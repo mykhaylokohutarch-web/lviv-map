@@ -156,6 +156,64 @@
         
         .action-btn:active { transform: scale(0.98); }
 
+        /* --- СТИЛІ ІНТЕГРОВАНОГО ЧАТУ --- */
+        #chat-box {
+            display: none;
+            flex-direction: column;
+            height: 250px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-top: 15px;
+            background: #fafafa;
+        }
+
+        #chat-messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 10px;
+            list-style: none;
+            margin: 0;
+        }
+
+        #chat-messages li {
+            margin-bottom: 8px;
+            padding: 6px 10px;
+            background: white;
+            border-radius: 6px;
+            font-size: 13px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            line-height: 1.4;
+        }
+
+        #chat-input-form {
+            display: flex;
+            padding: 5px;
+            background: #eee;
+            border-bottom-left-radius: 7px;
+            border-bottom-right-radius: 7px;
+        }
+
+        #chat-input-form input {
+            flex-grow: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            outline: none;
+            font-size: 13px;
+        }
+
+        #chat-input-form button {
+            background: var(--accent-people);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            margin-left: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+        }
+
         /* Маркери Людей */
         .custom-avatar-marker { background: none; border: none; }
         .avatar-ring {
@@ -205,48 +263,79 @@
                     <p id="prof-text2">...</p>
                 </div>
 
+                <div id="chat-box">
+                    <ul id="chat-messages"></ul>
+                    <form id="chat-input-form">
+                        <input type="text" id="chat-msg-input" placeholder="Напишіть повідомлення..." required autocomplete="off">
+                        <button type="submit">📎</button>
+                    </form>
+                </div>
+
                 <button class="action-btn" id="prof-btn" onclick="handleAction()">Дія</button>
             </div>
         </div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        // Твої особисті конфігураційні ключі
+        const firebaseConfig = {
+            apiKey: "AIzaSyBEluWP-2ElBYWH5R_jb-hmfnYk02a_JfY",
+            authDomain: "lviv-map-chat.firebaseapp.com",
+            databaseURL: "https://lviv-map-chat-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "lviv-map-chat",
+            storageBucket: "lviv-map-chat.firebasestorage.app",
+            messagingSenderId: "940306109194",
+            appId: "1:940306109194:web:a4df7fff5350d8142a60f3"
+        };
+
+        // Ініціалізуємо Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // Запитуємо ім'я при вході на сайт
+        let myName = prompt("Введіть ваше ім'я для входу в мережу Львова:", "Гість");
+        if (!myName || myName.trim() === "") myName = "Анонім";
+
+        // Ініціалізація карти
         const map = L.map('map', { zoomControl: false }).setView([49.8415, 24.0315], 15);
         L.control.zoom({ position: 'topleft' }).addTo(map);
 
-        // Світла карта
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
             attribution: '© OpenStreetMap contributors, © CARTO'
         }).addTo(map);
 
         // --- ДАНІ КОРИСТУВАЧІВ (Люди) ---
         const people = [
-            { type: 'person', name: "Марта, 22", coords: [49.8425, 24.0320], avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150", photo: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500", status: "П'ю матчу на Ринку, ходімо гуляти! ☕", about: "Студентка академії мистецтв. Обожнюю львівські дворики.", interests: "Мистецтво, кава, виставки" },
-            { type: 'person', name: "Влад, 26", coords: [49.8445, 24.0260], avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150", photo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500", status: "Шукаю компанію на вечірній велозаїзд 🚴‍♂️", about: "Працюю в IT, вечорами катаю на велі або граю в настілки.", interests: "Велосипед, Стрийський парк, Настільні ігри" },
-            { type: 'person', name: "Юля, 24", coords: [49.8360, 24.0145], avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150", photo: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=500", status: "Хто на какао та обговорення книг? 📚", about: "Пишу вірші, колекціоную вінілові платівки.", interests: "Література, Поезія, Вініл, Затишні кав'ярні" },
-            { type: 'person', name: "Денис, 28", coords: [49.8490, 24.0465], avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150", photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500", status: "Зустрічаю захід сонця на Високому Замку 🌅", about: "Фотограф-аматор. Шукаю цікавих людей в якості моделей.", interests: "Фотографія, Подорожі, Психологія" },
-            { type: 'person', name: "Олексій, 23", coords: [49.8390, 24.0210], avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150", photo: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500", status: "Хто грає у фрісбі в парку Франка? 🥏", about: "Люблю спорт та спонтанні знайомства. Сиджу на траві.", interests: "Спорт, Фрісбі, Парки, Смузі" }
+            { id: "marta", type: 'person', name: "Марта, 22", coords: [49.8425, 24.0320], avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150", photo: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500", status: "П'ю матчу на Ринку, ходімо гуляти! ☕", about: "Студентка академії мистецтв. Обожнюю львівські дворики.", interests: "Мистецтво, кава, výставки" },
+            { id: "vlad", type: 'person', name: "Влад, 26", coords: [49.8445, 24.0260], avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150", photo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500", status: "Шукаю компанію на вечірній велозаїзд 🚴‍♂️", about: "Працюю в IT, вечорами катаю на велі або граю в настілки.", interests: "Велосипед, Стрийський парк, Настільні ігри" },
+            { id: "yulia", type: 'person', name: "Юля, 24", coords: [49.8360, 24.0145], avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150", photo: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=500", status: "Хто на какао та обговорення книг? 📚", about: "Пишу вірші, колекціоную вінілові платівки.", interests: "Література, Поезія, Вініл, Затишні кав'ярні" },
+            { id: "denys", type: 'person', name: "Денис, 28", coords: [49.8490, 24.0465], avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150", photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500", status: "Зустрічаю заход сонця на Високому Замку 🌅", about: "Фотограф-аматор. Шукаю цікавих людей в якості моделей.", interests: "Фотографія, Подорожі, Психологія" },
+            { id: "oleksiy", type: 'person', name: "Олексій, 23", coords: [49.8390, 24.0210], avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150", photo: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500", status: "Хто грає у фрісбі в парку Франка? 🥏", about: "Люблю спорт та спонтанні знайомства. Сиджу на траві.", interests: "Спорт, Фрісбі, Парки, Смузі" }
         ];
 
-        // --- ДАНІ ЗАКЛАДІВ (20 місць у центрі) ---
+        // --- ДАНІ ЗАКЛАДІВ ---
         const places = [
-            { type: 'place', name: "Ресторація Бачевських", coords: [49.8430, 24.0305], photo: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500", status: "Легендарна нова галицька кухня 🥂", text1: "вул. Шевська, 8. Атмосфера львівського оранжерейного шику початку XX століття. Неймовірні фірмові наливки та вишукані сніданки під спів канарок.", text2: "-20% на всі авторські коктейлі з неділі по четвер після 19:00 для користувачів додатку!", icon: "🍽️" },
+            { type: 'place', name: "Ресторація Бачевських", coords: [49.8430, 24.0305], photo: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500", status: "Lehendarna nova halytska kuhnia 🥂", text1: "вул. Шевська, 8. Атмосфера львівського оранжерейного шику початку XX століття. Неймовірні фірмові наливки та вишукані сніданки під спів канарок.", text2: "-20% на всі авторські коктейлі з неділі по четвер після 19:00 для користувачів додатку!", icon: "🍽️" },
             { type: 'place', name: "Львівська копальня кави", coords: [49.8412, 24.0326], photo: "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=500", status: "Тут видобувають найкращу каву міста! ⛏️☕", text1: "пл. Ринок, 10. Завітайте у шахту, щоб спробувати знамениту «Запаяну каву» з вогняним шоу від бариста.", text2: "При замовленні двох порцій «Запаяної кави» — фірмовий шоколадний трюфель у подарунок!", icon: "☕" },
             { type: 'place', name: "Криївка", coords: [49.8410, 24.0320], photo: "https://images.unsplash.com/photo-1560624052-449f5ddf0c31?w=500", status: "«Гасло знаєте?» — таємне місце УПА 🪖", text1: "пл. Ринок, 14 (підвал). Військово-історичний сеттінг, традиційні українські страви в казанах і патріотична атмосфера.", text2: "Назвіть нашому стійковому промокод 'КАРТА' та безкоштовно отримайте вітальний частунок (настоянка)!", icon: "🥩" },
             { type: 'place', name: "Реберня під Арсеналом", coords: [49.8418, 24.0350], photo: "https://images.unsplash.com/photo-1544025162-d76694265947?w=500", status: "Найсоковитіші ребра на вогні 🔥", text1: "вул. Підвальна, 5. Справжні гарячі реберця, які їдять виключно руками в атмосфері середньовічного Арсеналу.", text2: "Спеціальна пропозиція: фірмовий крафтовий соус до кожної порції м'яса абсолютно безкоштовно.", icon: "🍖" },
             { type: 'place', name: "Театр пива «Правда»", coords: [49.8421, 24.0322], photo: "https://images.unsplash.com/photo-1532634922-8fe0b757fb13?w=500", status: "Крафтове пиво під живу музику оркестру 🎺🍺", text1: "пл. Ринок, 32. Власна броварня, величезний вибір свіжого пива з політичними етикетками, що підкорили світ.", text2: "Кожен вівторок та середу: купуй 3 пляшки пива з собою, 4-ту (фірмовий стаут) забирай за 1 грн!", icon: "🍺" },
             { type: 'place', name: "Світ Кави", coords: [49.8406, 24.0310], photo: "https://images.unsplash.com/photo-1447933601403-0c6688de566e?w=500", status: "Культове місце для справжніх кавоманів ☕✨", text1: "пл. Катедральна, 6. Свіжообсмажені зерна specialty-кави, класичні десерти (Захер) та затишна тераса біля храму.", text2: "Замовте будь-яку V60 або Кемекс каву і отримайте макарон на вибір у подарунок.", icon: "☕" },
             { type: 'place', name: "П'яна Вишня", coords: [49.8416, 24.0314], photo: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=500", status: "Найкраща львівська вишнева настоянка 🍒", text1: "пл. Ринок, 11. Незмінна класика, яка зігріває серце. Смакує як холодною, так і гарячою з чорним шоколадом.", text2: "Акція: При покупці пляшки 0.7л на виніс — фірмовий келих у фірмовому пакуванні безкоштовно!", icon: "🍷" },
-            { type: 'place', name: "Mons Pius (Монс Піус)", coords: [49.8436, 24.0308], photo: "https://images.unsplash.com/photo-1543353071-10c8ba85a904?w=500", status: "М'ясо та живе пиво у Вірменському дворику 🥩", text1: "вул. Вірменська, 7. Ресторан розташований у будівлі колишнього банку. Стейки преміум якості на хоспері.", text2: "Покажи цей маркер офіціанту та отримай келих фірмового пива Mons Pius до будь-якого стейку.", icon: "🥩" },
+            { type: 'place', name: "Mons Pius (Монс Піус)", coords: [49.8436, 24.0308], photo: "https://images.unsplash.com/photo-1543353071-10c8ba85a904?w=500", status: "М'ясо та живе пиво у Вірменському дворику 🥩", text1: "вул. Вірменська, 7. Ресторан розташований у будівлі колишнього банку. Стейки преміум якості на хоспері.", text2: "Покажи цей маркер офіціанту та отримай келих фірмового пива Mons Pius до будь-вого стейку.", icon: "🥩" },
             { type: 'place', name: "Чентрале (Café Centaur)", coords: [49.8423, 24.0311], photo: "https://images.unsplash.com/photo-1463796111765-96519122015a?w=500", status: "Сніданки з видом на площу Ринок 🍳", text1: "пл. Ринок, 34. Затишна атмосфера європейського міського кафе з багатою історією та чудовою випічкою.", text2: "Безлімітна фільтр-кава до будь-якого великого львівського сніданку щодня до 12:00!", icon: "☕" },
             { type: 'place', name: "Шампанерія Х&Х", coords: [49.8414, 24.0298], photo: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=500", status: "Хачапурі, хот-доги та ігристе вино 🥂", text1: "вул. Лесі Українки, 29. Сміливий мікс грузинських хачапурі по-аджарськи, соковитих хот-догів та елітного шампанського.", text2: "Замов будь-який хачапурі та отримай келих фірмового ігристого вина Fragolino всього за 25 грн.", icon: "🥂" },
             { type: 'place', name: "Кондитерська «Вероніка»", coords: [49.8378, 24.0332], photo: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=500", status: "Рай для ласунів європейського рівня 🍰", text1: "просп. Шевченка, 21. Легендарний ресторан-цукерня з фантастичним асортиментом тортів, еклерів та свіжого хліба.", text2: "При замовленні від 400 грн з собою — коробка фірмового печива ручної роботи у подарунок!", icon: "🍰" },
             { type: 'place', name: "Перша грильова ресторація м'яса та справедливості", coords: [49.8410, 24.0345], photo: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500", status: "Гриль-хаус у середньовічному стилі ка́та 🥩⛓️", text1: "вул. Валова, 20. М'ясні страви на багатті. Офіціанти в костюмах, шоу з клітками та гільйотиною.", text2: "Спеціальний коктейль 'Кров Ката' за півціни при замовленні фірмової шашличної тарілки.", icon: "🍖" },
             { type: 'place', name: "Мазох Кафе", coords: [49.8418, 24.0328], photo: "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=500", status: "Екстравагантні розваги та гострі відчуття 🌶️🔥", text1: "вул. Сербська, 7. Заклад присвячений Леопольду фон Захер-Мазоху. Специфічне обслуговування з батогами.", text2: "Замов екстремальний коктейль «Пристрасть» та отримай безкоштовний фірмовий 'мазохістський' батіг.", icon: "🍷" },
             { type: 'place', name: "Найдорожча ресторація Галичини (Масони)", coords: [49.8409, 24.0318], photo: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500", status: "Таємне товариство з великими знижками 🗲🔺", text1: "пл. Ринок, 14. Секретні двері через звичайну квартиру. Спочатку ціни шокують, але діє знижка 90% для місцевих.", text2: "З цим додатком знижка 90% на все меню автоматично активується без наявності фізичної карти 'Lokal'!", icon: "🍽️" },
-            { type: 'place', name: "Na Bambetli (На Бамбетлі)", coords: [49.8419, 24.0333], photo: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=500", status: "Затишна кав'ярня у пасажі Андреоллі 🕰️", text1: "пл. Ринок, 29. Справжня львівська класика, старовинні дивани-бамбетлі, кава в турках і спокійна атмосфера старого Львова.", text2: "Знижка 15% на всі види домашніх чаїв та глінтвейнів у вечірній час після 20:00.", icon: "☕" },
-            { type: 'place', name: "Трапезна Ідей", coords: [49.8408, 24.0348], photo: "https://images.unsplash.com/photo-1502301197179-6522b4b0004d?w=500", status: "Галицька кухня в монастирських підземеллях 🏰", text1: "вул. Валова, 18а. Автентичний ресторан у підвалах Бернардинського монастиря. Фірмовий монастирський борщ.", text2: "Пригощаємо фірмовим пирогом з цибулею при замовленні будь-якої гарячої першої страви.", icon: "🍽️" },
+            { type: 'place', name: "Na Bambetli (На Бамбетлі)", coords: [49.8419, 24.0333], photo: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=500", status: "Затишна кав'ярня у пасажі Андреоллі 🕰️", text1: "пл. Ринок, 29. Справжня львівська класика, старовинні дивани-бамбетлі, кава в турках і спокійна атмосфера старого Львова.", text2: "Знижка 15% на всі вида домашніх чаїв та глінтвейнів у вечірній час після 20:00.", icon: "☕" },
+            { type: 'place', name: "Трапезна Ідей", coords: [49.8408, 24.0348], photo: "https://images.unsplash.com/photo-1002301197179-6522b4b0004d?w=500", status: "Галицька кухня в монастирських підземеллях 🏰", text1: "вул. Валова, 18а. Автентичний ресторан у підвалах Бернардинського монастиря. Фірмовий монастирський борщ.", text2: "Пригощаємо фірмовим пирогом з цибулею при замовленні будь-якої гарячої першої страви.", icon: "🍽️" },
             { type: 'place', name: "Аптека Міколяша", coords: [49.8398, 24.0302], photo: "https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=500", status: "Кафе-музей на місці історичної аптеки 💊🍰", text1: "вул. Коперника, 1. Величезний вибір тістечок, які схожі на витвори мистецтва, власна кондитерська лабораторія.", text2: "Отримай фірмовий аптечний трав'яний еліксир здоров'я безкоштовно до будь-якого десерту.", icon: "🍰" },
             { type: 'place', name: "The Cheese Bakery", coords: [49.8405, 24.0323], photo: "https://images.unsplash.com/photo-1551024601-bec78aea704b?w=500", status: "Найкращі чізкейки у вашому житті 🧀🍰", text1: "вул. Галицька, 1. Неймовірно естетичний інтер'єр, смачні бранчі (авокадо тости) та десятки видів ніжного сирного торта.", text2: "Акція: При покупці шматочка чізкейку 'Солена карамель' — класичне еспресо або американо за 10 грн.", icon: "🍰" },
             { type: 'place', name: "Вiденська кав'ярня", coords: [49.8428, 24.0280], photo: "https://images.unsplash.com/photo-1559925393-8be0ec4767c8?w=500", status: "Найстаріша діюча кав'ярня Львова (1829 р.) 🎻", text1: "просп. Свободи, 12. Традиційний австрійський стиль, жива класична музика вечорами, витончені віденські шніцелі.", text2: "Даруємо штрудель з яблуками до будь-якої великої м'ясної вечері за цим рекламним купоном.", icon: "☕" },
@@ -255,7 +344,7 @@
 
         let currentActiveItem = null;
 
-        // Додаємо Людей на карту (Рожеві аватарки)
+        // Показуємо Людей
         people.forEach(person => {
             const customIcon = L.divIcon({
                 className: 'custom-avatar-marker',
@@ -266,7 +355,7 @@
             marker.on('click', () => showSidebar(person));
         });
 
-        // Додаємо Заклади на карту (Фіолетові значки з іконками їжі)
+        // Показуємо Заклади
         places.forEach(place => {
             const customIcon = L.divIcon({
                 className: 'custom-place-marker',
@@ -277,11 +366,10 @@
             marker.on('click', () => showSidebar(place));
         });
 
-        // Спільна функція для показу Сайдбару
-        function showSidebar(item) {
+        // Функція для показу Сайдбару та завантаження повідомлень чату
+        window.showSidebar = function(item) {
             currentActiveItem = item;
             
-            // Налаштування контенту
             document.getElementById('prof-img').style.backgroundImage = `url('${item.photo}')`;
             document.getElementById('prof-name').innerText = item.name;
             document.getElementById('prof-status').innerText = `"${item.status}"`;
@@ -293,44 +381,86 @@
             const btn = document.getElementById('prof-btn');
             const label1 = document.getElementById('label-1');
             const label2 = document.getElementById('label-2');
+            const chatBox = document.getElementById('chat-box');
 
             if (item.type === 'person') {
-                // Стиль для людини
                 badge.style.display = 'none';
                 statusEl.className = "profile-status status-people";
                 label1.innerText = "Про себе";
                 label2.innerText = "Інтереси";
                 btn.innerText = "Надіслати повідомлення";
                 btn.style.backgroundColor = "var(--accent-people)";
+                btn.style.display = "block";
+                chatBox.style.display = "none"; // Спочатку ховаємо чат, поки не натиснуть кнопку
             } else {
-                // Стиль для закладу (Реклама)
                 badge.style.display = 'block';
                 statusEl.className = "profile-status status-place";
                 label1.innerText = "Про заклад та адресу";
                 label2.innerText = "🔥 Гаряча акція для вас";
                 btn.innerText = "Забронювати столик / Отримати знижку";
                 btn.style.backgroundColor = "var(--accent-place)";
+                btn.style.display = "block";
+                chatBox.style.display = "none";
             }
 
             document.getElementById('profile-sidebar').classList.add('active');
-            
-            // Зсув карти
             map.panTo([item.coords[0], item.coords[1] + 0.0035]);
-        }
+        };
 
-        function closeProfile() {
+        window.closeProfile = function() {
             document.getElementById('profile-sidebar').classList.remove('active');
             currentActiveItem = null;
-        }
+        };
 
-        function handleAction() {
+        // Обробка головної дії (кліку по кнопці в сайдбарі)
+        window.handleAction = function() {
             if (!currentActiveItem) return;
             if (currentActiveItem.type === 'person') {
-                alert(`Ви відкрили приватний чат з користувачем ${currentActiveItem.name}!`);
+                // Замість алерта — відкриваємо блок чату
+                document.getElementById('chat-box').style.display = "flex";
+                document.getElementById('prof-btn').style.display = "none"; // Ховаємо велику кнопку
+                loadChatMessages(currentActiveItem.id);
             } else {
                 alert(`Ваш купон на знижку в "${currentActiveItem.name}" активовано! Покажіть цей екран офіціанту.`);
             }
+        };
+
+        // --- ЛОГІКА СИНХРОНІЗАЦІЇ ЧАТУ З FIREBASE ---
+        const chatForm = document.getElementById('chat-input-form');
+        const messageInput = document.getElementById('chat-msg-input');
+        const messagesList = document.getElementById('chat-messages');
+        let currentChatId = null;
+
+        function loadChatMessages(userId) {
+            currentChatId = userId;
+            messagesList.innerHTML = ""; // Очищаємо екран перед завантаженням
+
+            // Слухаємо гілку повідомлень конкретної людини у Firebase
+            onChildAdded(ref(db, `chats/${userId}`), (snapshot) => {
+                // Перевіряємо, чи ми досі в чаті з цією людиною
+                if (currentChatId !== userId) return;
+                
+                const msg = snapshot.val();
+                const li = document.createElement('li');
+                li.innerHTML = `<strong>${msg.user}:</strong> ${msg.text}`;
+                messagesList.appendChild(li);
+                messagesList.scrollTop = messagesList.scrollHeight;
+            });
         }
+
+        // Відправка повідомлення в базу
+        chatForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const text = messageInput.value.trim();
+            if (text !== "" && currentChatId) {
+                push(ref(db, `chats/${currentChatId}`), {
+                    user: myName,
+                    text: text,
+                    timestamp: Date.now()
+                });
+                messageInput.value = "";
+            }
+        });
     </script>
 </body>
 </html>
