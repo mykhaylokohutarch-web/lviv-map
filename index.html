@@ -7,12 +7,12 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root {
-            --bg-color: #f4f4f7;
-            --card-bg: #ffffff;
+            --bg-color: #f8fafc;
+            --card-bg: rgba(255, 255, 255, 0.95);
             --accent-people: #ff4757;
             --accent-place: #6c5ce7;
-            --text-color: #2d3436;
-            --text-secondary: #636e72;
+            --text-color: #1e293b;
+            --text-secondary: #64748b;
         }
 
         body, html {
@@ -35,71 +35,81 @@
         #map {
             flex-grow: 1;
             height: 100%;
-            background-color: #e5e9f0;
+            background-color: #e2e8f0;
         }
 
-        /* Стильний універсальний сайдбар */
+        /* Оновлений плаваючий сайдбар */
         #profile-sidebar {
             width: 360px;
             background-color: var(--card-bg);
-            height: 100%;
-            box-shadow: -5px 0 25px rgba(0,0,0,0.15);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            height: calc(100% - 40px);
+            box-shadow: -5px 0 30px rgba(0,0,0,0.1);
             display: flex;
             flex-direction: column;
-            transition: transform 0.3s ease;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: absolute;
-            right: 0;
-            top: 0;
+            right: 20px;
+            top: 20px;
+            bottom: 20px;
             z-index: 1000;
-            transform: translateX(100%);
+            transform: translateX(400px);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
         }
 
         #profile-sidebar.active {
             transform: translateX(0);
-            position: relative;
         }
 
         .close-btn {
             position: absolute;
             top: 15px;
             left: 15px;
-            background: rgba(255,255,255,0.9);
+            background: #ffffff;
             border: none;
-            color: #2d3436;
-            font-size: 24px;
+            color: var(--text-color);
+            font-size: 20px;
             cursor: pointer;
             z-index: 10;
-            width: 35px;
-            height: 35px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
         }
+        .close-btn:hover { transform: scale(1.05); }
 
         .profile-hero {
             position: relative;
             height: 180px;
             background-size: cover;
             background-position: center;
+            border-top-left-radius: 16px;
+            border-top-right-radius: 16px;
         }
 
         .badge {
             position: absolute;
             bottom: 15px;
             right: 15px;
-            padding: 5px 12px;
+            padding: 6px 14px;
             background: var(--accent-place);
             color: white;
             border-radius: 20px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: bold;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 10px rgba(108, 92, 231, 0.3);
         }
 
         .profile-info {
-            padding: 20px;
+            padding: 24px;
             display: flex;
             flex-direction: column;
             flex-grow: 1;
@@ -107,22 +117,24 @@
         }
 
         .profile-name {
-            font-size: 22px;
-            margin: 0 0 5px 0;
-            font-weight: 600;
+            font-size: 24px;
+            margin: 0 0 6px 0;
+            font-weight: 700;
+            letter-spacing: -0.5px;
         }
 
         .profile-status {
             font-style: italic;
-            margin: 0 0 15px 0;
+            margin: 0 0 20px 0;
             font-size: 14px;
             font-weight: 500;
+            line-height: 1.4;
         }
         .status-people { color: var(--accent-people); }
         .status-place { color: var(--accent-place); }
 
         .profile-section {
-            margin-bottom: 15px;
+            margin-bottom: 18px;
         }
 
         .profile-section label {
@@ -130,109 +142,149 @@
             color: var(--text-secondary);
             font-size: 11px;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 5px;
-            font-weight: bold;
+            letter-spacing: 0.8px;
+            margin-bottom: 6px;
+            font-weight: 700;
         }
 
         .profile-section p {
             margin: 0;
             font-size: 14px;
-            line-height: 1.45;
-            color: #4a4a4a;
+            line-height: 1.5;
+            color: #334155;
         }
 
-        /* Стилі інтегрованого чату */
+        /* Красивий сучасний чат у стилі месенджерів */
         #chat-container {
             display: none;
             flex-direction: column;
             border-top: 1px solid #e2e8f0;
-            padding-top: 15px;
+            padding-top: 18px;
             margin-top: 10px;
             flex-grow: 1;
-            max-height: 300px;
         }
 
         #chat-messages {
             flex-grow: 1;
             overflow-y: auto;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            padding: 10px;
-            background: #f8fafc;
-            margin-bottom: 10px;
-            font-size: 13px;
+            max-height: 240px;
+            padding: 10px 5px;
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
             list-style: none;
         }
 
+        /* Стилізація баблів повідомлень */
         #chat-messages li {
-            margin-bottom: 8px;
-            padding: 6px 10px;
-            border-radius: 4px;
-            background: #fff;
+            max-width: 80%;
+            padding: 8px 14px;
+            border-radius: 14px;
+            font-size: 13.5px;
+            line-height: 1.4;
+            width: fit-content;
+            word-break: break-word;
             box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        /* Повідомлення від інших людей */
+        .msg-other {
+            background: #f1f5f9;
+            color: var(--text-color);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px !important;
+        }
+
+        /* Твої особисті повідомлення */
+        .msg-me {
+            background: var(--accent-people);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px !important;
+        }
+
+        .msg-user-name {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            margin-bottom: 2px;
+            opacity: 0.8;
         }
 
         .chat-input-row {
             display: flex;
-            gap: 5px;
+            gap: 8px;
+            background: #f8fafc;
+            padding: 6px;
+            border-radius: 24px;
+            border: 1px solid #e2e8f0;
         }
 
         .chat-input-row input {
             flex-grow: 1;
-            padding: 8px;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            font-size: 13px;
+            padding: 8px 14px;
+            border: none;
+            background: transparent;
+            font-size: 13.5px;
+            color: var(--text-color);
+            outline: none;
         }
 
         .chat-input-row button {
             background: var(--accent-people);
             color: white;
             border: none;
-            padding: 0 15px;
-            border-radius: 6px;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
             cursor: pointer;
             font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
         }
+        .chat-input-row button:hover { background: #e03d4f; }
 
         .action-btn {
             color: white;
             border: none;
             padding: 14px;
-            border-radius: 8px;
-            font-size: 16px;
+            border-radius: 10px;
+            font-size: 15px;
             font-weight: bold;
             cursor: pointer;
             margin-top: auto;
-            transition: opacity 0.2s, transform 0.1s;
+            box-shadow: 0 4px 12px rgba(108, 92, 231, 0.2);
+            transition: transform 0.1s;
         }
-        
         .action-btn:active { transform: scale(0.98); }
 
         /* Маркери Людей */
         .custom-avatar-marker { background: none; border: none; }
         .avatar-ring {
-            width: 42px; height: 42px; border-radius: 50%;
-            border: 3px solid var(--accent-people);
-            box-shadow: 0 3px 10px rgba(255, 71, 87, 0.5);
+            width: 44px; height: 44px; border-radius: 50%;
+            border: 3px solid #ffffff;
+            outline: 3px solid var(--accent-people);
+            box-shadow: 0 4px 15px rgba(255, 71, 87, 0.4);
             background-size: cover; background-position: center;
-            transition: transform 0.2s;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        .avatar-ring:hover { transform: scale(1.15); }
+        .avatar-ring:hover { transform: scale(1.15); z-index: 999; }
 
         /* Маркери Закладів */
         .custom-place-marker { background: none; border: none; }
         .place-ring {
-            width: 36px; height: 36px; border-radius: 50%;
+            width: 38px; height: 38px; border-radius: 50%;
             background-color: var(--accent-place);
             border: 2px solid white;
-            box-shadow: 0 3px 10px rgba(108, 92, 231, 0.6);
+            box-shadow: 0 4px 12px rgba(108, 92, 231, 0.4);
             display: flex; align-items: center; justify-content: center;
             font-size: 18px; color: white; cursor: pointer;
-            transition: transform 0.2s;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        .place-ring:hover { transform: scale(1.2); background-color: #5b4bc4; }
+        .place-ring:hover { transform: scale(1.15); background-color: #5b4bc4; }
     </style>
 </head>
 <body>
@@ -259,12 +311,13 @@
                     <p id="prof-text2">...</p>
                 </div>
 
+                <!-- Оновлений Чат -->
                 <div id="chat-container">
-                    <label style="font-size: 11px; text-transform: uppercase; font-weight: bold; color: var(--text-secondary); margin-bottom: 5px;">Живий чат</label>
+                    <label style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">Живий чат</label>
                     <ul id="chat-messages"></ul>
                     <div class="chat-input-row">
-                        <input type="text" id="chat-msg-input" placeholder="Напишіть повідомлення..." />
-                        <button id="chat-send-btn">=></button>
+                        <input type="text" id="chat-msg-input" placeholder="Напишіть щось..." />
+                        <button id="chat-send-btn">➔</button>
                     </div>
                 </div>
 
@@ -275,11 +328,9 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script type="module">
-        // Імпортуємо модулі Firebase прямо з CDN мережі (щоб працювало без встановлення npm)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, push, onChildAdded, off } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-        // ТВОЯ ОСОБИСТА КОНФІГУРАЦІЯ FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyBELuWP-2ElBYWH5R_jb-hmfnYk02a_JfY",
             authDomain: "lviv-map-chat.firebaseapp.com",
@@ -290,11 +341,9 @@
             appId: "1:940306109194:web:a4df7fff5350d8142a60f3"
         };
 
-        // Ініціалізуємо додаток
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // Створення карти
         const map = L.map('map', { zoomControl: false }).setView([49.8415, 24.0315], 15);
         L.control.zoom({ position: 'topleft' }).addTo(map);
 
@@ -302,7 +351,6 @@
             attribution: '© OpenStreetMap contributors, © CARTO'
         }).addTo(map);
 
-        // Ім'я користувача (запитується один раз при завантаженні сайту)
         let myName = localStorage.getItem('chat_username');
         if (!myName) {
             myName = prompt("Введіть ваше ім'я для спілкування в чаті:", "Гість");
@@ -310,41 +358,34 @@
             localStorage.setItem('chat_username', myName);
         }
 
-        // Дані користувачів
         const people = [
             { id: 'marta', type: 'person', name: "Марта, 22", coords: [49.8425, 24.0320], avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150", photo: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500", status: "П'ю матчу на Ринку, ходімо гуляти! ☕", about: "Студентка академії мистецтв. Обожнюю львівські дворики.", interests: "Мистецтво, кава, виставки" },
             { id: 'vlad', type: 'person', name: "Влад, 26", coords: [49.8445, 24.0260], avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150", photo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500", status: "Шукаю компанію на вечірній велозаїзд 🚴‍♂️", about: "Працюю в IT, вечорами катаю на велі або граю в настілки.", interests: "Велосипед, Стрийський парк, Настільні ігри" },
-            { id: 'yulia', type: 'person', name: "Юля, 24", coords: [49.8360, 24.0145], avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150", photo: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=500", status: "Хто на какао та обговорення книг? 📚", about: "Пишу вірші, колекціоную вінілові платівки.", interests: "Література, Поезія, Вініл, Затишні кав'ярні" },
-            { id: 'denys', type: 'person', name: "Денис, 28", coords: [49.8490, 24.0465], avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150", photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500", status: "Зустрічаю захід сонця на Високому Замку 🌅", about: "Фотограф-аматор. Шукаю цікавих людей в якості моделей.", interests: "Фотографія, Подорожі, Психологія" },
-            { id: 'oleksiy', type: 'person', name: "Олексій, 23", coords: [49.8390, 24.0210], avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150", photo: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500", status: "Хто грає у фрісбі в парку Франка? 🥏", about: "Люблю спорт та спонтанні знайомства. Сиджу на траві.", interests: "Спорт, Фрісбі, Парки, Смузі" }
+            { id: 'yulia', type: 'person', name: "Юля, 24", coords: [49.8360, 24.0145], avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150", photo: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=500", status: "Хто на какао та обговорення книг? 📚", about: "Пишу вірші, колекціоную вінілові платівки.", interests: "Література, Поезія, Вініл, Затишні кав'ярні" }
         ];
 
-        // Дані закладів
         const places = [
             { id: 'bachevski', type: 'place', name: "Ресторація Бачевських", coords: [49.8430, 24.0305], photo: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500", status: "Легендарна нова галицька кухня 🥂", text1: "вул. Шевська, 8. Атмосфера львівського оранжерейного шику початку XX століття.", text2: "-20% на всі авторські коктейлі з неділі по четвер після 19:00 для користувачів додатку!", icon: "🍽️" },
-            { id: 'kopalnya', type: 'place', name: "Львівська копальня кави", coords: [49.8412, 24.0326], photo: "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=500", status: "Тут видобувають найкращу каву міста! ⛏️☕", text1: "пл. Ринок, 10. Завітайте у шахту, щоб спробувати знамениту «Запаяну каву».", text2: "При замовленні двох порцій «Запаяної кави» — фірмовий шоколадний трюфель у подарунок!", icon: "☕" },
-            { id: 'kryivka', type: 'place', name: "Криївка", coords: [49.8410, 24.0320], photo: "https://images.unsplash.com/photo-1560624052-449f5ddf0c31?w=500", status: "«Гасло знаєте?» — таємне місце УПА 🪖", text1: "пл. Ринок, 14 (підвал). Військово-історичний сеттінг, традиційні страви.", text2: "Назвіть нашому стійковому промокод 'КАРТА' та безкоштовно отримайте вітальний частунок!", icon: "🥩" }
+            { id: 'kopalnya', type: 'place', name: "Львівська копальня кави", coords: [49.8412, 24.0326], photo: "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=500", status: "Тут видобувають найкращу каву міста! ⛏️☕", text1: "пл. Ринок, 10. Завітайте у шахту, щоб спробувати знамениту «Запаяну каву».", text2: "При замовленні двох порцій «Запаяної кави» — фірмовий шоколадний трюфель у подарунок!", icon: "☕" }
         ];
 
         let currentActiveItem = null;
         let currentChatRef = null;
 
-        // Відображення людей
         people.forEach(person => {
             const customIcon = L.divIcon({
                 className: 'custom-avatar-marker',
                 html: `<div class="avatar-ring" style="background-image: url('${person.avatar}')"></div>`,
-                iconSize: [42, 42], iconAnchor: [21, 21]
+                iconSize: [44, 44], iconAnchor: [22, 22]
             });
             L.marker(person.coords, { icon: customIcon }).addTo(map).on('click', () => showSidebar(person));
         });
 
-        // Відображення закладів
         places.forEach(place => {
             const customIcon = L.divIcon({
                 className: 'custom-place-marker',
                 html: `<div class="place-ring">${place.icon}</div>`,
-                iconSize: [36, 36], iconAnchor: [18, 18]
+                iconSize: [38, 38], iconAnchor: [19, 19]
             });
             L.marker(place.coords, { icon: customIcon }).addTo(map).on('click', () => showSidebar(place));
         });
@@ -365,7 +406,6 @@
             const label2 = document.getElementById('label-2');
             const chatContainer = document.getElementById('chat-container');
 
-            // Очищення попереднього слухача чату
             if (currentChatRef) {
                 off(currentChatRef);
                 document.getElementById('chat-messages').innerHTML = '';
@@ -377,11 +417,9 @@
                 label1.innerText = "Про себе";
                 label2.innerText = "Інтереси";
                 
-                // Ховаємо стару кнопку, показуємо вікно чату
                 btn.style.display = 'none';
                 chatContainer.style.display = 'flex';
 
-                // Підключаємо кімнату чату у Firebase саме для цієї людини
                 loadChat(item.id);
             } else {
                 badge.style.display = 'block';
@@ -392,6 +430,7 @@
                 btn.style.display = 'block';
                 btn.innerText = "Отримати знижку";
                 btn.style.backgroundColor = "var(--accent-place)";
+                btn.style.boxShadow = "0 4px 12px rgba(108, 92, 231, 0.2)";
                 chatContainer.style.display = 'none';
             }
 
@@ -401,13 +440,10 @@
 
         window.closeProfile = function() {
             document.getElementById('profile-sidebar').classList.remove('active');
-            if (currentChatRef) {
-                off(currentChatRef);
-            }
+            if (currentChatRef) off(currentChatRef);
             currentActiveItem = null;
         }
 
-        // Логіка завантаження повідомлень з бази даних Firebase
         function loadChat(chatId) {
             const messagesList = document.getElementById('chat-messages');
             messagesList.innerHTML = '';
@@ -417,13 +453,21 @@
             onChildAdded(currentChatRef, (snapshot) => {
                 const data = snapshot.val();
                 const li = document.createElement('li');
-                li.innerHTML = `<strong>${data.user}:</strong> ${data.text}`;
+                
+                // Перевірка: чи моє це повідомлення, чи чуже для вибору стилю
+                if (data.user === myName) {
+                    li.className = 'msg-me';
+                    li.innerHTML = `${data.text}`;
+                } else {
+                    li.className = 'msg-other';
+                    li.innerHTML = `<span class="msg-user-name">${data.user}</span>${data.text}`;
+                }
+                
                 messagesList.appendChild(li);
                 messagesList.scrollTop = messagesList.scrollHeight;
             });
         }
 
-        // Відправка повідомлення в Firebase
         function sendMessage() {
             const input = document.getElementById('chat-msg-input');
             const text = input.value.trim();
@@ -438,13 +482,11 @@
             input.value = '';
         }
 
-        // Вішаємо події на кнопки чату
         document.getElementById('chat-send-btn').addEventListener('click', sendMessage);
         document.getElementById('chat-msg-input').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') sendMessage();
         });
 
-        // Подія для кнопки знижок закладів
         document.getElementById('prof-btn').addEventListener('click', () => {
             if (currentActiveItem && currentActiveItem.type === 'place') {
                 alert(`Ваш купон на знижку в "${currentActiveItem.name}" активовано! Покажіть цей екран офіціанту.`);
