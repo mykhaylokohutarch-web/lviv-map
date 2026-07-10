@@ -42,7 +42,7 @@
 
         /* Центрований адаптивний сайдбар */
         #profile-sidebar {
-            width: 90%;
+            width: 92%;
             max-width: 420px;
             background-color: var(--card-bg);
             backdrop-filter: blur(15px);
@@ -87,10 +87,11 @@
 
         .profile-hero {
             position: relative;
-            height: 220px;
+            height: 180px;
             background-size: cover;
             background-position: center;
             background-color: #e2e8f0;
+            flex-shrink: 0;
         }
 
         .badge {
@@ -108,78 +109,87 @@
         }
 
         .profile-info {
-            padding: 24px;
+            padding: 16px 20px;
             display: flex;
             flex-direction: column;
             flex-grow: 1;
-            overflow-y: auto;
+            overflow: hidden; /* Запобігає ламанню структури на мобільних */
         }
 
         .profile-name {
-            font-size: 24px;
-            margin: 0 0 4px 0;
+            font-size: 22px;
+            margin: 0 0 2px 0;
             font-weight: 700;
         }
 
         .profile-status {
             font-style: italic;
-            margin: 0 0 20px 0;
-            font-size: 14px;
+            margin: 0 0 12px 0;
+            font-size: 13px;
             font-weight: 500;
-            line-height: 1.4;
+            line-height: 1.3;
         }
         .status-people { color: var(--accent-people); }
         .status-place { color: var(--accent-place); }
 
+        /* Компактний контейнер для текстової інформації */
+        .info-scroll-area {
+            max-height: 120px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            flex-shrink: 0;
+            padding-right: 4px;
+        }
+
         .profile-section {
-            margin-bottom: 16px;
+            margin-bottom: 8px;
         }
 
         .profile-section label {
             display: block;
             color: var(--text-secondary);
-            font-size: 11px;
+            font-size: 10px;
             text-transform: uppercase;
             letter-spacing: 0.8px;
-            margin-bottom: 6px;
+            margin-bottom: 2px;
             font-weight: 700;
         }
 
         .profile-section p {
             margin: 0;
-            font-size: 14px;
-            line-height: 1.5;
+            font-size: 13px;
+            line-height: 1.4;
             color: #334155;
         }
 
         .promo-box {
             background: linear-gradient(135deg, rgba(108, 92, 231, 0.1), rgba(108, 92, 231, 0.02));
             border-left: 4px solid var(--accent-place);
-            padding: 14px;
+            padding: 10px;
             border-radius: 0 12px 12px 0;
-            margin-top: 5px;
+            margin-top: 4px;
         }
         .promo-box p {
             color: var(--accent-place) !important;
             font-weight: 600;
         }
 
-        /* Чат */
+        /* Оптимізований мобільний чат для людей */
         #chat-container {
             display: none;
             flex-direction: column;
             border-top: 1px solid #e2e8f0;
-            padding-top: 14px;
-            margin-top: 5px;
+            padding-top: 10px;
             flex-grow: 1;
+            overflow: hidden;
         }
 
         #chat-messages {
             flex-grow: 1;
             overflow-y: auto;
-            height: 150px;
-            padding: 5px;
-            margin-bottom: 10px;
+            height: 100px; /* Фіксований мінімум для мобільних екранів */
+            padding: 2px;
+            margin-bottom: 8px;
             display: flex;
             flex-direction: column;
             gap: 6px;
@@ -188,26 +198,36 @@
 
         #chat-messages li {
             max-width: 85%;
-            padding: 8px 14px;
-            border-radius: 14px;
+            padding: 6px 12px;
+            border-radius: 12px;
             font-size: 13px;
+            line-height: 1.3;
         }
 
         .msg-other { background: #f1f5f9; color: var(--text-color); align-self: flex-start; border-bottom-left-radius: 4px !important; }
         .msg-me { background: var(--accent-people); color: white; align-self: flex-end; border-bottom-right-radius: 4px !important; }
+        
+        .msg-user-name {
+            display: block;
+            font-weight: bold;
+            font-size: 9px;
+            color: var(--text-secondary);
+            margin-bottom: 1px;
+        }
 
         .chat-input-row {
             display: flex;
-            gap: 8px;
+            gap: 6px;
             background: #f8fafc;
-            padding: 4px 6px;
-            border-radius: 24px;
+            padding: 4px;
+            border-radius: 20px;
             border: 1px solid #e2e8f0;
+            flex-shrink: 0;
         }
 
         .chat-input-row input {
             flex-grow: 1;
-            padding: 6px 10px;
+            padding: 4px 8px;
             border: none;
             background: transparent;
             font-size: 13px;
@@ -218,22 +238,27 @@
             background: var(--accent-people);
             color: white;
             border: none;
-            width: 32px;
-            height: 32px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .action-btn {
             color: white;
             border: none;
-            padding: 14px;
-            border-radius: 14px;
-            font-size: 15px;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 14px;
             font-weight: bold;
             cursor: pointer;
             margin-top: auto;
+            width: 100%;
             box-shadow: 0 4px 15px rgba(108, 92, 231, 0.3);
+            flex-shrink: 0;
         }
 
         #qr-modal {
@@ -260,7 +285,6 @@
         /* МАРКЕРИ НА КАРТІ */
         .custom-avatar-marker, .custom-place-marker { background: none; border: none; }
         
-        /* Маркер людини */
         .avatar-ring {
             width: 44px; height: 44px; border-radius: 50%;
             border: 2px solid white; outline: 3px solid var(--accent-people);
@@ -269,7 +293,6 @@
             background-color: #cbd5e1;
         }
         
-        /* Великі фіолетові кола закладу з великими читабельними іконками */
         .place-ring {
             width: 44px; height: 44px; border-radius: 50%;
             background-color: var(--accent-place); 
@@ -278,11 +301,8 @@
             display: flex; 
             align-items: center; 
             justify-content: center; 
-            font-size: 24px; /* Максимальна видимість значка */
+            font-size: 24px;
             transition: transform 0.2s;
-        }
-        .place-ring:hover {
-            transform: scale(1.15);
         }
     </style>
 </head>
@@ -300,21 +320,22 @@
                 <h2 class="profile-name" id="prof-name">Назва</h2>
                 <p class="profile-status" id="prof-status">"Статус"</p>
                 
-                <div class="profile-section">
-                    <label id="label-1">Опис</label>
-                    <div id="prof-text1-box"><p id="prof-text1">...</p></div>
-                </div>
+                <div class="info-scroll-area">
+                    <div class="profile-section">
+                        <label id="label-1">Опис</label>
+                        <div id="prof-text1-box"><p id="prof-text1">...</p></div>
+                    </div>
 
-                <div class="profile-section">
-                    <label id="label-2">Деталі</label>
-                    <div id="prof-text2-box"><p id="prof-text2">...</p></div>
+                    <div class="profile-section">
+                        <label id="label-2">Деталі</label>
+                        <div id="prof-text2-box"><p id="prof-text2">...</p></div>
+                    </div>
                 </div>
 
                 <div id="chat-container">
-                    <label>Публічна кімната локації</label>
                     <ul id="chat-messages"></ul>
                     <div class="chat-input-row">
-                        <input type="text" id="chat-msg-input" placeholder="Напишіть у чат..." />
+                        <input type="text" id="chat-msg-input" placeholder="Напишіть повідомлення..." />
                         <button id="chat-send-btn">➔</button>
                     </div>
                 </div>
@@ -363,7 +384,6 @@
         let myName = localStorage.getItem('chat_username') || prompt("Введіть ваше ім'я:", "Гість") || "Анонім";
         localStorage.setItem('chat_username', myName);
 
-        // Стабільні швидкі фото без блокувань для людей
         const people = [
             { id: 'p1', type: 'person', name: "Марта, 22", coords: [49.8425, 24.0320], photo: "https://xsgames.co/randomusers/assets/avatars/female/1.jpg", status: "П'ю матчу, ходімо гуляти! ☕", about: "Студентка академії мистецтв.", interests: "Мистецтво, кава, дизайн" },
             { id: 'p2', type: 'person', name: "Влад, 26", coords: [49.8445, 24.0260], photo: "https://xsgames.co/randomusers/assets/avatars/male/2.jpg", status: "Шукаю компанію на вечірній велозаїзд 🚴‍♂️", about: "Розробник, люблю швидкість.", interests: "Вело, IT, подорожі" },
@@ -377,7 +397,6 @@
             { id: 'p10', type: 'person', name: "Артур, 27", coords: [49.8400, 24.0270], photo: "https://xsgames.co/randomusers/assets/avatars/male/10.jpg", status: "Тестую кав'ярні міста. Хто зі мною? ☕", about: "Кавовий сомельє на мінімалках.", interests: "Еспресо, Капінг, Фільтр" }
         ];
 
-        // Стабільні тематичні фото для закладів (їжа/кава/інтер'єри)
         const places = [
             { id: 'c1', type: 'place', name: "Ресторація Бачевських", coords: [49.8430, 24.0305], photo: "https://picsum.photos/id/429/600/400", status: "Нова галицька кухня 🥂", text1: "вул. Шевська, 8. Справжній дух старого Львова.", text2: "Знижка 15% на фірмові наливки.", icon: "🍽️" },
             { id: 'c2', type: 'place', name: "Львівська копальня кави", coords: [49.8412, 24.0326], photo: "https://picsum.photos/id/1060/600/400", status: "Видобуваємо каву тут! ⛏️", text1: "пл. Ринок, 10. Єдина у світі кавова шахта.", text2: "Знижка 10% на будь-яку каву в зернах.", icon: "☕" },
@@ -394,7 +413,7 @@
         let currentActiveItem = null;
         let currentChatRef = null;
 
-        // Рендеринг маркерів людей
+        // Люди
         people.forEach(person => {
             const customIcon = L.divIcon({
                 className: 'custom-avatar-marker',
@@ -404,7 +423,7 @@
             L.marker(person.coords, { icon: customIcon }).addTo(map).on('click', () => showSidebar(person));
         });
 
-        // Рендеринг великих фіолетових кіл закладів
+        // Заклади
         places.forEach(place => {
             const customIcon = L.divIcon({
                 className: 'custom-place-marker',
@@ -435,8 +454,8 @@
             if (item.type === 'person') {
                 badge.style.display = 'none';
                 statusEl.className = "profile-status status-people";
-                label1.innerText = "Хто я та послуги";
-                label2.innerText = "Мої інтереси";
+                label1.innerText = "Про мене";
+                label2.innerText = "Інтереси";
                 
                 text1Box.className = "";
                 text2Box.className = "";
@@ -444,7 +463,7 @@
                 document.getElementById('prof-text2').innerText = item.interests;
 
                 btn.style.display = 'none';
-                chatContainer.style.display = 'flex';
+                chatContainer.style.display = 'flex'; // Показуємо чат ТІЛЬКИ для людей
                 loadChat(item.id);
             } else {
                 badge.style.display = 'block';
@@ -458,10 +477,10 @@
                 document.getElementById('prof-text1').innerText = item.text1;
                 document.getElementById('prof-text2').innerText = item.text2;
 
+                chatContainer.style.display = 'none'; // Повністю ховаємо чат для закладів
                 btn.style.display = 'block';
                 btn.innerText = "Отримати знижку";
                 btn.style.backgroundColor = "var(--accent-place)";
-                chatContainer.style.display = 'none';
             }
 
             document.getElementById('profile-sidebar').classList.add('active');
