@@ -8,7 +8,7 @@
     <style>
         :root {
             --bg-color: #f5f5f7; 
-            --card-bg: rgba(255, 255, 255, 0.85); 
+            --card-bg: rgba(255, 255, 255, 0.75); 
             --accent-main: #4542f4;      
             --accent-people: #ff2d55;    
             --text-color: #1d1d1f; 
@@ -40,7 +40,7 @@
             background-color: #e5e5ea;
         }
 
-        /* Бічна панель з підтримкою трансформацій в реальному часі */
+        /* Бічна панель */
         #profile-sidebar {
             width: 90%;
             max-width: 400px;
@@ -56,50 +56,34 @@
             left: 50%;
             z-index: 1000;
             
-            /* Базовий стан: відцентровано за допомогою CSS змінних для динамічного свайпу */
-            --ty: 100%;
-            --scale: 0.85;
-            --opacity: 0;
-            
-            transform: translate(-50%, var(--ty)) scale(var(--scale));
-            opacity: var(--opacity);
-            pointer-events: none;
+            /* Стан приховування */
+            transform: translate(-50%, 150%);
+            transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
             
             border-radius: 30px;
             border: 1px solid rgba(255, 255, 255, 0.5);
             box-sizing: border-box;
-            padding: 12px;
-            
-            /* Керуємо плавністю через клас, щоб не гальмувало під час перетягування */
-            transition: none;
-        }
-
-        /* Плавна анімація відкриття/закриття */
-        #profile-sidebar.smooth-transition {
-            transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.35s ease, scale 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            padding: 12px; /* Повернуто чисті 12px з усіх чотирьох боків */
         }
 
         #profile-sidebar.active {
-            --ty: -50%;
-            --scale: 1;
-            --opacity: 1;
-            pointer-events: auto;
+            transform: translate(-50%, -50%);
         }
 
-        /* Елегантний індикатор свайпу над фотографією */
+        /* Абсолютний індикатор свайпу, винесений вгору */
         .drag-handle {
             width: 36px;
             height: 5px;
             background: rgba(0, 0, 0, 0.12);
             border-radius: 3px;
             position: absolute;
-            top: -12px;
+            top: -12px; /* Повністю захований над картою, фото не чіпає */
             left: 50%;
             transform: translateX(-50%);
             cursor: grab;
         }
 
-        /* Чисті білі поля навколо фото (по 12px з усіх боків завдяки padding картки) */
+        /* Фотографія з ідеальними рамками */
         .profile-hero {
             position: relative;
             height: 170px; 
@@ -202,8 +186,6 @@
             flex-direction: column;
             gap: 8px;
             list-style: none;
-            /* Важливо для свайпів: оверскрол не повинен блокувати тач */
-            overscroll-behavior-y: contain; 
         }
 
         #chat-messages li {
@@ -337,7 +319,7 @@
     <div id="app-container">
         <div id="map"></div>
 
-        <div id="profile-sidebar" class="smooth-transition">
+        <div id="profile-sidebar">
             <div class="drag-handle"></div>
             <div class="profile-hero" id="prof-img">
                 <span class="badge" id="prof-badge" style="display:none;">АКЦІЯ</span>
@@ -398,11 +380,10 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // Налагоджено Double Click Zoom: тепер працює нативно всюди
         const map = L.map('map', { 
             zoomControl: false,
             doubleClickZoom: true,
-            tap: false 
+            tap: false
         }).setView([49.8415, 24.0315], 15);
 
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
@@ -419,7 +400,7 @@
         const people = [
             { id: 'p1', type: 'person', name: "Марта, 22", coords: [49.8425, 24.0320], photo: "https://xsgames.co/randomusers/assets/avatars/female/1.jpg", status: "П'ю матчу, ходімо гуляти! ☕", about: "Студентка академії мистецтв.", interests: "Мистецтво, кава, дизайн" },
             { id: 'p2', type: 'person', name: "Влад, 26", coords: [49.8445, 24.0260], photo: "https://xsgames.co/randomusers/assets/avatars/male/2.jpg", status: "Шукаю компанію на вечірній велозаїзд 🚴‍♂️", about: "Розробник, люблю швидкість.", interests: "Вело, IT, подорожі" },
-            { id: 'p3', type: 'person', name: "Олег (Репетитор)", coords: [49.8390, 24.0350], photo: "https://xsgames.co/randomusers/assets/avatars/male/3.jpg", status: "Пропоную послуги розмовної англійської 🇬🇧", about: "Вчитель з досвідом 5 років. Проводжу заняття в кав'ярнях або онлайн.", interests: "Англійська, Коучинг, Лекції" },
+            { id: 'p3', type: 'person', name: "Олег (Репетитор)", coords: [49.8390, 24.0350], photo: "https://xsgames.co/randomusers/assets/avatars/male/3.jpg", status: "Пропоную послуги розмовної англійської 🇬бий", about: "Вчитель з досвідом 5 років. Проводжу заняття в кав'ярнях або онлайн.", interests: "Англійська, Коучинг, Лекції" },
             { id: 'p4', type: 'person', name: "Діана, 21", coords: [49.8410, 24.0220], photo: "https://xsgames.co/randomusers/assets/avatars/female/4.jpg", status: "Я на концерті біля Опери! Хто тут? 🎶", about: "Обожнюю живу музику і фестивалі.", interests: "Рок, Концерти, Нічне місто" },
             { id: 'p5', type: 'person', name: "Катя (Фотограф)", coords: [49.8460, 24.0310], photo: "https://xsgames.co/randomusers/assets/avatars/female/5.jpg", status: "Роблю експрес-фотосесії у парку 📸", about: "Година зйомки — 3 готові фото вже ввечері. Пишіть!", interests: "Фотографія, Портрети, Стиль" },
             { id: 'p6', type: 'person', name: "Макс, 29", coords: [49.8350, 24.0290], photo: "https://xsgames.co/randomusers/assets/avatars/male/6.jpg", status: "Хто грати в настілки у Стрийському? 🎲", about: "Збираю компанію на Колонізаторів.", interests: "Настільні ігри, Стратегії, Пікніки" },
@@ -458,10 +439,7 @@
                 html: `<div class="avatar-ring" style="background-image: url('${person.photo}')"></div>`,
                 iconSize: [44, 44], iconAnchor: [22, 22]
             });
-            L.marker(person.coords, { icon: customIcon }).addTo(map).on('click', (e) => {
-                L.DomEvent.stopPropagation(e); 
-                showSidebar(person);
-            });
+            L.marker(person.coords, { icon: customIcon }).addTo(map).on('click', () => showSidebar(person));
         });
 
         places.forEach(place => {
@@ -470,10 +448,7 @@
                 html: `<div class="place-ring">${place.svg}</div>`,
                 iconSize: [44, 44], iconAnchor: [22, 22]
             });
-            L.marker(place.coords, { icon: customIcon }).addTo(map).on('click', (e) => {
-                L.DomEvent.stopPropagation(e); 
-                showSidebar(place);
-            });
+            L.marker(place.coords, { icon: customIcon }).addTo(map).on('click', () => showSidebar(place));
         });
 
         function showSidebar(item) {
@@ -526,88 +501,35 @@
                 btn.style.background = "var(--ultramarine-gradient)";
             }
 
-            const sidebar = document.getElementById('profile-sidebar');
-            sidebar.classList.remove('smooth-transition');
-            
-            // Задаємо активний стан
-            setTimeout(() => {
-                sidebar.classList.add('smooth-transition');
-                sidebar.classList.add('active');
-            }, 10);
-            
+            document.getElementById('profile-sidebar').classList.add('active');
             map.panTo([item.coords[0] - 0.0015, item.coords[1]]);
         }
 
         window.closeProfile = function() {
-            const sidebar = document.getElementById('profile-sidebar');
-            sidebar.classList.add('smooth-transition');
-            
-            // Скидаємо стилі свайпу до базових iOS ефектів затухання
-            sidebar.style.setProperty('--ty', '100%');
-            sidebar.style.setProperty('--scale', '0.85');
-            sidebar.style.setProperty('--opacity', '0');
-            
-            sidebar.classList.remove('active');
+            document.getElementById('profile-sidebar').classList.remove('active');
             if (currentChatRef) off(currentChatRef);
             currentActiveItem = null;
         }
 
-        /* НОВА ПЛАВНА СИСТЕМА iOS-СВАЙПІВ З ТРЕКІНГОМ ПАЛЬЦЯ В РЕАЛЬНОМУ ЧАСІ */
+        /* Обробка свайпу вниз для закриття картки */
         const sidebar = document.getElementById('profile-sidebar');
         let startY = 0;
         let currentY = 0;
-        let isDragging = false;
 
         sidebar.addEventListener('touchstart', (e) => {
-            const chatMessages = document.getElementById('chat-messages');
-            
-            // Дозволяємо внутрішній скрол чату, ЯКЩО користувач гортає переписку вниз
-            if (chatMessages && e.target.closest('#chat-messages')) {
-                if (chatMessages.scrollTop > 0) return; 
-            }
-            
-            isDragging = true;
+            if (e.target.closest('#chat-messages') || e.target.closest('.info-scroll-area')) return;
             startY = e.touches[0].clientY;
-            sidebar.classList.remove('smooth-transition');
         }, { passive: true });
 
         sidebar.addEventListener('touchmove', (e) => {
-            if (!isDragging) return;
-            
+            if (e.target.closest('#chat-messages') || e.target.closest('.info-scroll-area')) return;
             currentY = e.touches[0].clientY;
             let diffY = currentY - startY;
             
-            // Реагуємо переважно на свайп вниз
-            if (diffY > 0) {
-                let progress = diffY / window.innerHeight;
-                let newScale = 1 - (progress * 0.3);
-                let newOpacity = 1 - (progress * 1.5);
-                
-                // Переміщуємо картку слідом за пальцем
-                sidebar.style.setProperty('--ty', `calc(-50% + ${diffY}px)`);
-                sidebar.style.setProperty('--scale', `${Math.max(0.85, newScale)}`);
-                sidebar.style.setProperty('--opacity', `${Math.max(0, newOpacity)}`);
+            if (diffY > 100) {
+                window.closeProfile();
             }
         }, { passive: true });
-
-        sidebar.addEventListener('touchend', (e) => {
-            if (!isDragging) return;
-            isDragging = false;
-            
-            let diffY = currentY - startY;
-            sidebar.classList.add('smooth-transition');
-            
-            // Якщо свайпнули достатньо глибоко (>120px) — закриваємо, інакше — повертаємо назад
-            if (diffY > 120) {
-                window.closeProfile();
-            } else {
-                sidebar.style.setProperty('--ty', '-50%');
-                sidebar.style.setProperty('--scale', '1');
-                sidebar.style.setProperty('--opacity', '1');
-            }
-            startY = 0;
-            currentY = 0;
-        });
 
 
         function loadChat(chatId) {
