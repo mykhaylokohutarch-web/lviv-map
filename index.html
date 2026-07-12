@@ -7,22 +7,24 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root {
-            --bg-color: #f8fafc;
-            --card-bg: rgba(255, 255, 255, 0.98);
-            --accent-people: #ff4757;
-            --accent-place: #6c5ce7;
-            --text-color: #1e293b;
-            --text-secondary: #64748b;
+            --bg-color: #f5f5f7; 
+            --card-bg: rgba(255, 255, 255, 0.65); 
+            --accent-main: #4542f4;      
+            --accent-people: #ff2d55;    
+            --text-color: #1d1d1f; 
+            --text-secondary: #86868b; 
+            --ultramarine-gradient: linear-gradient(180deg, #706eff 0%, #4542f4 60%, #2a27c9 100%);
         }
 
         body, html {
             margin: 0;
             padding: 0;
             height: 100%;
-            font-family: 'Segoe UI', Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
             overflow: hidden;
+            -webkit-font-smoothing: antialiased;
         }
 
         #app-container {
@@ -32,34 +34,33 @@
             position: relative;
         }
 
-        /* Підсилена зелень та насиченість карти на +30% */
         #map {
             flex-grow: 1;
             height: 100%;
-            background-color: #e2e8f0;
-            filter: saturate(1.4) contrast(1.15) hue-rotate(-5deg);
+            background-color: #e5e5ea;
         }
 
-        /* Центрований адаптивний сайдбар */
         #profile-sidebar {
-            width: 92%;
-            max-width: 420px;
+            width: 90%;
+            max-width: 400px;
             background-color: var(--card-bg);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            height: 85vh;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            backdrop-filter: blur(30px) saturate(200%);
+            -webkit-backdrop-filter: blur(30px) saturate(200%);
+            height: 82vh;
+            box-shadow: 0 14px 40px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.03);
             display: flex;
             flex-direction: column;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: transform 0.45s cubic-bezier(0.25, 1, 0.5, 1);
             position: absolute;
             top: 50%;
             left: 50%;
             z-index: 1000;
             transform: translate(-50%, 150%);
-            border-radius: 24px;
-            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 28px;
+            border: 1px solid rgba(255, 255, 255, 0.45);
             overflow: hidden;
+            padding: 8px; 
+            box-sizing: border-box;
         }
 
         #profile-sidebar.active {
@@ -68,118 +69,118 @@
 
         .close-btn {
             position: absolute;
-            top: 15px;
-            left: 15px;
-            background: #ffffff;
+            top: 14px;
+            right: 14px;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(5px);
             border: none;
-            color: var(--text-color);
-            font-size: 20px;
+            color: #3a3a3c;
+            font-size: 16px;
             cursor: pointer;
-            z-index: 10;
-            width: 36px;
-            height: 36px;
+            z-index: 15;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.14);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: background 0.2s;
         }
 
         .profile-hero {
             position: relative;
-            height: 180px;
+            height: 200px;
             background-size: cover;
             background-position: center;
-            background-color: #e2e8f0;
+            background-color: #e5e5ea;
+            border-radius: 20px;
             flex-shrink: 0;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12), 0 3px 10px rgba(0, 0, 0, 0.06), inset 0 0 0 1px rgba(255,255,255,0.2);
         }
 
         .badge {
             position: absolute;
-            bottom: 15px;
-            right: 15px;
-            padding: 6px 14px;
-            background: var(--accent-place);
-            color: white;
-            border-radius: 20px;
+            top: 12px;
+            left: 12px;
+            padding: 4px 10px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(5px);
+            color: var(--accent-main); 
+            border-radius: 10px;
             font-size: 11px;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
         }
 
         .profile-info {
-            padding: 16px 20px;
+            padding: 12px 8px 0 8px;
             display: flex;
             flex-direction: column;
             flex-grow: 1;
-            overflow: hidden; /* Запобігає ламанню структури на мобільних */
+            overflow: hidden;
         }
 
         .profile-name {
-            font-size: 22px;
-            margin: 0 0 2px 0;
+            font-size: 24px;
+            margin: 0 0 4px 0;
             font-weight: 700;
+            letter-spacing: -0.5px;
         }
 
         .profile-status {
-            font-style: italic;
-            margin: 0 0 12px 0;
-            font-size: 13px;
+            font-size: 14px;
+            margin: 0 0 16px 0;
             font-weight: 500;
-            line-height: 1.3;
+            line-height: 1.4;
         }
         .status-people { color: var(--accent-people); }
-        .status-place { color: var(--accent-place); }
+        .status-place { color: var(--accent-main); }
 
-        /* Компактний контейнер для текстової інформації */
         .info-scroll-area {
-            max-height: 120px;
+            max-height: 140px;
             overflow-y: auto;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             flex-shrink: 0;
-            padding-right: 4px;
         }
 
         .profile-section {
-            margin-bottom: 8px;
+            margin-bottom: 12px;
         }
 
         .profile-section label {
             display: block;
             color: var(--text-secondary);
-            font-size: 10px;
+            font-size: 11px;
+            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.8px;
-            margin-bottom: 2px;
-            font-weight: 700;
+            letter-spacing: 0.3px;
+            margin-bottom: 4px;
         }
 
         .profile-section p {
             margin: 0;
-            font-size: 13px;
+            font-size: 14px;
             line-height: 1.4;
-            color: #334155;
+            color: #3a3a3c;
         }
 
         .promo-box {
-            background: linear-gradient(135deg, rgba(108, 92, 231, 0.1), rgba(108, 92, 231, 0.02));
-            border-left: 4px solid var(--accent-place);
-            padding: 10px;
-            border-radius: 0 12px 12px 0;
-            margin-top: 4px;
+            background: rgba(69, 66, 244, 0.06);
+            border: 1px solid rgba(69, 66, 244, 0.15);
+            padding: 12px;
+            border-radius: 16px;
         }
         .promo-box p {
-            color: var(--accent-place) !important;
+            color: var(--accent-main) !important;
             font-weight: 600;
         }
 
-        /* Оптимізований мобільний чат для людей */
         #chat-container {
             display: none;
             flex-direction: column;
-            border-top: 1px solid #e2e8f0;
-            padding-top: 10px;
+            border-top: 1px solid rgba(0,0,0,0.05);
+            padding-top: 12px;
             flex-grow: 1;
             overflow: hidden;
         }
@@ -187,9 +188,9 @@
         #chat-messages {
             flex-grow: 1;
             overflow-y: auto;
-            height: 100px; /* Фіксований мінімум для мобільних екранів */
+            height: 100px;
             padding: 2px;
-            margin-bottom: 8px;
+            margin-bottom: 12px;
             display: flex;
             flex-direction: column;
             gap: 6px;
@@ -197,45 +198,45 @@
         }
 
         #chat-messages li {
-            max-width: 85%;
-            padding: 6px 12px;
-            border-radius: 12px;
-            font-size: 13px;
-            line-height: 1.3;
+            max-width: 75%;
+            padding: 8px 14px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.4;
         }
 
-        .msg-other { background: #f1f5f9; color: var(--text-color); align-self: flex-start; border-bottom-left-radius: 4px !important; }
-        .msg-me { background: var(--accent-people); color: white; align-self: flex-end; border-bottom-right-radius: 4px !important; }
+        .msg-other { background: rgba(0,0,0,0.06); color: var(--text-color); align-self: flex-start; }
+        .msg-me { background: var(--accent-main); color: white; align-self: flex-end; }
         
         .msg-user-name {
             display: block;
-            font-weight: bold;
-            font-size: 9px;
+            font-weight: 600;
+            font-size: 10px;
             color: var(--text-secondary);
-            margin-bottom: 1px;
+            margin-bottom: 2px;
         }
 
         .chat-input-row {
             display: flex;
-            gap: 6px;
-            background: #f8fafc;
-            padding: 4px;
-            border-radius: 20px;
-            border: 1px solid #e2e8f0;
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.05);
+            padding: 6px 6px 6px 12px;
+            border-radius: 22px;
             flex-shrink: 0;
+            align-items: center;
         }
 
         .chat-input-row input {
             flex-grow: 1;
-            padding: 4px 8px;
             border: none;
             background: transparent;
-            font-size: 13px;
+            font-size: 14px;
             outline: none;
+            color: var(--text-color);
         }
 
         .chat-input-row button {
-            background: var(--accent-people);
+            background: var(--accent-main);
             color: white;
             border: none;
             width: 28px;
@@ -245,64 +246,88 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            font-size: 12px;
         }
 
         .action-btn {
             color: white;
             border: none;
-            padding: 12px;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: bold;
+            padding: 14px;
+            border-radius: 16px;
+            font-size: 15px;
+            font-weight: 600;
             cursor: pointer;
             margin-top: auto;
             width: 100%;
-            box-shadow: 0 4px 15px rgba(108, 92, 231, 0.3);
+            box-shadow: 0 4px 12px rgba(69, 66, 244, 0.2);
             flex-shrink: 0;
+            transition: opacity 0.2s;
         }
+        .action-btn:active { opacity: 0.85; }
 
         #qr-modal {
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6);
+            background: rgba(0,0,0,0.15);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
             z-index: 2000;
             justify-content: center;
             align-items: center;
         }
         .qr-content {
-            background: white;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
             padding: 24px;
-            border-radius: 20px;
+            border-radius: 24px;
             text-align: center;
-            max-width: 250px;
+            max-width: 240px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.4);
         }
-        .qr-content img { width: 180px; height: 180px; margin-bottom: 12px; }
+        .qr-content img { width: 180px; height: 180px; margin-bottom: 12px; border-radius: 16px; }
         .qr-close {
-            background: #f1f5f9; border: none; padding: 8px 16px; border-radius: 10px; cursor: pointer;
+            background: rgba(0, 0, 0, 0.05); border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; width: 100%; font-size: 14px;
         }
 
-        /* МАРКЕРИ НА КАРТІ */
-        .custom-avatar-marker, .custom-place-marker { background: none; border: none; }
-        
-        .avatar-ring {
-            width: 44px; height: 44px; border-radius: 50%;
-            border: 2px solid white; outline: 3px solid var(--accent-people);
-            box-shadow: 0 4px 12px rgba(255, 71, 87, 0.4);
-            background-size: cover; background-position: center;
-            background-color: #cbd5e1;
+        .custom-avatar-marker, .custom-place-marker { 
+            background: none !important; 
+            border: none !important; 
+            box-shadow: none !important;
+            filter: drop-shadow(0 5px 12px rgba(0, 0, 0, 0.25)) !important;
         }
         
+        /* Людина: тепер має виразну рамку товщиною 3px ультрамаринового кольору */
+        .avatar-ring {
+            width: 44px; 
+            height: 44px; 
+            border-radius: 50%;
+            border: 3px solid var(--accent-main);
+            background-size: cover; 
+            background-position: center;
+            box-sizing: border-box;
+        }
+        
+        /* Заклад: градієнтна розтяжка кольору ультрамарину */
         .place-ring {
-            width: 44px; height: 44px; border-radius: 50%;
-            background-color: var(--accent-place); 
-            border: 2.5px solid white;
-            box-shadow: 0 4px 14px rgba(108, 92, 231, 0.5);
+            width: 44px; 
+            height: 44px; 
+            border-radius: 50%;
+            background: var(--ultramarine-gradient) !important; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
-            font-size: 24px;
-            transition: transform 0.2s;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        /* Білі та дуже чіткі векторні SVG-іконки всередині маркерів */
+        .place-icon-svg {
+            width: 20px;
+            height: 20px;
+            fill: #ffffff;
+            display: block;
         }
     </style>
 </head>
@@ -335,8 +360,8 @@
                 <div id="chat-container">
                     <ul id="chat-messages"></ul>
                     <div class="chat-input-row">
-                        <input type="text" id="chat-msg-input" placeholder="Напишіть повідомлення..." />
-                        <button id="chat-send-btn">➔</button>
+                        <input type="text" id="chat-msg-input" placeholder="Повідомлення" />
+                        <button id="chat-send-btn">▲</button>
                     </div>
                 </div>
 
@@ -347,10 +372,10 @@
 
     <div id="qr-modal">
         <div class="qr-content">
-            <h3>Твій купон на знижку</h3>
+            <h3>Твій купон</h3>
             <div id="qr-code-space"></div>
-            <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 15px;">Покажи цей код на касі закладу</p>
-            <button class="qr-close" onclick="closeQr()">Закрити</button>
+            <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px;">Покажи цей код на касі закладу</p>
+            <button class="qr-close" onclick="closeQr()">Готово</button>
         </div>
     </div>
 
@@ -397,23 +422,30 @@
             { id: 'p10', type: 'person', name: "Артур, 27", coords: [49.8400, 24.0270], photo: "https://xsgames.co/randomusers/assets/avatars/male/10.jpg", status: "Тестую кав'ярні міста. Хто зі мною? ☕", about: "Кавовий сомельє на мінімалках.", interests: "Еспресо, Капінг, Фільтр" }
         ];
 
+        /* SVG іконки замість емодзі для ідеальної білої графіки */
+        const svgIcons = {
+            food: `<svg class="place-icon-svg" viewBox="0 0 24 24"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.86 3.77 3.97L6.25 22h3.5l-.52-8.03C11.34 12.86 13 11.12 13 9V2h-2v7zm8-7c-1.3 0-2.42.84-2.83 2.02l-3.34 9.47C12.5 14.4 13.06 15 14 15h1v7h2v-7h1a3 3 0 0 0 3-3V2h-2z"/></svg>`,
+            coffee: `<svg class="place-icon-svg" viewBox="0 0 24 24"><path d="M4 19h16v2H4zm14-9h-2V5h2zm2-2V3H2v7c0 2.76 2.24 5 5 5h6c2.76 0 5-2.24 5-5h2c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z"/></svg>`,
+            beer: `<svg class="place-icon-svg" viewBox="0 0 24 24"><path d="M4 2h13a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-1v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V2zm13 2H6v3h11V4zm-2 5H6v10h9V9z"/></svg>`,
+            fire: `<svg class="place-icon-svg" viewBox="0 0 24 24"><path d="M12 23a7.5 7.5 0 0 0 7.5-7.5c0-4.14-3.36-7.5-7.5-12.5C7.86 8 4.5 11.36 4.5 15.5A7.5 7.5 0 0 0 12 23zm-1-17.06c.34-.41.69-.83 1-1.25.31.42.66.84 1 1.25A11.35 11.35 0 0 1 15.42 11H8.58A11.35 11.35 0 0 1 11 5.94z"/></svg>`
+        };
+
         const places = [
-            { id: 'c1', type: 'place', name: "Ресторація Бачевських", coords: [49.8430, 24.0305], photo: "https://picsum.photos/id/429/600/400", status: "Нова галицька кухня 🥂", text1: "вул. Шевська, 8. Справжній дух старого Львова.", text2: "Знижка 15% на фірмові наливки.", icon: "🍽️" },
-            { id: 'c2', type: 'place', name: "Львівська копальня кави", coords: [49.8412, 24.0326], photo: "https://picsum.photos/id/1060/600/400", status: "Видобуваємо каву тут! ⛏️", text1: "пл. Ринок, 10. Єдина у світі кавова шахта.", text2: "Знижка 10% на будь-яку каву в зернах.", icon: "☕" },
-            { id: 'c3', type: 'place', name: "Театр пива «Правда»", coords: [49.8418, 24.0318], photo: "https://picsum.photos/id/152/600/400", status: "Крафтове пиво та оркестр 🎺", text1: "пл. Ринок, 32. Власна броварня та жива музика.", text2: "Безкоштовний дегустаційний сет пива.", icon: "🍺" },
-            { id: 'c4', type: 'place', name: "Криївка", coords: [49.8411, 24.0321], photo: "https://picsum.photos/id/292/600/400", status: "Найвідвідуваніший ресторан Європи 🪖", text1: "пл. Ринок, 14. Скажи гасло «Героям Слава» на вході.", text2: "Полумисок фірмових вареників зі знижкою 20%.", icon: "🛡️" },
-            { id: 'c5', type: 'place', name: "Мазох-café", coords: [49.8416, 24.0335], photo: "https://picsum.photos/id/635/600/400", status: "Атмосфера пристрасті та болю 🔥", text1: "вул. Сербська, 7. Унікальне тематичне кафе.", text2: "Екстремальний коктейль у подарунок при чеку від 500 грн.", icon: "⛓️" },
-            { id: 'c6', type: 'place', name: "Майстерня шоколаду", coords: [49.8405, 24.0330], photo: "https://picsum.photos/id/756/600/400", status: "Справжній львівський шоколад 🍫", text1: "вул. Сербська, 3. Три поверхи солодощів ручної роботи.", text2: "Купуй 5 цукерок — отримай 2 безкоштовно.", icon: "🍬" },
-            { id: 'c7', type: 'place', name: "Світ Кави", coords: [49.8402, 24.0310], photo: "https://picsum.photos/id/766/600/400", status: "Культове кавове місце ☕", text1: "Катедральна площа, 6. Найкраща спешелті-кава.", text2: "Мінус 15% на весь класичний кавовий асортимент.", icon: "☕" },
-            { id: 'c8', type: 'place', name: "Човен", coords: [49.8435, 24.0285], photo: "https://picsum.photos/id/832/600/400", status: "24 крани українського крафту 🍻", text1: "вул. Вірменська, 33. Головний пивний бар вулиці.", text2: "Знижка 10% на всі сорта українських броварень.", icon: "🛶" },
-            { id: 'c9', type: 'place', name: "Кентавр", coords: [49.8419, 24.0308], photo: "https://picsum.photos/id/1080/600/400", status: "Сніданки на Ринку з 8 ранку 🍳", text1: "пл. Ринок, 10. Традиційна міська ресторація.", text2: "Кава та круасан за спеціальною ціною 85 грн.", icon: "🍳" },
-            { id: 'c10', type: 'place', name: "П'яна Вишня", coords: [49.8417, 24.0312], photo: "https://picsum.photos/id/882/600/400", status: "Найкраща львівська настоянка 🍒", text1: "пл. Ринок, 11. Не відпускає, поки не доп'єш.", text2: "Замов великий келих — отримай фірмовий стікерпак.", icon: "🍒" }
+            { id: 'c1', type: 'place', name: "Ресторація Бачевських", coords: [49.8430, 24.0305], photo: "https://picsum.photos/id/429/600/400", status: "Нова галицька кухня 🥂", text1: "вул. Шевська, 8. Справжній дух старого Львова.", text2: "Знижка 15% на фірмові наливки.", svg: svgIcons.food },
+            { id: 'c2', type: 'place', name: "Львівська копальня кави", coords: [49.8412, 24.0326], photo: "https://picsum.photos/id/1060/600/400", status: "Видобуваємо каву тут! ⛏️", text1: "пл. Ринок, 10. Єдина у світі кавова шахта.", text2: "Знижка 10% на будь-яку каву в зернах.", svg: svgIcons.coffee },
+            { id: 'c3', type: 'place', name: "Театр пива «Правда»", coords: [49.8418, 24.0318], photo: "https://picsum.photos/id/152/600/400", status: "Крафтове пиво та оркестр 🎺", text1: "пл. Ринок, 32. Власна броварня та жива музика.", text2: "Безкоштовний дегустаційний сет пива.", svg: svgIcons.beer },
+            { id: 'c4', type: 'place', name: "Криївка", coords: [49.8411, 24.0321], photo: "https://picsum.photos/id/292/600/400", status: "Найвідвідуваніший ресторан Європи 🪖", text1: "пл. Ринок, 14. Скажи гасло «Героям Слава» на вході.", text2: "Полумисок фірмових вареників зі знижкою 20%.", svg: svgIcons.food },
+            { id: 'c5', type: 'place', name: "Мазох-café", coords: [49.8416, 24.0335], photo: "https://picsum.photos/id/635/600/400", status: "Атмосфера пристрасті та болю 🔥", text1: "вул. Сербська, 7. Унікальне тематичне кафе.", text2: "Екстремальний коктейль у подарунок при чеку від 500 грн.", svg: svgIcons.fire },
+            { id: 'c6', type: 'place', name: "Майстерня шоколаду", coords: [49.8405, 24.0330], photo: "https://picsum.photos/id/756/600/400", status: "Справжній львівський шоколад 🍫", text1: "вул. Сербська, 3. Три поверхи солодощів ручної роботи.", text2: "Купуй 5 цукерок — отримай 2 безкоштовно.", svg: svgIcons.food },
+            { id: 'c7', type: 'place', name: "Світ Кави", coords: [49.8402, 24.0310], photo: "https://picsum.photos/id/766/600/400", status: "Культове кавове місце ☕", text1: "Катедральна площа, 6. Найкраща спешелті-кава.", text2: "Мінус 15% на весь класичний кавовий асортимент.", svg: svgIcons.coffee },
+            { id: 'c8', type: 'place', name: "Човен", coords: [49.8435, 24.0285], photo: "https://picsum.photos/id/832/600/400", status: "24 крани українського крафту 🍻", text1: "вул. Вірменська, 33. Головний пивний бар вулиці.", text2: "Знижка 10% на всі сорта українських броварень.", svg: svgIcons.beer },
+            { id: 'c9', type: 'place', name: "Кентавр", coords: [49.8419, 24.0308], photo: "https://picsum.photos/id/1080/600/400", status: "Сніданки на Ринку з 8 ранку 🍳", text1: "пл. Ринок, 10. Традиційна міська ресторація.", text2: "Кава та круасан за спеціальною ціною 85 грн.", svg: svgIcons.food },
+            { id: 'c10', type: 'place', name: "П'яна Вишня", coords: [49.8417, 24.0312], photo: "https://picsum.photos/id/882/600/400", status: "Найкраща львівська настоянка 🍒", text1: "пл. Ринок, 11. Не відпускає, поки не доп'єш.", text2: "Замов великий келих — отримай фірмовий стікерпак.", svg: svgIcons.fire }
         ];
 
         let currentActiveItem = null;
         let currentChatRef = null;
 
-        // Люди
         people.forEach(person => {
             const customIcon = L.divIcon({
                 className: 'custom-avatar-marker',
@@ -423,11 +455,10 @@
             L.marker(person.coords, { icon: customIcon }).addTo(map).on('click', () => showSidebar(person));
         });
 
-        // Заклади
         places.forEach(place => {
             const customIcon = L.divIcon({
                 className: 'custom-place-marker',
-                html: `<div class="place-ring">${place.icon}</div>`,
+                html: `<div class="place-ring">${place.svg}</div>`,
                 iconSize: [44, 44], iconAnchor: [22, 22]
             });
             L.marker(place.coords, { icon: customIcon }).addTo(map).on('click', () => showSidebar(place));
@@ -463,7 +494,7 @@
                 document.getElementById('prof-text2').innerText = item.interests;
 
                 btn.style.display = 'none';
-                chatContainer.style.display = 'flex'; // Показуємо чат ТІЛЬКИ для людей
+                chatContainer.style.display = 'flex';
                 loadChat(item.id);
             } else {
                 badge.style.display = 'block';
@@ -477,10 +508,10 @@
                 document.getElementById('prof-text1').innerText = item.text1;
                 document.getElementById('prof-text2').innerText = item.text2;
 
-                chatContainer.style.display = 'none'; // Повністю ховаємо чат для закладів
+                chatContainer.style.display = 'none';
                 btn.style.display = 'block';
-                btn.innerText = "Отримати знижку";
-                btn.style.backgroundColor = "var(--accent-place)";
+                btn.innerText = "Отримати купон";
+                btn.style.background = "var(--ultramarine-gradient)";
             }
 
             document.getElementById('profile-sidebar').classList.add('active');
@@ -530,7 +561,7 @@
             if (currentActiveItem && currentActiveItem.type === 'place') {
                 const qrSpace = document.getElementById('qr-code-space');
                 const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=LvivMapDiscount_${currentActiveItem.id}`;
-                qrSpace.innerHTML = `<img src="${qrUrl}" alt="QR код знижки">`;
+                qrSpace.innerHTML = `<img src="${qrUrl}" alt="QR код">`;
                 document.getElementById('qr-modal').style.display = 'flex';
             }
         });
