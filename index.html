@@ -8,7 +8,7 @@
     <style>
         :root {
             --bg-color: #f5f5f7; 
-            --card-bg: rgba(255, 255, 255, 0.75); 
+            --card-bg: rgba(255, 255, 255, 0.85); 
             --accent-main: #4542f4;      
             --accent-people: #ff2d55;    
             --text-color: #1d1d1f; 
@@ -40,7 +40,7 @@
             background-color: #e5e5ea;
         }
 
-        /* Бічна панель з iOS-анімацією */
+        /* Бічна панель з підтримкою трансформацій в реальному часі */
         #profile-sidebar {
             width: 90%;
             max-width: 400px;
@@ -56,39 +56,50 @@
             left: 50%;
             z-index: 1000;
             
-            /* Початковий стан для ефекту плавного зникнення iPhone */
-            transform: translate(-50%, 100%) scale(0.85);
-            opacity: 0;
-            pointer-events: none;
+            /* Базовий стан: відцентровано за допомогою CSS змінних для динамічного свайпу */
+            --ty: 100%;
+            --scale: 0.85;
+            --opacity: 0;
             
-            transition: transform 0.45s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease, scale 0.45s cubic-bezier(0.25, 1, 0.5, 1);
+            transform: translate(-50%, var(--ty)) scale(var(--scale));
+            opacity: var(--opacity);
+            pointer-events: none;
             
             border-radius: 30px;
             border: 1px solid rgba(255, 255, 255, 0.5);
             box-sizing: border-box;
-            padding: 12px; /* Чисті рівномірні поля 12px з усіх чотирьох боків */
+            padding: 12px;
+            
+            /* Керуємо плавністю через клас, щоб не гальмувало під час перетягування */
+            transition: none;
+        }
+
+        /* Плавна анімація відкриття/закриття */
+        #profile-sidebar.smooth-transition {
+            transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.35s ease, scale 0.4s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
         #profile-sidebar.active {
-            transform: translate(-50%, -50%) scale(1);
-            opacity: 1;
+            --ty: -50%;
+            --scale: 1;
+            --opacity: 1;
             pointer-events: auto;
         }
 
-        /* Абсолютне позиціонування індикатора свайпу, щоб він не створював зайвих ліній над фото */
+        /* Елегантний індикатор свайпу над фотографією */
         .drag-handle {
             width: 36px;
             height: 5px;
             background: rgba(0, 0, 0, 0.12);
             border-radius: 3px;
             position: absolute;
-            top: -12px; /* Винесено над карткою у вільну зону */
+            top: -12px;
             left: 50%;
             transform: translateX(-50%);
             cursor: grab;
         }
 
-        /* Фотографія: чисті однакові білі рамки з усіх боків без ліній */
+        /* Чисті білі поля навколо фото (по 12px з усіх боків завдяки padding картки) */
         .profile-hero {
             position: relative;
             height: 170px; 
@@ -191,6 +202,8 @@
             flex-direction: column;
             gap: 8px;
             list-style: none;
+            /* Важливо для свайпів: оверскрол не повинен блокувати тач */
+            overscroll-behavior-y: contain; 
         }
 
         #chat-messages li {
@@ -324,7 +337,7 @@
     <div id="app-container">
         <div id="map"></div>
 
-        <div id="profile-sidebar">
+        <div id="profile-sidebar" class="smooth-transition">
             <div class="drag-handle"></div>
             <div class="profile-hero" id="prof-img">
                 <span class="badge" id="prof-badge" style="display:none;">АКЦІЯ</span>
@@ -385,6 +398,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
+        // Налагоджено Double Click Zoom: тепер працює нативно всюди
         const map = L.map('map', { 
             zoomControl: false,
             doubleClickZoom: true,
@@ -512,35 +526,88 @@
                 btn.style.background = "var(--ultramarine-gradient)";
             }
 
-            document.getElementById('profile-sidebar').classList.add('active');
+            const sidebar = document.getElementById('profile-sidebar');
+            sidebar.classList.remove('smooth-transition');
+            
+            // Задаємо активний стан
+            setTimeout(() => {
+                sidebar.classList.add('smooth-transition');
+                sidebar.classList.add('active');
+            }, 10);
+            
             map.panTo([item.coords[0] - 0.0015, item.coords[1]]);
         }
 
         window.closeProfile = function() {
-            document.getElementById('profile-sidebar').classList.remove('active');
+            const sidebar = document.getElementById('profile-sidebar');
+            sidebar.classList.add('smooth-transition');
+            
+            // Скидаємо стилі свайпу до базових iOS ефектів затухання
+            sidebar.style.setProperty('--ty', '100%');
+            sidebar.style.setProperty('--scale', '0.85');
+            sidebar.style.setProperty('--opacity', '0');
+            
+            sidebar.classList.remove('active');
             if (currentChatRef) off(currentChatRef);
             currentActiveItem = null;
         }
 
-        /* ЛОГІКА СВАЙПІВ ДЛЯ ЗАКРИТТЯ */
+        /* НОВА ПЛАВНА СИСТЕМА iOS-СВАЙПІВ З ТРЕКІНГОМ ПАЛЬЦЯ В РЕАЛЬНОМУ ЧАСІ */
         const sidebar = document.getElementById('profile-sidebar');
         let startY = 0;
         let currentY = 0;
+        let isDragging = false;
 
         sidebar.addEventListener('touchstart', (e) => {
-            if (e.target.closest('#chat-messages') || e.target.closest('.info-scroll-area')) return;
+            const chatMessages = document.getElementById('chat-messages');
+            
+            // Дозволяємо внутрішній скрол чату, ЯКЩО користувач гортає переписку вниз
+            if (chatMessages && e.target.closest('#chat-messages')) {
+                if (chatMessages.scrollTop > 0) return; 
+            }
+            
+            isDragging = true;
             startY = e.touches[0].clientY;
+            sidebar.classList.remove('smooth-transition');
         }, { passive: true });
 
         sidebar.addEventListener('touchmove', (e) => {
-            if (e.target.closest('#chat-messages') || e.target.closest('.info-scroll-area')) return;
+            if (!isDragging) return;
+            
             currentY = e.touches[0].clientY;
             let diffY = currentY - startY;
             
-            if (Math.abs(diffY) > 80) {
-                window.closeProfile();
+            // Реагуємо переважно на свайп вниз
+            if (diffY > 0) {
+                let progress = diffY / window.innerHeight;
+                let newScale = 1 - (progress * 0.3);
+                let newOpacity = 1 - (progress * 1.5);
+                
+                // Переміщуємо картку слідом за пальцем
+                sidebar.style.setProperty('--ty', `calc(-50% + ${diffY}px)`);
+                sidebar.style.setProperty('--scale', `${Math.max(0.85, newScale)}`);
+                sidebar.style.setProperty('--opacity', `${Math.max(0, newOpacity)}`);
             }
         }, { passive: true });
+
+        sidebar.addEventListener('touchend', (e) => {
+            if (!isDragging) return;
+            isDragging = false;
+            
+            let diffY = currentY - startY;
+            sidebar.classList.add('smooth-transition');
+            
+            // Якщо свайпнули достатньо глибоко (>120px) — закриваємо, інакше — повертаємо назад
+            if (diffY > 120) {
+                window.closeProfile();
+            } else {
+                sidebar.style.setProperty('--ty', '-50%');
+                sidebar.style.setProperty('--scale', '1');
+                sidebar.style.setProperty('--opacity', '1');
+            }
+            startY = 0;
+            currentY = 0;
+        });
 
 
         function loadChat(chatId) {
