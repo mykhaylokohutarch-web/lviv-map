@@ -40,74 +40,64 @@
             background-color: #e5e5ea;
         }
 
+        /* Бічна панель з iOS-анімацією */
         #profile-sidebar {
             width: 90%;
             max-width: 400px;
             background-color: var(--card-bg);
             backdrop-filter: blur(30px) saturate(200%);
             -webkit-backdrop-filter: blur(30px) saturate(200%);
-            height: 85vh;
+            height: 83vh;
             box-shadow: 0 14px 40px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.04);
             display: flex;
             flex-direction: column;
-            transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
             position: absolute;
             top: 50%;
             left: 50%;
             z-index: 1000;
-            transform: translate(-50%, 150%);
+            
+            /* Початковий стан для ефекту плавного зникнення iPhone */
+            transform: translate(-50%, 100%) scale(0.85);
+            opacity: 0;
+            pointer-events: none;
+            
+            transition: transform 0.45s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease, scale 0.45s cubic-bezier(0.25, 1, 0.5, 1);
+            
             border-radius: 30px;
             border: 1px solid rgba(255, 255, 255, 0.5);
-            overflow: hidden;
-            padding: 10px; 
             box-sizing: border-box;
-            touch-action: none; /* Дозволяє скрипту повністю контролювати тач-жести */
+            padding: 12px; /* Чисті рівномірні поля 12px з усіх чотирьох боків */
         }
 
         #profile-sidebar.active {
-            transform: translate(-50%, -50%);
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+            pointer-events: auto;
         }
 
-        /* Візуальний індикатор для свайпу вгорі панелі */
+        /* Абсолютне позиціонування індикатора свайпу, щоб він не створював зайвих ліній над фото */
         .drag-handle {
-            width: 40px;
+            width: 36px;
             height: 5px;
-            background: rgba(0, 0, 0, 0.15);
+            background: rgba(0, 0, 0, 0.12);
             border-radius: 3px;
-            margin: 4px auto 10px auto;
-            flex-shrink: 0;
+            position: absolute;
+            top: -12px; /* Винесено над карткою у вільну зону */
+            left: 50%;
+            transform: translateX(-50%);
             cursor: grab;
         }
 
-        .close-btn {
-            position: absolute;
-            top: 14px;
-            right: 14px;
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(5px);
-            border: none;
-            color: #3a3a3c;
-            font-size: 16px;
-            cursor: pointer;
-            z-index: 15;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-
+        /* Фотографія: чисті однакові білі рамки з усіх боків без ліній */
         .profile-hero {
             position: relative;
-            height: 160px; /* Трохи зменшили висоту, щоб дати більше місця чату */
+            height: 170px; 
             background-size: cover;
             background-position: center;
             background-color: #e5e5ea;
             border-radius: 20px;
             flex-shrink: 0;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(255,255,255,0.2);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
         }
 
         .badge {
@@ -123,7 +113,7 @@
         }
 
         .profile-info {
-            padding: 10px 6px 0 6px;
+            padding: 12px 4px 0 4px;
             display: flex;
             flex-direction: column;
             flex-grow: 1;
@@ -146,14 +136,14 @@
         .status-place { color: var(--accent-main); }
 
         .info-scroll-area {
-            max-height: 90px; /* Зменшили блок опису, щоб розвантажити простір */
+            max-height: 85px; 
             overflow-y: auto;
             margin-bottom: 8px;
             flex-shrink: 0;
         }
 
         .profile-section {
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .profile-section label {
@@ -183,13 +173,12 @@
             font-weight: 600;
         }
 
-        /* КРИТИЧНО: ЗОНА ЧАТУ СТАЛА ЗНАЧНО БІЛЬШОЮ ТА ПРІОРИТЕТНІШОЮ */
         #chat-container {
             display: none;
             flex-direction: column;
             border-top: 1px solid rgba(0,0,0,0.06);
             padding-top: 10px;
-            flex-grow: 2; /* Займає максимум доступного простору */
+            flex-grow: 2; 
             overflow: hidden;
         }
 
@@ -337,7 +326,6 @@
 
         <div id="profile-sidebar">
             <div class="drag-handle"></div>
-            <button class="close-btn" onclick="window.closeProfile()">&times;</button>
             <div class="profile-hero" id="prof-img">
                 <span class="badge" id="prof-badge" style="display:none;">АКЦІЯ</span>
             </div>
@@ -397,15 +385,19 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // Масштабування за допомогою doubleClickZoom активоване
         const map = L.map('map', { 
             zoomControl: false,
-            doubleClickZoom: true 
+            doubleClickZoom: true,
+            tap: false 
         }).setView([49.8415, 24.0315], 15);
 
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
             attribution: '© OpenStreetMap'
         }).addTo(map);
+
+        map.on('click', function() {
+            window.closeProfile();
+        });
 
         let myName = localStorage.getItem('chat_username') || prompt("Введіть ваше ім'я:", "Гість") || "Анонім";
         localStorage.setItem('chat_username', myName);
@@ -452,7 +444,10 @@
                 html: `<div class="avatar-ring" style="background-image: url('${person.photo}')"></div>`,
                 iconSize: [44, 44], iconAnchor: [22, 22]
             });
-            L.marker(person.coords, { icon: customIcon }).addTo(map).on('click', () => showSidebar(person));
+            L.marker(person.coords, { icon: customIcon }).addTo(map).on('click', (e) => {
+                L.DomEvent.stopPropagation(e); 
+                showSidebar(person);
+            });
         });
 
         places.forEach(place => {
@@ -461,7 +456,10 @@
                 html: `<div class="place-ring">${place.svg}</div>`,
                 iconSize: [44, 44], iconAnchor: [22, 22]
             });
-            L.marker(place.coords, { icon: customIcon }).addTo(map).on('click', () => showSidebar(place));
+            L.marker(place.coords, { icon: customIcon }).addTo(map).on('click', (e) => {
+                L.DomEvent.stopPropagation(e); 
+                showSidebar(place);
+            });
         });
 
         function showSidebar(item) {
@@ -524,13 +522,12 @@
             currentActiveItem = null;
         }
 
-        /* ЛОГІКА СВАЙПУ (TOUCH DRAG) ДЛЯ ЗАКРИТТЯ ПАНЕЛІ */
+        /* ЛОГІКА СВАЙПІВ ДЛЯ ЗАКРИТТЯ */
         const sidebar = document.getElementById('profile-sidebar');
         let startY = 0;
         let currentY = 0;
 
         sidebar.addEventListener('touchstart', (e) => {
-            // Дозволяємо скролити список повідомлень, якщо тач почався всередині нього
             if (e.target.closest('#chat-messages') || e.target.closest('.info-scroll-area')) return;
             startY = e.touches[0].clientY;
         }, { passive: true });
@@ -540,12 +537,7 @@
             currentY = e.touches[0].clientY;
             let diffY = currentY - startY;
             
-            // Якщо тягнемо вниз — закриваємо вікно
-            if (diffY > 100) {
-                window.closeProfile();
-            }
-            // Свайп вгору: також закриває вікно згідно з вашим ТЗ
-            if (diffY < -100) {
+            if (Math.abs(diffY) > 80) {
                 window.closeProfile();
             }
         }, { passive: true });
