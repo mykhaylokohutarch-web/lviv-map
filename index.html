@@ -54,7 +54,7 @@
             position: absolute;
             top: 50%;
             left: 50%;
-            z-index: 1000;
+            z-index: 2000; /* Підняли пріоритет над картою */
             
             /* Стан приховування */
             transform: translate(-50%, 150%);
@@ -261,7 +261,7 @@
             background: rgba(0,0,0,0.15);
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
-            z-index: 2000;
+            z-index: 3000;
             justify-content: center;
             align-items: center;
         }
@@ -380,15 +380,21 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // КАРТА: doubleClickZoom активовано, прибрано конфліктний tap: false
+        // Налаштування карти з підтримкою стандартного масштабування
         const map = L.map('map', { 
             zoomControl: false,
-            doubleClickZoom: true
+            doubleClickZoom: false, // Вимкнено дефолтний, бо ми написали надійніший кастомний нижче
+            bounceAtZoomLimits: true
         }).setView([49.8415, 24.0315], 15);
 
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
             attribution: '© OpenStreetMap'
         }).addTo(map);
+
+        // Примусове збільшення карти при подвійному кліку/тапу (гарантовано працює на телефонах)
+        map.on('dblclick', function(e) {
+            map.setView(e.latlng, map.getZoom() + 1);
+        });
 
         map.on('click', function() {
             window.closeProfile();
@@ -425,176 +431,4 @@
             { id: 'c5', type: 'place', name: "Мазох-café", coords: [49.8416, 24.0335], photo: "https://picsum.photos/id/635/600/400", status: "Атмосфера пристрасті та болю 🔥", text1: "вул. Сербська, 7. Унікальне тематичне кафе.", text2: "Екстремальний коктейль у подарунок при чеку від 500 грн.", svg: svgIcons.fire },
             { id: 'c6', type: 'place', name: "Майстерня шоколаду", coords: [49.8405, 24.0330], photo: "https://picsum.photos/id/756/600/400", status: "Справжній львівський шоколад 🍫", text1: "вул. Сербська, 3. Три поверхи солодощів ручної роботи.", text2: "Купуй 5 цукерок — отримай 2 безкоштовно.", svg: svgIcons.food },
             { id: 'c7', type: 'place', name: "Світ Кави", coords: [49.8402, 24.0310], photo: "https://picsum.photos/id/766/600/400", status: "Культове кавове місце ☕", text1: "Катедральна площа, 6. Найкраща спешелті-кава.", text2: "Мінус 15% на весь класичний кавовий асортимент.", svg: svgIcons.coffee },
-            { id: 'c8', type: 'place', name: "Човен", coords: [49.8435, 24.0285], photo: "https://picsum.photos/id/832/600/400", status: "24 крани українського крафту 🍻", text1: "вул. Вірменська, 33. Головний пивний бар вулиці.", text2: "Знижка 10% на всі сорта українських броварень.", svg: svgIcons.beer },
-            { id: 'c9', type: 'place', name: "Кентавр", coords: [49.8419, 24.0308], photo: "https://picsum.photos/id/1080/600/400", status: "Сніданки на Ринку з 8 ранку 🍳", text1: "пл. Ринок, 10. Традиційна міська ресторація.", text2: "Кава та круасан за спеціальною ціною 85 грн.", svg: svgIcons.food },
-            { id: 'c10', type: 'place', name: "П'яна Вишня", coords: [49.8417, 24.0312], photo: "https://picsum.photos/id/882/600/400", status: "Найкраща львівська настоянка 🍒", text1: "пл. Ринок, 11. Не відпускає, поки не доп'єш.", svg: svgIcons.fire }
-        ];
-
-        let currentActiveItem = null;
-        let currentChatRef = null;
-
-        people.forEach(person => {
-            const customIcon = L.divIcon({
-                className: 'custom-avatar-marker',
-                html: `<div class="avatar-ring" style="background-image: url('${person.photo}')"></div>`,
-                iconSize: [44, 44], iconAnchor: [22, 22]
-            });
-            L.marker(person.coords, { icon: customIcon }).addTo(map).on('click', (e) => {
-                L.DomEvent.stopPropagation(e);
-                showSidebar(person);
-            });
-        });
-
-        places.forEach(place => {
-            const customIcon = L.divIcon({
-                className: 'custom-place-marker',
-                html: `<div class="place-ring">${place.svg}</div>`,
-                iconSize: [44, 44], iconAnchor: [22, 22]
-            });
-            L.marker(place.coords, { icon: customIcon }).addTo(map).on('click', (e) => {
-                L.DomEvent.stopPropagation(e);
-                showSidebar(place);
-            });
-        });
-
-        function showSidebar(item) {
-            currentActiveItem = item;
-            
-            document.getElementById('prof-img').style.backgroundImage = `url('${item.photo}')`;
-            document.getElementById('prof-name').innerText = item.name;
-            document.getElementById('prof-status').innerText = `"${item.status}"`;
-
-            const badge = document.getElementById('prof-badge');
-            const statusEl = document.getElementById('prof-status');
-            const btn = document.getElementById('prof-btn');
-            const label1 = document.getElementById('label-1');
-            const label2 = document.getElementById('label-2');
-            const text1Box = document.getElementById('prof-text1-box');
-            const text2Box = document.getElementById('prof-text2-box');
-            const chatContainer = document.getElementById('chat-container');
-
-            if (currentChatRef) { off(currentChatRef); document.getElementById('chat-messages').innerHTML = ''; }
-
-            if (item.type === 'person') {
-                badge.style.display = 'none';
-                statusEl.className = "profile-status status-people";
-                label1.innerText = "Про мене";
-                label2.innerText = "Інтереси";
-                
-                text1Box.className = "";
-                text2Box.className = "";
-                document.getElementById('prof-text1').innerText = item.about;
-                document.getElementById('prof-text2').innerText = item.interests;
-
-                btn.style.display = 'none';
-                chatContainer.style.display = 'flex';
-                loadChat(item.id);
-            } else {
-                badge.style.display = 'block';
-                statusEl.className = "profile-status status-place";
-                label1.innerText = "Про локацію";
-                label2.innerText = "🔥 Спеціальна пропозиція";
-                
-                text1Box.className = "";
-                text2Box.className = "promo-box";
-                
-                document.getElementById('prof-text1').innerText = item.text1;
-                document.getElementById('prof-text2').innerText = item.text2 || 'Немає деталей';
-
-                chatContainer.style.display = 'none';
-                btn.style.display = 'block';
-                btn.innerText = "Отримати купон";
-                btn.style.background = "var(--ultramarine-gradient)";
-            }
-
-            document.getElementById('profile-sidebar').classList.add('active');
-            map.panTo([item.coords[0] - 0.0015, item.coords[1]]);
-        }
-
-        window.closeProfile = function() {
-            document.getElementById('profile-sidebar').classList.remove('active');
-            if (currentChatRef) off(currentChatRef);
-            currentActiveItem = null;
-        }
-
-        /* НАДІЙНИЙ СВАЙП ДЛЯ ЗАКРИТТЯ ПО ВСІЙ ПЛОЩИНІ ВІКНА */
-        const sidebar = document.getElementById('profile-sidebar');
-        let startY = 0;
-        let currentY = 0;
-
-        sidebar.addEventListener('touchstart', (e) => {
-            const chatMessages = document.getElementById('chat-messages');
-            const scrollArea = document.querySelector('.info-scroll-area');
-            
-            // Якщо користувач скролить чат чи опис внутрішньо, не закриваємо
-            if (chatMessages && e.target.closest('#chat-messages') && chatMessages.scrollTop > 0) return;
-            if (scrollArea && e.target.closest('.info-scroll-area') && scrollArea.scrollTop > 0) return;
-
-            startY = e.touches[0].clientY;
-        }, { passive: true });
-
-        sidebar.addEventListener('touchmove', (e) => {
-            const chatMessages = document.getElementById('chat-messages');
-            const scrollArea = document.querySelector('.info-scroll-area');
-            
-            if (chatMessages && e.target.closest('#chat-messages') && chatMessages.scrollTop > 0) return;
-            if (scrollArea && e.target.closest('.info-scroll-area') && scrollArea.scrollTop > 0) return;
-
-            currentY = e.touches[0].clientY;
-            let diffY = currentY - startY;
-            
-            // Якщо потягнули вниз на 90px — плавно ховаємо картку
-            if (diffY > 90) {
-                window.closeProfile();
-            }
-        }, { passive: true });
-
-
-        function loadChat(chatId) {
-            const messagesList = document.getElementById('chat-messages');
-            messagesList.innerHTML = '';
-            currentChatRef = ref(db, `chats/${chatId}`);
-            
-            onChildAdded(currentChatRef, (snapshot) => {
-                const data = snapshot.val();
-                const li = document.createElement('li');
-                if (data.user === myName) {
-                    li.className = 'msg-me';
-                    li.innerHTML = `${data.text}`;
-                } else {
-                    li.className = 'msg-other';
-                    li.innerHTML = `<span class="msg-user-name">${data.user}</span>${data.text}`;
-                }
-                messagesList.appendChild(li);
-                messagesList.scrollTop = messagesList.scrollHeight;
-            });
-        }
-
-        function sendMessage() {
-            const input = document.getElementById('chat-msg-input');
-            const text = input.value.trim();
-            if (!text || !currentActiveItem) return;
-
-            const chatRef = ref(db, `chats/${currentActiveItem.id}`);
-            push(chatRef, { user: myName, text: text, timestamp: Date.now() });
-            input.value = '';
-        }
-
-        document.getElementById('chat-send-btn').addEventListener('click', sendMessage);
-        document.getElementById('chat-msg-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
-
-        document.getElementById('prof-btn').addEventListener('click', () => {
-            if (currentActiveItem && currentActiveItem.type === 'place') {
-                const qrSpace = document.getElementById('qr-code-space');
-                const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=LvivMapDiscount_${currentActiveItem.id}`;
-                qrSpace.innerHTML = `<img src="${qrUrl}" alt="QR код">`;
-                document.getElementById('qr-modal').style.display = 'flex';
-            }
-        });
-
-        window.closeQr = function() {
-            document.getElementById('qr-modal').style.display = 'none';
-        }
-    </script>
-</body>
-</html>
+            { id: 'c8', type: 'place', name: "Човен", coords:
