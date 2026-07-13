@@ -35,7 +35,7 @@
         }
 
         #map {
-            flex-grow: 1;
+            width: 100%;
             height: 100%;
             background-color: #e5e5ea;
         }
@@ -54,7 +54,7 @@
             position: absolute;
             top: 50%;
             left: 50%;
-            z-index: 2000; /* Підняли пріоритет над картою */
+            z-index: 2000;
             
             /* Стан приховування */
             transform: translate(-50%, 150%);
@@ -64,13 +64,13 @@
             border: 1px solid rgba(255, 255, 255, 0.5);
             box-sizing: border-box;
             padding: 12px;
+            touch-action: none; /* Забороняємо iOS ламати жест */
         }
 
         #profile-sidebar.active {
             transform: translate(-50%, -50%);
         }
 
-        /* Індикатор свайпу винесений вгору */
         .drag-handle {
             width: 36px;
             height: 5px;
@@ -80,10 +80,9 @@
             top: -12px;
             left: 50%;
             transform: translateX(-50%);
-            cursor: grab;
         }
 
-        /* Фотографія з однаковими рамками */
+        /* Фотографія з ідеальними рамками */
         .profile-hero {
             position: relative;
             height: 170px; 
@@ -135,6 +134,7 @@
             overflow-y: auto;
             margin-bottom: 8px;
             flex-shrink: 0;
+            touch-action: pan-y;
         }
 
         .profile-section {
@@ -186,6 +186,7 @@
             flex-direction: column;
             gap: 8px;
             list-style: none;
+            touch-action: pan-y;
         }
 
         #chat-messages li {
@@ -357,7 +358,7 @@
         <div class="qr-content">
             <h3>Твій купон</h3>
             <div id="qr-code-space"></div>
-            <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px;">Покажи цей код на касі закладу</p>
+            <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px;">Покажи цей код на касі закладе</p>
             <button class="qr-close" onclick="closeQr()">Готово</button>
         </div>
     </div>
@@ -380,20 +381,24 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // Налаштування карти з підтримкою стандартного масштабування
         const map = L.map('map', { 
             zoomControl: false,
-            doubleClickZoom: false, // Вимкнено дефолтний, бо ми написали надійніший кастомний нижче
-            bounceAtZoomLimits: true
+            doubleClickZoom: false
         }).setView([49.8415, 24.0315], 15);
 
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
             attribution: '© OpenStreetMap'
         }).addTo(map);
 
-        // Примусове збільшення карти при подвійному кліку/тапу (гарантовано працює на телефонах)
-        map.on('dblclick', function(e) {
-            map.setView(e.latlng, map.getZoom() + 1);
+        // ПОДВІЙНИЙ ТАП ДЛЯ IPHONE (Через розрахунок часу між дотиками)
+        let lastTap = 0;
+        map.on('touchstart', function(e) {
+            const now = Date.now();
+            const timespan = now - lastTap;
+            if (timespan < 300 && timespan > 0) {
+                map.setView(e.latlng, map.getZoom() + 1);
+            }
+            lastTap = now;
         });
 
         map.on('click', function() {
@@ -523,39 +528,30 @@
             currentActiveItem = null;
         }
 
-        /* ОНОВЛЕНИЙ НАДІЙНИЙ СВАЙП БЕЗ КОНФЛІКТІВ З LEAFLET */
+        /* НАДІЙНІ ЖЕСТИ ДЛЯ IPHONE (ВГОРУ У ЧАТІ / ВНИЗ У КАРТЦІ) */
         const sidebar = document.getElementById('profile-sidebar');
         let startY = 0;
-        let currentY = 0;
-
-        // Зупиняємо розповсюдження подій кліків/тачів на карту зсередини сайдбару
-        L.DomEvent.disableClickPropagation(sidebar);
-        L.DomEvent.disableScrollPropagation(sidebar);
 
         sidebar.addEventListener('touchstart', (e) => {
-            const chatMessages = document.getElementById('chat-messages');
-            const scrollArea = document.querySelector('.info-scroll-area');
-            
-            // Якщо скролимо чат чи деталі внутрішньо, свайп блокується
-            if (chatMessages && e.target.closest('#chat-messages') && chatMessages.scrollTop > 0) return;
-            if (scrollArea && e.target.closest('.info-scroll-area') && scrollArea.scrollTop > 0) return;
-
             startY = e.touches[0].clientY;
         }, { passive: true });
 
         sidebar.addEventListener('touchmove', (e) => {
-            const chatMessages = document.getElementById('chat-messages');
-            const scrollArea = document.querySelector('.info-scroll-area');
-            
-            if (chatMessages && e.target.closest('#chat-messages') && chatMessages.scrollTop > 0) return;
-            if (scrollArea && e.target.closest('.info-scroll-area') && scrollArea.scrollTop > 0) return;
-
-            currentY = e.touches[0].clientY;
+            let currentY = e.touches[0].clientY;
             let diffY = currentY - startY;
             
-            // Чіткий жест вниз на 80px — ховаємо
-            if (diffY > 80) {
-                window.closeProfile();
+            const isChat = e.target.closest('#chat-messages');
+
+            if (isChat) {
+                // Якщо пальцем тягнуть ВГОРУ (diffY від'ємний) по блоку переписки — закриваємо
+                if (diffY < -70) {
+                    window.closeProfile();
+                }
+            } else {
+                // На решті елементів картки (інфо, фото) працює жест ВНИЗ (diffY додатній)
+                if (diffY > 70) {
+                    window.closeProfile();
+                }
             }
         }, { passive: true });
 
