@@ -2,7 +2,7 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Львів Спілкується та Смакує</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
@@ -63,27 +63,27 @@
             border-radius: 30px;
             border: 1px solid rgba(255, 255, 255, 0.5);
             box-sizing: border-box;
-            padding: 12px; /* Повернуто чисті 12px з усіх чотирьох боків */
+            padding: 12px;
         }
 
         #profile-sidebar.active {
             transform: translate(-50%, -50%);
         }
 
-        /* Абсолютний індикатор свайпу, винесений вгору */
+        /* Індикатор свайпу винесений вгору */
         .drag-handle {
             width: 36px;
             height: 5px;
             background: rgba(0, 0, 0, 0.12);
             border-radius: 3px;
             position: absolute;
-            top: -12px; /* Повністю захований над картою, фото не чіпає */
+            top: -12px;
             left: 50%;
             transform: translateX(-50%);
             cursor: grab;
         }
 
-        /* Фотографія з ідеальними рамками */
+        /* Фотографія з однаковими рамками */
         .profile-hero {
             position: relative;
             height: 170px; 
@@ -380,10 +380,10 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
+        // КАРТА: doubleClickZoom активовано, прибрано конфліктний tap: false
         const map = L.map('map', { 
             zoomControl: false,
-            doubleClickZoom: true,
-            tap: false
+            doubleClickZoom: true
         }).setView([49.8415, 24.0315], 15);
 
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
@@ -400,7 +400,7 @@
         const people = [
             { id: 'p1', type: 'person', name: "Марта, 22", coords: [49.8425, 24.0320], photo: "https://xsgames.co/randomusers/assets/avatars/female/1.jpg", status: "П'ю матчу, ходімо гуляти! ☕", about: "Студентка академії мистецтв.", interests: "Мистецтво, кава, дизайн" },
             { id: 'p2', type: 'person', name: "Влад, 26", coords: [49.8445, 24.0260], photo: "https://xsgames.co/randomusers/assets/avatars/male/2.jpg", status: "Шукаю компанію на вечірній велозаїзд 🚴‍♂️", about: "Розробник, люблю швидкість.", interests: "Вело, IT, подорожі" },
-            { id: 'p3', type: 'person', name: "Олег (Репетитор)", coords: [49.8390, 24.0350], photo: "https://xsgames.co/randomusers/assets/avatars/male/3.jpg", status: "Пропоную послуги розмовної англійської 🇬бий", about: "Вчитель з досвідом 5 років. Проводжу заняття в кав'ярнях або онлайн.", interests: "Англійська, Коучинг, Лекції" },
+            { id: 'p3', type: 'person', name: "Олег (Репетитор)", coords: [49.8390, 24.0350], photo: "https://xsgames.co/randomusers/assets/avatars/male/3.jpg", status: "Пропоную послуги розмовної англійської 🇬🇧", about: "Вчитель з досвідом 5 років. Проводжу заняття в кав'ярнях або онлайн.", interests: "Англійська, Коучинг, Лекції" },
             { id: 'p4', type: 'person', name: "Діана, 21", coords: [49.8410, 24.0220], photo: "https://xsgames.co/randomusers/assets/avatars/female/4.jpg", status: "Я на концерті біля Опери! Хто тут? 🎶", about: "Обожнюю живу музику і фестивалі.", interests: "Рок, Концерти, Нічне місто" },
             { id: 'p5', type: 'person', name: "Катя (Фотограф)", coords: [49.8460, 24.0310], photo: "https://xsgames.co/randomusers/assets/avatars/female/5.jpg", status: "Роблю експрес-фотосесії у парку 📸", about: "Година зйомки — 3 готові фото вже ввечері. Пишіть!", interests: "Фотографія, Портрети, Стиль" },
             { id: 'p6', type: 'person', name: "Макс, 29", coords: [49.8350, 24.0290], photo: "https://xsgames.co/randomusers/assets/avatars/male/6.jpg", status: "Хто грати в настілки у Стрийському? 🎲", about: "Збираю компанію на Колонізаторів.", interests: "Настільні ігри, Стратегії, Пікніки" },
@@ -439,7 +439,10 @@
                 html: `<div class="avatar-ring" style="background-image: url('${person.photo}')"></div>`,
                 iconSize: [44, 44], iconAnchor: [22, 22]
             });
-            L.marker(person.coords, { icon: customIcon }).addTo(map).on('click', () => showSidebar(person));
+            L.marker(person.coords, { icon: customIcon }).addTo(map).on('click', (e) => {
+                L.DomEvent.stopPropagation(e);
+                showSidebar(person);
+            });
         });
 
         places.forEach(place => {
@@ -448,7 +451,10 @@
                 html: `<div class="place-ring">${place.svg}</div>`,
                 iconSize: [44, 44], iconAnchor: [22, 22]
             });
-            L.marker(place.coords, { icon: customIcon }).addTo(map).on('click', () => showSidebar(place));
+            L.marker(place.coords, { icon: customIcon }).addTo(map).on('click', (e) => {
+                L.DomEvent.stopPropagation(e);
+                showSidebar(place);
+            });
         });
 
         function showSidebar(item) {
@@ -511,22 +517,34 @@
             currentActiveItem = null;
         }
 
-        /* Обробка свайпу вниз для закриття картки */
+        /* НАДІЙНИЙ СВАЙП ДЛЯ ЗАКРИТТЯ ПО ВСІЙ ПЛОЩИНІ ВІКНА */
         const sidebar = document.getElementById('profile-sidebar');
         let startY = 0;
         let currentY = 0;
 
         sidebar.addEventListener('touchstart', (e) => {
-            if (e.target.closest('#chat-messages') || e.target.closest('.info-scroll-area')) return;
+            const chatMessages = document.getElementById('chat-messages');
+            const scrollArea = document.querySelector('.info-scroll-area');
+            
+            // Якщо користувач скролить чат чи опис внутрішньо, не закриваємо
+            if (chatMessages && e.target.closest('#chat-messages') && chatMessages.scrollTop > 0) return;
+            if (scrollArea && e.target.closest('.info-scroll-area') && scrollArea.scrollTop > 0) return;
+
             startY = e.touches[0].clientY;
         }, { passive: true });
 
         sidebar.addEventListener('touchmove', (e) => {
-            if (e.target.closest('#chat-messages') || e.target.closest('.info-scroll-area')) return;
+            const chatMessages = document.getElementById('chat-messages');
+            const scrollArea = document.querySelector('.info-scroll-area');
+            
+            if (chatMessages && e.target.closest('#chat-messages') && chatMessages.scrollTop > 0) return;
+            if (scrollArea && e.target.closest('.info-scroll-area') && scrollArea.scrollTop > 0) return;
+
             currentY = e.touches[0].clientY;
             let diffY = currentY - startY;
             
-            if (diffY > 100) {
+            // Якщо потягнули вниз на 90px — плавно ховаємо картку
+            if (diffY > 90) {
                 window.closeProfile();
             }
         }, { passive: true });
