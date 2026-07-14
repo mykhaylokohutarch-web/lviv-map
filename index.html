@@ -284,39 +284,31 @@
 
         /* СТИЛІ ГАЛЕРЕЇ ФОТО */
         .gallery-container {
-            width: 85%;
-            max-width: 380px;
+            width: 94%;
+            height: 85vh;
+            max-width: 450px;
             position: relative;
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
         }
         .gallery-img-box {
             width: 100%;
-            height: 380px;
+            height: 75vh; /* майже на весь екран */
             background-size: cover;
             background-position: center;
-            border-radius: 24px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            border-radius: 28px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
             position: relative;
             overflow: hidden;
+            touch-action: none; /* вимикаємо браузерне прокручування під час жестів */
         }
-        /* Зони тапу для перегортання на iPhone */
-        .gallery-nav-zone {
-            position: absolute;
-            top: 0;
-            height: 100%;
-            width: 45%;
-            z-index: 5;
-        }
-        .gallery-nav-left { left: 0; }
-        .gallery-nav-right { right: 0; }
         
         .gallery-dots {
             display: flex;
             gap: 6px;
             margin-top: 16px;
-            margin-bottom: 16px;
         }
         .dot {
             width: 8px; height: 8px;
@@ -325,20 +317,6 @@
             transition: background 0.3s;
         }
         .dot.active { background: #ffffff; }
-        
-        .gallery-close-btn {
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            padding: 12px 24px;
-            border-radius: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
-            font-size: 14px;
-            width: 100%;
-        }
 
         .custom-avatar-marker, .custom-place-marker { 
             background: none !important; 
@@ -426,12 +404,8 @@
 
     <div id="gallery-modal">
         <div class="gallery-container">
-            <div class="gallery-img-box" id="gallery-img">
-                <div class="gallery-nav-zone gallery-nav-left" onclick="changeGalleryPhoto(-1)"></div>
-                <div class="gallery-nav-zone gallery-nav-right" onclick="changeGalleryPhoto(1)"></div>
-            </div>
+            <div class="gallery-img-box" id="gallery-img"></div>
             <div class="gallery-dots" id="gallery-dots"></div>
-            <button class="gallery-close-btn" onclick="closeGallery()">Закрити</button>
         </div>
     </div>
 
@@ -462,7 +436,7 @@
             attribution: '© OpenStreetMap'
         }).addTo(map);
 
-        // ПОДВІЙНИЙ ТАП ДЛЯ IPHONE (Leaflet DOM level fix)
+        // ПОДВІЙНИЙ ТАП ДЛЯ IPHONE
         let lastTap = 0;
         map.getContainer().addEventListener('touchstart', function(e) {
             const now = Date.now();
@@ -480,7 +454,7 @@
         let myName = localStorage.getItem('chat_username') || prompt("Введіть ваше ім'я:", "Гість") || "Анонім";
         localStorage.setItem('chat_username', myName);
 
-        // МАСИВИ З КІЛЬКОМА ФОТОГРАФІЯМИ
+        // МАСИВИ З ФОТОГРАФІЯМИ
         const people = [
             { id: 'p1', type: 'person', name: "Марта, 22", coords: [49.8425, 24.0320], photos: ["https://xsgames.co/randomusers/assets/avatars/female/1.jpg", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500", "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500"], status: "П'ю матчу, ходімо гуляти! ☕", about: "Студентка академії мистецтв.", interests: "Мистецтво, кава, дизайн" },
             { id: 'p2', type: 'person', name: "Влад, 26", coords: [49.8445, 24.0260], photos: ["https://xsgames.co/randomusers/assets/avatars/male/2.jpg", "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500"], status: "Шукаю компанію на вечірній велозаїзд 🚴‍♂️", about: "Розробник, люблю швидкість.", interests: "Вело, IT, подорожі" },
@@ -511,9 +485,8 @@
 
         let currentActiveItem = null;
         let currentChatRef = null;
-        let activePhotoIndex = 0; // Індекс поточного фото в галереї
+        let activePhotoIndex = 0;
 
-        // Генерація маркерів на карті (береться перше фото з масиву)
         people.forEach(person => {
             const customIcon = L.divIcon({
                 className: 'custom-avatar-marker',
@@ -541,7 +514,6 @@
         function showSidebar(item) {
             currentActiveItem = item;
             
-            // Задаємо головне фото
             document.getElementById('prof-img').style.backgroundImage = `url('${item.photos[0]}')`;
             document.getElementById('prof-name').innerText = item.name;
             document.getElementById('prof-status').innerText = `"${item.status}"`;
@@ -599,7 +571,7 @@
             currentActiveItem = null;
         }
 
-        /* КЛІК НА ФОТО ДЛЯ ВІДКРИТТЯ ГАЛЕРЕЇ */
+        /* ГАЛЕРЕЯ ТА СВАЙПИ НА IPHONE */
         document.getElementById('prof-img').addEventListener('click', () => {
             if (!currentActiveItem) return;
             activePhotoIndex = 0;
@@ -607,8 +579,7 @@
         });
 
         function openGallery() {
-            const modal = document.getElementById('gallery-modal');
-            modal.style.display = 'flex';
+            document.getElementById('gallery-modal').style.display = 'flex';
             updateGalleryUI();
         }
 
@@ -627,7 +598,6 @@
             const photos = currentActiveItem.photos;
             document.getElementById('gallery-img').style.backgroundImage = `url('${photos[activePhotoIndex]}')`;
             
-            // Оновлюємо індикатори-крапки
             const dotsContainer = document.getElementById('gallery-dots');
             dotsContainer.innerHTML = '';
             photos.forEach((_, idx) => {
@@ -637,7 +607,41 @@
             });
         }
 
-        /* УНІВЕРСАЛЬНИЙ ПЛАВНИЙ ЗНИКАЮЧИЙ СВАЙП */
+        // ОБРОБКА ЖЕСТІВ СВАЙПУ ДЛЯ ФОТО (Вгору — закрити, Вліво/Вправо — гортати)
+        const galleryImgBox = document.getElementById('gallery-img');
+        let galStartX = 0;
+        let galStartY = 0;
+
+        galleryImgBox.addEventListener('touchstart', (e) => {
+            galStartX = e.touches[0].clientX;
+            galStartY = e.touches[0].clientY;
+        }, { passive: true });
+
+        galleryImgBox.addEventListener('touchend', (e) => {
+            let galEndX = e.changedTouches[0].clientX;
+            let galEndY = e.changedTouches[0].clientY;
+            
+            let diffX = galEndX - galStartX;
+            let diffY = galEndY - galStartY;
+
+            // Свайп вгору для закриття (вертикальний зсув сильніший за горизонтальний)
+            if (diffY < -70 && Math.abs(diffY) > Math.abs(diffX)) {
+                window.closeGallery();
+                return;
+            }
+
+            // Горизонтальні свайпи для гортання
+            if (Math.abs(diffX) > 50) {
+                if (diffX < 0) {
+                    window.changeGalleryPhoto(1);  // Свайп вліво -> наступне фото
+                } else {
+                    window.changeGalleryPhoto(-1); // Свайп вправо -> попереднє фото
+                }
+            }
+        }, { passive: true });
+
+
+        /* УНІВЕРСАЛЬНИЙ СВАЙП ДЛЯ КАРТОК ПРОФІЛЮ */
         const sidebar = document.getElementById('profile-sidebar');
         let startY = 0;
 
