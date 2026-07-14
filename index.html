@@ -93,6 +93,7 @@
             flex-shrink: 0;
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
             cursor: pointer;
+            touch-action: none; /* дозволяє зчитувати свайпи закриття */
         }
 
         .badge {
@@ -188,7 +189,7 @@
             flex-direction: column;
             gap: 8px;
             list-style: none;
-            touch-action: pan-y;
+            touch-action: pan-y; /* Чат прокручується незалежно і не конфліктує */
         }
 
         #chat-messages li {
@@ -262,7 +263,7 @@
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.4);
+            background: rgba(0,0,0,0.5);
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
             z-index: 3000;
@@ -295,14 +296,16 @@
         }
         .gallery-img-box {
             width: 100%;
-            height: 75vh; /* майже на весь екран */
+            height: 75vh;
             background-size: cover;
             background-position: center;
             border-radius: 28px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.4);
             position: relative;
             overflow: hidden;
-            touch-action: none; /* вимикаємо браузерне прокручування під час жестів */
+            touch-action: none;
+            /* Плавний транзишн для ефекту ковзання, коли відпускаємо палець */
+            transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s ease;
         }
         
         .gallery-dots {
@@ -364,7 +367,7 @@
             <div class="profile-hero" id="prof-img">
                 <span class="badge" id="prof-badge" style="display:none;">АКЦІЯ</span>
             </div>
-            <div class="profile-info">
+            <div class="profile-info" id="prof-non-active-info">
                 <h2 class="profile-name" id="prof-name">Назва</h2>
                 <p class="profile-status" id="prof-status">"Статус"</p>
                 
@@ -571,7 +574,7 @@
             currentActiveItem = null;
         }
 
-        /* ГАЛЕРЕЯ ТА СВАЙПИ НА IPHONE */
+        /* ГАЛЕРЕЯ ТА СВАЙПИ */
         document.getElementById('prof-img').addEventListener('click', () => {
             if (!currentActiveItem) return;
             activePhotoIndex = 0;
@@ -596,7 +599,10 @@
 
         function updateGalleryUI() {
             const photos = currentActiveItem.photos;
-            document.getElementById('gallery-img').style.backgroundImage = `url('${photos[activePhotoIndex]}')`;
+            const imgBox = document.getElementById('gallery-img');
+            imgBox.style.transform = 'translate(0px, 0px)'; // скидаємо зсув свайпу
+            imgBox.style.backgroundImage = `url('${photos[activePhotoIndex]}')`;
+            imgBox.style.opacity = '1';
             
             const dotsContainer = document.getElementById('gallery-dots');
             dotsContainer.innerHTML = '';
@@ -607,62 +613,141 @@
             });
         }
 
-        // ОБРОБКА ЖЕСТІВ СВАЙПУ ДЛЯ ФОТО (Вгору — закрити, Вліво/Вправо — гортати)
+        // ОБРОБКА ФІЗИКИ ЖЕСТІВ ДЛЯ ФОТО (iPhone style)
         const galleryImgBox = document.getElementById('gallery-img');
         let galStartX = 0;
         let galStartY = 0;
+        let isSwiping = false;
 
         galleryImgBox.addEventListener('touchstart', (e) => {
             galStartX = e.touches[0].clientX;
             galStartY = e.touches[0].clientY;
+            isSwiping = true;
+            galleryImgBox.style.transition = 'none'; // прибираємо затримку під час ковзання за пальцем
+        }, { passive: true });
+
+        galleryImgBox.addEventListener('touchmove', (e) => {
+            if (!isSwiping) return;
+            let currentX = e.touches[0].clientX;
+            let currentY = e.touches[0].clientY;
+            let diffX = currentX - galStartX;
+            let diffY = currentY - galStartY;
+
+            if (Math.abs(diffY) > Math.abs(diffX)) {
+                // Плавне зміщення вгору для закриття
+                if (diffY < 0) {
+                    galleryImgBox.style.transform = `translateY(${diffY}px)`;
+                    galleryImgBox.style.opacity = `${1 - Math.abs(diffY) / 400}`;
+                }
+            } else {
+                // Плавне зсування вліво/вправо для гортання
+                galleryImgBox.style.transform = `translateX(${diffX}px)`;
+            }
         }, { passive: true });
 
         galleryImgBox.addEventListener('touchend', (e) => {
+            if (!isSwiping) return;
+            isSwiping = false;
+            galleryImgBox.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s ease';
+
             let galEndX = e.changedTouches[0].clientX;
             let galEndY = e.changedTouches[0].clientY;
             
             let diffX = galEndX - galStartX;
             let diffY = galEndY - galStartY;
 
-            // Свайп вгору для закриття (вертикальний зсув сильніший за горизонтальний)
-            if (diffY < -70 && Math.abs(diffY) > Math.abs(diffX)) {
-                window.closeGallery();
+            // Закриття галереї вгору
+            if (diffY < -100 && Math.abs(diffY) > Math.abs(diffX)) {
+                galleryImgBox.style.transform = `translateY(-120%)`;
+                galleryImgBox.style.opacity = '0';
+                setTimeout(() => {
+                    window.closeGallery();
+                }, 250);
                 return;
             }
 
-            // Горизонтальні свайпи для гортання
-            if (Math.abs(diffX) > 50) {
+            // Гортання фото за порогом 20% ширини
+            const threshold = window.innerWidth * 0.20;
+            if (Math.abs(diffX) > threshold) {
                 if (diffX < 0) {
-                    window.changeGalleryPhoto(1);  // Свайп вліво -> наступне фото
+                    window.changeGalleryPhoto(1);  // Наступне
                 } else {
-                    window.changeGalleryPhoto(-1); // Свайп вправо -> попереднє фото
-                }
-            }
-        }, { passive: true });
-
-
-        /* УНІВЕРСАЛЬНИЙ СВАЙП ДЛЯ КАРТОК ПРОФІЛЮ */
-        const sidebar = document.getElementById('profile-sidebar');
-        let startY = 0;
-
-        sidebar.addEventListener('touchstart', (e) => {
-            startY = e.touches[0].clientY;
-        }, { passive: true });
-
-        sidebar.addEventListener('touchmove', (e) => {
-            let currentY = e.touches[0].clientY;
-            let diffY = currentY - startY;
-            
-            if (currentActiveItem && currentActiveItem.type === 'person') {
-                if (diffY < -60) {
-                    window.closeProfile();
+                    window.changeGalleryPhoto(-1); // Попереднє
                 }
             } else {
-                if (diffY > 60) {
-                    window.closeProfile();
-                }
+                // Повернення на центр
+                galleryImgBox.style.transform = 'translate(0px, 0px)';
+                galleryImgBox.style.opacity = '1';
             }
         }, { passive: true });
+
+
+        /* РОЗУМНИЙ СВАЙП ЗАКРИТТЯ КАРТОК (Тільки на неактивних зонах) */
+        const sidebar = document.getElementById('profile-sidebar');
+        const activeChatMessages = document.getElementById('chat-messages');
+        const nonActiveHero = document.getElementById('prof-img');
+        const nonActiveInfo = document.getElementById('prof-non-active-info');
+        
+        let startSidebarY = 0;
+        let isSidebarSwiping = false;
+
+        function initCardSwipe(element) {
+            element.addEventListener('touchstart', (e) => {
+                // Забороняємо конфлікт, якщо юзер скролить сам чат або ввід тексту
+                if (e.target.closest('#chat-messages') || e.target.closest('.chat-input-row') || e.target.closest('.action-btn')) {
+                    return;
+                }
+                startSidebarY = e.touches[0].clientY;
+                isSidebarSwiping = true;
+                sidebar.style.transition = 'none';
+            }, { passive: true });
+
+            element.addEventListener('touchmove', (e) => {
+                if (!isSidebarSwiping || !currentActiveItem) return;
+                let currentY = e.touches[0].clientY;
+                let diffY = currentY - startSidebarY;
+
+                // Для людей (чат) — плавне тягнення вгору (diffY < 0)
+                if (currentActiveItem.type === 'person') {
+                    if (diffY < 0) {
+                        sidebar.style.transform = `translate(-50%, calc(-50% + ${diffY}px))`;
+                    }
+                } 
+                // Для закладів (купон) — плавне тягнення вниз (diffY > 0)
+                else {
+                    if (diffY > 0) {
+                        sidebar.style.transform = `translate(-50%, calc(-50% + ${diffY}px))`;
+                    }
+                }
+            }, { passive: true });
+
+            element.addEventListener('touchend', (e) => {
+                if (!isSidebarSwiping) return;
+                isSidebarSwiping = false;
+                sidebar.style.transition = 'transform 0.45s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease';
+
+                let endY = e.changedTouches[0].clientY;
+                let diffY = endY - startSidebarY;
+
+                if (currentActiveItem.type === 'person') {
+                    if (diffY < -100) {
+                        window.closeProfile();
+                    } else {
+                        sidebar.style.transform = `translate(-50%, -50%)`;
+                    }
+                } else {
+                    if (diffY > 100) {
+                        window.closeProfile();
+                    } else {
+                        sidebar.style.transform = `translate(-50%, -50%)`;
+                    }
+                }
+            }, { passive: true });
+        }
+
+        // Вішаємо жести лише на безпечні для свайпу зони
+        initCardSwipe(nonActiveHero);
+        initCardSwipe(nonActiveInfo);
 
 
         function loadChat(chatId) {
