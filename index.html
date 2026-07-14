@@ -2,13 +2,13 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
     <title>Львів Спілкується та Смакує</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root {
             --bg-color: #f5f5f7; 
-            --card-bg: rgba(255, 255, 255, 0.75); 
+            --card-bg: rgba(255, 255, 255, 0.8); 
             --accent-main: #4542f4;      
             --accent-people: #ff2d55;    
             --text-color: #1d1d1f; 
@@ -25,6 +25,8 @@
             color: var(--text-color);
             overflow: hidden;
             -webkit-font-smoothing: antialiased;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         #app-container {
@@ -40,15 +42,15 @@
             background-color: #e5e5ea;
         }
 
-        /* Бічна панель */
+        /* Оптимізована бічна панель */
         #profile-sidebar {
-            width: 90%;
+            width: 92%;
             max-width: 400px;
             background-color: var(--card-bg);
-            backdrop-filter: blur(30px) saturate(200%);
-            -webkit-backdrop-filter: blur(30px) saturate(200%);
-            height: 83vh;
-            box-shadow: 0 14px 40px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.04);
+            backdrop-filter: blur(25px) saturate(190%);
+            -webkit-backdrop-filter: blur(25px) saturate(190%);
+            height: 82vh;
+            box-shadow: 0 12px 38px rgba(0, 0, 0, 0.15);
             display: flex;
             flex-direction: column;
             position: absolute;
@@ -56,44 +58,45 @@
             left: 50%;
             z-index: 2000;
             
-            transform: translate(-50%, 150%);
-            opacity: 0;
-            transition: transform 0.45s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease;
+            /* Дефолтний стан зсунутий вниз */
+            transform: translate3d(-50%, 150%, 0);
+            will-change: transform;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             
-            border-radius: 30px;
-            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
             box-sizing: border-box;
-            padding: 12px;
+            padding: 14px;
             touch-action: none;
         }
 
         #profile-sidebar.active {
-            transform: translate(-50%, -50%);
-            opacity: 1;
+            transform: translate3d(-50%, -50%, 0);
         }
 
         .drag-handle {
-            width: 36px;
+            width: 38px;
             height: 5px;
-            background: rgba(0, 0, 0, 0.12);
+            background: rgba(0, 0, 0, 0.15);
             border-radius: 3px;
             position: absolute;
-            top: -12px;
+            top: 8px;
             left: 50%;
-            transform: translateX(-50%);
+            transform: translate3d(-50%, 0, 0);
         }
 
         .profile-hero {
             position: relative;
-            height: 170px; 
+            height: 180px; 
             background-size: cover;
             background-position: center;
             background-color: #e5e5ea;
-            border-radius: 20px;
+            border-radius: 22px;
             flex-shrink: 0;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
             cursor: pointer;
-            touch-action: none; /* дозволяє зчитувати свайпи закриття */
+            touch-action: none;
+            margin-top: 8px;
         }
 
         .badge {
@@ -110,7 +113,7 @@
         }
 
         .profile-info {
-            padding: 12px 4px 0 4px;
+            padding: 12px 2px 0 2px;
             display: flex;
             flex-direction: column;
             flex-grow: 1;
@@ -118,7 +121,7 @@
         }
 
         .profile-name {
-            font-size: 22px;
+            font-size: 23px;
             margin: 0 0 2px 0;
             font-weight: 700;
             letter-spacing: -0.5px;
@@ -133,11 +136,12 @@
         .status-place { color: var(--accent-main); }
 
         .info-scroll-area {
-            max-height: 85px; 
+            max-height: 80px; 
             overflow-y: auto;
             margin-bottom: 8px;
             flex-shrink: 0;
             touch-action: pan-y;
+            -webkit-overflow-scrolling: touch; /* плавний скрол для iOS всередині */
         }
 
         .profile-section {
@@ -189,7 +193,8 @@
             flex-direction: column;
             gap: 8px;
             list-style: none;
-            touch-action: pan-y; /* Чат прокручується незалежно і не конфліктує */
+            touch-action: pan-y;
+            -webkit-overflow-scrolling: touch;
         }
 
         #chat-messages li {
@@ -229,6 +234,8 @@
             font-size: 14px;
             outline: none;
             color: var(--text-color);
+            -webkit-user-select: text;
+            user-select: text;
         }
 
         .chat-input-row button {
@@ -247,9 +254,9 @@
         .action-btn {
             color: white;
             border: none;
-            padding: 14px;
-            border-radius: 16px;
-            font-size: 15px;
+            padding: 15px;
+            border-radius: 18px;
+            font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             margin-top: auto;
@@ -258,17 +265,18 @@
             flex-shrink: 0;
         }
 
-        /* МОДАЛЬНІ ВІКНА */
+        /* ОПТИМІЗОВАНІ МОДАЛКИ ТА ГАЛЕРЕЯ */
         #qr-modal, #gallery-modal {
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.55);
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
             z-index: 3000;
             justify-content: center;
             align-items: center;
+            will-change: opacity;
         }
         .qr-content {
             background: rgba(255, 255, 255, 0.85);
@@ -283,7 +291,6 @@
             background: rgba(0, 0, 0, 0.05); border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; width: 100%;
         }
 
-        /* СТИЛІ ГАЛЕРЕЇ ФОТО */
         .gallery-container {
             width: 94%;
             height: 85vh;
@@ -293,39 +300,42 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            touch-action: none;
         }
         .gallery-img-box {
             width: 100%;
             height: 75vh;
             background-size: cover;
             background-position: center;
-            border-radius: 28px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            border-radius: 30px;
+            box-shadow: 0 24px 48px rgba(0,0,0,0.5);
             position: relative;
             overflow: hidden;
             touch-action: none;
-            /* Плавний транзишн для ефекту ковзання, коли відпускаємо палець */
-            transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s ease;
+            will-change: transform;
+            /* Нативна фізика переходів iOS */
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
         }
         
         .gallery-dots {
             display: flex;
             gap: 6px;
-            margin-top: 16px;
+            margin-top: 18px;
         }
         .dot {
             width: 8px; height: 8px;
             border-radius: 50%;
-            background: rgba(255,255,255,0.4);
-            transition: background 0.3s;
+            background: rgba(255,255,255,0.35);
+            transition: background 0.25s ease;
         }
         .dot.active { background: #ffffff; }
 
+        /* МАРКЕРИ */
         .custom-avatar-marker, .custom-place-marker { 
             background: none !important; 
             border: none !important; 
             box-shadow: none !important;
-            filter: drop-shadow(0 5px 12px rgba(0, 0, 0, 0.25)) !important;
+            filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.2)) !important;
         }
         
         .avatar-ring {
@@ -432,32 +442,30 @@
 
         const map = L.map('map', { 
             zoomControl: false,
-            doubleClickZoom: false
+            doubleClickZoom: false,
+            tap: false // Вимикаємо конфліктний Leaflet-тач для iOS
         }).setView([49.8415, 24.0315], 15);
 
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
             attribution: '© OpenStreetMap'
         }).addTo(map);
 
-        // ПОДВІЙНИЙ ТАП ДЛЯ IPHONE
+        // Швидкий зум подвійним тапом
         let lastTap = 0;
         map.getContainer().addEventListener('touchstart', function(e) {
             const now = Date.now();
-            const timespan = now - lastTap;
-            if (timespan < 300 && timespan > 0) {
+            if (now - lastTap < 280) {
                 map.zoomIn(); 
             }
             lastTap = now;
         }, { passive: true });
 
-        map.on('click', function() {
-            window.closeProfile();
-        });
+        map.on('click', () => window.closeProfile());
 
         let myName = localStorage.getItem('chat_username') || prompt("Введіть ваше ім'я:", "Гість") || "Анонім";
         localStorage.setItem('chat_username', myName);
 
-        // МАСИВИ З ФОТОГРАФІЯМИ
+        // Дані локацій та користувачів
         const people = [
             { id: 'p1', type: 'person', name: "Марта, 22", coords: [49.8425, 24.0320], photos: ["https://xsgames.co/randomusers/assets/avatars/female/1.jpg", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500", "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500"], status: "П'ю матчу, ходімо гуляти! ☕", about: "Студентка академії мистецтв.", interests: "Мистецтво, кава, дизайн" },
             { id: 'p2', type: 'person', name: "Влад, 26", coords: [49.8445, 24.0260], photos: ["https://xsgames.co/randomusers/assets/avatars/male/2.jpg", "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500"], status: "Шукаю компанію на вечірній велозаїзд 🚴‍♂️", about: "Розробник, люблю швидкість.", interests: "Вело, IT, подорожі" },
@@ -479,322 +487,4 @@
         };
 
         const places = [
-            { id: 'c1', type: 'place', name: "Ресторація Бачевських", coords: [49.8430, 24.0305], photos: ["https://picsum.photos/id/429/600/400", "https://picsum.photos/id/431/600/400", "https://picsum.photos/id/433/600/400"], status: "Нова галицька кухня 🥂", text1: "вул. Шевська, 8. Справжній дух старого Львова.", text2: "Знижка 15% на фірмові наливки.", svg: svgIcons.food },
-            { id: 'c2', type: 'place', name: "Львівська копальня кави", coords: [49.8412, 24.0326], photos: ["https://picsum.photos/id/1060/600/400", "https://picsum.photos/id/1069/600/400", "https://picsum.photos/id/1071/600/400"], status: "Видобуваємо каву тут! ⛏️", text1: "пл. Ринок, 10. Єдина у світі кавова шахта.", text2: "Знижка 10% на будь-яку каву в зернах.", svg: svgIcons.coffee },
-            { id: 'c3', type: 'place', name: "Театр пива «Правда»", coords: [49.8418, 24.0318], photos: ["https://picsum.photos/id/152/600/400", "https://picsum.photos/id/159/600/400", "https://picsum.photos/id/180/600/400"], status: "Крафтове пиво та оркестр 🎺", text1: "пл. Ринок, 32. Власна броварня та жива музика.", text2: "Безкоштовний дегустаційний сет пива.", svg: svgIcons.beer },
-            { id: 'c4', type: 'place', name: "Криївка", coords: [49.8411, 24.0321], photos: ["https://picsum.photos/id/292/600/400", "https://picsum.photos/id/293/600/400", "https://picsum.photos/id/294/600/400"], status: "Найвідвідуваніший ресторан Європи 🪖", text1: "пл. Ринок, 14. Скажи гасло «Героям Слава» на вході.", text2: "Полумисок фірмових вареників зі знижкою 20%.", svg: svgIcons.food },
-            { id: 'c5', type: 'place', name: "Мазох-café", coords: [49.8416, 24.0335], photos: ["https://picsum.photos/id/635/600/400", "https://picsum.photos/id/634/600/400", "https://picsum.photos/id/631/600/400"], status: "Атмосфера пристрасті та болю 🔥", text1: "вул. Сербська, 7. Унікальне тематичне кафе.", text2: "Екстремальний коктейль у подарунок при чеку від 500 грн.", svg: svgIcons.fire }
-        ];
-
-        let currentActiveItem = null;
-        let currentChatRef = null;
-        let activePhotoIndex = 0;
-
-        people.forEach(person => {
-            const customIcon = L.divIcon({
-                className: 'custom-avatar-marker',
-                html: `<div class="avatar-ring" style="background-image: url('${person.photos[0]}')"></div>`,
-                iconSize: [44, 44], iconAnchor: [22, 22]
-            });
-            L.marker(person.coords, { icon: customIcon }).addTo(map).on('click', (e) => {
-                L.DomEvent.stopPropagation(e);
-                showSidebar(person);
-            });
-        });
-
-        places.forEach(place => {
-            const customIcon = L.divIcon({
-                className: 'custom-place-marker',
-                html: `<div class="place-ring">${place.svg}</div>`,
-                iconSize: [44, 44], iconAnchor: [22, 22]
-            });
-            L.marker(place.coords, { icon: customIcon }).addTo(map).on('click', (e) => {
-                L.DomEvent.stopPropagation(e);
-                showSidebar(place);
-            });
-        });
-
-        function showSidebar(item) {
-            currentActiveItem = item;
-            
-            document.getElementById('prof-img').style.backgroundImage = `url('${item.photos[0]}')`;
-            document.getElementById('prof-name').innerText = item.name;
-            document.getElementById('prof-status').innerText = `"${item.status}"`;
-
-            const badge = document.getElementById('prof-badge');
-            const statusEl = document.getElementById('prof-status');
-            const btn = document.getElementById('prof-btn');
-            const label1 = document.getElementById('label-1');
-            const label2 = document.getElementById('label-2');
-            const text1Box = document.getElementById('prof-text1-box');
-            const text2Box = document.getElementById('prof-text2-box');
-            const chatContainer = document.getElementById('chat-container');
-
-            if (currentChatRef) { off(currentChatRef); document.getElementById('chat-messages').innerHTML = ''; }
-
-            if (item.type === 'person') {
-                badge.style.display = 'none';
-                statusEl.className = "profile-status status-people";
-                label1.innerText = "Про мене";
-                label2.innerText = "Інтереси";
-                
-                text1Box.className = "";
-                text2Box.className = "";
-                document.getElementById('prof-text1').innerText = item.about;
-                document.getElementById('prof-text2').innerText = item.interests;
-
-                btn.style.display = 'none';
-                chatContainer.style.display = 'flex';
-                loadChat(item.id);
-            } else {
-                badge.style.display = 'block';
-                statusEl.className = "profile-status status-place";
-                label1.innerText = "Про локацію";
-                label2.innerText = "🔥 Спеціальна пропозиція";
-                
-                text1Box.className = "";
-                text2Box.className = "promo-box";
-                
-                document.getElementById('prof-text1').innerText = item.text1;
-                document.getElementById('prof-text2').innerText = item.text2 || 'Немає деталей';
-
-                chatContainer.style.display = 'none';
-                btn.style.display = 'block';
-                btn.innerText = "Отримати купон";
-                btn.style.background = "var(--ultramarine-gradient)";
-            }
-
-            document.getElementById('profile-sidebar').classList.add('active');
-            map.panTo([item.coords[0] - 0.0015, item.coords[1]]);
-        }
-
-        window.closeProfile = function() {
-            document.getElementById('profile-sidebar').classList.remove('active');
-            if (currentChatRef) off(currentChatRef);
-            currentActiveItem = null;
-        }
-
-        /* ГАЛЕРЕЯ ТА СВАЙПИ */
-        document.getElementById('prof-img').addEventListener('click', () => {
-            if (!currentActiveItem) return;
-            activePhotoIndex = 0;
-            openGallery();
-        });
-
-        function openGallery() {
-            document.getElementById('gallery-modal').style.display = 'flex';
-            updateGalleryUI();
-        }
-
-        window.closeGallery = function() {
-            document.getElementById('gallery-modal').style.display = 'none';
-        }
-
-        window.changeGalleryPhoto = function(direction) {
-            if (!currentActiveItem) return;
-            const total = currentActiveItem.photos.length;
-            activePhotoIndex = (activePhotoIndex + direction + total) % total;
-            updateGalleryUI();
-        }
-
-        function updateGalleryUI() {
-            const photos = currentActiveItem.photos;
-            const imgBox = document.getElementById('gallery-img');
-            imgBox.style.transform = 'translate(0px, 0px)'; // скидаємо зсув свайпу
-            imgBox.style.backgroundImage = `url('${photos[activePhotoIndex]}')`;
-            imgBox.style.opacity = '1';
-            
-            const dotsContainer = document.getElementById('gallery-dots');
-            dotsContainer.innerHTML = '';
-            photos.forEach((_, idx) => {
-                const dot = document.createElement('div');
-                dot.className = `dot ${idx === activePhotoIndex ? 'active' : ''}`;
-                dotsContainer.appendChild(dot);
-            });
-        }
-
-        // ОБРОБКА ФІЗИКИ ЖЕСТІВ ДЛЯ ФОТО (iPhone style)
-        const galleryImgBox = document.getElementById('gallery-img');
-        let galStartX = 0;
-        let galStartY = 0;
-        let isSwiping = false;
-
-        galleryImgBox.addEventListener('touchstart', (e) => {
-            galStartX = e.touches[0].clientX;
-            galStartY = e.touches[0].clientY;
-            isSwiping = true;
-            galleryImgBox.style.transition = 'none'; // прибираємо затримку під час ковзання за пальцем
-        }, { passive: true });
-
-        galleryImgBox.addEventListener('touchmove', (e) => {
-            if (!isSwiping) return;
-            let currentX = e.touches[0].clientX;
-            let currentY = e.touches[0].clientY;
-            let diffX = currentX - galStartX;
-            let diffY = currentY - galStartY;
-
-            if (Math.abs(diffY) > Math.abs(diffX)) {
-                // Плавне зміщення вгору для закриття
-                if (diffY < 0) {
-                    galleryImgBox.style.transform = `translateY(${diffY}px)`;
-                    galleryImgBox.style.opacity = `${1 - Math.abs(diffY) / 400}`;
-                }
-            } else {
-                // Плавне зсування вліво/вправо для гортання
-                galleryImgBox.style.transform = `translateX(${diffX}px)`;
-            }
-        }, { passive: true });
-
-        galleryImgBox.addEventListener('touchend', (e) => {
-            if (!isSwiping) return;
-            isSwiping = false;
-            galleryImgBox.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s ease';
-
-            let galEndX = e.changedTouches[0].clientX;
-            let galEndY = e.changedTouches[0].clientY;
-            
-            let diffX = galEndX - galStartX;
-            let diffY = galEndY - galStartY;
-
-            // Закриття галереї вгору
-            if (diffY < -100 && Math.abs(diffY) > Math.abs(diffX)) {
-                galleryImgBox.style.transform = `translateY(-120%)`;
-                galleryImgBox.style.opacity = '0';
-                setTimeout(() => {
-                    window.closeGallery();
-                }, 250);
-                return;
-            }
-
-            // Гортання фото за порогом 20% ширини
-            const threshold = window.innerWidth * 0.20;
-            if (Math.abs(diffX) > threshold) {
-                if (diffX < 0) {
-                    window.changeGalleryPhoto(1);  // Наступне
-                } else {
-                    window.changeGalleryPhoto(-1); // Попереднє
-                }
-            } else {
-                // Повернення на центр
-                galleryImgBox.style.transform = 'translate(0px, 0px)';
-                galleryImgBox.style.opacity = '1';
-            }
-        }, { passive: true });
-
-
-        /* РОЗУМНИЙ СВАЙП ЗАКРИТТЯ КАРТОК (Тільки на неактивних зонах) */
-        const sidebar = document.getElementById('profile-sidebar');
-        const activeChatMessages = document.getElementById('chat-messages');
-        const nonActiveHero = document.getElementById('prof-img');
-        const nonActiveInfo = document.getElementById('prof-non-active-info');
-        
-        let startSidebarY = 0;
-        let isSidebarSwiping = false;
-
-        function initCardSwipe(element) {
-            element.addEventListener('touchstart', (e) => {
-                // Забороняємо конфлікт, якщо юзер скролить сам чат або ввід тексту
-                if (e.target.closest('#chat-messages') || e.target.closest('.chat-input-row') || e.target.closest('.action-btn')) {
-                    return;
-                }
-                startSidebarY = e.touches[0].clientY;
-                isSidebarSwiping = true;
-                sidebar.style.transition = 'none';
-            }, { passive: true });
-
-            element.addEventListener('touchmove', (e) => {
-                if (!isSidebarSwiping || !currentActiveItem) return;
-                let currentY = e.touches[0].clientY;
-                let diffY = currentY - startSidebarY;
-
-                // Для людей (чат) — плавне тягнення вгору (diffY < 0)
-                if (currentActiveItem.type === 'person') {
-                    if (diffY < 0) {
-                        sidebar.style.transform = `translate(-50%, calc(-50% + ${diffY}px))`;
-                    }
-                } 
-                // Для закладів (купон) — плавне тягнення вниз (diffY > 0)
-                else {
-                    if (diffY > 0) {
-                        sidebar.style.transform = `translate(-50%, calc(-50% + ${diffY}px))`;
-                    }
-                }
-            }, { passive: true });
-
-            element.addEventListener('touchend', (e) => {
-                if (!isSidebarSwiping) return;
-                isSidebarSwiping = false;
-                sidebar.style.transition = 'transform 0.45s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease';
-
-                let endY = e.changedTouches[0].clientY;
-                let diffY = endY - startSidebarY;
-
-                if (currentActiveItem.type === 'person') {
-                    if (diffY < -100) {
-                        window.closeProfile();
-                    } else {
-                        sidebar.style.transform = `translate(-50%, -50%)`;
-                    }
-                } else {
-                    if (diffY > 100) {
-                        window.closeProfile();
-                    } else {
-                        sidebar.style.transform = `translate(-50%, -50%)`;
-                    }
-                }
-            }, { passive: true });
-        }
-
-        // Вішаємо жести лише на безпечні для свайпу зони
-        initCardSwipe(nonActiveHero);
-        initCardSwipe(nonActiveInfo);
-
-
-        function loadChat(chatId) {
-            const messagesList = document.getElementById('chat-messages');
-            messagesList.innerHTML = '';
-            currentChatRef = ref(db, `chats/${chatId}`);
-            
-            onChildAdded(currentChatRef, (snapshot) => {
-                const data = snapshot.val();
-                const li = document.createElement('li');
-                if (data.user === myName) {
-                    li.className = 'msg-me';
-                    li.innerHTML = `${data.text}`;
-                } else {
-                    li.className = 'msg-other';
-                    li.innerHTML = `<span class="msg-user-name">${data.user}</span>${data.text}`;
-                }
-                messagesList.appendChild(li);
-                messagesList.scrollTop = messagesList.scrollHeight;
-            });
-        }
-
-        function sendMessage() {
-            const input = document.getElementById('chat-msg-input');
-            const text = input.value.trim();
-            if (!text || !currentActiveItem) return;
-
-            const chatRef = ref(db, `chats/${currentActiveItem.id}`);
-            push(chatRef, { user: myName, text: text, timestamp: Date.now() });
-            input.value = '';
-        }
-
-        document.getElementById('chat-send-btn').addEventListener('click', sendMessage);
-        document.getElementById('chat-msg-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
-
-        document.getElementById('prof-btn').addEventListener('click', () => {
-            if (currentActiveItem && currentActiveItem.type === 'place') {
-                const qrSpace = document.getElementById('qr-code-space');
-                const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=LvivMapDiscount_${currentActiveItem.id}`;
-                qrSpace.innerHTML = `<img src="${qrUrl}" alt="QR код">`;
-                document.getElementById('qr-modal').style.display = 'flex';
-            }
-        });
-
-        window.closeQr = function() {
-            document.getElementById('qr-modal').style.display = 'none';
-        }
-    </script>
-</body>
-</html>
+            { id: 'c1', type: 'place', name: "Ресторація Бачевських", coords: [49.8430, 24.0305], photos: ["https://picsum.photos/id/429/600/400", "https://picsum.photos/id/431/600/400", "https://picsum.photos/id/433/600/400"], status: "Нова галицька кухня 🥂", text1: "вул. Шевська, 8. Справжній дух старого Львова.", text2:
