@@ -487,4 +487,320 @@
         };
 
         const places = [
-            { id: 'c1', type: 'place', name: "Ресторація Бачевських", coords: [49.8430, 24.0305], photos: ["https://picsum.photos/id/429/600/400", "https://picsum.photos/id/431/600/400", "https://picsum.photos/id/433/600/400"], status: "Нова галицька кухня 🥂", text1: "вул. Шевська, 8. Справжній дух старого Львова.", text2:
+            { id: 'c1', type: 'place', name: "Ресторація Бачевських", coords: [49.8430, 24.0305], photos: ["https://picsum.photos/id/429/600/400", "https://picsum.photos/id/431/600/400", "https://picsum.photos/id/433/600/400"], status: "Нова галицька кухня 🥂", text1: "вул. Шевська, 8. Справжній дух старого Львова.", text2: "Знижка 15% на фірмові наливки.", svg: svgIcons.food },
+            { id: 'c2', type: 'place', name: "Львівська копальня кави", coords: [49.8412, 24.0326], photos: ["https://picsum.photos/id/1060/600/400", "https://picsum.photos/id/1069/600/400", "https://picsum.photos/id/1071/600/400"], status: "Видобуваємо каву тут! ⛏️", text1: "пл. Ринок, 10. Єдина у світі кавова шахта.", text2: "Знижка 10% на будь-яку каву в зернах.", svg: svgIcons.coffee },
+            { id: 'c3', type: 'place', name: "Театр пива «Правда»", coords: [49.8418, 24.0318], photos: ["https://picsum.photos/id/152/600/400", "https://picsum.photos/id/159/600/400", "https://picsum.photos/id/180/600/400"], status: "Крафтове пиво та оркестр 🎺", text1: "пл. Ринок, 32. Власна броварня та жива музика.", text2: "Безкоштовний дегустаційний сет пива.", svg: svgIcons.beer },
+            { id: 'c4', type: 'place', name: "Криївка", coords: [49.8411, 24.0321], photos: ["https://picsum.photos/id/292/600/400", "https://picsum.photos/id/293/600/400", "https://picsum.photos/id/294/600/400"], status: "Найвідвідуваніший ресторан Європи 🪖", text1: "пл. Ринок, 14. Скажи гасло «Героям Слава» на вході.", text2: "Полумисок фірмових вареників зі знижкою 20%.", svg: svgIcons.food },
+            { id: 'c5', type: 'place', name: "Мазох-café", coords: [49.8416, 24.0335], photos: ["https://picsum.photos/id/635/600/400", "https://picsum.photos/id/634/600/400", "https://picsum.photos/id/631/600/400"], status: "Атмосфера пристрасті та болю 🔥", text1: "вул. Сербська, 7. Унікальне тематичне кафе.", text2: "Екстремальний коктейль у подарунок при чеку від 500 грн.", svg: svgIcons.fire }
+        ];
+
+        let currentActiveItem = null;
+        let currentChatRef = null;
+        let activePhotoIndex = 0;
+
+        // Генерація кастомних маркерів
+        people.forEach(person => {
+            const customIcon = L.divIcon({
+                className: 'custom-avatar-marker',
+                html: `<div class="avatar-ring" style="background-image: url('${person.photos[0]}')"></div>`,
+                iconSize: [44, 44], iconAnchor: [22, 22]
+            });
+            L.marker(person.coords, { icon: customIcon }).addTo(map).on('click', (e) => {
+                L.DomEvent.stopPropagation(e);
+                showSidebar(person);
+            });
+        });
+
+        places.forEach(place => {
+            const customIcon = L.divIcon({
+                className: 'custom-place-marker',
+                html: `<div class="place-ring">${place.svg}</div>`,
+                iconSize: [44, 44], iconAnchor: [22, 22]
+            });
+            L.marker(place.coords, { icon: customIcon }).addTo(map).on('click', (e) => {
+                L.DomEvent.stopPropagation(e);
+                showSidebar(place);
+            });
+        });
+
+        function showSidebar(item) {
+            currentActiveItem = item;
+            
+            document.getElementById('prof-img').style.backgroundImage = `url('${item.photos[0]}')`;
+            document.getElementById('prof-name').innerText = item.name;
+            document.getElementById('prof-status').innerText = `"${item.status}"`;
+
+            const badge = document.getElementById('prof-badge');
+            const statusEl = document.getElementById('prof-status');
+            const btn = document.getElementById('prof-btn');
+            const label1 = document.getElementById('label-1');
+            const label2 = document.getElementById('label-2');
+            const text1Box = document.getElementById('prof-text1-box');
+            const text2Box = document.getElementById('prof-text2-box');
+            const chatContainer = document.getElementById('chat-container');
+
+            if (currentChatRef) { off(currentChatRef); document.getElementById('chat-messages').innerHTML = ''; }
+
+            if (item.type === 'person') {
+                badge.style.display = 'none';
+                statusEl.className = "profile-status status-people";
+                label1.innerText = "Про мене";
+                label2.innerText = "Інтереси";
+                
+                text1Box.className = "";
+                text2Box.className = "";
+                document.getElementById('prof-text1').innerText = item.about;
+                document.getElementById('prof-text2').innerText = item.interests;
+
+                btn.style.display = 'none';
+                chatContainer.style.display = 'flex';
+                loadChat(item.id);
+            } else {
+                badge.style.display = 'block';
+                statusEl.className = "profile-status status-place";
+                label1.innerText = "Про локацію";
+                label2.innerText = "🔥 Спеціальна пропозиція";
+                
+                text1Box.className = "";
+                text2Box.className = "promo-box";
+                
+                document.getElementById('prof-text1').innerText = item.text1;
+                document.getElementById('prof-text2').innerText = item.text2 || 'Немає деталей';
+
+                chatContainer.style.display = 'none';
+                btn.style.display = 'block';
+                btn.innerText = "Отримати купон";
+                btn.style.background = "var(--ultramarine-gradient)";
+            }
+
+            const sidebar = document.getElementById('profile-sidebar');
+            sidebar.style.transition = 'transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)';
+            sidebar.classList.add('active');
+            map.panTo([item.coords[0] - 0.0015, item.coords[1]]);
+        }
+
+        window.closeProfile = function() {
+            const sidebar = document.getElementById('profile-sidebar');
+            sidebar.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+            sidebar.classList.remove('active');
+            sidebar.style.transform = ''; // скидання кастомного драгу
+            if (currentChatRef) off(currentChatRef);
+            currentActiveItem = null;
+        }
+
+        /* ГАЛЕРЕЯ ТА НАДПЛАВНІ СВАЙПИ (iOS-style) */
+        document.getElementById('prof-img').addEventListener('click', () => {
+            if (!currentActiveItem) return;
+            activePhotoIndex = 0;
+            openGallery();
+        });
+
+        function openGallery() {
+            document.getElementById('gallery-modal').style.display = 'flex';
+            updateGalleryUI();
+        }
+
+        window.closeGallery = function() {
+            document.getElementById('gallery-modal').style.display = 'none';
+        }
+
+        window.changeGalleryPhoto = function(direction) {
+            if (!currentActiveItem) return;
+            const total = currentActiveItem.photos.length;
+            activePhotoIndex = (activePhotoIndex + direction + total) % total;
+            updateGalleryUI();
+        }
+
+        function updateGalleryUI() {
+            const photos = currentActiveItem.photos;
+            const imgBox = document.getElementById('gallery-img');
+            imgBox.style.transition = 'none';
+            imgBox.style.transform = 'translate3d(0, 0, 0)'; 
+            imgBox.style.backgroundImage = `url('${photos[activePhotoIndex]}')`;
+            
+            const dotsContainer = document.getElementById('gallery-dots');
+            dotsContainer.innerHTML = '';
+            photos.forEach((_, idx) => {
+                const dot = document.createElement('div');
+                dot.className = `dot ${idx === activePhotoIndex ? 'active' : ''}`;
+                dotsContainer.appendChild(dot);
+            });
+        }
+
+        // ОБРОБКА ЖЕСТІВ ГАЛЕРЕЇ (ВИКОРИСТОВУЄМО translate3d ДЛЯ РЕНДЕРУ НА GPU)
+        const galleryImgBox = document.getElementById('gallery-img');
+        let galStartX = 0;
+        let galStartY = 0;
+        let galCurrX = 0;
+        let galCurrY = 0;
+        let activeTouch = false;
+
+        galleryImgBox.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 1) return;
+            const touch = e.touches[0];
+            galStartX = touch.clientX;
+            galStartY = touch.clientY;
+            activeTouch = true;
+            galleryImgBox.style.transition = 'none'; // Миттєва реакція без інпут-лагу
+        }, { passive: true });
+
+        galleryImgBox.addEventListener('touchmove', (e) => {
+            if (!activeTouch) return;
+            const touch = e.touches[0];
+            galCurrX = touch.clientX - galStartX;
+            galCurrY = touch.clientY - galStartY;
+
+            // Блокуємо рендер у два напрямки одночасно для плавності
+            if (Math.abs(galCurrY) > Math.abs(galCurrX)) {
+                if (galCurrY < 0) { // тягнемо вгору
+                    galleryImgBox.style.transform = `translate3d(0, ${galCurrY}px, 0)`;
+                }
+            } else {
+                galleryImgBox.style.transform = `translate3d(${galCurrX}px, 0, 0)`;
+            }
+        }, { passive: true });
+
+        galleryImgBox.addEventListener('touchend', () => {
+            if (!activeTouch) return;
+            activeTouch = false;
+            
+            // Задаємо плавний iOS-spring для повернення/прокрутки
+            galleryImgBox.style.transition = 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)';
+
+            // Закриття свайпом вгору
+            if (galCurrY < -100 && Math.abs(galCurrY) > Math.abs(galCurrX)) {
+                galleryImgBox.style.transform = `translate3d(0, -125vh, 0)`;
+                setTimeout(() => window.closeGallery(), 300);
+                galCurrX = galCurrY = 0;
+                return;
+            }
+
+            // Гортання фото (поріг 60px)
+            if (Math.abs(galCurrX) > 60) {
+                if (galCurrX < 0) {
+                    window.changeGalleryPhoto(1);
+                } else {
+                    window.changeGalleryPhoto(-1);
+                }
+            } else {
+                // Повернення на місце
+                galleryImgBox.style.transform = 'translate3d(0, 0, 0)';
+            }
+            galCurrX = galCurrY = 0;
+        }, { passive: true });
+
+
+        /* ВИСОКОПРОДУКТИВНИЙ СВАЙП КАРТОК (БЕЗ КОНФЛІКТІВ З ЧАТОМ) */
+        const sidebar = document.getElementById('profile-sidebar');
+        const nonActiveHero = document.getElementById('prof-img');
+        const nonActiveInfo = document.getElementById('prof-non-active-info');
+        
+        let startSidebarY = 0;
+        let currSidebarY = 0;
+        let isSidebarSwiping = false;
+
+        function attachSidebarSwipe(element) {
+            element.addEventListener('touchstart', (e) => {
+                // ПОВНИЙ захист: якщо юзер скролить чат, інпути чи кнопку — анімація карти не спрацьовує
+                if (e.target.closest('#chat-messages') || e.target.closest('.chat-input-row') || e.target.closest('.action-btn') || e.target.closest('.info-scroll-area')) {
+                    return;
+                }
+                startSidebarY = e.touches[0].clientY;
+                isSidebarSwiping = true;
+                sidebar.style.transition = 'none'; // миттєвий відгук карти за пальцем
+            }, { passive: true });
+
+            element.addEventListener('touchmove', (e) => {
+                if (!isSidebarSwiping || !currentActiveItem) return;
+                let currentY = e.touches[0].clientY;
+                currSidebarY = currentY - startSidebarY;
+
+                // Для людей (чат) — плавне тягнення вгору
+                if (currentActiveItem.type === 'person') {
+                    if (currSidebarY < 0) {
+                        sidebar.style.transform = `translate3d(-50%, calc(-50% + ${currSidebarY}px), 0)`;
+                    }
+                } 
+                // Для закладів (купони) — плавне тягнення вниз
+                else {
+                    if (currSidebarY > 0) {
+                        sidebar.style.transform = `translate3d(-50%, calc(-50% + ${currSidebarY}px), 0)`;
+                    }
+                }
+            }, { passive: true });
+
+            element.addEventListener('touchend', () => {
+                if (!isSidebarSwiping) return;
+                isSidebarSwiping = false;
+                sidebar.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+
+                if (currentActiveItem.type === 'person') {
+                    if (currSidebarY < -100) {
+                        window.closeProfile();
+                    } else {
+                        sidebar.style.transform = 'translate3d(-50%, -50%, 0)';
+                    }
+                } else {
+                    if (currSidebarY > 100) {
+                        window.closeProfile();
+                    } else {
+                        sidebar.style.transform = 'translate3d(-50%, -50%, 0)';
+                    }
+                }
+                currSidebarY = 0;
+            }, { passive: true });
+        }
+
+        // Кріпимо жести на безпечні зони, які не містять контенту, що прокручується
+        attachSidebarSwipe(nonActiveHero);
+        attachSidebarSwipe(nonActiveInfo);
+
+
+        function loadChat(chatId) {
+            const messagesList = document.getElementById('chat-messages');
+            messagesList.innerHTML = '';
+            currentChatRef = ref(db, `chats/${chatId}`);
+            
+            onChildAdded(currentChatRef, (snapshot) => {
+                const data = snapshot.val();
+                const li = document.createElement('li');
+                if (data.user === myName) {
+                    li.className = 'msg-me';
+                    li.innerHTML = `${data.text}`;
+                } else {
+                    li.className = 'msg-other';
+                    li.innerHTML = `<span class="msg-user-name">${data.user}</span>${data.text}`;
+                }
+                messagesList.appendChild(li);
+                messagesList.scrollTop = messagesList.scrollHeight;
+            });
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chat-msg-input');
+            const text = input.value.trim();
+            if (!text || !currentActiveItem) return;
+
+            const chatRef = ref(db, `chats/${currentActiveItem.id}`);
+            push(chatRef, { user: myName, text: text, timestamp: Date.now() });
+            input.value = '';
+        }
+
+        document.getElementById('chat-send-btn').addEventListener('click', sendMessage);
+        document.getElementById('chat-msg-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+
+        document.getElementById('prof-btn').addEventListener('click', () => {
+            if (currentActiveItem && currentActiveItem.type === 'place') {
+                const qrSpace = document.getElementById('qr-code-space');
+                const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=LvivMapDiscount_${currentActiveItem.id}`;
+                qrSpace.innerHTML = `<img src="${qrUrl}" alt="QR код">`;
+                document.getElementById('qr-modal').style.display = 'flex';
+            }
+        });
+
+        window.closeQr = function() {
+            document.getElementById('qr-modal').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
