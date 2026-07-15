@@ -709,10 +709,8 @@
                 if (!isSidebarSwiping || !currentActiveItem) return;
                 currSidebarY = e.touches[0].clientY - startSidebarY;
 
-                // Рух дозволений виключно вниз для закриття картки (як для людей, так і для закладів)
-                if (currSidebarY > 0) { 
-                    sidebar.style.transform = `translate3d(-50%, calc(-50% + ${currSidebarY}px), 0)`;
-                }
+                // ДОЗВОЛЕНО ВІЛЬНЕ ПЕРЕМІЩЕННЯ І ВГОРУ, І ВНИЗ
+                sidebar.style.transform = `translate3d(-50%, calc(-50% + ${currSidebarY}px), 0)`;
             }, { passive: true });
 
             element.addEventListener('touchend', () => {
@@ -720,8 +718,8 @@
                 isSidebarSwiping = false;
                 sidebar.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
 
-                // Спільна ідеально працююча логіка закриття вниз як для людей, так і для закладів
-                if (currSidebarY > 90) { 
+                // ЯКЩО СВАЙПНУЛИ ВГОРУ (менше -90px) АБО ВНИЗ (більше 90px) - ЗАКРИВАЄМО КАРТКУ
+                if (Math.abs(currSidebarY) > 90) { 
                     window.closeProfile();
                 } else {
                     sidebar.style.transform = 'translate3d(-50%, -50%, 0)';
