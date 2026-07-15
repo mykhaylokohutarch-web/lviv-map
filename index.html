@@ -42,63 +42,54 @@
             background-color: #e5e5ea;
         }
 
-        /* МІНІМАЛІСТИЧНИЙ ПОВЗУНОК МАСШТАБУВАННЯ В СТИЛІ APPLE */
+        /* УЛЬТРА-МІНІМАЛІСТИЧНИЙ ПОВЗУНОК ЗА ЗОЛОТИМ ПЕРЕТИНОМ */
         .apple-zoom-slider-container {
             position: absolute;
-            right: 16px;
-            top: 50%;
+            right: 8px; /* Максимально близько до правої грані */
+            top: 61.8%; /* Точне золоте перетинання ближче до нижнього краю */
             transform: translateY(-50%);
             z-index: 1000;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 200px;
-            width: 40px;
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(20px) saturate(190%);
-            -webkit-backdrop-filter: blur(20px) saturate(190%);
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            height: 160px;
+            width: 24px; /* Вузька зона взаємодії, щоб не перекривати кліки по карті */
             touch-action: none;
         }
 
         .apple-zoom-track {
             position: relative;
-            width: 4px;
-            height: 150px;
-            background: rgba(0, 0, 0, 0.1);
-            border-radius: 2px;
+            width: 2px; /* Тонка лінія */
+            height: 140px;
+            background: rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border-radius: 1px;
             display: flex;
             align-items: flex-end;
             justify-content: center;
+            cursor: pointer;
         }
 
         .apple-zoom-handle {
             position: absolute;
-            width: 24px;
-            height: 24px;
-            background: #ffffff;
+            width: 14px; /* Маленький кружечок */
+            height: 14px;
+            background: rgba(255, 255, 255, 0.85); /* Напівпрозорий білий */
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
             border-radius: 50%;
-            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.1);
-            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
             left: 50%;
             transform: translate3d(-50%, 50%, 0);
             bottom: 0%; /* Контролюється через JS */
             will-change: bottom;
+            transition: background 0.2s ease, transform 0.1s ease;
         }
 
-        .apple-zoom-icon {
-            font-size: 14px;
-            font-weight: 600;
-            color: rgba(0, 0, 0, 0.4);
-            user-select: none;
-            pointer-events: none;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .apple-zoom-track:active .apple-zoom-handle {
+            background: rgba(255, 255, 255, 1);
+            transform: translate3d(-50%, 50%, 0) scale(1.1);
         }
 
         #profile-sidebar {
@@ -450,11 +441,9 @@
         <div id="map"></div>
 
         <div class="apple-zoom-slider-container" id="zoom-slider-container">
-            <div class="apple-zoom-icon">+</div>
             <div class="apple-zoom-track" id="zoom-track">
                 <div class="apple-zoom-handle" id="zoom-handle"></div>
             </div>
-            <div class="apple-zoom-icon">−</div>
         </div>
 
         <div id="profile-sidebar">
@@ -514,58 +503,4 @@
 
         const firebaseConfig = {
             apiKey: "AIzaSyBELuWP-2ElBYWH5R_jb-hmfnYk02a_JfY",
-            authDomain: "lviv-map-chat.firebaseapp.com",
-            databaseURL: "https://lviv-map-chat-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "lviv-map-chat",
-            storageBucket: "lviv-map-chat.firebasestorage.app",
-            messagingSenderId: "940306109194",
-            appId: "1:940306109194:web:a4df7fff5350d8142a60f3"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-
-        const map = L.map('map', { 
-            zoomControl: false,
-            doubleClickZoom: false,
-            tap: false
-        }).setView([49.8415, 24.0315], 15);
-
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '© OpenStreetMap'
-        }).addTo(map);
-
-        let lastTap = 0;
-        let zoomPhase = 0; 
-
-        map.getContainer().addEventListener('touchstart', function(e) {
-            const now = Date.now();
-            if (now - lastTap < 280) {
-                e.preventDefault();
-                const currentZoom = map.getZoom();
-                let newZoom = currentZoom;
-
-                if (zoomPhase === 0) {
-                    newZoom = currentZoom + 2; 
-                } else if (zoomPhase === 1) {
-                    newZoom = currentZoom + 1; 
-                } else if (zoomPhase === 2) {
-                    newZoom = currentZoom - 2; 
-                }
-
-                map.setZoom(newZoom);
-                zoomPhase = (zoomPhase + 1) % 3; 
-            }
-            lastTap = now;
-        }, { passive: false });
-
-        map.on('click', () => window.closeProfile());
-
-        let myName = localStorage.getItem('chat_username') || prompt("Введіть ваше ім'я:", "Гість") || "Анонім";
-        localStorage.setItem('chat_username', myName);
-
-        const people = [
-            { id: 'p1', type: 'person', name: "Марта, 22", coords: [49.8425, 24.0320], photos: ["https://xsgames.co/randomusers/assets/avatars/female/1.jpg", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500", "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500"], status: "П'ю матчу, ходімо гуляти! ☕", about: "Студентка академії мистецтв.", interests: "Мистецтво, кава, дизайн" },
-            { id: 'p2', type: 'person', name: "Влад, 26", coords: [49.8445, 24.0260], photos: ["https://xsgames.co/randomusers/assets/avatars/male/2.jpg", "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500"], status: "Шукаю компанію на вечірній велозаїзд 🚴‍♂️", about: "Розробник, люблю швидкість.", interests: "Вело, IT, подорожі" },
-            { id: 'p3', type: 'person', name: "Олег (Репетитор)", coords: [49.8390, 24.0350], photos: ["https://xsgames.co/randomusers/assets/avatars/male/3.jpg", "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=500", "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=500"], status: "Пропоную послуги розмовної англійської 🇬🇧", about: "Вчитель з досвідом 5 років. Проводжу заняття в кав'ярнях або онлайн.", interests: "Англійська, Коучинг, Лекції" },
-            { id: 'p4', type: 'person', name: "Діана, 21", coords: [49.8410, 24.0220], photos:
+            authDomain: "lviv-map-
