@@ -2,15 +2,15 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
     <title>Львів Спілкується та Смакує</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root {
             --bg-color: #f5f5f7; 
-            --card-bg: rgba(255, 255, 255, 0.55);
+            --card-bg: rgba(255, 255, 255, 0.55); /* Зроблено білий фон на 30% прозорішим */
             --accent-main: #4542f4;      
-            --accent-people: #4542f4;   
+            --accent-people: #4542f4; /* Змінено з червоного на ультрамарин */   
             --text-color: #1d1d1f; 
             --text-secondary: #86868b; 
             --ultramarine-gradient: linear-gradient(180deg, #706eff 0%, #4542f4 60%, #2a27c9 100%);
@@ -45,23 +45,25 @@
         /* УЛЬТРА-МІНІМАЛІСТИЧНИЙ ПОВЗУНОК ЗА ЗОЛОТИМ ПЕРЕТИНОМ */
         .apple-zoom-slider-container {
             position: absolute;
-            right: 6px; /* Ще ближче до правої грані */
-            top: 61.8%; /* Золотий перетин */
+            right: 6px; /* Впритул до правої грані */
+            top: 61.8%; /* Золотий перетин ближче до нижньої грані */
             transform: translateY(-50%);
             z-index: 1000;
             display: flex;
             align-items: center;
             justify-content: center;
             height: 140px;
-            width: 16px; /* Ультра-вузький контейнер, щоб не заважати тапам по карті */
-            pointer-events: auto; /* Дозволяє взаємодію лише в межах цих 16px */
+            width: 16px; /* Тонка зона взаємодії, щоб не перекривати карту */
+            touch-action: none;
         }
 
         .apple-zoom-track {
             position: relative;
-            width: 2px; /* Тонка лінія */
+            width: 2px; /* Тонка напівпрозора лінія */
             height: 120px;
-            background: rgba(0, 0, 0, 0.12);
+            background: rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
             border-radius: 1px;
             display: flex;
             align-items: flex-end;
@@ -73,17 +75,18 @@
             position: absolute;
             width: 12px; /* Маленький акуратний кружечок */
             height: 12px;
-            background: rgba(255, 255, 255, 0.8); /* Напівпрозорий */
+            background: rgba(255, 255, 255, 0.8); /* Напівпрозорий білий */
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
             border-radius: 50%;
             box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
             left: 50%;
             transform: translate3d(-50%, 50%, 0);
-            bottom: 0%;
+            bottom: 0%; /* Контролюється через JS */
             will-change: bottom;
-            transition: background 0.2s, transform 0.1s;
+            transition: background 0.2s ease, transform 0.1s ease;
         }
 
-        /* Ефект при торканні повзунка */
         .apple-zoom-track:active .apple-zoom-handle {
             background: rgba(255, 255, 255, 1);
             transform: translate3d(-50%, 50%, 0) scale(1.15);
@@ -109,7 +112,10 @@
             border-radius: 32px;
             border: 1px solid rgba(255, 255, 255, 0.4);
             box-sizing: border-box;
+            
+            /* ВНУТРІШНІ РАМКИ КАРТКИ ЗМЕНШЕНО ВДВІЧІ (з 14px до 7px) */
             padding: 7px; 
+            touch-action: none;
         }
 
         #profile-sidebar.active {
@@ -122,6 +128,8 @@
             background: rgba(0, 0, 0, 0.15);
             border-radius: 3px;
             position: absolute;
+            
+            /* Вирівняно ручку по висоті з урахуванням нових тонких рамок */
             top: 6px;
             left: 50%;
             transform: translate3d(-50%, 0, 0);
@@ -135,10 +143,13 @@
             background-size: cover;
             background-position: center;
             background-color: #e5e5ea;
-            border-radius: 25px;
+            border-radius: 25px; /* Більш гармонійний радіус під тонку рамку */
             flex-shrink: 0;
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
             cursor: pointer;
+            touch-action: none;
+            
+            /* ТОЧНЕ ВИРІВНЮВАННЯ: Верхній відступ тепер абсолютно такий же, як і по боках (7px) */
             margin-top: 7px; 
             box-sizing: border-box;
         }
@@ -157,6 +168,7 @@
         }
 
         .profile-info {
+            /* Легкий відступ знизу фото для повітря в інтерфейсі */
             padding: 12px 7px 0 7px;
             display: flex;
             flex-direction: column;
@@ -184,6 +196,7 @@
             overflow-y: auto;
             margin-bottom: 8px;
             flex-shrink: 0;
+            touch-action: pan-y;
             -webkit-overflow-scrolling: touch;
         }
 
@@ -236,6 +249,7 @@
             flex-direction: column;
             gap: 8px;
             list-style: none;
+            touch-action: pan-y;
             -webkit-overflow-scrolling: touch;
         }
 
@@ -317,9 +331,10 @@
             z-index: 3000;
             justify-content: center;
             align-items: center;
+            will-change: opacity;
         }
         .qr-content {
-            background: rgba(255, 255, 255, 0.55);
+            background: rgba(255, 255, 255, 0.55); /* Також на 30% прозоріше */
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             padding: 24px;
@@ -342,6 +357,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            touch-action: none;
         }
         .gallery-img-box {
             width: 100%;
@@ -352,6 +368,7 @@
             box-shadow: 0 24px 48px rgba(0,0,0,0.5);
             position: relative;
             overflow: hidden;
+            touch-action: none;
             will-change: transform;
             transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
         }
@@ -369,6 +386,7 @@
         }
         .dot.active { background: #ffffff; }
 
+        /* ОДНАКОВІ УЛЬТРА-ТОНКІ РАМКИ ТА СПІЛЬНИЙ СТИЛЬ ДЛЯ МАРКЕРІВ */
         .custom-avatar-marker, .custom-place-marker { 
             background: none !important; 
             border: none !important; 
@@ -379,12 +397,13 @@
             justify-content: center;
         }
         
+        /* Зменшені однакові рамки (38px x 38px) з однаковим кольором і тонким бордером (в 2 рази менше) */
         .avatar-ring {
             width: 38px; 
             height: 38px; 
             border-radius: 50%;
-            background: var(--ultramarine-gradient); 
-            padding: 1.2px; 
+            background: var(--ultramarine-gradient); /* Jednakowy ультрамариновий градієнт */
+            padding: 1.2px; /* Рамку зменшено рівно в 2 рази, ідеально симетрична з усіх боків */
             box-sizing: border-box;
         }
         .avatar-ring-inner {
@@ -395,12 +414,13 @@
             background-position: center;
         }
         
+        /* Тонка рівномірна рамка для закладів */
         .place-ring {
             width: 38px; 
             height: 38px; 
             border-radius: 50%;
             background: var(--ultramarine-gradient); 
-            padding: 1.2px; 
+            padding: 1.2px; /* Рівномірна рамка в 1.2px зі всіх боків */
             box-sizing: border-box;
             display: flex;
             align-items: center;
@@ -408,7 +428,7 @@
         }
 
         .place-icon-svg {
-            width: 18px; 
+            width: 18px; /* Відповідно зменшена іконка для балансу */
             height: 18px;
             fill: #ffffff;
             display: block;
@@ -429,130 +449,4 @@
         <div id="profile-sidebar">
             <div class="drag-handle"></div>
             <div class="profile-hero" id="prof-img">
-                <span class="badge" id="prof-badge" style="display:none;">АКЦІЯ</span>
-            </div>
-            <div class="profile-info" id="prof-non-active-info">
-                <h2 class="profile-name" id="prof-name">Назва</h2>
-                <p class="profile-status" id="prof-status">"Статус"</p>
-                
-                <div class="info-scroll-area">
-                    <div class="profile-section">
-                        <label id="label-1">Опис</label>
-                        <div id="prof-text1-box"><p id="prof-text1">...</p></div>
-                    </div>
-
-                    <div class="profile-section">
-                        <label id="label-2">Деталі</label>
-                        <div id="prof-text2-box"><p id="prof-text2">...</p></div>
-                    </div>
-                </div>
-
-                <div id="chat-container">
-                    <ul id="chat-messages"></ul>
-                    <div class="chat-input-row">
-                        <input type="text" id="chat-msg-input" placeholder="Повідомлення" />
-                        <button id="chat-send-btn">▲</button>
-                    </div>
-                </div>
-
-                <button class="action-btn" id="prof-btn">Дія</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="qr-modal">
-        <div class="qr-content">
-            <h3>Твій купон</h3>
-            <div id="qr-code-space"></div>
-            <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px;">Покажи цей код на касі закладу</p>
-            <button class="qr-close" onclick="closeQr()">Готово</button>
-        </div>
-    </div>
-
-    <div id="gallery-modal">
-        <div class="gallery-container">
-            <div class="gallery-img-box" id="gallery-img"></div>
-            <div class="gallery-dots" id="gallery-dots"></div>
-        </div>
-    </div>
-
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script type="module">
-        let db = null;
-        let myName = "Гість";
-
-        // Безпечна ініціалізація Firebase у try-catch блоці
-        try {
-            const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js");
-            const { getDatabase, ref, push, onChildAdded, off } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js");
-
-            const firebaseConfig = {
-                apiKey: "AIzaSyBELuWP-2ElBYWH5R_jb-hmfnYk02a_JfY",
-                authDomain: "lviv-map-chat.firebaseapp.com",
-                databaseURL: "https://lviv-map-chat-default-rtdb.europe-west1.firebasedatabase.app",
-                projectId: "lviv-map-chat",
-                storageBucket: "lviv-map-chat.firebasestorage.app",
-                messagingSenderId: "940306109194",
-                appId: "1:940306109194:web:a4df7fff5350d8142a60f3"
-            };
-
-            const app = initializeApp(firebaseConfig);
-            db = getDatabase(app);
-
-            window.firebaseRef = ref;
-            window.firebasePush = push;
-            window.firebaseOnChildAdded = onChildAdded;
-            window.firebaseOff = off;
-
-            myName = localStorage.getItem('chat_username') || prompt("Введіть ваше ім'я:", "Гість") || "Анонім";
-            localStorage.setItem('chat_username', myName);
-        } catch (e) {
-            console.warn("Помилка ініціалізації Firebase. Чат працюватиме локально.", e);
-        }
-
-        // Чиста ініціалізація карти (без застарілих тач-блокувальників)
-        const map = L.map('map', { 
-            zoomControl: false,
-            doubleClickZoom: false
-        }).setView([49.8415, 24.0315], 15);
-
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '© OpenStreetMap'
-        }).addTo(map);
-
-        // Обробка подвійного тапу для розумного зуму
-        let lastTap = 0;
-        let zoomPhase = 0; 
-
-        map.getContainer().addEventListener('touchstart', function(e) {
-            const now = Date.now();
-            if (now - lastTap < 280) {
-                const currentZoom = map.getZoom();
-                let newZoom = currentZoom;
-
-                if (zoomPhase === 0) {
-                    newZoom = currentZoom + 2; 
-                } else if (zoomPhase === 1) {
-                    newZoom = currentZoom + 1; 
-                } else if (zoomPhase === 2) {
-                    newZoom = currentZoom - 2; 
-                }
-
-                map.setZoom(newZoom);
-                zoomPhase = (zoomPhase + 1) % 3; 
-            }
-            lastTap = now;
-        }, { passive: true });
-
-        map.on('click', () => window.closeProfile());
-
-        const people = [
-            { id: 'p1', type: 'person', name: "Марта, 22", coords: [49.8425, 24.0320], photos: ["https://xsgames.co/randomusers/assets/avatars/female/1.jpg", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500", "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500"], status: "П'ю матчу, ходімо гуляти! ☕", about: "Студентка академії мистецтв.", interests: "Мистецтво, кава, дизайн" },
-            { id: 'p2', type: 'person', name: "Влад, 26", coords: [49.8445, 24.0260], photos: ["https://xsgames.co/randomusers/assets/avatars/male/2.jpg", "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500"], status: "Шукаю компанію на вечірній велозаїзд 🚴‍♂️", about: "Розробник, люблю швидкість.", interests: "Вело, IT, подорожі" },
-            { id: 'p3', type: 'person', name: "Олег (Репетитор)", coords: [49.8390, 24.0350], photos: ["https://xsgames.co/randomusers/assets/avatars/male/3.jpg", "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=500", "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=500"], status: "Пропоную послуги розмовної англійської 🇬🇧", about: "Вчитель з досвідом 5 років. Проводжу заняття в кав'ярнях або онлайн.", interests: "Англійська, Коучинг, Лекції" },
-            { id: 'p4', type: 'person', name: "Діана, 21", coords: [49.8410, 24.0220], photos: ["https://xsgames.co/randomusers/assets/avatars/female/4.jpg", "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500", "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=500"], status: "Я на концерті біля Опери! Хто тут? 🎶", about: "Обожнюю живу музику і фестивалі.", interests: "Рок, Концерти, Нічне місто" },
-            { id: 'p5', type: 'person', name: "Катя (Фотограф)", coords: [49.8460, 24.0310], photos: ["https://xsgames.co/randomusers/assets/avatars/female/5.jpg", "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=500", "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=500"], status: "Роблю експрес-фотосесії у парку 📸", about: "Година зйомки — 3 готові фото вже ввечері. Пишіть!", interests: "Фотографія, Портрети, Стиль" }
-        ];
-
-        const svgIcons = {
-            food: `<svg class="place-icon-svg" viewBox="0 0 24 24"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.86 3.77 3.97L6.25 22h3.5l-.52-8.03C11.34 12.86 13 11.12 13 9V2h-
+                <span class="badge" id="
