@@ -8,9 +8,9 @@
     <style>
         :root {
             --bg-color: #f5f5f7; 
-            --card-bg: rgba(255, 255, 255, 0.55); /* Зроблено білий фон на 30% прозорішим */
+            --card-bg: rgba(255, 255, 255, 0.55);
             --accent-main: #4542f4;      
-            --accent-people: #4542f4; /* Змінено з червоного на ультрамарин */   
+            --accent-people: #4542f4;   
             --text-color: #1d1d1f; 
             --text-secondary: #86868b; 
             --ultramarine-gradient: linear-gradient(180deg, #706eff 0%, #4542f4 60%, #2a27c9 100%);
@@ -94,7 +94,7 @@
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
             cursor: pointer;
             touch-action: none;
-            margin-top: 8px; /* Додано відступ зверху */
+            margin-top: 8px; 
             box-sizing: border-box;
         }
 
@@ -105,4 +105,381 @@
             padding: 4px 10px;
             background: rgba(255, 255, 255, 0.95);
             color: var(--accent-main); 
-            border-radius: 1
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+            z-index: 10;
+        }
+
+        .profile-info {
+            padding: 12px 7px 0 7px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            overflow: hidden;
+        }
+
+        .profile-name {
+            font-size: 23px;
+            margin: 0 0 2px 0;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .profile-status {
+            font-size: 13px;
+            margin: 0 0 12px 0;
+            font-weight: 500;
+        }
+        .status-people { color: var(--accent-people); }
+        .status-place { color: var(--accent-main); }
+
+        .info-scroll-area {
+            max-height: 90px; 
+            overflow-y: auto;
+            margin-bottom: 8px;
+            flex-shrink: 0;
+            touch-action: pan-y;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .profile-section {
+            margin-bottom: 6px;
+        }
+
+        .profile-section label {
+            display: block;
+            color: var(--text-secondary);
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+
+        .profile-section p {
+            margin: 0;
+            font-size: 13px;
+            line-height: 1.35;
+            color: #3a3a3c;
+        }
+
+        .promo-box {
+            background: rgba(69, 66, 244, 0.06);
+            border: 1px solid rgba(69, 66, 244, 0.15);
+            padding: 10px;
+            border-radius: 14px;
+        }
+        .promo-box p {
+            color: var(--accent-main) !important;
+            font-weight: 600;
+        }
+
+        #chat-container {
+            display: none;
+            flex-direction: column;
+            border-top: 1px solid rgba(0,0,0,0.06);
+            padding-top: 10px;
+            flex-grow: 2; 
+            overflow: hidden;
+        }
+
+        #chat-messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 2px;
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            list-style: none;
+            touch-action: pan-y;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        #chat-messages li {
+            max-width: 80%;
+            padding: 10px 14px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .msg-other { background: rgba(0,0,0,0.06); color: var(--text-color); align-self: flex-start; }
+        .msg-me { background: var(--accent-main); color: white; align-self: flex-end; }
+        
+        .msg-user-name {
+            display: block;
+            font-weight: 600;
+            font-size: 10px;
+            color: var(--text-secondary);
+            margin-bottom: 2px;
+        }
+
+        .chat-input-row {
+            display: flex;
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.05);
+            padding: 6px 6px 6px 14px;
+            border-radius: 22px;
+            flex-shrink: 0;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .chat-input-row input {
+            flex-grow: 1;
+            border: none;
+            background: transparent;
+            font-size: 14px;
+            outline: none;
+            color: var(--text-color);
+            -webkit-user-select: text;
+            user-select: text;
+        }
+
+        .chat-input-row button {
+            background: var(--accent-main);
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .action-btn {
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 18px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: auto;
+            width: 100%;
+            box-shadow: 0 4px 12px rgba(69, 66, 244, 0.2);
+            flex-shrink: 0;
+        }
+
+        #qr-modal, #gallery-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.55);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            z-index: 3000;
+            justify-content: center;
+            align-items: center;
+            will-change: opacity;
+        }
+        .qr-content {
+            background: rgba(255, 255, 255, 0.55); 
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 24px;
+            border-radius: 24px;
+            text-align: center;
+            max-width: 240px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .qr-content img { width: 180px; height: 180px; margin-bottom: 12px; border-radius: 16px; }
+        .qr-close {
+            background: rgba(0, 0, 0, 0.05); border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; width: 100%;
+        }
+
+        .gallery-container {
+            width: 94%;
+            height: 85vh;
+            max-width: 450px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            touch-action: none;
+        }
+        .gallery-img-box {
+            width: 100%;
+            height: 75vh;
+            background-size: cover;
+            background-position: center;
+            border-radius: 30px;
+            box-shadow: 0 24px 48px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
+            touch-action: none;
+            will-change: transform;
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        .gallery-dots {
+            display: flex;
+            gap: 6px;
+            margin-top: 18px;
+        }
+        .dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.35);
+            transition: background 0.25s ease;
+        }
+        .dot.active { background: #ffffff; }
+
+        .custom-avatar-marker, .custom-place-marker { 
+            background: none !important; 
+            border: none !important; 
+            box-shadow: none !important;
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.15)) !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .avatar-ring {
+            width: 38px; 
+            height: 38px; 
+            border-radius: 50%;
+            background: var(--ultramarine-gradient); 
+            padding: 1.2px; 
+            box-sizing: border-box;
+        }
+        .avatar-ring-inner {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .place-ring {
+            width: 38px; 
+            height: 38px; 
+            border-radius: 50%;
+            background: var(--ultramarine-gradient); 
+            padding: 1.2px; 
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .place-icon-svg {
+            width: 18px; 
+            height: 18px;
+            fill: #ffffff;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        <div id="map"></div>
+
+        <div id="profile-sidebar">
+            <div class="drag-handle"></div>
+            <div class="profile-hero" id="prof-img">
+                <span class="badge" id="prof-badge" style="display:none;">АКЦІЯ</span>
+            </div>
+            <div class="profile-info" id="prof-non-active-info">
+                <h2 class="profile-name" id="prof-name">Назва</h2>
+                <p class="profile-status" id="prof-status">"Статус"</p>
+                
+                <div class="info-scroll-area">
+                    <div class="profile-section">
+                        <label id="label-1">Опис</label>
+                        <div id="prof-text1-box"><p id="prof-text1">...</p></div>
+                    </div>
+
+                    <div class="profile-section">
+                        <label id="label-2">Деталі</label>
+                        <div id="prof-text2-box"><p id="prof-text2">...</p></div>
+                    </div>
+                </div>
+
+                <div id="chat-container">
+                    <ul id="chat-messages"></ul>
+                    <div class="chat-input-row">
+                        <input type="text" id="chat-msg-input" placeholder="Повідомлення" />
+                        <button id="chat-send-btn">▲</button>
+                    </div>
+                </div>
+
+                <button class="action-btn" id="prof-btn">Дія</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="qr-modal">
+        <div class="qr-content">
+            <h3>Твій купон</h3>
+            <div id="qr-code-space"></div>
+            <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px;">Покажи цей код на касі закладу</p>
+            <button class="qr-close" onclick="closeQr()">Готово</button>
+        </div>
+    </div>
+
+    <div id="gallery-modal">
+        <div class="gallery-container">
+            <div class="gallery-img-box" id="gallery-img"></div>
+            <div class="gallery-dots" id="gallery-dots"></div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBELuWP-2ElBYWH5R_jb-hmfnYk02a_JfY",
+            authDomain: "lviv-map-chat.firebaseapp.com",
+            databaseURL: "https://lviv-map-chat-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "lviv-map-chat",
+            storageBucket: "lviv-map-chat.firebasestorage.app",
+            messagingSenderId: "940306109194",
+            appId: "1:940306109194:web:a4df7fff5350d8142a60f3"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        const map = L.map('map', { 
+            zoomControl: false,
+            doubleClickZoom: false,
+            tap: false
+        }).setView([49.8415, 24.0315], 15);
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        let savedView = { center: map.getCenter(), zoom: map.getZoom() };
+        let isFullyZoomed = false; 
+
+        map.on('dblclick', function(e) {
+            if (!isFullyZoomed) {
+                savedView.center = map.getCenter();
+                savedView.zoom = map.getZoom();
+                map.setView(e.latlng, 18);
+                isFullyZoomed = true;
+            } else {
+                map.setView(savedView.center, savedView.zoom);
+                isFullyZoomed = false;
+            }
+        });
+
+        map.on('click', () => window.closeProfile());
+
+        let myName = localStorage.getItem('chat_username') || prompt("Введіть ваше ім'я:", "Гість") || "Анонім";
+        localStorage.setItem('chat_username', myName);
+
+        const people = [
+            { id: 'p1', type: 'person', name: "Марта, 22", coords: [49.8425, 24.0320], photos: ["https://xsgames.co/randomusers/assets/avatars/female/1.jpg", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500", "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500"], status: "П'ю матчу, ходімо гуляти! ☕", about: "Студентка академії мистецтв.", interests: "Мистецтво, кава, дизайн" },
+            { id: 'p2', type: 'person', name: "Влад, 26", coords: [49.8445, 24.0260], photos: ["https://xsgames.co/randomusers/assets/avatars/male/2.jpg", "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500"], status: "Шукаю компанію на вечірній велозаїзд 🚴‍♂️", about: "Розробник, люблю швидкість.", interests: "Вело, IT, подорожі" },
+            { id: 'p3', type: 'person', name: "Олег (Репетитор)", coords: [49.8390, 24.0350], photos: ["https://xsgames.co/randomusers/assets/avatars/male/3.jpg", "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=500", "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=500"], status: "Пропоную послуги розмовної англійської 🇬🇧", about: "Вчитель з досвідом 5 років. Проводжу заняття в кав'ярнях або онлайн.", interests: "Англійська, Коучинг, Лекції" },
+            { id: 'p4', type: 'person', name: "Діана, 21", coords: [49.8410, 24.0220], photos: ["https://xsgames.co/randomusers/assets/avatars/female/4.jpg", "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500", "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?
