@@ -62,7 +62,9 @@
             border-radius: 32px;
             border: 1px solid rgba(255, 255, 255, 0.4);
             box-sizing: border-box;
-            padding: 14px;
+            
+            /* ВНУТРІШНІ РАМКИ КАРТКИ ЗМЕНШЕНО ВДВІЧІ (з 14px до 7px) */
+            padding: 7px; 
             touch-action: none;
         }
 
@@ -76,9 +78,12 @@
             background: rgba(0, 0, 0, 0.15);
             border-radius: 3px;
             position: absolute;
-            top: 8px;
+            
+            /* Вирівняно ручку по висоті з урахуванням нових тонких рамок */
+            top: 6px;
             left: 50%;
             transform: translate3d(-50%, 0, 0);
+            z-index: 15;
         }
 
         .profile-hero {
@@ -88,12 +93,14 @@
             background-size: cover;
             background-position: center;
             background-color: #e5e5ea;
-            border-radius: 22px;
+            border-radius: 25px; /* Більш гармонійний радіус під тонку рамку */
             flex-shrink: 0;
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
             cursor: pointer;
             touch-action: none;
-            margin-top: 8px;
+            
+            /* ТОЧНЕ ВИРІВНЮВАННЯ: Верхній відступ тепер абсолютно такий же, як і по боках (7px) */
+            margin-top: 7px; 
             box-sizing: border-box;
         }
 
@@ -111,7 +118,8 @@
         }
 
         .profile-info {
-            padding: 12px 2px 0 2px;
+            /* Легкий відступ знизу фото для повітря в інтерфейсі */
+            padding: 12px 7px 0 7px;
             display: flex;
             flex-direction: column;
             flex-grow: 1;
@@ -328,7 +336,7 @@
         }
         .dot.active { background: #ffffff; }
 
-        /* ОДНАКОВІ ЗМЕНШЕНІ РАМКИ ТА СПІЛЬНИЙ СТИЛЬ ДЛЯ МАРКЕРІВ */
+        /* ОДНАКОВІ УЛЬТРА-ТОНКІ РАМКИ ТА СПІЛЬНИЙ СТИЛЬ ДЛЯ МАРКЕРІВ */
         .custom-avatar-marker, .custom-place-marker { 
             background: none !important; 
             border: none !important; 
@@ -339,13 +347,13 @@
             justify-content: center;
         }
         
-        /* Зменшені однакові рамки (38px x 38px) з однаковим кольором */
+        /* Зменшені однакові рамки (38px x 38px) з однаковим кольором і тонким бордером (в 2 рази менше) */
         .avatar-ring {
             width: 38px; 
             height: 38px; 
             border-radius: 50%;
-            background: var(--ultramarine-gradient); /* Такий самий ультрамариновий градієнт */
-            padding: 2.5px; /* Тонка рівна рамка з усіх боків */
+            background: var(--ultramarine-gradient); /* Jednakowy ультрамариновий градієнт */
+            padding: 1.2px; /* Рамку зменшено рівно в 2 рази, ідеально симетрична з усіх боків */
             box-sizing: border-box;
         }
         .avatar-ring-inner {
@@ -356,13 +364,13 @@
             background-position: center;
         }
         
-        /* Зменшена рамка для закладів */
+        /* Тонка рівномірна рамка для закладів */
         .place-ring {
             width: 38px; 
             height: 38px; 
             border-radius: 50%;
             background: var(--ultramarine-gradient); 
-            padding: 2.5px;
+            padding: 1.2px; /* Рівномірна рамка в 1.2px зі всіх боків */
             box-sizing: border-box;
             display: flex;
             align-items: center;
@@ -701,14 +709,9 @@
                 if (!isSidebarSwiping || !currentActiveItem) return;
                 currSidebarY = e.touches[0].clientY - startSidebarY;
 
-                if (currentActiveItem.type === 'person') {
-                    if (currSidebarY < 0) { 
-                        sidebar.style.transform = `translate3d(-50%, calc(-50% + ${currSidebarY}px), 0)`;
-                    }
-                } else {
-                    if (currSidebarY > 0) { 
-                        sidebar.style.transform = `translate3d(-50%, calc(-50% + ${currSidebarY}px), 0)`;
-                    }
+                // Рух дозволений виключно вниз для закриття картки (як для людей, так і для закладів)
+                if (currSidebarY > 0) { 
+                    sidebar.style.transform = `translate3d(-50%, calc(-50% + ${currSidebarY}px), 0)`;
                 }
             }, { passive: true });
 
@@ -717,18 +720,11 @@
                 isSidebarSwiping = false;
                 sidebar.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
 
-                if (currentActiveItem.type === 'person') {
-                    if (currSidebarY < -90) {
-                        window.closeProfile();
-                    } else {
-                        sidebar.style.transform = 'translate3d(-50%, -50%, 0)';
-                    }
+                // Спільна ідеально працююча логіка закриття вниз як для людей, так і для закладів
+                if (currSidebarY > 90) { 
+                    window.closeProfile();
                 } else {
-                    if (currSidebarY > 90) { 
-                        window.closeProfile();
-                    } else {
-                        sidebar.style.transform = 'translate3d(-50%, -50%, 0)';
-                    }
+                    sidebar.style.transform = 'translate3d(-50%, -50%, 0)';
                 }
                 currSidebarY = 0;
             }, { passive: true });
