@@ -8,9 +8,9 @@
     <style>
         :root {
             --bg-color: #f5f5f7; 
-            --card-bg: rgba(255, 255, 255, 0.65); 
+            --card-bg: rgba(255, 255, 255, 0.55); /* Зроблено білий фон на 30% прозорішим */
             --accent-main: #4542f4;      
-            --accent-people: #4542f4;   
+            --accent-people: #4542f4; /* Змінено з червоного на ультрамарин */   
             --text-color: #1d1d1f; 
             --text-secondary: #86868b; 
             --ultramarine-gradient: linear-gradient(180deg, #706eff 0%, #4542f4 60%, #2a27c9 100%);
@@ -32,7 +32,7 @@
         #app-container {
             display: flex;
             width: 100%;
-            height: 100dvh;
+            height: 100vh;
             position: relative;
         }
 
@@ -48,7 +48,7 @@
             background-color: var(--card-bg);
             backdrop-filter: blur(25px) saturate(190%);
             -webkit-backdrop-filter: blur(25px) saturate(190%);
-            height: 80dvh;
+            height: 82vh;
             box-shadow: 0 12px 38px rgba(0, 0, 0, 0.15);
             display: flex;
             flex-direction: column;
@@ -62,9 +62,10 @@
             border-radius: 32px;
             border: 1px solid rgba(255, 255, 255, 0.4);
             box-sizing: border-box;
-            padding: 12px; 
-            padding-bottom: calc(12px + env(safe-area-inset-bottom));
-            touch-action: none; /* Контролюється ручним drag-and-drop */
+            
+            /* ВНУТРІШНІ РАМКИ КАРТКИ ЗМЕНШЕНО ВДВІЧІ (з 14px до 7px) */
+            padding: 7px; 
+            touch-action: none;
         }
 
         #profile-sidebar.active {
@@ -72,50 +73,53 @@
         }
 
         .drag-handle {
-            width: 36px;
-            height: 4px;
-            background: rgba(0, 0, 0, 0.14);
-            border-radius: 2px;
+            width: 38px;
+            height: 5px;
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 3px;
             position: absolute;
-            top: 8px;
+            
+            /* Вирівняно ручку по висоті з урахуванням нових тонких рамок */
+            top: 6px;
             left: 50%;
             transform: translate3d(-50%, 0, 0);
             z-index: 15;
-            cursor: grab;
         }
 
         .profile-hero {
             position: relative;
-            height: 160px; 
+            height: 180px; 
             width: 100%;
             background-size: cover;
             background-position: center;
             background-color: #e5e5ea;
-            border-radius: 22px; 
+            border-radius: 25px; /* Більш гармонійний радіус під тонку рамку */
             flex-shrink: 0;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
             cursor: pointer;
             touch-action: none;
-            margin-top: 6px; 
+            
+            /* ТОЧНЕ ВИРІВНЮВАННЯ: Верхній відступ тепер абсолютно такий же, як і по боках (7px) */
+            margin-top: 7px; 
             box-sizing: border-box;
         }
 
         .badge {
             position: absolute;
-            top: 10px;
-            left: 10px;
-            padding: 4px 8px;
+            top: 12px;
+            left: 12px;
+            padding: 4px 10px;
             background: rgba(255, 255, 255, 0.95);
             color: var(--accent-main); 
-            border-radius: 8px;
-            font-size: 10px;
-            font-weight: 700;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
             z-index: 10;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
 
         .profile-info {
-            padding: 10px 2px 0 2px;
+            /* Легкий відступ знизу фото для повітря в інтерфейсі */
+            padding: 12px 7px 0 7px;
             display: flex;
             flex-direction: column;
             flex-grow: 1;
@@ -123,77 +127,65 @@
         }
 
         .profile-name {
-            font-size: 21px;
-            margin: 0;
-            font-weight: 750;
+            font-size: 23px;
+            margin: 0 0 2px 0;
+            font-weight: 700;
             letter-spacing: -0.5px;
-            line-height: 1.2;
         }
 
         .profile-status {
-            font-size: 12.5px;
-            margin: 4px 0 10px 0;
+            font-size: 13px;
+            margin: 0 0 12px 0;
             font-weight: 500;
-            line-height: 1.3;
         }
         .status-people { color: var(--accent-people); }
         .status-place { color: var(--accent-main); }
 
         .info-scroll-area {
-            max-height: 85px; 
+            max-height: 90px; 
             overflow-y: auto;
             margin-bottom: 8px;
             flex-shrink: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
             touch-action: pan-y;
             -webkit-overflow-scrolling: touch;
         }
 
         .profile-section {
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
+            margin-bottom: 6px;
         }
 
         .profile-section label {
-            align-self: flex-start;
-            color: var(--accent-main);
-            background: rgba(69, 66, 244, 0.08);
-            padding: 2px 6px;
-            border-radius: 6px;
-            font-size: 9px;
-            font-weight: 700;
+            display: block;
+            color: var(--text-secondary);
+            font-size: 10px;
+            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.3px;
+            margin-bottom: 2px;
         }
 
         .profile-section p {
             margin: 0;
-            font-size: 12px;
-            line-height: 1.3;
-            color: #2c2c2e;
-            padding-left: 2px;
+            font-size: 13px;
+            line-height: 1.35;
+            color: #3a3a3c;
         }
 
         .promo-box {
-            background: rgba(69, 66, 244, 0.04);
-            border-left: 3px solid var(--accent-main);
-            padding: 5px 8px;
-            border-radius: 2px 6px 6px 2px;
+            background: rgba(69, 66, 244, 0.06);
+            border: 1px solid rgba(69, 66, 244, 0.15);
+            padding: 10px;
+            border-radius: 14px;
         }
         .promo-box p {
-            color: #1d1d1f !important;
+            color: var(--accent-main) !important;
             font-weight: 600;
-            font-size: 12px;
         }
 
         #chat-container {
             display: none;
             flex-direction: column;
             border-top: 1px solid rgba(0,0,0,0.06);
-            padding-top: 8px;
+            padding-top: 10px;
             flex-grow: 2; 
             overflow: hidden;
         }
@@ -202,10 +194,10 @@
             flex-grow: 1;
             overflow-y: auto;
             padding: 2px;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 8px;
             list-style: none;
             touch-action: pan-y;
             -webkit-overflow-scrolling: touch;
@@ -213,40 +205,39 @@
 
         #chat-messages li {
             max-width: 80%;
-            padding: 8px 12px;
-            border-radius: 16px;
-            font-size: 13.5px;
-            line-height: 1.35;
+            padding: 10px 14px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.4;
         }
 
-        .msg-other { background: rgba(0,0,0,0.05); color: var(--text-color); align-self: flex-start; }
+        .msg-other { background: rgba(0,0,0,0.06); color: var(--text-color); align-self: flex-start; }
         .msg-me { background: var(--accent-main); color: white; align-self: flex-end; }
         
         .msg-user-name {
             display: block;
-            font-weight: 700;
-            font-size: 9px;
+            font-weight: 600;
+            font-size: 10px;
             color: var(--text-secondary);
             margin-bottom: 2px;
-            text-transform: uppercase;
         }
 
         .chat-input-row {
             display: flex;
             gap: 8px;
             background: rgba(0, 0, 0, 0.05);
-            padding: 5px 5px 5px 12px;
-            border-radius: 20px;
+            padding: 6px 6px 6px 14px;
+            border-radius: 22px;
             flex-shrink: 0;
             align-items: center;
-            margin-bottom: 2px;
+            margin-bottom: 4px;
         }
 
         .chat-input-row input {
             flex-grow: 1;
             border: none;
             background: transparent;
-            font-size: 13.5px;
+            font-size: 14px;
             outline: none;
             color: var(--text-color);
             -webkit-user-select: text;
@@ -257,42 +248,30 @@
             background: var(--accent-main);
             color: white;
             border: none;
-            width: 28px;
-            height: 28px;
+            width: 30px;
+            height: 30px;
             border-radius: 50%;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: transform 0.1s ease, opacity 0.1s ease;
-        }
-
-        .chat-input-row button:active {
-            transform: scale(0.9);
-            opacity: 0.85;
         }
 
         .action-btn {
             color: white;
             border: none;
-            padding: 13px;
-            border-radius: 16px;
-            font-size: 15px;
+            padding: 15px;
+            border-radius: 18px;
+            font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             margin-top: auto;
             width: 100%;
             box-shadow: 0 4px 12px rgba(69, 66, 244, 0.2);
             flex-shrink: 0;
-            transition: transform 0.1s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.15s ease;
         }
 
-        .action-btn:active {
-            transform: scale(0.97);
-            opacity: 0.9;
-        }
-
-        #qr-modal, #gallery-modal, #user-modal {
+        #qr-modal, #gallery-modal {
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -304,63 +283,24 @@
             align-items: center;
             will-change: opacity;
         }
-
-        .modal-content-card {
-            background: rgba(255, 255, 255, 0.65); 
+        .qr-content {
+            background: rgba(255, 255, 255, 0.55); /* Також на 30% прозоріше */
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             padding: 24px;
-            border-radius: 28px;
+            border-radius: 24px;
             text-align: center;
-            width: 84%;
-            max-width: 280px;
-            border: 1px solid rgba(255, 255, 255, 0.35);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            max-width: 240px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
-
-        .modal-content-card input {
-            width: 100%;
-            padding: 14px;
-            border-radius: 14px;
-            border: 1px solid rgba(0,0,0,0.08);
-            background: rgba(255, 255, 255, 0.7);
-            font-size: 15px;
-            margin: 16px 0;
-            box-sizing: border-box;
-            outline: none;
-            text-align: center;
-            -webkit-user-select: text;
-            user-select: text;
-        }
-
-        .modal-content-card img { width: 180px; height: 180px; margin-bottom: 12px; border-radius: 16px; }
-        
-        .modal-btn {
-            background: var(--accent-main); 
-            color: white;
-            border: none; 
-            padding: 12px 20px; 
-            border-radius: 14px; 
-            cursor: pointer; 
-            font-weight: 600; 
-            width: 100%;
-            font-size: 15px;
-            transition: transform 0.1s ease;
-        }
-
-        .modal-btn:active {
-            transform: scale(0.97);
-        }
-
+        .qr-content img { width: 180px; height: 180px; margin-bottom: 12px; border-radius: 16px; }
         .qr-close {
-            background: rgba(0, 0, 0, 0.05); color: var(--text-color); border: none; padding: 12px 20px; border-radius: 14px; cursor: pointer; font-weight: 600; width: 100%;
-            transition: transform 0.1s ease;
+            background: rgba(0, 0, 0, 0.05); border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; width: 100%;
         }
-        .qr-close:active { transform: scale(0.97); }
 
         .gallery-container {
             width: 94%;
-            height: 85dvh;
+            height: 85vh;
             max-width: 450px;
             position: relative;
             display: flex;
@@ -371,7 +311,7 @@
         }
         .gallery-img-box {
             width: 100%;
-            height: 75dvh;
+            height: 75vh;
             background-size: cover;
             background-position: center;
             border-radius: 30px;
@@ -396,6 +336,7 @@
         }
         .dot.active { background: #ffffff; }
 
+        /* ОДНАКОВІ УЛЬТРА-ТОНКІ РАМКИ ТА СПІЛЬНИЙ СТИЛЬ ДЛЯ МАРКЕРІВ */
         .custom-avatar-marker, .custom-place-marker { 
             background: none !important; 
             border: none !important; 
@@ -406,12 +347,13 @@
             justify-content: center;
         }
         
+        /* Зменшені однакові рамки (38px x 38px) з однаковим кольором і тонким бордером (в 2 рази менше) */
         .avatar-ring {
             width: 38px; 
             height: 38px; 
             border-radius: 50%;
-            background: var(--ultramarine-gradient); 
-            padding: 1.2px; 
+            background: var(--ultramarine-gradient); /* Jednakowy ультрамариновий градієнт */
+            padding: 1.2px; /* Рамку зменшено рівно в 2 рази, ідеально симетрична з усіх боків */
             box-sizing: border-box;
         }
         .avatar-ring-inner {
@@ -422,12 +364,13 @@
             background-position: center;
         }
         
+        /* Тонка рівномірна рамка для закладів */
         .place-ring {
             width: 38px; 
             height: 38px; 
             border-radius: 50%;
             background: var(--ultramarine-gradient); 
-            padding: 1.2px; 
+            padding: 1.2px; /* Рівномірна рамка в 1.2px зі всіх боків */
             box-sizing: border-box;
             display: flex;
             align-items: center;
@@ -435,7 +378,7 @@
         }
 
         .place-icon-svg {
-            width: 18px; 
+            width: 18px; /* Відповідно зменшена іконка для балансу */
             height: 18px;
             fill: #ffffff;
             display: block;
@@ -481,31 +424,19 @@
         </div>
     </div>
 
-    <!-- Модалка купона -->
     <div id="qr-modal">
-        <div class="modal-content-card">
-            <h3 style="margin: 0 0 8px 0; font-size: 18px;">Твій купон</h3>
+        <div class="qr-content">
+            <h3>Твій купон</h3>
             <div id="qr-code-space"></div>
             <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px;">Покажи цей код на касі закладу</p>
             <button class="qr-close" onclick="closeQr()">Готово</button>
         </div>
     </div>
 
-    <!-- Галерея -->
     <div id="gallery-modal">
         <div class="gallery-container">
             <div class="gallery-img-box" id="gallery-img"></div>
             <div class="gallery-dots" id="gallery-dots"></div>
-        </div>
-    </div>
-
-    <!-- Модалка для введення імені -->
-    <div id="user-modal">
-        <div class="modal-content-card">
-            <h3 style="margin: 0; font-size: 19px; font-weight: 700;">Привіт у Львові! 👋</h3>
-            <p style="font-size: 13px; color: var(--text-secondary); margin: 8px 0 0 0;">Введіть своє ім'я для спілкування в чатах міста</p>
-            <input type="text" id="username-input" placeholder="Твоє ім'я" value="Гість" />
-            <button class="modal-btn" id="save-username-btn">Продовжити</button>
         </div>
     </div>
 
@@ -527,32 +458,44 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // Стандартна ініціалізація карти. Тепер зум на жестах смартфона працюватиме за умовчанням
         const map = L.map('map', { 
-            zoomControl: false
+            zoomControl: false,
+            doubleClickZoom: false,
+            tap: false
         }).setView([49.8415, 24.0315], 15);
 
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
             attribution: '© OpenStreetMap'
         }).addTo(map);
 
+        let lastTap = 0;
+        let zoomPhase = 0; 
+
+        map.getContainer().addEventListener('touchstart', function(e) {
+            const now = Date.now();
+            if (now - lastTap < 280) {
+                e.preventDefault();
+                const currentZoom = map.getZoom();
+                let newZoom = currentZoom;
+
+                if (zoomPhase === 0) {
+                    newZoom = currentZoom + 2; 
+                } else if (zoomPhase === 1) {
+                    newZoom = currentZoom + 1; 
+                } else if (zoomPhase === 2) {
+                    newZoom = currentZoom - 2; 
+                }
+
+                map.setZoom(newZoom);
+                zoomPhase = (zoomPhase + 1) % 3; 
+            }
+            lastTap = now;
+        }, { passive: false });
+
         map.on('click', () => window.closeProfile());
 
-        let myName = localStorage.getItem('chat_username');
-        const userModal = document.getElementById('user-modal');
-        const usernameInput = document.getElementById('username-input');
-        const saveUsernameBtn = document.getElementById('save-username-btn');
-
-        if (!myName) {
-            userModal.style.display = 'flex';
-        }
-
-        saveUsernameBtn.addEventListener('click', () => {
-            const val = usernameInput.value.trim();
-            myName = val || "Гість";
-            localStorage.setItem('chat_username', myName);
-            userModal.style.display = 'none';
-        });
+        let myName = localStorage.getItem('chat_username') || prompt("Введіть ваше ім'я:", "Гість") || "Анонім";
+        localStorage.setItem('chat_username', myName);
 
         const people = [
             { id: 'p1', type: 'person', name: "Марта, 22", coords: [49.8425, 24.0320], photos: ["https://xsgames.co/randomusers/assets/avatars/female/1.jpg", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500", "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500"], status: "П'ю матчу, ходімо гуляти! ☕", about: "Студентка академії мистецтв.", interests: "Мистецтво, кава, дизайн" },
@@ -625,10 +568,7 @@
             const text2Box = document.getElementById('prof-text2-box');
             const chatContainer = document.getElementById('chat-container');
 
-            if (currentChatRef) { 
-                off(currentChatRef); 
-                document.getElementById('chat-messages').innerHTML = ''; 
-            }
+            if (currentChatRef) { off(currentChatRef); document.getElementById('chat-messages').innerHTML = ''; }
 
             if (item.type === 'person') {
                 badge.style.display = 'none';
@@ -658,30 +598,16 @@
             }
 
             const sidebar = document.getElementById('profile-sidebar');
-            
-            if (sidebar.style.transform && sidebar.style.transform.includes('-150%')) {
-                sidebar.style.transition = 'none';
-                sidebar.style.transform = 'translate3d(-50%, 150%, 0)';
-                sidebar.offsetHeight; 
-            }
-
             sidebar.style.transition = 'transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)';
-            sidebar.style.transform = 'translate3d(-50%, -50%, 0)';
             sidebar.classList.add('active');
             map.panTo([item.coords[0] - 0.0015, item.coords[1]]);
         }
 
-        window.closeProfile = function(direction) {
+        window.closeProfile = function() {
             const sidebar = document.getElementById('profile-sidebar');
             sidebar.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
-            
-            if (direction === 'up') {
-                sidebar.style.transform = 'translate3d(-50%, -150%, 0)';
-            } else {
-                sidebar.style.transform = 'translate3d(-50%, 150%, 0)'; 
-            }
-            
             sidebar.classList.remove('active');
+            sidebar.style.transform = ''; 
             if (currentChatRef) off(currentChatRef);
             currentActiveItem = null;
         }
@@ -724,124 +650,153 @@
             });
         }
 
-        // Покращена логіка свайпів для гортання галереї
-        let touchStartX = 0;
-        let touchEndX = 0;
-        const galleryContainer = document.querySelector('.gallery-container');
+        const galleryImgBox = document.getElementById('gallery-img');
+        let galStartX = 0, galStartY = 0, galCurrX = 0, galCurrY = 0, activeTouch = false;
 
-        galleryContainer.addEventListener('touchstart', e => {
-            touchStartX = e.changedTouches[0].screenX;
+        galleryImgBox.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 1) return;
+            galStartX = e.touches[0].clientX;
+            galStartY = e.touches[0].clientY;
+            activeTouch = true;
+            galleryImgBox.style.transition = 'none';
         }, { passive: true });
 
-        galleryContainer.addEventListener('touchend', e => {
-            touchEndX = e.changedTouches[0].screenX;
-            handleSwipe();
-        }, { passive: true });
+        galleryImgBox.addEventListener('touchmove', (e) => {
+            if (!activeTouch) return;
+            galCurrX = e.touches[0].clientX - galStartX;
+            galCurrY = e.touches[0].clientY - galStartY;
 
-        function handleSwipe() {
-            const swipeDistance = touchEndX - touchStartX;
-            if (Math.abs(swipeDistance) > 40) { // Надійніший поріг реакції на свайп
-                if (swipeDistance < 0) {
-                    window.changeGalleryPhoto(1); 
-                } else {
-                    window.changeGalleryPhoto(-1); 
-                }
+            if (Math.abs(galCurrY) > Math.abs(galCurrX)) {
+                if (galCurrY < 0) galleryImgBox.style.transform = `translate3d(0, ${galCurrY}px, 0)`;
+            } else {
+                galleryImgBox.style.transform = `translate3d(${galCurrX}px, 0, 0)`;
             }
+        }, { passive: true });
+
+        galleryImgBox.addEventListener('touchend', () => {
+            if (!activeTouch) return;
+            activeTouch = false;
+            galleryImgBox.style.transition = 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)';
+
+            if (galCurrY < -100 && Math.abs(galCurrY) > Math.abs(galCurrX)) {
+                galleryImgBox.style.transform = `translate3d(0, -125vh, 0)`;
+                setTimeout(() => window.closeGallery(), 300);
+            } else if (Math.abs(galCurrX) > 60) {
+                window.changeGalleryPhoto(galCurrX < 0 ? 1 : -1);
+            } else {
+                galleryImgBox.style.transform = 'translate3d(0, 0, 0)';
+            }
+            galCurrX = galCurrY = 0;
+        }, { passive: true });
+
+
+        const sidebar = document.getElementById('profile-sidebar');
+        const nonActiveHero = document.getElementById('prof-img');
+        const nonActiveInfo = document.getElementById('prof-non-active-info');
+        let startSidebarY = 0, currSidebarY = 0, isSidebarSwiping = false;
+
+        function attachSidebarSwipe(element) {
+            element.addEventListener('touchstart', (e) => {
+                if (e.target.closest('#chat-messages') || e.target.closest('.chat-input-row') || e.target.closest('.action-btn') || e.target.closest('.info-scroll-area')) {
+                    return;
+                }
+                startSidebarY = e.touches[0].clientY;
+                isSidebarSwiping = true;
+                sidebar.style.transition = 'none';
+            }, { passive: true });
+
+            element.addEventListener('touchmove', (e) => {
+                if (!isSidebarSwiping) return;
+                currSidebarY = e.touches[0].clientY - startSidebarY;
+                if (currSidebarY > 0) {
+                    sidebar.style.transform = `translate3d(-50%, calc(-50% + ${currSidebarY}px), 0)`;
+                }
+            }, { passive: true });
+
+            element.addEventListener('touchend', () => {
+                if (!isSidebarSwiping) return;
+                isSidebarSwiping = false;
+                sidebar.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+                if (currSidebarY > 120) {
+                    window.closeProfile();
+                } else {
+                    sidebar.style.transform = 'translate3d(-50%, -50%, 0)';
+                }
+                currSidebarY = 0;
+            }, { passive: true });
         }
 
-        document.getElementById('gallery-modal').addEventListener('click', (e) => {
-            if (e.target.id === 'gallery-modal') window.closeGallery();
-        });
+        attachSidebarSwipe(sidebar);
 
-        document.getElementById('qr-modal').addEventListener('click', (e) => {
-            if (e.target.id === 'qr-modal') window.closeQr();
-        });
-
-        window.closeQr = function() {
-            document.getElementById('qr-modal').style.display = 'none';
-        };
-
-        const actionBtn = document.getElementById('prof-btn');
-        actionBtn.addEventListener('click', () => {
-            if (!currentActiveItem || currentActiveItem.type !== 'place') return;
-            
-            const randomCode = Math.floor(100000 + Math.random() * 900000);
-            const qrSpace = document.getElementById('qr-code-space');
-            
-            qrSpace.innerHTML = `
-                <div style="font-size: 24px; font-weight: 800; letter-spacing: 4px; padding: 24px; border: 2px dashed var(--accent-main); border-radius: 12px; margin-bottom: 12px; color: var(--accent-main); background: #fdfdfd;">
-                    ${randomCode}
-                </div>
-            `;
-            document.getElementById('qr-modal').style.display = 'flex';
-        });
-
-        // Firebase чат
-        function loadChat(chatId) {
+        // ЧАТ З FIREBASE
+        function loadChat(itemId) {
             const chatMessages = document.getElementById('chat-messages');
             chatMessages.innerHTML = '';
+            currentChatRef = ref(db, `chats/${itemId}`);
             
-            currentChatRef = ref(db, `chats/${chatId}`);
             onChildAdded(currentChatRef, (snapshot) => {
-                const data = snapshot.val();
+                const msg = snapshot.val();
                 const li = document.createElement('li');
-                
-                if (data.sender === myName) {
+                if (msg.name === myName) {
                     li.className = 'msg-me';
-                    li.innerHTML = `<span>${data.text}</span>`;
+                    li.innerHTML = `<span>${escapeHtml(msg.text)}</span>`;
                 } else {
                     li.className = 'msg-other';
-                    li.innerHTML = `
-                        <span class="msg-user-name">${data.sender}</span>
-                        <span>${data.text}</span>
-                    `;
+                    li.innerHTML = `<span class="msg-user-name">${escapeHtml(msg.name)}</span><span>${escapeHtml(msg.text)}</span>`;
                 }
                 chatMessages.appendChild(li);
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             });
         }
 
-        function sendMessage() {
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        function sendChatMessage() {
             const input = document.getElementById('chat-msg-input');
             const text = input.value.trim();
             if (!text || !currentActiveItem) return;
 
             push(ref(db, `chats/${currentActiveItem.id}`), {
-                sender: myName,
+                name: myName,
                 text: text,
                 timestamp: Date.now()
             });
             input.value = '';
         }
 
-        document.getElementById('chat-send-btn').addEventListener('click', sendMessage);
+        document.getElementById('chat-send-btn').addEventListener('click', sendChatMessage);
         document.getElementById('chat-msg-input').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendMessage();
+            if (e.key === 'Enter') sendChatMessage();
         });
 
-        // Логіка жестів для закриття сайдбару свайпом вниз
-        let sidebarTouchStartY = 0;
-        const sidebar = document.getElementById('profile-sidebar');
+        // КУПОНИ & МОДАЛКИ
+        document.getElementById('prof-btn').addEventListener('click', () => {
+            if (!currentActiveItem || currentActiveItem.type !== 'place') return;
+            const qrSpace = document.getElementById('qr-code-space');
+            qrSpace.innerHTML = '';
+            
+            const qrImg = document.createElement('img');
+            const promoData = `lviv_promo_${currentActiveItem.id}_${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(promoData)}`;
+            qrImg.alt = "Купон";
+            qrSpace.appendChild(qrImg);
 
-        // Відстежуємо дотик до верхньої частини панелі (ручка + зона фотографії)
-        const swipeZone = document.getElementById('prof-img');
-        const handleZone = document.querySelector('.drag-handle');
+            document.getElementById('qr-modal').style.display = 'flex';
+        });
 
-        const onTouchStart = (e) => {
-            sidebarTouchStartY = e.touches[0].clientY;
-        };
+        window.closeQr = function() {
+            document.getElementById('qr-modal').style.display = 'none';
+        }
 
-        const onTouchEnd = (e) => {
-            const diffY = e.changedTouches[0].clientY - sidebarTouchStartY;
-            if (diffY > 60) { // Якщо свайпнули вниз більше ніж на 60px
-                window.closeProfile('down');
-            }
-        };
-
-        swipeZone.addEventListener('touchstart', onTouchStart, { passive: true });
-        swipeZone.addEventListener('touchend', onTouchEnd, { passive: true });
-        handleZone.addEventListener('touchstart', onTouchStart, { passive: true });
-        handleZone.addEventListener('touchend', onTouchEnd, { passive: true });
+        // Закриття галереї та модалок по кліку на задній фон
+        document.getElementById('gallery-modal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('gallery-modal')) window.closeGallery();
+        });
+        document.getElementById('qr-modal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('qr-modal')) window.closeQr();
+        });
     </script>
 </body>
 </html>
