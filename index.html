@@ -62,8 +62,6 @@
             border-radius: 32px;
             border: 1px solid rgba(255, 255, 255, 0.4);
             box-sizing: border-box;
-            
-            /* Жорсткий рівномірний відступ 7px з усіх сторін */
             padding: 7px; 
             touch-action: none;
         }
@@ -72,7 +70,6 @@
             transform: translate3d(-50%, -50%, 0);
         }
 
-        /* Ручка тепер позиціонується всередині верхньої 7px рамки та не заважає фотографії */
         .drag-handle {
             width: 36px;
             height: 4px;
@@ -98,8 +95,6 @@
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
             cursor: pointer;
             touch-action: none;
-            
-            /* Жодних зовнішніх відступів зверху, рамка формується виключно за рахунок padding контейнера */
             margin-top: 0; 
             box-sizing: border-box;
         }
@@ -687,13 +682,17 @@
         }, { passive: true });
 
 
-        // ОБРОБКА ЖЕСТУ СВАЙПУ КАРТКИ ВГОРУ ТА ВНИЗ
+        // ОБРОБКА ЖЕСТУ СВАЙПУ КАРТКИ ВГОРУ ТА ВНИЗ (ОНОВЛЕНО)
         const sidebar = document.getElementById('profile-sidebar');
-        let startSidebarY = 0, currSidebarY = 0, isSidebarSwiping = false;
+        let startSidebarY = 0;
+        let currSidebarY = 0;
+        let isSidebarSwiping = false;
 
         sidebar.addEventListener('touchstart', (e) => {
-            // Скасовуємо свайп, якщо він почався на внутрішніх інтерактивних областях
-            if (e.target.closest('#chat-messages') || e.target.closest('.chat-input-row') || e.target.closest('.action-btn') || e.target.closest('.info-scroll-area')) {
+            if (e.target.closest('#chat-messages') || 
+                e.target.closest('.chat-input-row') || 
+                e.target.closest('.action-btn') || 
+                e.target.closest('.info-scroll-area')) {
                 return;
             }
             startSidebarY = e.touches[0].clientY;
@@ -704,22 +703,25 @@
         sidebar.addEventListener('touchmove', (e) => {
             if (!isSidebarSwiping) return;
             currSidebarY = e.touches[0].clientY - startSidebarY;
-            
-            // Завдяки формулі зсуву translate3d(-50%, calc(-50% + Y), 0) картка реагує на тягнення як вниз (+), так і вгору (-)
             sidebar.style.transform = `translate3d(-50%, calc(-50% + ${currSidebarY}px), 0)`;
         }, { passive: true });
 
         sidebar.addEventListener('touchend', () => {
             if (!isSidebarSwiping) return;
             isSidebarSwiping = false;
-            sidebar.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
             
-            // Якщо потягнули вниз на 120px+ АБО вгору на 120px+ (менше -120), картка сховається
-            if (currSidebarY > 120 || currSidebarY < -120) {
-                window.closeProfile();
+            sidebar.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)';
+            
+            if (currSidebarY > 80) {
+                sidebar.style.transform = 'translate3d(-50%, 150%, 0)';
+                setTimeout(() => window.closeProfile(), 300);
+            } else if (currSidebarY < -80) {
+                sidebar.style.transform = 'translate3d(-50%, -250%, 0)';
+                setTimeout(() => window.closeProfile(), 300);
             } else {
-                sidebar.style.transform = ''; // Повертаємо в центр
+                sidebar.style.transform = 'translate3d(-50%, -50%, 0)';
             }
+            
             currSidebarY = 0;
         }, { passive: true });
 
@@ -761,7 +763,6 @@
             if (e.key === 'Enter') sendChatMessage();
         });
 
-        // КУПОНИ (QR)
         const qrModal = document.getElementById('qr-modal');
         const profBtn = document.getElementById('prof-btn');
 
@@ -770,7 +771,6 @@
             const qrSpace = document.getElementById('qr-code-space');
             qrSpace.innerHTML = '';
             
-            // Проста генерація QR за допомогою апішки Google Charts
             const qrImg = document.createElement('img');
             qrImg.src = `https://chart.googleapis.com/chart?chs=180x180&cht=qr&chl=COUPON-${currentActiveItem.id}-${Date.now()}&choe=UTF-8`;
             qrSpace.appendChild(qrImg);
