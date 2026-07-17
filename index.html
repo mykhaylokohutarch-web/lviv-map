@@ -8,9 +8,9 @@
     <style>
         :root {
             --bg-color: #f5f5f7; 
-            --card-bg: rgba(255, 255, 255, 0.55); /* Зроблено білий фон на 30% прозорішим */
+            --card-bg: rgba(255, 255, 255, 0.55); 
             --accent-main: #4542f4;      
-            --accent-people: #4542f4; /* Змінено з червоного на ультрамарин */   
+            --accent-people: #4542f4;   
             --text-color: #1d1d1f; 
             --text-secondary: #86868b; 
             --ultramarine-gradient: linear-gradient(180deg, #706eff 0%, #4542f4 60%, #2a27c9 100%);
@@ -32,7 +32,7 @@
         #app-container {
             display: flex;
             width: 100%;
-            height: 100vh;
+            height: 100dvh;
             position: relative;
         }
 
@@ -48,7 +48,7 @@
             background-color: var(--card-bg);
             backdrop-filter: blur(25px) saturate(190%);
             -webkit-backdrop-filter: blur(25px) saturate(190%);
-            height: 82vh;
+            height: 80dvh;
             box-shadow: 0 12px 38px rgba(0, 0, 0, 0.15);
             display: flex;
             flex-direction: column;
@@ -62,9 +62,8 @@
             border-radius: 32px;
             border: 1px solid rgba(255, 255, 255, 0.4);
             box-sizing: border-box;
-            
-            /* ВНУТРІШНІ РАМКИ КАРТКИ ЗМЕНШЕНО ВДВІЧІ (з 14px до 7px) */
             padding: 7px; 
+            padding-bottom: calc(7px + env(safe-area-inset-bottom));
             touch-action: none;
         }
 
@@ -78,8 +77,6 @@
             background: rgba(0, 0, 0, 0.15);
             border-radius: 3px;
             position: absolute;
-            
-            /* Вирівняно ручку по висоті з урахуванням нових тонких рамок */
             top: 6px;
             left: 50%;
             transform: translate3d(-50%, 0, 0);
@@ -93,13 +90,11 @@
             background-size: cover;
             background-position: center;
             background-color: #e5e5ea;
-            border-radius: 25px; /* Більш гармонійний радіус під тонку рамку */
+            border-radius: 25px; 
             flex-shrink: 0;
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
             cursor: pointer;
             touch-action: none;
-            
-            /* ТОЧНЕ ВИРІВНЮВАННЯ: Верхній відступ тепер абсолютно такий же, як і по боках (7px) */
             margin-top: 7px; 
             box-sizing: border-box;
         }
@@ -118,7 +113,6 @@
         }
 
         .profile-info {
-            /* Легкий відступ знизу фото для повітря в інтерфейсі */
             padding: 12px 7px 0 7px;
             display: flex;
             flex-direction: column;
@@ -255,6 +249,12 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: transform 0.1s ease, opacity 0.1s ease;
+        }
+
+        .chat-input-row button:active {
+            transform: scale(0.9);
+            opacity: 0.85;
         }
 
         .action-btn {
@@ -269,9 +269,15 @@
             width: 100%;
             box-shadow: 0 4px 12px rgba(69, 66, 244, 0.2);
             flex-shrink: 0;
+            transition: transform 0.1s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.15s ease;
         }
 
-        #qr-modal, #gallery-modal {
+        .action-btn:active {
+            transform: scale(0.97);
+            opacity: 0.9;
+        }
+
+        #qr-modal, #gallery-modal, #user-modal {
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -283,24 +289,63 @@
             align-items: center;
             will-change: opacity;
         }
-        .qr-content {
-            background: rgba(255, 255, 255, 0.55); /* Також на 30% прозоріше */
+
+        .modal-content-card {
+            background: rgba(255, 255, 255, 0.65); 
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             padding: 24px;
-            border-radius: 24px;
+            border-radius: 28px;
             text-align: center;
-            max-width: 240px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            width: 84%;
+            max-width: 280px;
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
         }
-        .qr-content img { width: 180px; height: 180px; margin-bottom: 12px; border-radius: 16px; }
+
+        .modal-content-card input {
+            width: 100%;
+            padding: 14px;
+            border-radius: 14px;
+            border: 1px solid rgba(0,0,0,0.08);
+            background: rgba(255, 255, 255, 0.7);
+            font-size: 15px;
+            margin: 16px 0;
+            box-sizing: border-box;
+            outline: none;
+            text-align: center;
+            -webkit-user-select: text;
+            user-select: text;
+        }
+
+        .modal-content-card img { width: 180px; height: 180px; margin-bottom: 12px; border-radius: 16px; }
+        
+        .modal-btn {
+            background: var(--accent-main); 
+            color: white;
+            border: none; 
+            padding: 12px 20px; 
+            border-radius: 14px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            width: 100%;
+            font-size: 15px;
+            transition: transform 0.1s ease;
+        }
+
+        .modal-btn:active {
+            transform: scale(0.97);
+        }
+
         .qr-close {
-            background: rgba(0, 0, 0, 0.05); border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; width: 100%;
+            background: rgba(0, 0, 0, 0.05); color: var(--text-color); border: none; padding: 12px 20px; border-radius: 14px; cursor: pointer; font-weight: 600; width: 100%;
+            transition: transform 0.1s ease;
         }
+        .qr-close:active { transform: scale(0.97); }
 
         .gallery-container {
             width: 94%;
-            height: 85vh;
+            height: 85dvh;
             max-width: 450px;
             position: relative;
             display: flex;
@@ -311,7 +356,7 @@
         }
         .gallery-img-box {
             width: 100%;
-            height: 75vh;
+            height: 75dvh;
             background-size: cover;
             background-position: center;
             border-radius: 30px;
@@ -336,7 +381,6 @@
         }
         .dot.active { background: #ffffff; }
 
-        /* ОДНАКОВІ УЛЬТРА-ТОНКІ РАМКИ ТА СПІЛЬНИЙ СТИЛЬ ДЛЯ МАРКЕРІВ */
         .custom-avatar-marker, .custom-place-marker { 
             background: none !important; 
             border: none !important; 
@@ -347,13 +391,12 @@
             justify-content: center;
         }
         
-        /* Зменшені однакові рамки (38px x 38px) з однаковим кольором і тонким бордером (в 2 рази менше) */
         .avatar-ring {
             width: 38px; 
             height: 38px; 
             border-radius: 50%;
-            background: var(--ultramarine-gradient); /* Jednakowy ультрамариновий градієнт */
-            padding: 1.2px; /* Рамку зменшено рівно в 2 рази, ідеально симетрична з усіх боків */
+            background: var(--ultramarine-gradient); 
+            padding: 1.2px; 
             box-sizing: border-box;
         }
         .avatar-ring-inner {
@@ -364,13 +407,12 @@
             background-position: center;
         }
         
-        /* Тонка рівномірна рамка для закладів */
         .place-ring {
             width: 38px; 
             height: 38px; 
             border-radius: 50%;
             background: var(--ultramarine-gradient); 
-            padding: 1.2px; /* Рівномірна рамка в 1.2px зі всіх боків */
+            padding: 1.2px; 
             box-sizing: border-box;
             display: flex;
             align-items: center;
@@ -378,7 +420,7 @@
         }
 
         .place-icon-svg {
-            width: 18px; /* Відповідно зменшена іконка для балансу */
+            width: 18px; 
             height: 18px;
             fill: #ffffff;
             display: block;
@@ -424,19 +466,31 @@
         </div>
     </div>
 
+    <!-- Модалка купона -->
     <div id="qr-modal">
-        <div class="qr-content">
-            <h3>Твій купон</h3>
+        <div class="modal-content-card">
+            <h3 style="margin: 0 0 8px 0; font-size: 18px;">Твій купон</h3>
             <div id="qr-code-space"></div>
             <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px;">Покажи цей код на касі закладу</p>
             <button class="qr-close" onclick="closeQr()">Готово</button>
         </div>
     </div>
 
+    <!-- Галерея -->
     <div id="gallery-modal">
         <div class="gallery-container">
             <div class="gallery-img-box" id="gallery-img"></div>
             <div class="gallery-dots" id="gallery-dots"></div>
+        </div>
+    </div>
+
+    <!-- Красива модалка для введення імені користувача замість prompt -->
+    <div id="user-modal">
+        <div class="modal-content-card">
+            <h3 style="margin: 0; font-size: 19px; font-weight: 700;">Привіт у Львові! 👋</h3>
+            <p style="font-size: 13px; color: var(--text-secondary); margin: 8px 0 0 0;">Введіть своє ім'я для спілкування в чатах міста</p>
+            <input type="text" id="username-input" placeholder="Твоє ім'я" value="Гість" />
+            <button class="modal-btn" id="save-username-btn">Продовжити</button>
         </div>
     </div>
 
@@ -494,8 +548,22 @@
 
         map.on('click', () => window.closeProfile());
 
-        let myName = localStorage.getItem('chat_username') || prompt("Введіть ваше ім'я:", "Гість") || "Анонім";
-        localStorage.setItem('chat_username', myName);
+        // Логіка імені користувача через кастомний інтерфейс
+        let myName = localStorage.getItem('chat_username');
+        const userModal = document.getElementById('user-modal');
+        const usernameInput = document.getElementById('username-input');
+        const saveUsernameBtn = document.getElementById('save-username-btn');
+
+        if (!myName) {
+            userModal.style.display = 'flex';
+        }
+
+        saveUsernameBtn.addEventListener('click', () => {
+            const val = usernameInput.value.trim();
+            myName = val || "Гість";
+            localStorage.setItem('chat_username', myName);
+            userModal.style.display = 'none';
+        });
 
         const people = [
             { id: 'p1', type: 'person', name: "Марта, 22", coords: [49.8425, 24.0320], photos: ["https://xsgames.co/randomusers/assets/avatars/female/1.jpg", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500", "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500"], status: "П'ю матчу, ходімо гуляти! ☕", about: "Студентка академії мистецтв.", interests: "Мистецтво, кава, дизайн" },
@@ -568,7 +636,10 @@
             const text2Box = document.getElementById('prof-text2-box');
             const chatContainer = document.getElementById('chat-container');
 
-            if (currentChatRef) { off(currentChatRef); document.getElementById('chat-messages').innerHTML = ''; }
+            if (currentChatRef) { 
+                off(currentChatRef); 
+                document.getElementById('chat-messages').innerHTML = ''; 
+            }
 
             if (item.type === 'person') {
                 badge.style.display = 'none';
@@ -679,7 +750,7 @@
             galleryImgBox.style.transition = 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)';
 
             if (galCurrY < -100 && Math.abs(galCurrY) > Math.abs(galCurrX)) {
-                galleryImgBox.style.transform = `translate3d(0, -125vh, 0)`;
+                galleryImgBox.style.transform = `translate3d(0, -125dvh, 0)`;
                 setTimeout(() => window.closeGallery(), 300);
             } else if (Math.abs(galCurrX) > 60) {
                 window.changeGalleryPhoto(galCurrX < 0 ? 1 : -1);
@@ -689,7 +760,7 @@
             galCurrX = galCurrY = 0;
         }, { passive: true });
 
-
+        // Свайп закриття картки (Drag-to-dismiss)
         const sidebar = document.getElementById('profile-sidebar');
         const nonActiveHero = document.getElementById('prof-img');
         const nonActiveInfo = document.getElementById('prof-non-active-info');
@@ -697,9 +768,22 @@
 
         function attachSidebarSwipe(element) {
             element.addEventListener('touchstart', (e) => {
-                if (e.target.closest('#chat-messages') || e.target.closest('.chat-input-row') || e.target.closest('.action-btn') || e.target.closest('.info-scroll-area')) {
+                const targetMessages = e.target.closest('#chat-messages');
+                const targetScrollArea = e.target.closest('.info-scroll-area');
+
+                // Якщо користувач скролить чат, свайп блокується ТІЛЬКИ якщо чат проскролений вниз.
+                // Якщо чат на самому верху (scrollTop === 0) і людина тягне вниз, дозволяємо закрити картку.
+                if (targetMessages) {
+                    if (targetMessages.scrollTop > 0) return;
+                }
+                if (targetScrollArea) {
+                    if (targetScrollArea.scrollTop > 0) return;
+                }
+                
+                if (e.target.closest('.chat-input-row') || e.target.closest('.action-btn')) {
                     return;
                 }
+
                 startSidebarY = e.touches[0].clientY;
                 isSidebarSwiping = true;
                 sidebar.style.transition = 'none';
@@ -709,7 +793,6 @@
                 if (!isSidebarSwiping) return;
                 currSidebarY = e.touches[0].clientY - startSidebarY;
                 
-                // Дозволяємо рух лише вниз (для свайпу-закриття картки)
                 if (currSidebarY > 0) {
                     sidebar.style.transform = `translate3d(-50%, calc(-50% + ${currSidebarY}px), 0)`;
                 }
@@ -729,21 +812,16 @@
             }, { passive: true });
         }
 
-        // Прив'язуємо жести свайпу до шапки картки та текстової інформації
         attachSidebarSwipe(nonActiveHero);
         attachSidebarSwipe(nonActiveInfo);
-
-        // --- ЛОГІКА РОБОТИ З ФУНКЦІЯМИ (Купон / Чат) ---
 
         // Купон
         document.getElementById('prof-btn').addEventListener('click', () => {
             if (!currentActiveItem || currentActiveItem.type !== 'place') return;
             
             const qrSpace = document.getElementById('qr-code-space');
-            // Генеруємо випадковий код купону
             const couponCode = 'LVIV-' + Math.random().toString(36).substr(2, 9).toUpperCase();
             
-            // Використовуємо безкоштовний API для генерації QR-коду
             qrSpace.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${couponCode}" alt="QR Code">
                                  <p style="font-weight: 700; font-size: 16px; margin: 8px 0; color: var(--accent-main);">${couponCode}</p>`;
             
@@ -754,7 +832,7 @@
             document.getElementById('qr-modal').style.display = 'none';
         }
 
-        // Чат на базі Firebase Database
+        // Робота з Чатом Firebase
         function loadChat(personId) {
             const chatMessages = document.getElementById('chat-messages');
             chatMessages.innerHTML = '';
@@ -774,7 +852,6 @@
                 }
                 
                 chatMessages.appendChild(li);
-                // Автоматичний скрол до останнього повідомлення
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             });
         }
