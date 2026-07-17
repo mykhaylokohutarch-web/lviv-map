@@ -683,11 +683,10 @@
 
             const sidebar = document.getElementById('profile-sidebar');
             
-            // Якщо вікно закрили свайпом вгору, ми скидаємо його положення вниз без анімації
             if (sidebar.style.transform && sidebar.style.transform.includes('-150%')) {
                 sidebar.style.transition = 'none';
                 sidebar.style.transform = 'translate3d(-50%, 150%, 0)';
-                sidebar.offsetHeight; // force reflow
+                sidebar.offsetHeight; 
             }
 
             sidebar.style.transition = 'transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)';
@@ -749,123 +748,67 @@
             });
         }
 
-        const galleryImgBox = document.getElementById('gallery-img');
-        let galStartX = 0, galStartY = 0, galCurrX = 0, galCurrY = 0, activeTouch = false;
+        // Логіка жестів для галереї (свайпи)
+        let touchStartX = 0;
+        let touchEndX = 0;
+        const galleryContainer = document.querySelector('.gallery-container');
 
-        galleryImgBox.addEventListener('touchstart', (e) => {
-            if (e.touches.length > 1) return;
-            galStartX = e.touches[0].clientX;
-            galStartY = e.touches[0].clientY;
-            activeTouch = true;
-            galleryImgBox.style.transition = 'none';
+        galleryContainer.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
         }, { passive: true });
 
-        galleryImgBox.addEventListener('touchmove', (e) => {
-            if (!activeTouch) return;
-            galCurrX = e.touches[0].clientX - galStartX;
-            galCurrY = e.touches[0].clientY - galStartY;
-
-            if (Math.abs(galCurrY) > Math.abs(galCurrX)) {
-                if (galCurrY < 0) galleryImgBox.style.transform = `translate3d(0, ${galCurrY}px, 0)`;
-            } else {
-                galleryImgBox.style.transform = `translate3d(${galCurrX}px, 0, 0)`;
-            }
+        galleryContainer.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
         }, { passive: true });
 
-        galleryImgBox.addEventListener('touchend', () => {
-            if (!activeTouch) return;
-            activeTouch = false;
-            galleryImgBox.style.transition = 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)';
-
-            if (galCurrY < -100 && Math.abs(galCurrY) > Math.abs(galCurrX)) {
-                galleryImgBox.style.transform = `translate3d(0, -125dvh, 0)`;
-                setTimeout(() => window.closeGallery(), 300);
-            } else if (Math.abs(galCurrX) > 60) {
-                window.changeGalleryPhoto(galCurrX < 0 ? 1 : -1);
-            } else {
-                galleryImgBox.style.transform = 'translate3d(0, 0, 0)';
-            }
-            galCurrX = galCurrY = 0;
-        }, { passive: true });
-
-        // Свайп закриття картки (Двосторонній свайп вгору/вниз)
-        const sidebar = document.getElementById('profile-sidebar');
-        const nonActiveHero = document.getElementById('prof-img');
-        const nonActiveInfo = document.getElementById('prof-non-active-info');
-        let startSidebarY = 0, currSidebarY = 0, isSidebarSwiping = false;
-
-        function attachSidebarSwipe(element) {
-            element.addEventListener('touchstart', (e) => {
-                const targetMessages = e.target.closest('#chat-messages');
-                const targetScrollArea = e.target.closest('.info-scroll-area');
-
-                if (targetMessages) {
-                    if (targetMessages.scrollTop > 0) return;
-                }
-                if (targetScrollArea) {
-                    if (targetScrollArea.scrollTop > 0) return;
-                }
-                
-                if (e.target.closest('.chat-input-row') || e.target.closest('.action-btn')) {
-                    return;
-                }
-
-                startSidebarY = e.touches[0].clientY;
-                isSidebarSwiping = true;
-                sidebar.style.transition = 'none';
-            }, { passive: true });
-
-            element.addEventListener('touchmove', (e) => {  
-                if (!isSidebarSwiping) return;
-                currSidebarY = e.touches[0].clientY - startSidebarY;
-                
-                // Дозволяємо тягнути як вниз, так і вгору
-                sidebar.style.transform = `translate3d(-50%, calc(-50% + ${currSidebarY}px), 0)`;
-            }, { passive: true });
-
-            element.addEventListener('touchend', () => {
-                if (!isSidebarSwiping) return;
-                isSidebarSwiping = false;
-                
-                if (currSidebarY > 120) {
-                    window.closeProfile('down'); // Закриття вниз
-                } else if (currSidebarY < -120) {
-                    window.closeProfile('up');   // Закриття вгору
+        function handleSwipe() {
+            const swipeDistance = touchEndX - touchStartX;
+            if (Math.abs(swipeDistance) > 50) {
+                if (swipeDistance < 0) {
+                    window.changeGalleryPhoto(1); // наступне фото
                 } else {
-                    sidebar.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
-                    sidebar.style.transform = 'translate3d(-50%, -50%, 0)';
+                    window.changeGalleryPhoto(-1); // попереднє фото
                 }
-                currSidebarY = 0;
-            }, { passive: true });
+            }
         }
 
-        attachSidebarSwipe(nonActiveHero);
-        attachSidebarSwipe(nonActiveInfo);
+        // Закриття галереї та купона при тапі по затіненню
+        document.getElementById('gallery-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'gallery-modal') window.closeGallery();
+        });
 
-        // Купон
-        document.getElementById('prof-btn').addEventListener('click', () => {
-            if (!currentActiveItem || currentActiveItem.type !== 'place') return;
-            
-            const qrSpace = document.getElementById('qr-code-space');
-            const couponCode = 'LVIV-' + Math.random().toString(36).substr(2, 9).toUpperCase();
-            
-            qrSpace.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${couponCode}" alt="QR Code">
-                                 <p style="font-weight: 700; font-size: 16px; margin: 8px 0; color: var(--accent-main);">${couponCode}</p>`;
-            
-            document.getElementById('qr-modal').style.display = 'flex';
+        document.getElementById('qr-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'qr-modal') window.closeQr();
         });
 
         window.closeQr = function() {
             document.getElementById('qr-modal').style.display = 'none';
-        }
+        };
 
-        // Чат Firebase
-        function loadChat(personId) {
+        // Дія для купона
+        const actionBtn = document.getElementById('prof-btn');
+        actionBtn.addEventListener('click', () => {
+            if (!currentActiveItem || currentActiveItem.type !== 'place') return;
+            
+            const randomCode = Math.floor(100000 + Math.random() * 900000);
+            const qrSpace = document.getElementById('qr-code-space');
+            
+            // Проста імітація штрих-коду чи QR-тексту
+            qrSpace.innerHTML = `
+                <div style="font-size: 24px; font-weight: 800; letter-spacing: 4px; padding: 24px; border: 2px dashed var(--accent-main); border-radius: 12px; margin-bottom: 12px; color: var(--accent-main); background: #fdfdfd;">
+                    ${randomCode}
+                </div>
+            `;
+            document.getElementById('qr-modal').style.display = 'flex';
+        });
+
+        // Firebase чат
+        function loadChat(chatId) {
             const chatMessages = document.getElementById('chat-messages');
             chatMessages.innerHTML = '';
             
-            currentChatRef = ref(db, `chats/${personId}`);
-            
+            currentChatRef = ref(db, `chats/${chatId}`);
             onChildAdded(currentChatRef, (snapshot) => {
                 const data = snapshot.val();
                 const li = document.createElement('li');
@@ -875,26 +818,26 @@
                     li.innerHTML = `<span>${data.text}</span>`;
                 } else {
                     li.className = 'msg-other';
-                    li.innerHTML = `<span class="msg-user-name">${data.sender}</span><span>${data.text}</span>`;
+                    li.innerHTML = `
+                        <span class="msg-user-name">${data.sender}</span>
+                        <span>${data.text}</span>
+                    `;
                 }
-                
                 chatMessages.appendChild(li);
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             });
         }
 
         function sendMessage() {
-            if (!currentActiveItem || !currentChatRef) return;
             const input = document.getElementById('chat-msg-input');
             const text = input.value.trim();
-            if (!text) return;
+            if (!text || !currentActiveItem) return;
 
-            push(currentChatRef, {
+            push(ref(db, `chats/${currentActiveItem.id}`), {
                 sender: myName,
                 text: text,
                 timestamp: Date.now()
             });
-
             input.value = '';
         }
 
@@ -902,7 +845,23 @@
         document.getElementById('chat-msg-input').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') sendMessage();
         });
+
+        // Обробка жестів закриття (drag down/up) на сайдбарі
+        let sidebarTouchStart = 0;
+        const dragHandle = document.querySelector('.drag-handle');
         
+        dragHandle.addEventListener('touchstart', e => {
+            sidebarTouchStart = e.touches[0].clientY;
+        }, { passive: true });
+
+        dragHandle.addEventListener('touchend', e => {
+            const diff = e.changedTouches[0].clientY - sidebarTouchStart;
+            if (diff > 80) {
+                window.closeProfile('down');
+            } else if (diff < -80) {
+                window.closeProfile('up');
+            }
+        }, { passive: true });
     </script>
 </body>
 </html>
