@@ -8,9 +8,9 @@
     <style>
         :root {
             --bg-color: #f5f5f7; 
-            --card-bg: rgba(255, 255, 255, 0.55); /* Зроблено білий фон на 30% прозорішим */
+            --card-bg: rgba(255, 255, 255, 0.55); 
             --accent-main: #4542f4;      
-            --accent-people: #4542f4; /* Змінено з червоного на ультрамарин */   
+            --accent-people: #4542f4;   
             --text-color: #1d1d1f; 
             --text-secondary: #86868b; 
             --ultramarine-gradient: linear-gradient(180deg, #706eff 0%, #4542f4 60%, #2a27c9 100%);
@@ -63,7 +63,7 @@
             border: 1px solid rgba(255, 255, 255, 0.4);
             box-sizing: border-box;
             
-            /* ВНУТРІШНІ РАМКИ КАРТКИ ЗМЕНШЕНО ВДВІЧІ (з 14px до 7px) */
+            /* Жорсткий рівномірний відступ 7px з усіх сторін */
             padding: 7px; 
             touch-action: none;
         }
@@ -72,18 +72,18 @@
             transform: translate3d(-50%, -50%, 0);
         }
 
+        /* Ручка тепер позиціонується всередині верхньої 7px рамки та не заважає фотографії */
         .drag-handle {
-            width: 38px;
-            height: 5px;
+            width: 36px;
+            height: 4px;
             background: rgba(0, 0, 0, 0.15);
-            border-radius: 3px;
+            border-radius: 2px;
             position: absolute;
-            
-            /* Вирівняно ручку по висоті з урахуванням нових тонких рамок */
-            top: 6px;
+            top: 1.5px; 
             left: 50%;
             transform: translate3d(-50%, 0, 0);
             z-index: 15;
+            cursor: grab;
         }
 
         .profile-hero {
@@ -93,14 +93,14 @@
             background-size: cover;
             background-position: center;
             background-color: #e5e5ea;
-            border-radius: 25px; /* Більш гармонійний радіус під тонку рамку */
+            border-radius: 25px; 
             flex-shrink: 0;
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
             cursor: pointer;
             touch-action: none;
             
-            /* ТОЧНЕ ВИРІВНЮВАННЯ: Верхній відступ тепер абсолютно такий же, як і по боках (7px) */
-            margin-top: 7px; 
+            /* Жодних зовнішніх відступів зверху, рамка формується виключно за рахунок padding контейнера */
+            margin-top: 0; 
             box-sizing: border-box;
         }
 
@@ -118,7 +118,6 @@
         }
 
         .profile-info {
-            /* Легкий відступ знизу фото для повітря в інтерфейсі */
             padding: 12px 7px 0 7px;
             display: flex;
             flex-direction: column;
@@ -284,7 +283,7 @@
             will-change: opacity;
         }
         .qr-content {
-            background: rgba(255, 255, 255, 0.55); /* Також на 30% прозоріше */
+            background: rgba(255, 255, 255, 0.55); 
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             padding: 24px;
@@ -336,7 +335,6 @@
         }
         .dot.active { background: #ffffff; }
 
-        /* ОДНАКОВІ УЛЬТРА-ТОНКІ РАМКИ ТА СПІЛЬНИЙ СТИЛЬ ДЛЯ МАРКЕРІВ */
         .custom-avatar-marker, .custom-place-marker { 
             background: none !important; 
             border: none !important; 
@@ -347,13 +345,12 @@
             justify-content: center;
         }
         
-        /* Зменшені однакові рамки (38px x 38px) з однаковим кольором і тонким бордером (в 2 рази менше) */
         .avatar-ring {
             width: 38px; 
             height: 38px; 
             border-radius: 50%;
-            background: var(--ultramarine-gradient); /* Jednakowy ультрамариновий градієнт */
-            padding: 1.2px; /* Рамку зменшено рівно в 2 рази, ідеально симетрична з усіх боків */
+            background: var(--ultramarine-gradient); 
+            padding: 1.2px; 
             box-sizing: border-box;
         }
         .avatar-ring-inner {
@@ -364,13 +361,12 @@
             background-position: center;
         }
         
-        /* Тонка рівномірна рамка для закладів */
         .place-ring {
             width: 38px; 
             height: 38px; 
             border-radius: 50%;
             background: var(--ultramarine-gradient); 
-            padding: 1.2px; /* Рівномірна рамка в 1.2px зі всіх боків */
+            padding: 1.2px; 
             box-sizing: border-box;
             display: flex;
             align-items: center;
@@ -378,7 +374,7 @@
         }
 
         .place-icon-svg {
-            width: 18px; /* Відповідно зменшена іконка для балансу */
+            width: 18px; 
             height: 18px;
             fill: #ffffff;
             display: block;
@@ -690,43 +686,48 @@
         }, { passive: true });
 
 
+        // ОБРОБКА ЖЕСТУ СВАЙПУ КАРТКИ ВГОРУ ТА ВНИЗ
         const sidebar = document.getElementById('profile-sidebar');
-        const nonActiveHero = document.getElementById('prof-img');
-        const nonActiveInfo = document.getElementById('prof-non-active-info');
         let startSidebarY = 0, currSidebarY = 0, isSidebarSwiping = false;
 
-        function attachSidebarSwipe(element) {
-            element.addEventListener('touchstart', (e) => {
-                if (e.target.closest('#chat-messages') || e.target.closest('.chat-input-row') || e.target.closest('.action-btn') || e.target.closest('.info-scroll-area')) {
-                    return;
-                }
-                startSidebarY = e.touches[0].clientY;
-                isSidebarSwiping = true;
-                sidebar.style.transition = 'none';
-            }, { passive: true });
+        sidebar.addEventListener('touchstart', (e) => {
+            // Скасовуємо свайп, якщо він почався на внутрішніх інтерактивних областях
+            if (e.target.closest('#chat-messages') || e.target.closest('.chat-input-row') || e.target.closest('.action-btn') || e.target.closest('.info-scroll-area')) {
+                return;
+            }
+            startSidebarY = e.touches[0].clientY;
+            isSidebarSwiping = true;
+            sidebar.style.transition = 'none';
+        }, { passive: true });
 
-            element.addEventListener('touchmove', (e) => {
-                if (!isSidebarSwiping) return;
-                currSidebarY = e.touches[0].clientY - startSidebarY;
-                if (currSidebarY > 0) {
-                    sidebar.style.transform = `translate3d(-50%, calc(-50% + ${currSidebarY}px), 0)`;
-                }
-            }, { passive: true });
+        sidebar.addEventListener('touchmove', (e) => {
+            if (!isSidebarSwiping) return;
+            currSidebarY = e.touches[0].clientY - startSidebarY;
+            
+            // Завдяки формулі зсуву translate3d(-50%, calc(-50% + Y), 0) картка реагує на тягнення як вниз (+), так і вгору (-)
+            sidebar.style.transform = `translate3d(-50%, calc(-50% + ${currSidebarY}px), 0)`;
+        }, { passive: true });
 
-            element.addEventListener('touchend', () => {
-                if (!isSidebarSwiping) return;
-                isSidebarSwiping = false;
-                sidebar.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
-                if (currSidebarY > 120) {
+        sidebar.addEventListener('touchend', () => {
+            if (!isSidebarSwiping) return;
+            isSidebarSwiping = false;
+            sidebar.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+            
+            // Якщо потягнули вниз на 120px+ АБО вгору на 120px+ (менше -120), картка сховається
+            if (currSidebarY > 120) {
+                window.closeProfile(); // стандартно вниз
+            } else if (currSidebarY < -120) {
+                // Плавне повне ховання вгору за межі екрану
+                sidebar.style.transform = 'translate3d(-50%, -150vh, 0)';
+                setTimeout(() => {
                     window.closeProfile();
-                } else {
-                    sidebar.style.transform = 'translate3d(-50%, -50%, 0)';
-                }
-                currSidebarY = 0;
-            }, { passive: true });
-        }
+                }, 300);
+            } else {
+                sidebar.style.transform = 'translate3d(-50%, -50%, 0)';
+            }
+            currSidebarY = 0;
+        }, { passive: true });
 
-        attachSidebarSwipe(sidebar);
 
         // ЧАТ З FIREBASE
         function loadChat(itemId) {
@@ -790,7 +791,6 @@
             document.getElementById('qr-modal').style.display = 'none';
         }
 
-        // Закриття галереї та модалок по кліку на задній фон
         document.getElementById('gallery-modal').addEventListener('click', (e) => {
             if (e.target === document.getElementById('gallery-modal')) window.closeGallery();
         });
