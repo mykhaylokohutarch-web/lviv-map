@@ -97,12 +97,11 @@
             flex-shrink: 0;
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
             cursor: pointer;
-            touch-action: pan-y; /* Дозволяємо вертикальний скрол або свайп вгору, але перехоплюємо горизонтальний тач */
+            touch-action: none;
             
             /* Жодних зовнішніх відступів зверху, рамка формується виключно за рахунок padding контейнера */
             margin-top: 0; 
             box-sizing: border-box;
-            transition: background-image 0.2s ease-in-out;
         }
 
         .badge {
@@ -255,15 +254,10 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: transform 0.1s ease;
-        }
-        
-        /* Анімація натискання для круглої кнопки чату */
-        .chat-input-row button:active {
-            transform: scale(0.85);
         }
 
         .action-btn {
+            background: var(--accent-main);
             color: white;
             border: none;
             padding: 15px;
@@ -275,12 +269,6 @@
             width: 100%;
             box-shadow: 0 4px 12px rgba(69, 66, 244, 0.2);
             flex-shrink: 0;
-            transition: transform 0.1s ease, filter 0.2s ease;
-        }
-        
-        /* Анімація натискання для головної кнопки дії */
-        .action-btn:active {
-            transform: scale(0.95);
         }
 
         #qr-modal, #gallery-modal {
@@ -308,12 +296,6 @@
         .qr-content img { width: 180px; height: 180px; margin-bottom: 12px; border-radius: 16px; }
         .qr-close {
             background: rgba(0, 0, 0, 0.05); border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; width: 100%;
-            transition: transform 0.1s ease;
-        }
-        
-        /* Анімація натискання для кнопки у QR-попапі */
-        .qr-close:active {
-            transform: scale(0.95);
         }
 
         .gallery-container {
@@ -570,7 +552,6 @@
 
         function showSidebar(item) {
             currentActiveItem = item;
-            activePhotoIndex = 0; // Скидаємо індекс фото при відкритті нової картки
             document.getElementById('prof-img').style.backgroundImage = `url('${item.photos[0]}')`;
             document.getElementById('prof-name').innerText = item.name;
             document.getElementById('prof-status').innerText = `"${item.status}"`;
@@ -628,43 +609,11 @@
             currentActiveItem = null;
         }
 
-        // --- ЛОГІКА СВАЙПІВ (ВЛІВО / ВПРАВО) ПО ФОТО В КАРТЦІ БЕЗ ВІДКРИТТЯ ---
-        const profHeroImg = document.getElementById('prof-img');
-        let heroStartX = 0;
-        let heroStartY = 0;
-        let isHeroSwiping = false;
-
-        profHeroImg.addEventListener('touchstart', (e) => {
-            if (e.touches.length > 1) return;
-            heroStartX = e.touches[0].clientX;
-            heroStartY = e.touches[0].clientY;
-            isHeroSwiping = true;
-        }, { passive: true });
-
-        profHeroImg.addEventListener('touchend', (e) => {
-            if (!isHeroSwiping || !currentActiveItem) return;
-            isHeroSwiping = false;
-
-            const diffX = e.changedTouches[0].clientX - heroStartX;
-            const diffY = e.changedTouches[0].clientY - heroStartY;
-
-            // Визначаємо, що це був горизонтальний свайп, а не вертикальний зсув картки
-            if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 40) {
-                const totalPhotos = currentActiveItem.photos.length;
-                if (diffX < 0) {
-                    // Свайп вліво -> Наступне фото
-                    activePhotoIndex = (activePhotoIndex + 1) % totalPhotos;
-                } else {
-                    // Свайп вправо -> Попереднє фото
-                    activePhotoIndex = (activePhotoIndex - 1 + totalPhotos) % totalPhotos;
-                }
-                profHeroImg.style.backgroundImage = `url('${currentActiveItem.photos[activePhotoIndex]}')`;
-            } else if (Math.abs(diffX) < 10 && Math.abs(diffY) < 10) {
-                // Якщо це був просто короткий клік (не жест свайпу), відкриваємо велику галерею
-                openGallery();
-            }
-        }, { passive: true });
-
+        document.getElementById('prof-img').addEventListener('click', () => {
+            if (!currentActiveItem) return;
+            activePhotoIndex = 0;
+            openGallery();
+        });
 
         function openGallery() {
             document.getElementById('gallery-modal').style.display = 'flex';
@@ -680,9 +629,6 @@
             const total = currentActiveItem.photos.length;
             activePhotoIndex = (activePhotoIndex + direction + total) % total;
             updateGalleryUI();
-            
-            // Синхронізуємо змінене фото назад у мініатюру профілю
-            profHeroImg.style.backgroundImage = `url('${currentActiveItem.photos[activePhotoIndex]}')`;
         }
 
         function updateGalleryUI() {
@@ -747,7 +693,7 @@
 
         sidebar.addEventListener('touchstart', (e) => {
             // Скасовуємо свайп, якщо він почався на внутрішніх інтерактивних областях
-            if (e.target.closest('#chat-messages') || e.target.closest('.chat-input-row') || e.target.closest('.action-btn') || e.target.closest('.info-scroll-area') || e.target.closest('.profile-hero')) {
+            if (e.target.closest('#chat-messages') || e.target.closest('.chat-input-row') || e.target.closest('.action-btn') || e.target.closest('.info-scroll-area')) {
                 return;
             }
             startSidebarY = e.touches[0].clientY;
@@ -769,53 +715,41 @@
             sidebar.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
             
             // Якщо потягнули вниз на 120px+ АБО вгору на 120px+ (менше -120), картка сховається
-            if (currSidebarY > 120) {
-                window.closeProfile(); // стандартно вниз
-            } else if (currSidebarY < -120) {
-                // Плавне повне ховання вгору за межі екрану
-                sidebar.style.transform = 'translate3d(-50%, -150vh, 0)';
-                setTimeout(() => {
-                    window.closeProfile();
-                }, 300);
+            if (currSidebarY > 120 || currSidebarY < -120) {
+                window.closeProfile();
             } else {
-                sidebar.style.transform = 'translate3d(-50%, -50%, 0)';
+                sidebar.style.transform = ''; // Повертаємо в центр
             }
             currSidebarY = 0;
         }, { passive: true });
 
 
-        // ЧАТ З FIREBASE
-        function loadChat(itemId) {
+        // ЧАТ ТА ІНША ЛОГІКА
+        function loadChat(chatId) {
             const chatMessages = document.getElementById('chat-messages');
             chatMessages.innerHTML = '';
-            currentChatRef = ref(db, `chats/${itemId}`);
-            
-            onChildAdded(currentChatRef, (snapshot) => {
-                const msg = snapshot.val();
+            currentChatRef = ref(db, `chats/${chatId}`);
+            onChildAdded(currentChatRef, (data) => {
+                const val = data.val();
                 const li = document.createElement('li');
-                if (msg.name === myName) {
-                    li.className = 'msg-me';
-                    li.innerHTML = `<span>${escapeHtml(msg.text)}</span>`;
+                li.className = val.user === myName ? 'msg-me' : 'msg-other';
+                if (val.user !== myName) {
+                    li.innerHTML = `<span class="msg-user-name">${val.user}</span>${val.text}`;
                 } else {
-                    li.className = 'msg-other';
-                    li.innerHTML = `<span class="msg-user-name">${escapeHtml(msg.name)}</span><span>${escapeHtml(msg.text)}</span>`;
+                    li.innerText = val.text;
                 }
                 chatMessages.appendChild(li);
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             });
         }
 
-        function escapeHtml(str) {
-            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-        }
-
         function sendChatMessage() {
+            if (!currentActiveItem) return;
             const input = document.getElementById('chat-msg-input');
             const text = input.value.trim();
-            if (!text || !currentActiveItem) return;
-
+            if (!text) return;
             push(ref(db, `chats/${currentActiveItem.id}`), {
-                name: myName,
+                user: myName,
                 text: text,
                 timestamp: Date.now()
             });
@@ -827,31 +761,26 @@
             if (e.key === 'Enter') sendChatMessage();
         });
 
-        // КУПОНИ & МОДАЛКИ
-        document.getElementById('prof-btn').addEventListener('click', () => {
+        // КУПОНИ (QR)
+        const qrModal = document.getElementById('qr-modal');
+        const profBtn = document.getElementById('prof-btn');
+
+        profBtn.addEventListener('click', () => {
             if (!currentActiveItem || currentActiveItem.type !== 'place') return;
             const qrSpace = document.getElementById('qr-code-space');
             qrSpace.innerHTML = '';
             
+            // Проста генерація QR за допомогою апішки Google Charts
             const qrImg = document.createElement('img');
-            const promoData = `lviv_promo_${currentActiveItem.id}_${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
-            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(promoData)}`;
-            qrImg.alt = "Купон";
+            qrImg.src = `https://chart.googleapis.com/chart?chs=180x180&cht=qr&chl=COUPON-${currentActiveItem.id}-${Date.now()}&choe=UTF-8`;
             qrSpace.appendChild(qrImg);
-
-            document.getElementById('qr-modal').style.display = 'flex';
+            
+            qrModal.style.display = 'flex';
         });
 
         window.closeQr = function() {
-            document.getElementById('qr-modal').style.display = 'none';
+            qrModal.style.display = 'none';
         }
-
-        document.getElementById('gallery-modal').addEventListener('click', (e) => {
-            if (e.target === document.getElementById('gallery-modal')) window.closeGallery();
-        });
-        document.getElementById('qr-modal').addEventListener('click', (e) => {
-            if (e.target === document.getElementById('qr-modal')) window.closeQr();
-        });
     </script>
 </body>
 </html>
