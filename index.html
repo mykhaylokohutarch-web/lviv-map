@@ -47,7 +47,7 @@
       transform: scale(0.92);
     }
 
-    /* --- Слайдер без відкриття фото --- */
+    /* --- Слайдер без відкриття фото (з підтримкою тачу) --- */
     .slider-container {
       width: 100%;
       max-width: 450px;
@@ -62,6 +62,8 @@
       box-shadow: 0 10px 25px rgba(0,0,0,0.5);
       aspect-ratio: 16 / 9;
       background-color: #1e1e1e;
+      /* Запобігає дефолтній поведінці браузера під час свайпів на смартфонах */
+      touch-action: pan-y; 
     }
 
     .slides {
@@ -80,6 +82,7 @@
       font-size: 24px;
       font-weight: bold;
       color: #fff;
+      user-select: none;
     }
 
     /* Тимчасові кольорові слайди для демонстрації замість важких фото */
@@ -108,7 +111,7 @@
 
   <!-- Слайдер для перевірки гортання без відкриття -->
   <div class="slider-container">
-    <div class="slider-wrapper">
+    <div class="slider-wrapper" id="sliderWrapper">
       <div class="slides" id="slides">
         <div class="slide slide-1">Фото 1</div>
         <div class="slide slide-2">Фото 2</div>
@@ -126,6 +129,7 @@
     const slides = document.getElementById('slides');
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
+    const sliderWrapper = document.getElementById('sliderWrapper');
     
     let currentIndex = 0;
     const totalSlides = 3;
@@ -143,6 +147,34 @@
       currentIndex = (currentIndex - 1 + totalSlides) % totalSlides;
       updateSlider();
     });
+
+    // --- Логіка свайпів (Swipe/Touch) ---
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    sliderWrapper.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    sliderWrapper.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      handleSwipe();
+    }, { passive: true });
+
+    function handleSwipe() {
+      const swipeDistance = touchEndX - touchStartX;
+      const minSwipeDistance = 50; // мінімальна відстань у пікселях для зарахування свайпу
+
+      if (swipeDistance < -minSwipeDistance) {
+        // Свайп вліво -> наступний слайд
+        currentIndex = (currentIndex + 1) % totalSlides;
+        updateSlider();
+      } else if (swipeDistance > minSwipeDistance) {
+        // Свайп вправо -> попередній слайд
+        currentIndex = (currentIndex - 1 + totalSlides) % totalSlides;
+        updateSlider();
+      }
+    }
   </script>
 
 </body>
