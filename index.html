@@ -359,6 +359,9 @@
         .route-ping-ring { animation: routePulse 1.3s ease-in-out infinite; pointer-events: none; }
         @keyframes routePulse { 0%, 100% { stroke-opacity: 1; } 50% { stroke-opacity: 0.3; } }
 
+        /* Під час вибору/показу маршруту всі інші кружечки на карті стають набагато прозорішими */
+        .route-dim { opacity: 0.18 !important; transition: opacity 0.35s ease; }
+
         #route-toast {
             position: absolute;
             top: 74px;
@@ -645,8 +648,37 @@
         // ---- Пішохідний маршрут: затисни свою іконку на карті, потім вибери іншу — прокладеться найкоротший пішохідний шлях (радіус дії 4 км) ----
         const ROUTE_MAX_METERS = 4000;
         let routeSelecting = false;
+        let routeSelectFromId = null;
         let routeLine = null;
         let routeRings = [];
+
+        // ---- Реєстр усіх маркерів на карті (люди, місця, профілі) — потрібен, щоб під час маршруту
+        // затемнити всі кружечки, крім тих двох, між якими прокладено шлях ----
+        let markerRegistry = {};
+        let routeDimActive = false;
+        let routeDimExceptIds = [];
+
+        function registerMarker(id, marker) {
+            markerRegistry[id] = marker;
+            marker.off('add', marker._dimAddHandler);
+            marker._dimAddHandler = () => updateMarkerDimClass(id);
+            marker.on('add', marker._dimAddHandler);
+            updateMarkerDimClass(id);
+        }
+
+        function updateMarkerDimClass(id) {
+            const marker = markerRegistry[id];
+            const el = marker && marker.getElement && marker.getElement();
+            if (!el) return;
+            const shouldDim = routeDimActive && !routeDimExceptIds.includes(id);
+            el.classList.toggle('route-dim', shouldDim);
+        }
+
+        function setRouteDim(active, exceptIds) {
+            routeDimActive = active;
+            routeDimExceptIds = exceptIds || [];
+            Object.keys(markerRegistry).forEach(updateMarkerDimClass);
+        }
 
         function haversineMeters(a, b) {
             const R = 6371000;
@@ -678,12 +710,13 @@
         }
 
         function clearRouteRings() { routeRings.forEach(r => map.removeLayer(r)); routeRings = []; }
-        function clearRouteLine() { if (routeLine) { map.removeLayer(routeLine); routeLine = null; } clearRouteRings(); hideRouteInfo(); }
+        function clearRouteLine() { if (routeLine) { map.removeLayer(routeLine); routeLine = null; } clearRouteRings(); hideRouteInfo(); setRouteDim(false); }
 
         function cancelRouteSelection() {
             if (!routeSelecting) return;
             routeSelecting = false;
             clearRouteRings();
+            setRouteDim(false);
         }
 
         // Затиск (long-press) власної іконки на карті вмикає режим вибору точки призначення
@@ -714,25 +747,30 @@
             bindTouch();
         }
 
-        function enterRouteSelectionMode(fromCoords) {
+        function enterRouteSelectionMode(fromCoords, fromId) {
             clearRouteLine();
             routeSelecting = true;
+            routeSelectFromId = fromId || null;
             addRoutePing(fromCoords);
+            setRouteDim(true, fromId ? [fromId] : []);
             showRouteInfo('Виберіть іконку на карті, щоб прокласти маршрут 🚶');
             if (navigator.vibrate) navigator.vibrate(15);
         }
 
         // Клік по будь-якій іншій іконці під час режиму вибору — прокладає найкоротший пішохідний маршрут (діє лише в радіусі 4 км)
-        async function buildWalkingRoute(fromCoords, toCoords) {
+        async function buildWalkingRoute(fromCoords, toCoords, toId) {
             routeSelecting = false;
+            const fromId = routeSelectFromId;
             const dist = haversineMeters(fromCoords, toCoords);
             if (dist > ROUTE_MAX_METERS) {
                 clearRouteRings();
+                setRouteDim(false);
                 showRouteInfo('Це занадто далеко — пішохідний маршрут працює лише в радіусі 4 км 🚫', 3500, true);
                 if (navigator.vibrate) navigator.vibrate([15, 60, 15]);
                 return;
             }
             addRoutePing(toCoords);
+            setRouteDim(true, [fromId, toId].filter(Boolean));
             showRouteInfo('Прокладаю маршрут…');
             try {
                 const url = `https://routing.openstreetmap.de/routed-foot/route/v1/foot/${fromCoords[1]},${fromCoords[0]};${toCoords[1]},${toCoords[0]}?overview=full&geometries=geojson`;
@@ -808,11 +846,13 @@
                 iconSize: [38, 38], iconAnchor: [19, 19]
             });
             const targetGroup = layerGroups[person.category] || layerGroups.people;
-            L.marker(person.coords, { icon: customIcon }).addTo(targetGroup).on('click', (e) => {
+            const personMarker = L.marker(person.coords, { icon: customIcon }).addTo(targetGroup);
+            personMarker.on('click', (e) => {
                 L.DomEvent.stopPropagation(e);
-                if (routeSelecting) { buildWalkingRoute(myCoords, person.coords); return; }
+                if (routeSelecting) { buildWalkingRoute(myCoords, person.coords, person.id); return; }
                 showSidebar(person);
             });
+            registerMarker(person.id, personMarker);
         });
 
         places.forEach(place => {
@@ -822,11 +862,13 @@
                 iconSize: [38, 38], iconAnchor: [19, 19]
             });
             const targetGroup = layerGroups[place.category] || layerGroups.food;
-            L.marker(place.coords, { icon: customIcon }).addTo(targetGroup).on('click', (e) => {
+            const placeMarker = L.marker(place.coords, { icon: customIcon }).addTo(targetGroup);
+            placeMarker.on('click', (e) => {
                 L.DomEvent.stopPropagation(e);
-                if (routeSelecting) { buildWalkingRoute(myCoords, place.coords); return; }
+                if (routeSelecting) { buildWalkingRoute(myCoords, place.coords, place.id); return; }
                 showSidebar(place);
             });
+            registerMarker(place.id, placeMarker);
         });
 
         function isHeroVideoUrl(url) { return /\.(mp4|webm|mov|m4v)(\?|$)/i.test(url || ''); }
@@ -1228,14 +1270,16 @@
                     html: `<div class="avatar-ring"><div class="avatar-ring-inner" style="background-image: url('${photos[0]}')"></div></div>`,
                     iconSize: [38, 38], iconAnchor: [19, 19]
                 });
-                profileMarkers[id] = L.marker(p.coords, { icon: customIcon }).addTo(layerGroups.friends).on('click', (e) => {
+                profileMarkers[id] = L.marker(p.coords, { icon: customIcon }).addTo(layerGroups.friends);
+                profileMarkers[id].on('click', (e) => {
                     L.DomEvent.stopPropagation(e);
-                    if (routeSelecting) { if (id !== myId) buildWalkingRoute(myCoords, p.coords); return; }
+                    if (routeSelecting) { if (id !== myId) buildWalkingRoute(myCoords, p.coords, id); return; }
                     if (id === myId) { showSidebar(getMyProfileItem()); } else { showSidebar(personObj); }
                 });
+                registerMarker(id, profileMarkers[id]);
 
                 if (id === myId) {
-                    attachLongPress(profileMarkers[id], () => enterRouteSelectionMode(p.coords));
+                    attachLongPress(profileMarkers[id], () => enterRouteSelectionMode(p.coords, myId));
                 }
 
                 if (id === myId) { myProfile = { name: p.name, status: p.status, about: p.about, interests: p.interests, photos: p.photos || [] }; }
