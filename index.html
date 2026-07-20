@@ -722,9 +722,23 @@
         // Затиск (long-press) власної іконки на карті вмикає режим вибору точки призначення
         function attachLongPress(marker, onLongPress, duration) {
             duration = duration || 550;
+            const MOVE_TOLERANCE = 12; // px — природне тремтіння пальця не повинно скасовувати затиск
             let timer = null;
-            const start = () => { timer = setTimeout(onLongPress, duration); };
-            const cancel = () => { clearTimeout(timer); };
+            let startX = 0, startY = 0;
+            const start = (e) => {
+                if (e && e.touches && e.touches[0]) { startX = e.touches[0].clientX; startY = e.touches[0].clientY; }
+                clearTimeout(timer);
+                timer = setTimeout(onLongPress, duration);
+            };
+            const cancel = () => { clearTimeout(timer); timer = null; };
+            const moveCheck = (e) => {
+                if (timer === null) return;
+                if (e && e.touches && e.touches[0]) {
+                    const dx = e.touches[0].clientX - startX;
+                    const dy = e.touches[0].clientY - startY;
+                    if (Math.sqrt(dx * dx + dy * dy) > MOVE_TOLERANCE) cancel();
+                }
+            };
             marker.off('mousedown', marker._routeLpStart); marker.off('mouseup', marker._routeLpCancel); marker.off('mouseout', marker._routeLpCancel);
             marker._routeLpStart = start; marker._routeLpCancel = cancel;
             marker.on('mousedown', start);
@@ -738,7 +752,7 @@
                 el._routeLpBound = true;
                 el.addEventListener('touchstart', start, { passive: true });
                 el.addEventListener('touchend', cancel);
-                el.addEventListener('touchmove', cancel);
+                el.addEventListener('touchmove', moveCheck, { passive: true });
                 el.addEventListener('touchcancel', cancel);
             };
             marker.off('add', marker._routeLpBindTouch);
@@ -999,7 +1013,7 @@
             if (heroLock === 'x') {
                 const base = -heroPhotoIndex * heroEl.clientWidth;
                 heroTrackEl.style.transform = `translate3d(${base + heroDx}px, 0, 0)`;
-            } else if (heroDy > 0) {
+            } else {
                 document.getElementById('profile-sidebar').style.transform = `translate3d(-50%, calc(-50% + ${heroDy}px), 0)`;
             }
         }, { passive: true });
@@ -1014,7 +1028,7 @@
                     goToHeroSlide(heroPhotoIndex);
                 }
             } else if (heroLock === 'y') {
-                if (heroDy > 120) { window.closeProfile(); }
+                if (Math.abs(heroDy) > 120) { window.closeProfile(); }
                 else { document.getElementById('profile-sidebar').style.transform = 'translate3d(-50%, -50%, 0)'; }
             }
             heroLock = null; heroDx = 0; heroDy = 0;
