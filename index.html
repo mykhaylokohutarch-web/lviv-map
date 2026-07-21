@@ -65,18 +65,35 @@
             transition: filter 0.5s ease;
         }
 
-        /* Шар з підписами й іконками закладів (ресторани/магазини/кафе) — накладається напівпрозоро
-           поверх стильної Positron/Dark Matter підкладки, щоб місця було видно, але приглушено,
-           у тон білястого/напівпрозорого маркера, а не яскраво, як у звичайних картах. */
-        .poi-labels-pane {
-            opacity: 0.45;
-            filter: grayscale(0.3) brightness(1.15);
-            transition: opacity 0.5s ease, filter 0.5s ease;
+        /* Мітки реальних закладів з OpenStreetMap — маленькі, приглушені, без постійного тексту.
+           Стиль навмисно бляклий/білястий, щоб не конкурувати з власними яскравими мітками застосунку
+           (людьми та кураторськими закладами) — саме так, як просив користувач: "приглушені, білі". */
+        .osm-poi-marker { background: none !important; border: none !important; box-shadow: none !important; }
+        .osm-poi-dot {
+            width: 22px; height: 22px; border-radius: 50%;
+            background: rgba(255, 255, 255, 0.55);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 11px; line-height: 1;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.10);
+            opacity: 0.85;
+            transition: var(--theme-transition), transform 0.2s ease;
         }
-        body.dark-theme .poi-labels-pane {
-            opacity: 0.4;
-            filter: invert(1) hue-rotate(180deg) grayscale(0.3) brightness(1.3);
+        .osm-poi-marker:active .osm-poi-dot { transform: scale(0.88); }
+        body.dark-theme .osm-poi-dot { background: rgba(44, 44, 46, 0.55); border-color: rgba(255, 255, 255, 0.08); }
+
+        /* Картка-підпис, що з'являється тільки при дотику до мітки (як картка "Салалат" у Bump) */
+        .osm-poi-popup-wrap .leaflet-popup-content-wrapper {
+            background: var(--card-bg); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+            border-radius: 16px; border: 1px solid var(--border-minimal);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+            transition: var(--theme-transition);
         }
+        .osm-poi-popup-wrap .leaflet-popup-content { margin: 8px 12px; }
+        .osm-poi-popup-wrap .leaflet-popup-tip { background: var(--card-bg); }
+        .osm-poi-popup { display: flex; align-items: center; gap: 8px; }
+        .osm-poi-popup-icon { font-size: 17px; }
+        .osm-poi-popup-name { font-size: 14px; font-weight: 600; color: var(--text-color); white-space: nowrap; }
 
         /* Ультра-мінімалістична прозора кнопка Apple */
         .apple-blur-btn {
@@ -687,18 +704,6 @@
         });
         lightTiles.addTo(map);
 
-        // Окремий власний pane під наші мітки, але над картою — сюди йде додатковий шар з підписами
-        // й іконками закладів (ресторани, магазини, кафе тощо) із набагато багатшого стилю Voyager.
-        // Цей шар накладається напівпрозорим поверх стильної Positron/Dark Matter підкладки,
-        // тож заклади стають видимими, але приглушеними — не яскравішими за власні мітки застосунку.
-        map.createPane('poiLabelsPane');
-        map.getPane('poiLabelsPane').style.zIndex = 350;
-        map.getPane('poiLabelsPane').classList.add('poi-labels-pane');
-        const poiLabels = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', {
-            subdomains: 'abcd', maxZoom: 20, pane: 'poiLabelsPane'
-        });
-        poiLabels.addTo(map);
-
         const themeBtn = document.getElementById('theme-toggle');
         themeBtn.addEventListener('click', () => {
             document.body.classList.toggle('dark-theme');
@@ -710,6 +715,66 @@
                 lightTiles.addTo(map);
             }
         });
+
+        // ==================== Реальні заклади з OpenStreetMap (як у Bump/Apple Maps) ====================
+        // Підтягуємо справжні кав'ярні, ресторани, магазини, готелі тощо навколо видимої області карти
+        // через безкоштовний Overpass API (без ключа). Мітки — маленькі, приглушені (напівпрозорий
+        // білястий кружечок з іконкою), без постійного тексту. Назва з'являється карткою лише
+        // при дотику/кліку — так само, як на скріншоті Bump.
+        map.createPane('osmPoiPane');
+        map.getPane('osmPoiPane').style.zIndex = 550; // між лінією маршруту (overlayPane 400) і власними аватарками (markerPane 600)
+
+        const osmPoiLayer = L.layerGroup().addTo(map);
+        const loadedOsmPoiIds = new Set();
+        let osmPoiFetchTimer = null;
+        const OSM_POI_MIN_ZOOM = 16; // не тягнемо сотні міток, поки не наблизились достатньо
+
+        function osmPoiCategory(tags) {
+            if (tags.amenity && /^(restaurant|cafe|bar|pub|fast_food|bakery|ice_cream|food_court|biergarten)$/.test(tags.amenity)) return { cat: 'food', emoji: '🍽️' };
+            if (tags.shop) return { cat: 'shopping', emoji: '🛍️' };
+            if (tags.tourism && /^(hotel|guest_house|hostel|apartment)$/.test(tags.tourism)) return { cat: 'services', emoji: '🛏️' };
+            if (tags.tourism && /^(museum|attraction|gallery|artwork)$/.test(tags.tourism)) return { cat: 'events', emoji: '🎭' };
+            return { cat: 'services', emoji: '📍' };
+        }
+
+        function escapeHtml(str) {
+            return String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
+        function fetchOsmPois() {
+            if (map.getZoom() < OSM_POI_MIN_ZOOM) return;
+            const b = map.getBounds();
+            const bbox = `${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()}`;
+            const query = `[out:json][timeout:20];(node["amenity"~"^(restaurant|cafe|bar|pub|fast_food|bakery|ice_cream|food_court|biergarten)$"](${bbox});node["shop"](${bbox});node["tourism"~"^(hotel|guest_house|hostel|apartment|museum|attraction|gallery|artwork)$"](${bbox}););out body 300;`;
+            fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: query })
+                .then(r => r.json())
+                .then(data => {
+                    (data.elements || []).forEach(el => {
+                        if (!el.tags || !el.tags.name) return;
+                        const key = 'osm' + el.id;
+                        if (loadedOsmPoiIds.has(key)) return;
+                        loadedOsmPoiIds.add(key);
+                        const { cat, emoji } = osmPoiCategory(el.tags);
+                        const icon = L.divIcon({
+                            className: 'osm-poi-marker',
+                            html: `<div class="osm-poi-dot cat-${cat}">${emoji}</div>`,
+                            iconSize: [22, 22], iconAnchor: [11, 11]
+                        });
+                        const marker = L.marker([el.lat, el.lon], { icon: icon, pane: 'osmPoiPane' }).addTo(osmPoiLayer);
+                        marker.bindPopup(
+                            `<div class="osm-poi-popup"><span class="osm-poi-popup-icon">${emoji}</span><span class="osm-poi-popup-name">${escapeHtml(el.tags.name)}</span></div>`,
+                            { closeButton: false, offset: [0, -8], className: 'osm-poi-popup-wrap' }
+                        );
+                    });
+                })
+                .catch(() => { /* Overpass тимчасово недоступний — просто без нових міток цього разу */ });
+        }
+
+        map.on('moveend', () => {
+            clearTimeout(osmPoiFetchTimer);
+            osmPoiFetchTimer = setTimeout(fetchOsmPois, 700);
+        });
+        fetchOsmPois();
 
         // Весь інший JS-код (карта, логіка сайдбару, Firebase чат) залишається незмінним
         // zoomPhase 0-1: наближення (+1 кожен подвійний тап), zoomPhase 2-3: віддалення (-1), потім цикл повторюється
