@@ -316,8 +316,18 @@
         .custom-avatar-marker, .custom-place-marker { background: none !important; border: none !important; box-shadow: none !important; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.12)) !important; display: flex; align-items: center; justify-content: center; -webkit-touch-callout: none; touch-action: none; }
         .avatar-ring { width: 38px; height: 38px; border-radius: 50%; background: var(--ultramarine-gradient); padding: 1.2px; box-sizing: border-box; transition: background 0.5s ease; }
         .avatar-ring-inner { width: 100%; height: 100%; border-radius: 50%; background-size: cover; background-position: center; }
-        .place-ring { width: 38px; height: 38px; border-radius: 50%; background: var(--ultramarine-gradient); padding: 1.2px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; transition: background 0.5s ease; }
-        .place-icon-svg { width: 18px; height: 18px; fill: #ffffff; display: block; }
+        .place-ring {
+            width: 38px; height: 38px; border-radius: 50%; padding: 1.2px; box-sizing: border-box;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.28), inset 0 0 0 2.2px rgba(255,255,255,0.92);
+            transition: transform 0.15s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.2s ease;
+        }
+        .custom-place-marker:active .place-ring { transform: scale(0.9); }
+        .place-ring.cat-food { background: linear-gradient(160deg, #ffab6e 0%, #e8792f 55%, #c2591a 100%); }
+        .place-ring.cat-shopping { background: linear-gradient(160deg, #67d0ff 0%, #2f93e8 55%, #1a6bc4 100%); }
+        .place-ring.cat-events { background: linear-gradient(160deg, #e59bff 0%, #ab53f0 55%, #7c22c9 100%); }
+        .place-ring.cat-services { background: linear-gradient(160deg, #4fe0b0 0%, #12b586 55%, #0a8f68 100%); }
+        .place-icon-svg { width: 19px; height: 19px; fill: #ffffff; display: block; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.15)); }
 
         /* ---- Реальні кафе/магазини/заклади з OpenStreetMap — легкі напівпрозорі точки для орієнтації на карті ---- */
         .custom-poi-marker { background: none !important; border: none !important; }
@@ -650,40 +660,54 @@
             return String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
         }
 
+        async function fetchOverpass(query) {
+            // У кількох дзеркал різна доступність залежно від регіону/навантаження — пробуємо по черзі
+            const endpoints = [
+                'https://overpass-api.de/api/interpreter',
+                'https://overpass.kumi.systems/api/interpreter',
+                'https://overpass.openstreetmap.ru/api/interpreter'
+            ];
+            for (const url of endpoints) {
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 15000);
+                    const resp = await fetch(url, { method: 'POST', body: query, signal: controller.signal });
+                    clearTimeout(timeoutId);
+                    if (!resp.ok) continue;
+                    return await resp.json();
+                } catch (err) {
+                    console.warn('Overpass mirror failed, trying next:', url, err);
+                }
+            }
+            return null;
+        }
+
+        function renderPoi(el) {
+            const tags = el.tags || {};
+            const name = tags.name;
+            if (!name || !el.lat || !el.lon) return;
+            const style = classifyPoi(tags);
+            if (!style) return;
+            const icon = L.divIcon({
+                className: 'custom-poi-marker',
+                html: `<div class="poi-dot" style="background:${style.color}">${style.emoji}</div>`,
+                iconSize: [20, 20], iconAnchor: [10, 10]
+            });
+            const marker = L.marker([el.lat, el.lon], { icon: icon, opacity: 0.62, pane: 'poiPane' }).addTo(poiLayer);
+            marker.bindPopup(
+                `${escapeHtml(name)}<span class="poi-popup-cat">${style.label}</span>`,
+                { closeButton: false, className: 'poi-popup', offset: [0, -6] }
+            );
+            marker.on('click', (e) => L.DomEvent.stopPropagation(e));
+        }
+
         async function loadRealPoisFromOSM() {
             // Дещо ширше за робочу зону застосунку, щоб точки були видні і при невеликому панорамуванні
             const bbox = '49.826,24.003,49.857,24.060'; // south,west,north,east
             const query = `[out:json][timeout:25];(node["amenity"~"^(cafe|restaurant|fast_food|bar|pub|ice_cream|pharmacy|bank|cinema|bakery|marketplace)$"](${bbox});node["shop"](${bbox});node["tourism"~"^(hotel|guest_house|hostel)$"](${bbox}););out body 500;`;
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 15000);
-                const resp = await fetch('https://overpass-api.de/api/interpreter', {
-                    method: 'POST', body: 'data=' + encodeURIComponent(query), signal: controller.signal
-                });
-                clearTimeout(timeoutId);
-                if (!resp.ok) return;
-                const data = await resp.json();
-                (data.elements || []).forEach((el) => {
-                    const tags = el.tags || {};
-                    const name = tags.name;
-                    if (!name || !el.lat || !el.lon) return;
-                    const style = classifyPoi(tags);
-                    if (!style) return;
-                    const icon = L.divIcon({
-                        className: 'custom-poi-marker',
-                        html: `<div class="poi-dot" style="background:${style.color}">${style.emoji}</div>`,
-                        iconSize: [20, 20], iconAnchor: [10, 10]
-                    });
-                    const marker = L.marker([el.lat, el.lon], { icon: icon, opacity: 0.62, pane: 'poiPane' }).addTo(poiLayer);
-                    marker.bindPopup(
-                        `${escapeHtml(name)}<span class="poi-popup-cat">${style.label}</span>`,
-                        { closeButton: false, className: 'poi-popup', offset: [0, -6] }
-                    );
-                    marker.on('click', (e) => L.DomEvent.stopPropagation(e));
-                });
-            } catch (err) {
-                // Тихо ігноруємо — це лише довідковий шар, не критична функція застосунку
-            }
+            const data = await fetchOverpass(query);
+            if (!data) { console.warn('Не вдалося завантажити реальні заклади з OpenStreetMap (усі дзеркала недоступні)'); return; }
+            (data.elements || []).forEach(renderPoi);
         }
         loadRealPoisFromOSM();
 
@@ -1008,7 +1032,7 @@
         places.forEach(place => {
             const customIcon = L.divIcon({
                 className: 'custom-place-marker',
-                html: `<div class="place-ring">${place.svg}</div>`,
+                html: `<div class="place-ring cat-${place.category}">${place.svg}</div>`,
                 iconSize: [38, 38], iconAnchor: [19, 19]
             });
             const targetGroup = layerGroups[place.category] || layerGroups.food;
