@@ -64,10 +64,6 @@
             background-color: #e5e5ea;
             transition: filter 0.5s ease;
         }
-        .leaflet-tile-pane.dark-tiles {
-            filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9) saturate(0.85);
-            transition: filter 0.4s ease;
-        }
 
         /* Ультра-мінімалістична прозора кнопка Apple */
         .apple-blur-btn {
@@ -669,20 +665,27 @@
             currentChatPath = null; currentChatOtherId = null; chatTabOrigin = null;
         }
 
-        // CARTO Voyager — безкоштовний тайл-шар (без API-ключа), де вже позначені магазини, кафе, аптеки тощо
-        // прямо на самих тайлах. Значно легше за окремі DOM-мітки для сотень об'єктів.
-        const mapTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-            attribution: '© OpenStreetMap contributors © CARTO',
-            subdomains: 'abcd', maxZoom: 20
+        // CARTO Positron / Dark Matter — безкоштовні (без ключа) мінімалістичні стилі, справжні "рідні" для дня і ночі
+        // (а не інверсія кольорів). Обидва також містять стримані позначки закладів — просто малопомітні, у стилі мінімалізму,
+        // й проявляються повноцінно при більшому наближенні (тому й важливий zoom 17 при відкритті).
+        const lightTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '© OpenStreetMap contributors © CARTO', subdomains: 'abcd', maxZoom: 20
         });
-        mapTiles.addTo(map);
+        const darkTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '© OpenStreetMap contributors © CARTO', subdomains: 'abcd', maxZoom: 20
+        });
+        lightTiles.addTo(map);
 
-        // Для нічної теми немає окремого безкоштовного "voyager dark" — тож інвертуємо кольори самих тайлів
-        // (тільки tile pane, мітки та інтерфейс лишаються звичайними), щоб зберегти всі підписи закладів.
         const themeBtn = document.getElementById('theme-toggle');
         themeBtn.addEventListener('click', () => {
             document.body.classList.toggle('dark-theme');
-            map.getPane('tilePane').classList.toggle('dark-tiles', document.body.classList.contains('dark-theme'));
+            if (document.body.classList.contains('dark-theme')) {
+                map.removeLayer(lightTiles);
+                darkTiles.addTo(map);
+            } else {
+                map.removeLayer(darkTiles);
+                lightTiles.addTo(map);
+            }
         });
 
         // Весь інший JS-код (карта, логіка сайдбару, Firebase чат) залишається незмінним
