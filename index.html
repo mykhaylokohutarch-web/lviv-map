@@ -65,6 +65,16 @@
             transition: filter 0.5s ease;
         }
 
+        /* Робить підкладку карти трохи світлішою й менш насиченою — фільтр застосовано лише
+           до тайлів, тож власні мітки/аватарки/маршрут лишаються чіткими й не бляклими */
+        .leaflet-tile-pane {
+            transition: filter 0.5s ease;
+            filter: brightness(1.08) saturate(0.85) contrast(0.95);
+        }
+        body.dark-theme .leaflet-tile-pane {
+            filter: brightness(1.15) saturate(0.85) contrast(0.9);
+        }
+
         /* Ультра-мінімалістична прозора кнопка Apple */
         .apple-blur-btn {
             position: absolute;
@@ -665,15 +675,26 @@
             currentChatPath = null; currentChatOtherId = null; chatTabOrigin = null;
         }
 
-        // CARTO Positron / Dark Matter — безкоштовні (без ключа) мінімалістичні стилі, справжні "рідні" для дня і ночі
-        // (а не інверсія кольорів). Обидва також містять стримані позначки закладів — просто малопомітні, у стилі мінімалізму,
-        // й проявляються повноцінно при більшому наближенні (тому й важливий zoom 17 при відкритті).
-        const lightTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        // CARTO Voyager — безкоштовний (без ключа) стиль з повним набором позначок закладів і POI-іконок,
+        // максимально наближений за виглядом до Google Maps (на відміну від мінімалістичного Positron).
+        // Базовий шар (без підписів) і шар підписів додаються окремо, щоб підписи/мітки можна було
+        // зробити приглушеними через опасіті, не чіпаючи яскравість самої підкладки карти.
+        const lightBase = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png', {
             attribution: '© OpenStreetMap contributors © CARTO', subdomains: 'abcd', maxZoom: 20
         });
-        const darkTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        const lightLabels = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', {
+            subdomains: 'abcd', maxZoom: 20, opacity: 0.55
+        });
+        const lightTiles = L.layerGroup([lightBase, lightLabels]);
+
+        const darkBase = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
             attribution: '© OpenStreetMap contributors © CARTO', subdomains: 'abcd', maxZoom: 20
         });
+        const darkLabels = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png', {
+            subdomains: 'abcd', maxZoom: 20, opacity: 0.5
+        });
+        const darkTiles = L.layerGroup([darkBase, darkLabels]);
+
         lightTiles.addTo(map);
 
         const themeBtn = document.getElementById('theme-toggle');
