@@ -65,14 +65,19 @@
             transition: filter 0.5s ease;
         }
 
-        /* Робить підкладку карти трохи світлішою й менш насиченою — фільтр застосовано лише
-           до тайлів, тож власні мітки/аватарки/маршрут лишаються чіткими й не бляклими */
+        /* Фільтр застосовано лише до тайлів карти (не до власних міток/аватарок), щоб вони
+           лишалися чіткими й контрастними на будь-якому фоні.
+           Світла тема: трохи світліша й менш насичена підкладка — заклади й підписи стають
+           приглушеними, самі не зникаючи.
+           Темна тема: класична інверсія кольору тих самих тайлів Voyager (invert + hue-rotate
+           повертає правильні відтінки) — усі заклади й іконки, що видно вдень, лишаються на місці,
+           просто перефарбовані в темну палітру, без потреби у власному "темному" наборі даних. */
         .leaflet-tile-pane {
             transition: filter 0.5s ease;
-            filter: brightness(1.08) saturate(0.85) contrast(0.95);
+            filter: brightness(1.06) saturate(0.8) contrast(0.95);
         }
         body.dark-theme .leaflet-tile-pane {
-            filter: brightness(1.15) saturate(0.85) contrast(0.9);
+            filter: invert(1) hue-rotate(180deg) brightness(0.92) saturate(0.75) contrast(0.9);
         }
 
         /* Ультра-мінімалістична прозора кнопка Apple */
@@ -675,38 +680,20 @@
             currentChatPath = null; currentChatOtherId = null; chatTabOrigin = null;
         }
 
-        // CARTO Voyager — безкоштовний (без ключа) стиль з повним набором позначок закладів і POI-іконок,
-        // максимально наближений за виглядом до Google Maps (на відміну від мінімалістичного Positron).
-        // Базовий шар (без підписів) і шар підписів додаються окремо, щоб підписи/мітки можна було
-        // зробити приглушеними через опасіті, не чіпаючи яскравість самої підкладки карти.
-        const lightBase = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png', {
+        // CARTO Voyager — безкоштовний (без ключа) стиль з ПОВНИМ набором закладів: ресторани, кафе,
+        // магазини, парки тощо, з іконками — саме те багатство даних, що й у Bump/Google Maps.
+        // Один-єдиний шар (без розбиття на "підписи окремо" — той трюк ховав частину закладів під
+        // напівпрозорим прямокутником). Темна тема отримується CSS-інверсією кольорів ЦИХ ЖЕ тайлів —
+        // це стандартний прийом, який не змінює жодного шару даних, а лише перефарбовує картинку,
+        // тож усі заклади й підписи, що є вдень, лишаються на місці й вночі.
+        const mapTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
             attribution: '© OpenStreetMap contributors © CARTO', subdomains: 'abcd', maxZoom: 20
         });
-        const lightLabels = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', {
-            subdomains: 'abcd', maxZoom: 20, opacity: 0.55
-        });
-        const lightTiles = L.layerGroup([lightBase, lightLabels]);
-
-        const darkBase = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
-            attribution: '© OpenStreetMap contributors © CARTO', subdomains: 'abcd', maxZoom: 20
-        });
-        const darkLabels = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png', {
-            subdomains: 'abcd', maxZoom: 20, opacity: 0.5
-        });
-        const darkTiles = L.layerGroup([darkBase, darkLabels]);
-
-        lightTiles.addTo(map);
+        mapTiles.addTo(map);
 
         const themeBtn = document.getElementById('theme-toggle');
         themeBtn.addEventListener('click', () => {
             document.body.classList.toggle('dark-theme');
-            if (document.body.classList.contains('dark-theme')) {
-                map.removeLayer(lightTiles);
-                darkTiles.addTo(map);
-            } else {
-                map.removeLayer(darkTiles);
-                lightTiles.addTo(map);
-            }
         });
 
         // Весь інший JS-код (карта, логіка сайдбару, Firebase чат) залишається незмінним
