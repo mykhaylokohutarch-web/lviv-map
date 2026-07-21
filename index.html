@@ -64,6 +64,10 @@
             background-color: #e5e5ea;
             transition: filter 0.5s ease;
         }
+        .leaflet-tile-pane.dark-tiles {
+            filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9) saturate(0.85);
+            transition: filter 0.4s ease;
+        }
 
         /* Ультра-мінімалістична прозора кнопка Apple */
         .apple-blur-btn {
@@ -328,19 +332,6 @@
         .place-ring.cat-events { background: linear-gradient(160deg, #e59bff 0%, #ab53f0 55%, #7c22c9 100%); }
         .place-ring.cat-services { background: linear-gradient(160deg, #4fe0b0 0%, #12b586 55%, #0a8f68 100%); }
         .place-icon-svg { width: 19px; height: 19px; fill: #ffffff; display: block; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.15)); }
-
-        /* ---- Реальні кафе/магазини/заклади з OpenStreetMap — легкі напівпрозорі точки для орієнтації на карті ---- */
-        .custom-poi-marker { background: none !important; border: none !important; }
-        .poi-dot {
-            width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-size: 10.5px; line-height: 1; box-shadow: 0 1px 3px rgba(0,0,0,0.25);
-            border: 1.5px solid rgba(255,255,255,0.85); opacity: 0.6; transition: opacity 0.2s ease, transform 0.15s ease;
-        }
-        body.dark-theme .poi-dot { border-color: rgba(0,0,0,0.35); }
-        .custom-poi-marker:active .poi-dot { opacity: 0.95; transform: scale(1.15); }
-        .poi-popup .leaflet-popup-content-wrapper { border-radius: 12px; padding: 1px; }
-        .poi-popup .leaflet-popup-content { margin: 8px 12px; font-size: 13px; font-weight: 600; color: var(--text-color); }
-        .poi-popup .poi-popup-cat { display: block; font-size: 11px; font-weight: 500; color: var(--text-secondary); margin-top: 1px; }
 
         /* ---- Нижня панель: кнопка чату та фільтри шарів карти ---- */
         #bottom-bar {
@@ -625,92 +616,6 @@
             friends: L.layerGroup().addTo(map)
         };
 
-        // Окрема "тиха" пана нижче за звичайні мітки — реальні кафе/магазини з OpenStreetMap,
-        // напівпрозорі та завжди позаду власних/людських міток, як довідкові точки (в стилі Apple Maps)
-        map.createPane('poiPane');
-        map.getPane('poiPane').style.zIndex = 350;
-        const poiLayer = L.layerGroup().addTo(map);
-
-        // ---- Реальні заклади (кафе, ресторани, магазини тощо) з OpenStreetMap через Overpass API ----
-        // Легкі, напівпрозорі, некликабельні для основної логіки застосунку — лише короткий підпис назви при дотику.
-        function classifyPoi(tags) {
-            const a = tags.amenity, s = tags.shop, l = tags.leisure, t = tags.tourism;
-            if (a === 'cafe') return { emoji: '☕', color: '#a9713c', label: 'Кафе' };
-            if (a === 'restaurant') return { emoji: '🍽️', color: '#e0793c', label: 'Ресторан' };
-            if (a === 'fast_food') return { emoji: '🍔', color: '#e0793c', label: 'Фастфуд' };
-            if (a === 'bar' || a === 'pub') return { emoji: '🍺', color: '#8b5cf6', label: 'Бар' };
-            if (a === 'ice_cream') return { emoji: '🍦', color: '#f472b6', label: 'Морозиво' };
-            if (a === 'pharmacy') return { emoji: '⚕️', color: '#ef4444', label: 'Аптека' };
-            if (a === 'bank' || a === 'atm') return { emoji: '💳', color: '#16a34a', label: 'Банк' };
-            if (a === 'cinema') return { emoji: '🎬', color: '#ec4899', label: 'Кінотеатр' };
-            if (a === 'bakery' || s === 'bakery' || s === 'pastry') return { emoji: '🥐', color: '#d97706', label: 'Пекарня' };
-            if (a === 'marketplace') return { emoji: '🧺', color: '#2563eb', label: 'Ринок' };
-            if (t === 'hotel' || t === 'guest_house' || t === 'hostel') return { emoji: '🛏️', color: '#7c3aed', label: 'Готель' };
-            if (l === 'fitness_centre' || l === 'sports_centre') return { emoji: '🏋️', color: '#059669', label: 'Спорт' };
-            if (s === 'supermarket' || s === 'convenience' || s === 'grocery') return { emoji: '🛒', color: '#2563eb', label: 'Продукти' };
-            if (s === 'clothes' || s === 'shoes' || s === 'boutique') return { emoji: '👗', color: '#0ea5e9', label: 'Одяг' };
-            if (s === 'books') return { emoji: '📚', color: '#0ea5e9', label: 'Книгарня' };
-            if (s === 'gift' || s === 'florist') return { emoji: '🎁', color: '#0ea5e9', label: 'Подарунки' };
-            if (s === 'hairdresser' || s === 'beauty') return { emoji: '💇', color: '#db2777', label: 'Краса' };
-            if (s) return { emoji: '🛍️', color: '#2563eb', label: 'Магазин' };
-            return null;
-        }
-
-        function escapeHtml(str) {
-            return String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-        }
-
-        async function fetchOverpass(query) {
-            // У кількох дзеркал різна доступність залежно від регіону/навантаження — пробуємо по черзі
-            const endpoints = [
-                'https://overpass-api.de/api/interpreter',
-                'https://overpass.kumi.systems/api/interpreter',
-                'https://overpass.openstreetmap.ru/api/interpreter'
-            ];
-            for (const url of endpoints) {
-                try {
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 15000);
-                    const resp = await fetch(url, { method: 'POST', body: query, signal: controller.signal });
-                    clearTimeout(timeoutId);
-                    if (!resp.ok) continue;
-                    return await resp.json();
-                } catch (err) {
-                    console.warn('Overpass mirror failed, trying next:', url, err);
-                }
-            }
-            return null;
-        }
-
-        function renderPoi(el) {
-            const tags = el.tags || {};
-            const name = tags.name;
-            if (!name || !el.lat || !el.lon) return;
-            const style = classifyPoi(tags);
-            if (!style) return;
-            const icon = L.divIcon({
-                className: 'custom-poi-marker',
-                html: `<div class="poi-dot" style="background:${style.color}">${style.emoji}</div>`,
-                iconSize: [20, 20], iconAnchor: [10, 10]
-            });
-            const marker = L.marker([el.lat, el.lon], { icon: icon, opacity: 0.62, pane: 'poiPane' }).addTo(poiLayer);
-            marker.bindPopup(
-                `${escapeHtml(name)}<span class="poi-popup-cat">${style.label}</span>`,
-                { closeButton: false, className: 'poi-popup', offset: [0, -6] }
-            );
-            marker.on('click', (e) => L.DomEvent.stopPropagation(e));
-        }
-
-        async function loadRealPoisFromOSM() {
-            // Дещо ширше за робочу зону застосунку, щоб точки були видні і при невеликому панорамуванні
-            const bbox = '49.826,24.003,49.857,24.060'; // south,west,north,east
-            const query = `[out:json][timeout:25];(node["amenity"~"^(cafe|restaurant|fast_food|bar|pub|ice_cream|pharmacy|bank|cinema|bakery|marketplace)$"](${bbox});node["shop"](${bbox});node["tourism"~"^(hotel|guest_house|hostel)$"](${bbox}););out body 500;`;
-            const data = await fetchOverpass(query);
-            if (!data) { console.warn('Не вдалося завантажити реальні заклади з OpenStreetMap (усі дзеркала недоступні)'); return; }
-            (data.elements || []).forEach(renderPoi);
-        }
-        loadRealPoisFromOSM();
-
         document.querySelectorAll('.layer-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const group = layerGroups[btn.dataset.layer];
@@ -764,21 +669,20 @@
             currentChatPath = null; currentChatOtherId = null; chatTabOrigin = null;
         }
 
-        const lightTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '© OpenStreetMap' });
-        const darkTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '© OpenStreetMap' });
-        lightTiles.addTo(map);
+        // CARTO Voyager — безкоштовний тайл-шар (без API-ключа), де вже позначені магазини, кафе, аптеки тощо
+        // прямо на самих тайлах. Значно легше за окремі DOM-мітки для сотень об'єктів.
+        const mapTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            attribution: '© OpenStreetMap contributors © CARTO',
+            subdomains: 'abcd', maxZoom: 20
+        });
+        mapTiles.addTo(map);
 
-        // Обробка перемикача теми
+        // Для нічної теми немає окремого безкоштовного "voyager dark" — тож інвертуємо кольори самих тайлів
+        // (тільки tile pane, мітки та інтерфейс лишаються звичайними), щоб зберегти всі підписи закладів.
         const themeBtn = document.getElementById('theme-toggle');
         themeBtn.addEventListener('click', () => {
             document.body.classList.toggle('dark-theme');
-            if (document.body.classList.contains('dark-theme')) {
-                map.removeLayer(lightTiles);
-                darkTiles.addTo(map);
-            } else {
-                map.removeLayer(darkTiles);
-                lightTiles.addTo(map);
-            }
+            map.getPane('tilePane').classList.toggle('dark-tiles', document.body.classList.contains('dark-theme'));
         });
 
         // Весь інший JS-код (карта, логіка сайдбару, Firebase чат) залишається незмінним
@@ -835,10 +739,6 @@
             routeDimActive = active;
             routeDimExceptIds = exceptIds || [];
             Object.keys(markerRegistry).forEach(updateMarkerDimClass);
-            if (typeof poiLayer !== 'undefined' && poiLayer) {
-                if (active && map.hasLayer(poiLayer)) map.removeLayer(poiLayer);
-                else if (!active && !map.hasLayer(poiLayer)) map.addLayer(poiLayer);
-            }
         }
 
         function haversineMeters(a, b) {
