@@ -497,14 +497,15 @@
         .home-search-box svg { width: 16px; height: 16px; stroke: var(--text-secondary); fill: none; stroke-width: 2; flex-shrink: 0; }
         .home-search-box input { border: none; background: transparent; outline: none; font-size: 14px; color: var(--text-color); width: 100%; font-family: inherit; }
         /* ---- Головна: сітка кіл (люди + заклади) по 3 в ряд, як в надісланому прикладі ---- */
-        #home-grid { flex-grow: 1; overflow-y: auto; padding: 6px 14px 110px; box-sizing: border-box; touch-action: pan-y; -webkit-overflow-scrolling: touch; }
-        .home-grid-inner { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px 10px; }
+        #home-grid { flex-grow: 1; overflow-y: auto; overflow-x: hidden; padding: 6px 14px 110px; box-sizing: border-box; touch-action: pan-y; -webkit-overflow-scrolling: touch; overscroll-behavior-x: none; }
+        .home-grid-inner { display: grid; grid-template-columns: repeat(3, var(--circle-d, 100px)); justify-content: center; gap: 18px 10px; }
         .home-circle-item { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
         .home-circle-item:active .home-circle-avatar { transform: scale(0.93); }
-        .home-circle-avatar { position: relative; width: 100%; aspect-ratio: 1/1; border-radius: 50%; background-size: cover; background-position: center; background-color: #e5e5ea; transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1); box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+        .home-circle-avatar { position: relative; width: var(--circle-d, 100px); height: var(--circle-d, 100px); border-radius: 50%; background-size: cover; background-position: center; background-color: #e5e5ea; transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1); box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
         .home-circle-badge { position: absolute; right: 2%; bottom: 2%; width: 22%; height: 22%; min-width: 16px; min-height: 16px; border-radius: 50%; background: var(--accent-main); border: 2px solid var(--bg-color); display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
         .home-circle-badge svg { width: 55%; height: 55%; stroke: #fff; fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
-        .home-circle-name { font-size: 12px; font-weight: 600; color: var(--text-color); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+        .home-circle-name { font-size: 12px; line-height: 15px; height: 15px; font-weight: 600; color: var(--text-color); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: var(--circle-d, 100px); }
+
 
         /* ---- IG-стиль сторінки людини ---- */
         #screen-ig-profile { background: var(--bg-color); }
@@ -1716,7 +1717,40 @@
             renderHomeGrid(document.getElementById('people-search-input').value);
         });
 
-        function buildDirectoryEntries() {
+        // Розраховує розмір кола так, щоб на екрані вміщалось рівно ціле число рядків по 3 —
+        // мінімум 3 ряди (9 кіл); якщо висота дозволяє ще один цілий ряд, він теж додається.
+        // Далі — однакові кола, гортання лише вертикальне (overflow-x вимкнено окремо в CSS).
+        function layoutHomeGrid() {
+            const container = document.getElementById('home-grid');
+            const bottomNav = document.getElementById('bottom-nav');
+            if (!container) return;
+            const cs = getComputedStyle(container);
+            const padLeft = parseFloat(cs.paddingLeft) || 0;
+            const padRight = parseFloat(cs.paddingRight) || 0;
+            const padTop = parseFloat(cs.paddingTop) || 0;
+            const rect = container.getBoundingClientRect();
+            const navH = bottomNav ? bottomNav.getBoundingClientRect().height : 0;
+            const availW = container.clientWidth - padLeft - padRight;
+            const availH = (window.innerHeight - rect.top - navH - padTop) - 8;
+            if (availW <= 0 || availH <= 0) return;
+
+            const colGap = 10, rowGap = 18, labelH = 15, innerGap = 6;
+            let d = (availW - 2 * colGap) / 3;
+            let itemH = d + innerGap + labelH;
+            let rows = Math.floor((availH + rowGap) / (itemH + rowGap));
+
+            if (rows < 3) {
+                itemH = (availH - 2 * rowGap) / 3;
+                d = Math.max(46, itemH - innerGap - labelH);
+                rows = 3;
+            }
+
+            container.style.setProperty('--circle-d', d + 'px');
+        }
+        window.addEventListener('resize', layoutHomeGrid);
+        window.addEventListener('orientationchange', () => setTimeout(layoutHomeGrid, 60));
+
+
             const entries = people.map(p => ({ id: p.id, type: 'person', name: p.name, status: p.status, photos: p.photos, about: p.about, interests: p.interests }));
             Object.keys(firebaseProfilesCache).forEach(id => {
                 if (id === myId) return;
@@ -1773,6 +1807,8 @@
             });
         }
         renderHomeGrid('');
+        layoutHomeGrid();
+        setTimeout(layoutHomeGrid, 150);
 
         document.getElementById('people-search-input').addEventListener('input', (e) => renderHomeGrid(e.target.value));
 
@@ -1824,12 +1860,12 @@
             showScreen('igprofile');
         }
 
-        document.getElementById('ig-back-btn').addEventListener('click', () => showScreen('home'));
+        document.getElementById('ig-back-btn').addEventListener('click', () => { showScreen('home'); layoutHomeGrid(); });
 
         // ---- Нижня навігація: Люди · Карта · Повідомлення · Профіль ----
         // Картка профілю/чату — глобальний оверлей, тож чат і редагування відкриваються прямо
         // поверх поточного екрана, без перемикання на карту (карта відкривається лише своєю кнопкою).
-        document.getElementById('nav-home').addEventListener('click', () => showScreen('home'));
+        document.getElementById('nav-home').addEventListener('click', () => { showScreen('home'); layoutHomeGrid(); });
         document.getElementById('nav-map').addEventListener('click', () => showScreen('map'));
         document.getElementById('nav-messages').addEventListener('click', () => openChatsList());
         document.getElementById('nav-profile').addEventListener('click', () => openIgProfile(getMyProfileItem(), true));
