@@ -52,7 +52,6 @@
         }
 
         #app-container {
-            display: flex;
             width: 100%;
             height: 100vh;
             position: relative;
@@ -245,7 +244,7 @@
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
             display: flex;
             flex-direction: column;
-            position: absolute;
+            position: fixed;
             top: 50%;
             left: 50%;
             z-index: 2000;
@@ -455,11 +454,92 @@
         #route-toast.show { opacity: 1; transform: translate3d(-50%, 0, 0); }
         body.dark-theme #route-toast { box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
         #route-toast.warn { border-color: rgba(255, 45, 120, 0.5); color: #ff2d78; font-weight: 700; }
+
+        /* ==================================================================================
+           Багатоекранний режим: карта більше не головна — це один із екранів, між якими
+           перемикає нижня навігація в стилі надісланого прикладу (Instagram-мінімалізм).
+           ================================================================================== */
+        .app-screen { display: none; width: 100%; height: 100vh; box-sizing: border-box; }
+        .app-screen.active-screen { display: flex; flex-direction: column; }
+        #app-container.active-screen { display: flex; } /* карта має власний внутрішній layout — лишаємо як є */
+
+        /* Карта отримує трохи менше місця знизу, щоб її власна панель шарів не билася з новою навігацією */
+        #bottom-bar { bottom: 86px; }
+
+        /* ---- Глобальна нижня навігація ---- */
+        #bottom-nav {
+            position: fixed; left: 0; right: 0; bottom: 0; z-index: 1900;
+            display: flex; align-items: center; justify-content: space-around;
+            padding: 9px 4px calc(9px + env(safe-area-inset-bottom, 0px));
+            background: var(--card-bg);
+            backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border-top: 1px solid var(--border-minimal);
+            box-sizing: border-box;
+            transition: var(--theme-transition);
+        }
+        .nav-btn {
+            background: transparent; border: none; padding: 6px 4px; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 5px; cursor: pointer; flex: 1;
+            -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+        }
+        .nav-btn svg { width: 23px; height: 23px; fill: none; stroke: var(--icon-color); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: stroke 0.3s ease, transform 0.2s cubic-bezier(0.25, 1, 0.5, 1); }
+        .nav-btn:active svg { transform: scale(0.88); }
+        .nav-btn .nav-dot { width: 4px; height: 4px; border-radius: 50%; background: transparent; transition: background 0.3s ease; }
+        .nav-btn.active svg { stroke: var(--accent-main); }
+        .nav-btn.active .nav-dot { background: var(--accent-main); }
+
+        /* ---- Головна: список людей (мінімалістичний, як у прикладі) ---- */
+        #screen-home { background: var(--bg-color); }
+        .home-header { padding: 18px 20px 4px; flex-shrink: 0; }
+        .home-header h1 { margin: 0; font-size: 27px; font-weight: 700; letter-spacing: -0.4px; color: var(--text-color); }
+        .home-search-box { margin: 12px 20px 6px; padding: 10px 14px; border-radius: 14px; background: rgba(0,0,0,0.045); display: flex; align-items: center; gap: 8px; flex-shrink: 0; transition: var(--theme-transition); }
+        body.dark-theme .home-search-box { background: rgba(255,255,255,0.08); }
+        .home-search-box svg { width: 16px; height: 16px; stroke: var(--text-secondary); fill: none; stroke-width: 2; flex-shrink: 0; }
+        .home-search-box input { border: none; background: transparent; outline: none; font-size: 14px; color: var(--text-color); width: 100%; font-family: inherit; }
+        /* ---- Головна: сітка кіл (люди + заклади) по 3 в ряд, як в надісланому прикладі ---- */
+        #home-grid { flex-grow: 1; overflow-y: auto; padding: 6px 14px 110px; box-sizing: border-box; touch-action: pan-y; -webkit-overflow-scrolling: touch; }
+        .home-grid-inner { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px 10px; }
+        .home-circle-item { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        .home-circle-item:active .home-circle-avatar { transform: scale(0.93); }
+        .home-circle-avatar { position: relative; width: 100%; aspect-ratio: 1/1; border-radius: 50%; background-size: cover; background-position: center; background-color: #e5e5ea; transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1); box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+        .home-circle-badge { position: absolute; right: 2%; bottom: 2%; width: 22%; height: 22%; min-width: 16px; min-height: 16px; border-radius: 50%; background: var(--accent-main); border: 2px solid var(--bg-color); display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
+        .home-circle-badge svg { width: 55%; height: 55%; stroke: #fff; fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+        .home-circle-name { font-size: 12px; font-weight: 600; color: var(--text-color); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+
+        /* ---- IG-стиль сторінки людини ---- */
+        #screen-ig-profile { background: var(--bg-color); }
+        .ig-top-bar { display: flex; align-items: center; justify-content: space-between; padding: 14px 10px 2px; flex-shrink: 0; }
+        .ig-back-btn, .ig-more-btn { width: 34px; height: 34px; border-radius: 50%; background: transparent; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        .ig-back-btn svg, .ig-more-btn svg { width: 20px; height: 20px; stroke: var(--icon-color); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        .ig-handle-title { font-size: 15px; font-weight: 700; color: var(--text-color); }
+        #ig-content { flex-grow: 1; overflow-y: auto; touch-action: pan-y; -webkit-overflow-scrolling: touch; padding-bottom: 100px; box-sizing: border-box; }
+        .ig-header-row { display: flex; align-items: center; gap: 20px; padding: 8px 20px 14px; }
+        .ig-avatar { width: 84px; height: 84px; border-radius: 50%; background-size: cover; background-position: center; background-color: #e5e5ea; flex-shrink: 0; }
+        .ig-stats { display: flex; flex-grow: 1; justify-content: space-around; text-align: center; }
+        .ig-stat b { display: block; font-size: 17px; font-weight: 700; color: var(--text-color); }
+        .ig-stat span { display: block; font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+        .ig-bio-block { padding: 0 20px 14px; }
+        .ig-bio-name { font-size: 16px; font-weight: 700; color: var(--text-color); margin: 0 0 2px; }
+        .ig-bio-handle { font-size: 13px; color: var(--text-secondary); margin: 0 0 6px; }
+        .ig-bio-text { font-size: 14px; color: var(--text-color); margin: 0; line-height: 1.35; }
+        .ig-actions-row { display: flex; gap: 8px; padding: 0 20px 16px; }
+        .ig-action-btn { flex: 1; padding: 9px; border-radius: 10px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; background: rgba(0,0,0,0.06); color: var(--text-color); transition: var(--theme-transition); font-family: inherit; }
+        body.dark-theme .ig-action-btn { background: rgba(255,255,255,0.1); }
+        .ig-action-btn.primary { background: var(--accent-main); color: #fff; }
+        .ig-action-btn.icon-only { flex: 0 0 40px; display: flex; align-items: center; justify-content: center; }
+        .ig-action-btn.icon-only svg { width: 16px; height: 16px; stroke: var(--text-color); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        .ig-tabs-row { display: flex; border-top: 1px solid var(--border-minimal); }
+        .ig-tab { flex: 1; display: flex; align-items: center; justify-content: center; padding: 12px 0; border-bottom: 1.5px solid transparent; }
+        .ig-tab svg { width: 20px; height: 20px; stroke: var(--text-secondary); fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+        .ig-tab.active { border-bottom-color: var(--text-color); }
+        .ig-tab.active svg { stroke: var(--text-color); }
+        .ig-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 14px 14px 4px; }
+        .ig-grid-item { aspect-ratio: 1/1; border-radius: 50%; background-size: cover; background-position: center; background-color: #e5e5ea; }
     </style>
 </head>
 <body>
 
-    <div id="app-container">
+    <div id="app-container" class="app-screen">
         <!-- Мінімалістична кругла кнопка з тонкими SVG іконками -->
         <button class="apple-blur-btn" id="theme-toggle" aria-label="Змінити тему">
             <!-- Іконка Сонця (Light Mode) -->
@@ -523,60 +603,122 @@
             </button>
         </div>
 
-        <!-- Решта HTML-структури (profile-sidebar, купони, галереї) залишається повністю без змін -->
-        <div id="profile-sidebar">
-            <div class="profile-hero" id="prof-hero">
-                <div class="hero-track" id="hero-track"></div>
-                <div class="hero-bottom-fade"></div>
-                <div class="hero-dots" id="hero-dots"></div>
-                <div class="drag-handle"></div>
-                <span class="badge" id="prof-badge" style="display:none;">АКЦІЯ</span>
-                <button id="prof-edit-btn" aria-label="Редагувати">✏️</button>
-                <button id="prof-add-photo-btn" aria-label="Додати фото">+</button>
-                <button id="prof-move-btn" aria-label="Змінити своє місце на карті">📍</button>
-                <input type="file" id="prof-photo-input" accept="image/*" style="display:none;">
+    </div>
 
-                <div class="hero-info-panel" id="hero-info-panel">
-                    <div class="hero-info-top">
-                        <div class="hero-info-text">
-                            <h2 class="profile-name profile-editable" id="prof-name">Назва</h2>
-                            <p class="profile-status profile-editable" id="prof-status">"Статус"</p>
-                        </div>
-                        <button class="hero-msg-btn" id="hero-msg-btn" aria-label="Написати повідомлення">
-                            <div class="bottom-icon-wrap">
-                                <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-                            </div>
-                        </button>
+    <!-- Картка профілю/чату — глобальний оверлей, працює поверх будь-якого екрана (карта, список людей, IG-сторінка) -->
+    <div id="profile-sidebar">
+        <div class="profile-hero" id="prof-hero">
+            <div class="hero-track" id="hero-track"></div>
+            <div class="hero-bottom-fade"></div>
+            <div class="hero-dots" id="hero-dots"></div>
+            <div class="drag-handle"></div>
+            <span class="badge" id="prof-badge" style="display:none;">АКЦІЯ</span>
+            <button id="prof-edit-btn" aria-label="Редагувати">✏️</button>
+            <button id="prof-add-photo-btn" aria-label="Додати фото">+</button>
+            <button id="prof-move-btn" aria-label="Змінити своє місце на карті">📍</button>
+            <input type="file" id="prof-photo-input" accept="image/*" style="display:none;">
+
+            <div class="hero-info-panel" id="hero-info-panel">
+                <div class="hero-info-top">
+                    <div class="hero-info-text">
+                        <h2 class="profile-name profile-editable" id="prof-name">Назва</h2>
+                        <p class="profile-status profile-editable" id="prof-status">"Статус"</p>
                     </div>
-
-                    <div class="info-scroll-area">
-                        <div class="profile-section">
-                            <label id="label-1">Опис</label>
-                            <div id="prof-text1-box"><p class="profile-editable" id="prof-text1">...</p></div>
+                    <button class="hero-msg-btn" id="hero-msg-btn" aria-label="Написати повідомлення">
+                        <div class="bottom-icon-wrap">
+                            <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
                         </div>
-                        <div class="profile-section">
-                            <label id="label-2">Деталі</label>
-                            <div id="prof-text2-box"><p class="profile-editable" id="prof-text2">...</p></div>
-                        </div>
-                    </div>
-
-                    <button class="action-btn" id="prof-btn">Дія</button>
+                    </button>
                 </div>
-            </div>
 
-            <div id="chat-container">
-                <div id="chats-header"><span>Чати</span><button id="chats-close-btn" aria-label="Закрити">✕</button></div>
-                <div id="dm-back-row"><span class="arrow">←</span><span id="dm-back-name"></span></div>
-                <div id="dm-list"></div>
-                <div id="chat-thread-wrap">
-                    <ul id="chat-messages"></ul>
-                    <div class="chat-input-row">
-                        <input type="text" id="chat-msg-input" placeholder="Повідомлення" />
-                        <button id="chat-send-btn">▲</button>
+                <div class="info-scroll-area">
+                    <div class="profile-section">
+                        <label id="label-1">Опис</label>
+                        <div id="prof-text1-box"><p class="profile-editable" id="prof-text1">...</p></div>
                     </div>
+                    <div class="profile-section">
+                        <label id="label-2">Деталі</label>
+                        <div id="prof-text2-box"><p class="profile-editable" id="prof-text2">...</p></div>
+                    </div>
+                </div>
+
+                <button class="action-btn" id="prof-btn">Дія</button>
+            </div>
+        </div>
+
+        <div id="chat-container">
+            <div id="chats-header"><span>Чати</span><button id="chats-close-btn" aria-label="Закрити">✕</button></div>
+            <div id="dm-back-row"><span class="arrow">←</span><span id="dm-back-name"></span></div>
+            <div id="dm-list"></div>
+            <div id="chat-thread-wrap">
+                <ul id="chat-messages"></ul>
+                <div class="chat-input-row">
+                    <input type="text" id="chat-msg-input" placeholder="Повідомлення" />
+                    <button id="chat-send-btn">▲</button>
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- ==================== Головна: список людей (мінімалізм, як у прикладі) ==================== -->
+    <div id="screen-home" class="app-screen active-screen">
+        <div class="home-header"><h1>Сьогодні</h1></div>
+        <div class="home-search-box">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-3.8-3.8"></path></svg>
+            <input type="text" id="people-search-input" placeholder="Пошук" autocomplete="off">
+        </div>
+        <div id="home-grid"><div class="home-grid-inner" id="home-grid-inner"></div></div>
+    </div>
+
+    <!-- ==================== Сторінка людини в стилі прикладу (Instagram-мінімалізм) ==================== -->
+    <div id="screen-ig-profile" class="app-screen">
+        <div class="ig-top-bar">
+            <button class="ig-back-btn" id="ig-back-btn" aria-label="Назад"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"></path></svg></button>
+            <span class="ig-handle-title" id="ig-top-handle"></span>
+            <button class="ig-more-btn" aria-label="Ще"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.4"></circle><circle cx="12" cy="12" r="1.4"></circle><circle cx="19" cy="12" r="1.4"></circle></svg></button>
+        </div>
+        <div id="ig-content">
+            <div class="ig-header-row">
+                <div class="ig-avatar" id="ig-avatar"></div>
+                <div class="ig-stats">
+                    <div class="ig-stat"><b id="ig-stat-following">0</b><span>Підписки</span></div>
+                    <div class="ig-stat"><b id="ig-stat-followers">0</b><span>Підписники</span></div>
+                    <div class="ig-stat"><b id="ig-stat-posts">0</b><span>Дописи</span></div>
+                </div>
+            </div>
+            <div class="ig-bio-block">
+                <p class="ig-bio-name" id="ig-bio-name"></p>
+                <p class="ig-bio-handle" id="ig-bio-handle"></p>
+                <p class="ig-bio-text" id="ig-bio-text"></p>
+            </div>
+            <div class="ig-actions-row" id="ig-actions-row"></div>
+            <div class="ig-tabs-row">
+                <div class="ig-tab active"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect></svg></div>
+                <div class="ig-tab"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"></rect><path d="M10 9l5 3-5 3z"></path></svg></div>
+                <div class="ig-tab"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"></path></svg></div>
+            </div>
+            <div class="ig-grid" id="ig-grid"></div>
+        </div>
+    </div>
+
+    <!-- ==================== Глобальна нижня навігація ==================== -->
+    <div id="bottom-nav">
+        <button class="nav-btn active" id="nav-home" aria-label="Люди">
+            <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"></path><path d="M5 10v10h14V10"></path></svg>
+            <span class="nav-dot"></span>
+        </button>
+        <button class="nav-btn" id="nav-map" aria-label="Карта">
+            <svg viewBox="0 0 24 24"><path d="M9 3 3 5v16l6-2 6 2 6-2V3l-6 2-6-2z"></path><path d="M9 3v16M15 5v16"></path></svg>
+            <span class="nav-dot"></span>
+        </button>
+        <button class="nav-btn" id="nav-messages" aria-label="Повідомлення">
+            <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            <span class="nav-dot"></span>
+        </button>
+        <button class="nav-btn" id="nav-profile" aria-label="Профіль">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 4-6 8-6s8 2 8 6"></path></svg>
+            <span class="nav-dot"></span>
+        </button>
     </div>
 
     <div id="qr-modal">
@@ -1446,6 +1588,7 @@
 
         function showPinPlacement(isOnboarding) {
             window.closeProfile();
+            showScreen('map');
             placingPin = true;
             placingPinIsOnboarding = isOnboarding;
             document.getElementById('pin-place-crosshair').style.display = 'block';
@@ -1454,7 +1597,10 @@
             document.getElementById('pin-place-hint').innerText = isOnboarding
                 ? 'Перемістіть карту так, щоб мітка стала над вашим місцем'
                 : 'Перемістіть карту, щоб вибрати нове місце';
-            map.setView(myCoords, Math.max(map.getZoom(), 15));
+            setTimeout(() => {
+                map.invalidateSize();
+                map.setView(myCoords, Math.max(map.getZoom(), 15));
+            }, 60);
         }
 
         function hidePinPlacement() {
@@ -1529,6 +1675,164 @@
                 if (id === myId) { myProfile = { name: p.name, status: p.status, about: p.about, interests: p.interests, photos: p.photos || [] }; }
             });
         });
+
+        // ==================== Багатоекранний режим: Головна (список людей) + сторінка людини у стилі прикладу ====================
+        // Карта більше не головний екран — вона один із екранів (відкривається через нижню навігацію),
+        // і при відкритті профілю саме з карти (клік по мітці) картка людини лишається такою, як була.
+        // Нова "сторінка людини" (Instagram-стиль) використовується лише коли заходиш НЕ з карти —
+        // зі списку "Люди" на Головній чи з вкладки "Профіль".
+
+        function showScreen(name) {
+            const idByName = { home: 'screen-home', igprofile: 'screen-ig-profile', map: 'app-container' };
+            document.querySelectorAll('.app-screen').forEach(el => el.classList.remove('active-screen'));
+            const el = document.getElementById(idByName[name]);
+            if (el) el.classList.add('active-screen');
+
+            document.querySelectorAll('#bottom-nav .nav-btn').forEach(b => b.classList.remove('active'));
+            if (name === 'home') document.getElementById('nav-home').classList.add('active');
+            if (name === 'map') document.getElementById('nav-map').classList.add('active');
+            if (name === 'igprofile' && igCurrentIsMine) document.getElementById('nav-profile').classList.add('active');
+
+            if (name === 'map') setTimeout(() => map.invalidateSize(), 60);
+        }
+
+        // Детерміновані (стабільні для одного й того ж id) числа підписок/підписників — суто оформлення вітрини,
+        // адже соціальний граф у цій версії застосунку не ведеться.
+        function pseudoStat(id, salt, min, max) {
+            const s = String(id) + salt;
+            let h = 0;
+            for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+            return min + (h % (max - min + 1));
+        }
+
+        function slugHandle(name) {
+            const cleaned = String(name || 'user').toLowerCase().replace(/[^a-zа-яіїєґ0-9\s]/gi, '').trim();
+            return '@' + (cleaned.replace(/\s+/g, '.') || 'user');
+        }
+
+        let firebaseProfilesCache = {};
+        onValue(ref(db, 'profiles'), (snap) => {
+            firebaseProfilesCache = snap.val() || {};
+            renderHomeGrid(document.getElementById('people-search-input').value);
+        });
+
+        function buildDirectoryEntries() {
+            const entries = people.map(p => ({ id: p.id, type: 'person', name: p.name, status: p.status, photos: p.photos, about: p.about, interests: p.interests }));
+            Object.keys(firebaseProfilesCache).forEach(id => {
+                if (id === myId) return;
+                const p = firebaseProfilesCache[id];
+                if (!p) return;
+                entries.push({
+                    id, type: 'person', name: p.name || 'Гість', status: p.status || '',
+                    photos: (p.photos && p.photos.length) ? p.photos : ["https://xsgames.co/randomusers/assets/avatars/male/11.jpg"],
+                    about: p.about || '', interests: p.interests || ''
+                });
+            });
+            return entries;
+        }
+
+        const placeBadgeSvg = `<svg viewBox="0 0 24 24"><path d="M12 22s7-7.58 7-12.5A7 7 0 0 0 5 9.5C5 14.42 12 22 12 22z"></path><circle cx="12" cy="9.5" r="2.3"></circle></svg>`;
+
+        // "Топ за сьогодні": люди + заклади разом, одна сітка кіл (як у Instagram-прикладі),
+        // без окремих екранів чи списків — усе прокручується вниз, а карта відкривається лише кнопкою.
+        function buildTodayEntries() {
+            const peopleEntries = buildDirectoryEntries();
+            const placeEntries = places.map(pl => ({ id: pl.id, type: 'place', name: pl.name, status: pl.status, photos: pl.photos, text1: pl.text1, text2: pl.text2, svg: pl.svg, category: pl.category }));
+            const combined = peopleEntries.concat(placeEntries);
+            // Стабільний "рейтинг дня" для порядку кіл — детермінований, без реального лічильника переглядів.
+            combined.sort((a, b) => pseudoStat(b.id, 'today-rank', 0, 999) - pseudoStat(a.id, 'today-rank', 0, 999));
+            return combined;
+        }
+
+        function renderHomeGrid(filterText) {
+            const box = document.getElementById('home-grid-inner');
+            if (!box) return;
+            box.innerHTML = '';
+            const q = (filterText || '').trim().toLowerCase();
+            const entries = buildTodayEntries().filter(e => !q || e.name.toLowerCase().includes(q));
+            if (!entries.length) {
+                const empty = document.createElement('p'); empty.className = 'dm-empty'; empty.innerText = 'Нічого не знайдено';
+                box.appendChild(empty); return;
+            }
+            entries.forEach(e => {
+                const item = document.createElement('div'); item.className = 'home-circle-item';
+                const avatar = document.createElement('div'); avatar.className = 'home-circle-avatar';
+                avatar.style.backgroundImage = `url('${e.photos[0]}')`;
+                if (e.type === 'place') {
+                    const badge = document.createElement('div'); badge.className = 'home-circle-badge';
+                    badge.innerHTML = placeBadgeSvg;
+                    avatar.appendChild(badge);
+                }
+                const nameSpan = document.createElement('span'); nameSpan.className = 'home-circle-name'; nameSpan.innerText = e.name;
+                item.appendChild(avatar); item.appendChild(nameSpan);
+                item.addEventListener('click', () => {
+                    if (e.type === 'place') { showSidebar(e); }
+                    else { openIgProfile(e, false); }
+                });
+                box.appendChild(item);
+            });
+        }
+        renderHomeGrid('');
+
+        document.getElementById('people-search-input').addEventListener('input', (e) => renderHomeGrid(e.target.value));
+
+        // Відкриває сторінку людини у стилі прикладу (аватар, статистика, біо, сітка фото)
+        let igCurrentItem = null; let igCurrentIsMine = false;
+        function openIgProfile(item, isMine) {
+            igCurrentItem = item; igCurrentIsMine = isMine;
+            const photos = (item.photos && item.photos.length) ? item.photos : ["https://xsgames.co/randomusers/assets/avatars/male/11.jpg"];
+
+            document.getElementById('ig-avatar').style.backgroundImage = `url('${photos[0]}')`;
+            const handle = slugHandle(item.name);
+            document.getElementById('ig-top-handle').innerText = handle;
+            document.getElementById('ig-bio-handle').innerText = handle;
+            document.getElementById('ig-bio-name').innerText = item.name || 'Гість';
+            document.getElementById('ig-bio-text').innerText = item.about || item.status || '';
+            document.getElementById('ig-stat-posts').innerText = photos.length;
+            document.getElementById('ig-stat-following').innerText = pseudoStat(item.id, 'following', 20, 480);
+            document.getElementById('ig-stat-followers').innerText = pseudoStat(item.id, 'followers', 50, 3200);
+
+            const actionsRow = document.getElementById('ig-actions-row');
+            actionsRow.innerHTML = '';
+            if (isMine) {
+                const editBtn = document.createElement('button');
+                editBtn.className = 'ig-action-btn'; editBtn.innerText = 'Редагувати профіль';
+                editBtn.addEventListener('click', () => {
+                    showSidebar(getMyProfileItem());
+                    setTimeout(enterEditMode, 350);
+                });
+                const shareBtn = document.createElement('button');
+                shareBtn.className = 'ig-action-btn icon-only';
+                shareBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"></path><path d="M16 6l-4-4-4 4"></path><path d="M12 2v14"></path></svg>';
+                actionsRow.appendChild(editBtn); actionsRow.appendChild(shareBtn);
+            } else {
+                const msgBtn = document.createElement('button');
+                msgBtn.className = 'ig-action-btn primary'; msgBtn.innerText = 'Написати';
+                msgBtn.addEventListener('click', () => { showSidebar(item); openPersonChatTab(item); });
+                actionsRow.appendChild(msgBtn);
+            }
+
+            const grid = document.getElementById('ig-grid');
+            grid.innerHTML = '';
+            const gridCount = Math.max(photos.length, 6);
+            for (let i = 0; i < gridCount; i++) {
+                const cell = document.createElement('div'); cell.className = 'ig-grid-item';
+                cell.style.backgroundImage = `url('${photos[i % photos.length]}')`;
+                grid.appendChild(cell);
+            }
+
+            showScreen('igprofile');
+        }
+
+        document.getElementById('ig-back-btn').addEventListener('click', () => showScreen('home'));
+
+        // ---- Нижня навігація: Люди · Карта · Повідомлення · Профіль ----
+        // Картка профілю/чату — глобальний оверлей, тож чат і редагування відкриваються прямо
+        // поверх поточного екрана, без перемикання на карту (карта відкривається лише своєю кнопкою).
+        document.getElementById('nav-home').addEventListener('click', () => showScreen('home'));
+        document.getElementById('nav-map').addEventListener('click', () => showScreen('map'));
+        document.getElementById('nav-messages').addEventListener('click', () => openChatsList());
+        document.getElementById('nav-profile').addEventListener('click', () => openIgProfile(getMyProfileItem(), true));
     </script>
 </body>
 </html>
