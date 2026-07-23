@@ -1750,7 +1750,7 @@
         window.addEventListener('resize', layoutHomeGrid);
         window.addEventListener('orientationchange', () => setTimeout(layoutHomeGrid, 60));
 
-
+        function buildDirectoryEntries() {
             const entries = people.map(p => ({ id: p.id, type: 'person', name: p.name, status: p.status, photos: p.photos, about: p.about, interests: p.interests }));
             Object.keys(firebaseProfilesCache).forEach(id => {
                 if (id === myId) return;
