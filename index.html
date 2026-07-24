@@ -484,17 +484,17 @@
         #bottom-nav {
             position: fixed; left: 50%; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); z-index: 2600;
             transform: translate3d(-50%, 0, 0);
-            display: flex; align-items: center; justify-content: center; gap: 24px;
-            padding: 10px 22px;
-            background: var(--card-bg);
-            backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%);
+            display: flex; align-items: center; justify-content: center; gap: 30px;
+            padding: 7px 30px;
+            background: rgba(255, 255, 255, 0.22);
+            backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%);
             border: 1px solid var(--border-minimal);
             border-radius: 999px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.10);
             box-sizing: border-box;
             transition: var(--theme-transition);
         }
-        body.dark-theme #bottom-nav { box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+        body.dark-theme #bottom-nav { background: rgba(28, 28, 30, 0.28); box-shadow: 0 8px 24px rgba(0,0,0,0.35); }
         .nav-btn {
             background: transparent; border: none; padding: 4px 2px; display: flex; flex-direction: column;
             align-items: center; justify-content: center; gap: 5px; cursor: pointer;
@@ -511,7 +511,7 @@
         .home-header { padding: 18px 20px 4px; flex-shrink: 0; }
         .home-header h1 { margin: 0; font-size: 27px; font-weight: 700; letter-spacing: -0.4px; color: var(--text-color); }
         .app-wordmark { font-weight: 600; font-size: 19px !important; letter-spacing: 0.2px; color: var(--text-secondary) !important; text-transform: uppercase; }
-        .home-search-box { margin: 12px 20px 6px; padding: 10px 14px; border-radius: 14px; background: rgba(0,0,0,0.045); display: flex; align-items: center; gap: 8px; flex-shrink: 0; transition: var(--theme-transition); }
+        .home-search-box { margin: 12px 20px 6px; padding: 10px 16px; border-radius: 999px; background: rgba(0,0,0,0.045); display: flex; align-items: center; gap: 8px; flex-shrink: 0; transition: var(--theme-transition); }
         body.dark-theme .home-search-box { background: rgba(255,255,255,0.08); }
         .home-search-box svg { width: 16px; height: 16px; stroke: var(--text-secondary); fill: none; stroke-width: 2; flex-shrink: 0; }
         .home-search-box input { border: none; background: transparent; outline: none; font-size: 14px; color: var(--text-color); width: 100%; font-family: inherit; }
@@ -1349,28 +1349,37 @@
         }, { passive: true });
 
         const sidebar = document.getElementById('profile-sidebar');
-        let startSidebarY = 0, currSidebarY = 0, isSidebarSwiping = false, startSidebarTime = 0;
-        sidebar.addEventListener('touchstart', (e) => { if (e.target.closest('.profile-hero') || e.target.closest('#chat-messages') || e.target.closest('.chat-input-row') || e.target.closest('.action-btn') || e.target.closest('.info-scroll-area') || e.target.closest('#dm-list') || e.target.closest('.profile-editable') || e.target.closest('#prof-edit-btn') || e.target.closest('#prof-add-photo-btn')) return; startSidebarY = e.touches[0].clientY; startSidebarTime = Date.now(); isSidebarSwiping = true; sidebar.style.transition = 'none'; }, { passive: true });
-        sidebar.addEventListener('touchmove', (e) => {
-            if (!isSidebarSwiping) return;
-            currSidebarY = e.touches[0].clientY - startSidebarY;
-            if (sidebar.classList.contains('chat-mode')) { sidebar.style.transform = `translate3d(0, ${currSidebarY}px, 0)`; }
-            else { sidebar.style.transform = `translate3d(-50%, calc(-50% + ${currSidebarY}px), 0)`; }
-        }, { passive: true });
+        let startSidebarY = 0, currSidebarY = 0, isSidebarSwiping = false;
+        sidebar.addEventListener('touchstart', (e) => { if (sidebar.classList.contains('chat-mode') || e.target.closest('.profile-hero') || e.target.closest('#chat-messages') || e.target.closest('.chat-input-row') || e.target.closest('.action-btn') || e.target.closest('.info-scroll-area') || e.target.closest('#dm-list') || e.target.closest('.profile-editable') || e.target.closest('#prof-edit-btn') || e.target.closest('#prof-add-photo-btn')) return; startSidebarY = e.touches[0].clientY; isSidebarSwiping = true; sidebar.style.transition = 'none'; }, { passive: true });
+        sidebar.addEventListener('touchmove', (e) => { if (!isSidebarSwiping) return; currSidebarY = e.touches[0].clientY - startSidebarY; sidebar.style.transform = `translate3d(-50%, calc(-50% + ${currSidebarY}px), 0)`; }, { passive: true });
         sidebar.addEventListener('touchend', () => {
             if (!isSidebarSwiping) return; isSidebarSwiping = false; sidebar.style.transition = 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)';
-            const isChatMode = sidebar.classList.contains('chat-mode');
-            const elapsed = Date.now() - startSidebarTime;
-            const isQuickSwipeUp = currSidebarY < -50 && elapsed < 400;
-            if (isChatMode) {
-                if (isQuickSwipeUp || Math.abs(currSidebarY) > 130) { window.closeProfile(); }
-                else { sidebar.style.transform = 'translate3d(0, 0, 0)'; }
-            } else {
-                if (isQuickSwipeUp || Math.abs(currSidebarY) > 120) { window.closeProfile(); }
-                else { sidebar.style.transform = 'translate3d(-50%, -50%, 0)'; }
-            }
+            if (Math.abs(currSidebarY) > 120) { window.closeProfile(); }
+            else { sidebar.style.transform = 'translate3d(-50%, -50%, 0)'; }
             currSidebarY = 0;
         }, { passive: true });
+
+        // ---- Повноекранне вікно повідомлень: швидкий свайп вгору закриває його ----
+        // Слухач вішається на весь документ (а не лише на сайдбар), бо саме вікно повідомлень
+        // майже цілком зайняте списком чатів/листуванням — там свайп мав би починатись і на них теж.
+        let msgSwipeStartX = 0, msgSwipeStartY = 0, msgSwipeStartTime = 0, msgSwipeTracking = false;
+        document.addEventListener('touchstart', (e) => {
+            if (!(sidebar.classList.contains('chat-mode') && sidebar.classList.contains('active'))) { msgSwipeTracking = false; return; }
+            if (e.target.closest('.chat-input-row') || e.target.closest('#chat-send-btn')) { msgSwipeTracking = false; return; }
+            msgSwipeStartX = e.touches[0].clientX; msgSwipeStartY = e.touches[0].clientY; msgSwipeStartTime = Date.now(); msgSwipeTracking = true;
+        }, { passive: true });
+        document.addEventListener('touchend', (e) => {
+            if (!msgSwipeTracking) return; msgSwipeTracking = false;
+            if (!(sidebar.classList.contains('chat-mode') && sidebar.classList.contains('active'))) return;
+            const t = e.changedTouches[0];
+            const dx = t.clientX - msgSwipeStartX;
+            const dy = t.clientY - msgSwipeStartY;
+            const dt = Date.now() - msgSwipeStartTime;
+            // швидкий, переважно вертикальний рух вгору — не чіпляється до звичайного повільного гортання списку
+            if (dy < -70 && Math.abs(dx) < 90 && dt < 400) { window.closeProfile(); }
+        }, { passive: true });
+
+
 
         // ---- Загальні бесіди (стіни NPC) та приватні бесіди між реальними користувачами ----
         let currentChatPath = null;      // напр. 'chats/p1' або 'dms/u_abc__u_xyz'
