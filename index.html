@@ -508,19 +508,23 @@
 
         /* ---- Головна: список людей (мінімалістичний, як у прикладі) ---- */
         #screen-home { background: var(--bg-color); }
-        .home-header { padding: 14px 20px 2px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .home-header { padding: calc(4px + env(safe-area-inset-top, 0px)) 16px 2px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
         .home-header h1 { margin: 0; font-size: 27px; font-weight: 700; letter-spacing: -0.4px; color: var(--text-color); }
-        .app-wordmark { font-family: Georgia, 'Iowan Old Style', 'Times New Roman', serif; font-weight: 500; font-style: italic; font-size: 24px !important; letter-spacing: 0.3px; color: var(--text-color) !important; text-transform: none; }
-        .home-filter-tabs { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-shrink: 0; }
+        .app-wordmark { font-family: 'Snell Roundhand', 'Bradley Hand', 'Segoe Script', 'Brush Script MT', cursive; font-weight: 600; font-style: italic; font-size: 32px !important; letter-spacing: 0.4px; color: var(--text-color) !important; text-transform: none; }
+        .home-filter-tabs { display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex-shrink: 0; }
         .filter-tab {
             display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer;
-            width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--border-minimal);
-            background: rgba(0,0,0,0.035); color: var(--text-secondary);
+            width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border-minimal);
+            background: rgba(255, 255, 255, 0.14);
+            backdrop-filter: blur(18px) saturate(180%); -webkit-backdrop-filter: blur(18px) saturate(180%);
+            box-shadow: 0 4px 14px rgba(0,0,0,0.10);
+            color: var(--text-secondary);
             -webkit-tap-highlight-color: transparent; transition: var(--theme-transition), background 0.2s ease, color 0.2s ease;
         }
-        body.dark-theme .filter-tab { background: rgba(255,255,255,0.06); }
+        body.dark-theme .filter-tab { background: rgba(28, 28, 30, 0.28); box-shadow: 0 4px 14px rgba(0,0,0,0.3); }
         .filter-tab svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
         .filter-tab.active { background: var(--accent-main); border-color: var(--accent-main); color: #fff; }
+
 
         /* Стильне поле пошуку — зʼявляється знизу, над плаваючою таблеткою навігації */
         .home-search-bar {
