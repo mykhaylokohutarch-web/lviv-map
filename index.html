@@ -484,17 +484,17 @@
         #bottom-nav {
             position: fixed; left: 50%; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); z-index: 2600;
             transform: translate3d(-50%, 0, 0);
-            display: flex; align-items: center; justify-content: center; gap: 30px;
-            padding: 7px 30px;
-            background: rgba(255, 255, 255, 0.22);
-            backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%);
+            display: flex; align-items: center; justify-content: center; gap: 26px;
+            padding: 5px 26px;
+            background: rgba(255, 255, 255, 0.14);
+            backdrop-filter: blur(18px) saturate(180%); -webkit-backdrop-filter: blur(18px) saturate(180%);
             border: 1px solid var(--border-minimal);
             border-radius: 999px;
             box-shadow: 0 8px 24px rgba(0,0,0,0.10);
             box-sizing: border-box;
             transition: var(--theme-transition);
         }
-        body.dark-theme #bottom-nav { background: rgba(28, 28, 30, 0.28); box-shadow: 0 8px 24px rgba(0,0,0,0.35); }
+        body.dark-theme #bottom-nav { background: rgba(28, 28, 30, 0.18); box-shadow: 0 8px 24px rgba(0,0,0,0.35); }
         .nav-btn {
             background: transparent; border: none; padding: 4px 2px; display: flex; flex-direction: column;
             align-items: center; justify-content: center; gap: 5px; cursor: pointer;
@@ -510,16 +510,43 @@
         #screen-home { background: var(--bg-color); }
         .home-header { padding: 18px 20px 4px; flex-shrink: 0; }
         .home-header h1 { margin: 0; font-size: 27px; font-weight: 700; letter-spacing: -0.4px; color: var(--text-color); }
-        .app-wordmark { font-weight: 600; font-size: 19px !important; letter-spacing: 0.2px; color: var(--text-secondary) !important; text-transform: uppercase; }
-        .home-search-box { margin: 12px 20px 6px; padding: 10px 16px; border-radius: 999px; background: rgba(0,0,0,0.045); display: flex; align-items: center; gap: 8px; flex-shrink: 0; transition: var(--theme-transition); }
-        body.dark-theme .home-search-box { background: rgba(255,255,255,0.08); }
-        .home-search-box svg { width: 16px; height: 16px; stroke: var(--text-secondary); fill: none; stroke-width: 2; flex-shrink: 0; }
-        .home-search-box input { border: none; background: transparent; outline: none; font-size: 14px; color: var(--text-color); width: 100%; font-family: inherit; }
+        .app-wordmark { font-family: 'Snell Roundhand', 'Segoe Script', 'Brush Script MT', cursive; font-weight: 600; font-style: italic; font-size: 34px !important; letter-spacing: 0.5px; color: var(--text-color) !important; text-transform: none; }
+        .home-filter-tabs { display: flex; gap: 8px; padding: 4px 20px 8px; flex-shrink: 0; overflow-x: auto; scrollbar-width: none; }
+        .home-filter-tabs::-webkit-scrollbar { display: none; }
+        .filter-tab {
+            display: flex; align-items: center; gap: 6px; flex-shrink: 0; cursor: pointer;
+            padding: 8px 14px; border-radius: 999px; border: 1px solid var(--border-minimal);
+            background: rgba(0,0,0,0.035); color: var(--text-secondary);
+            -webkit-tap-highlight-color: transparent; transition: var(--theme-transition), background 0.2s ease, color 0.2s ease;
+        }
+        body.dark-theme .filter-tab { background: rgba(255,255,255,0.06); }
+        .filter-tab svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+        .filter-tab span { font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+        .filter-tab.active { background: var(--accent-main); border-color: var(--accent-main); color: #fff; }
+        .home-search-bar {
+            margin: 0 20px; padding: 0 16px; border-radius: 999px; background: rgba(0,0,0,0.045);
+            display: flex; align-items: center; gap: 8px; flex-shrink: 0; overflow: hidden;
+            max-height: 0; opacity: 0; transition: max-height 0.28s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.2s ease, padding 0.28s ease, margin 0.28s ease, var(--theme-transition);
+        }
+        .home-search-bar.open { max-height: 44px; opacity: 1; padding: 10px 16px; margin: 0 20px 8px; }
+        body.dark-theme .home-search-bar { background: rgba(255,255,255,0.08); }
+        .home-search-bar svg { width: 16px; height: 16px; stroke: var(--text-secondary); fill: none; stroke-width: 2; flex-shrink: 0; }
+        .home-search-bar input { border: none; background: transparent; outline: none; font-size: 14px; color: var(--text-color); width: 100%; font-family: inherit; }
         /* ---- Головна: сітка кіл (люди + заклади) по 3 в ряд, як в надісланому прикладі ---- */
         #home-grid { flex-grow: 1; overflow-y: auto; overflow-x: hidden; padding: 6px 14px 110px; box-sizing: border-box; touch-action: pan-y; -webkit-overflow-scrolling: touch; overscroll-behavior-x: none; }
-        .home-grid-inner { display: grid; grid-template-columns: repeat(3, var(--circle-d, 100px)); justify-content: center; gap: 18px 10px; }
+        .home-grid-inner { display: grid; grid-template-columns: repeat(3, var(--circle-d, 100px)); justify-content: center; gap: 34px 10px; }
         .home-circle-item { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
         .home-circle-item:active .home-circle-avatar { transform: scale(0.93); }
+        .home-circle-msg {
+            position: relative; max-width: calc(var(--circle-d, 100px) + 14px); background: var(--card-bg);
+            color: var(--text-color); font-size: 10.5px; font-weight: 600; line-height: 1.25;
+            padding: 4px 9px; border-radius: 11px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 3px;
+        }
+        .home-circle-msg::after {
+            content: ''; position: absolute; left: 50%; bottom: -4px; width: 8px; height: 8px;
+            background: var(--card-bg); transform: translateX(-50%) rotate(45deg); border-radius: 1.5px;
+        }
         .home-circle-avatar { position: relative; width: var(--circle-d, 100px); height: var(--circle-d, 100px); border-radius: 50%; background-size: cover; background-position: center; background-color: #e5e5ea; transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1); box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
         .home-circle-badge { position: absolute; right: 2%; bottom: 2%; width: 22%; height: 22%; min-width: 16px; min-height: 16px; border-radius: 50%; background: var(--accent-main); border: 2px solid var(--bg-color); display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
         .home-circle-badge svg { width: 55%; height: 55%; stroke: #fff; fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
@@ -682,8 +709,22 @@
 
     <!-- ==================== Головна: список людей (мінімалізм, як у прикладі) ==================== -->
     <div id="screen-home" class="app-screen active-screen">
-        <div class="home-header"><h1 class="app-wordmark">Львів</h1></div>
-        <div class="home-search-box">
+        <div class="home-header"><h1 class="app-wordmark">moment</h1></div>
+        <div class="home-filter-tabs" id="home-filter-tabs">
+            <button class="filter-tab" data-filter="fav" aria-label="Улюблені">
+                <svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg>
+                <span>Улюблені</span>
+            </button>
+            <button class="filter-tab" data-filter="friends" aria-label="Друзі">
+                <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                <span>Друзі</span>
+            </button>
+            <button class="filter-tab" data-filter="places" aria-label="Заклади">
+                <svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                <span>Заклади</span>
+            </button>
+        </div>
+        <div class="home-search-bar" id="home-search-bar">
             <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-3.8-3.8"></path></svg>
             <input type="text" id="people-search-input" placeholder="Пошук" autocomplete="off">
         </div>
@@ -737,6 +778,10 @@
         </button>
         <button class="nav-btn" id="nav-profile" aria-label="Профіль">
             <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 4-6 8-6s8 2 8 6"></path></svg>
+            <span class="nav-dot"></span>
+        </button>
+        <button class="nav-btn" id="nav-search" aria-label="Пошук">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-3.8-3.8"></path></svg>
             <span class="nav-dot"></span>
         </button>
     </div>
@@ -1775,14 +1820,14 @@
             const availH = (window.innerHeight - rect.top - navH - padTop) - 8;
             if (availW <= 0 || availH <= 0) return;
 
-            const colGap = 10, rowGap = 18, labelH = 15, innerGap = 6;
+            const colGap = 10, rowGap = 34, labelH = 15, innerGap = 6, msgH = 24;
             let d = (availW - 2 * colGap) / 3;
-            let itemH = d + innerGap + labelH;
+            let itemH = d + innerGap + labelH + msgH;
             let rows = Math.floor((availH + rowGap) / (itemH + rowGap));
 
             if (rows < 3) {
                 itemH = (availH - 2 * rowGap) / 3;
-                d = Math.max(46, itemH - innerGap - labelH);
+                d = Math.max(46, itemH - innerGap - labelH - msgH);
                 rows = 3;
             }
 
@@ -1814,23 +1859,38 @@
             const peopleEntries = buildDirectoryEntries();
             const placeEntries = places.map(pl => ({ id: pl.id, type: 'place', name: pl.name, status: pl.status, photos: pl.photos, text1: pl.text1, text2: pl.text2, svg: pl.svg, category: pl.category }));
             const combined = peopleEntries.concat(placeEntries);
+            // Стабільні (детерміновані) позначки "улюблене" / "друг" — суто оформлення вітрини для фільтрів.
+            combined.forEach(e => {
+                e.isFav = pseudoStat(e.id, 'is-fav', 0, 99) < 35;
+                e.isFriend = e.type === 'person' && pseudoStat(e.id, 'is-friend', 0, 99) < 45;
+            });
             // Стабільний "рейтинг дня" для порядку кіл — детермінований, без реального лічильника переглядів.
             combined.sort((a, b) => pseudoStat(b.id, 'today-rank', 0, 999) - pseudoStat(a.id, 'today-rank', 0, 999));
             return combined;
         }
 
-        function renderHomeGrid(filterText) {
+        let currentHomeFilter = null;
+
+        function renderHomeGrid(filterText, filterMode) {
             const box = document.getElementById('home-grid-inner');
             if (!box) return;
+            if (filterMode !== undefined) currentHomeFilter = filterMode;
             box.innerHTML = '';
             const q = (filterText || '').trim().toLowerCase();
-            const entries = buildTodayEntries().filter(e => !q || e.name.toLowerCase().includes(q));
+            let entries = buildTodayEntries().filter(e => !q || e.name.toLowerCase().includes(q));
+            if (currentHomeFilter === 'fav') entries = entries.filter(e => e.isFav);
+            else if (currentHomeFilter === 'friends') entries = entries.filter(e => e.isFriend);
+            else if (currentHomeFilter === 'places') entries = entries.filter(e => e.type === 'place');
             if (!entries.length) {
                 const empty = document.createElement('p'); empty.className = 'dm-empty'; empty.innerText = 'Нічого не знайдено';
                 box.appendChild(empty); return;
             }
             entries.forEach(e => {
                 const item = document.createElement('div'); item.className = 'home-circle-item';
+                if (e.status) {
+                    const msg = document.createElement('div'); msg.className = 'home-circle-msg'; msg.innerText = e.status;
+                    item.appendChild(msg);
+                }
                 const avatar = document.createElement('div'); avatar.className = 'home-circle-avatar';
                 avatar.style.backgroundImage = `url('${e.photos[0]}')`;
                 if (e.type === 'place') {
@@ -1852,6 +1912,29 @@
         setTimeout(layoutHomeGrid, 150);
 
         document.getElementById('people-search-input').addEventListener('input', (e) => renderHomeGrid(e.target.value));
+
+        document.querySelectorAll('.filter-tab').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const mode = btn.dataset.filter;
+                const isActive = btn.classList.contains('active');
+                document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+                if (!isActive) btn.classList.add('active');
+                renderHomeGrid(document.getElementById('people-search-input').value, isActive ? null : mode);
+                setTimeout(layoutHomeGrid, 0);
+            });
+        });
+
+        document.getElementById('nav-search').addEventListener('click', () => {
+            closeMessagesWindowIfOpen();
+            const bar = document.getElementById('home-search-bar');
+            const btn = document.getElementById('nav-search');
+            const opening = !bar.classList.contains('open');
+            bar.classList.toggle('open', opening);
+            btn.classList.toggle('active', opening);
+            if (opening) { setTimeout(() => document.getElementById('people-search-input').focus(), 260); }
+            else { const input = document.getElementById('people-search-input'); input.value = ''; renderHomeGrid(''); }
+            setTimeout(layoutHomeGrid, 300);
+        });
 
         // Відкриває сторінку людини у стилі прикладу (аватар, статистика, біо, сітка фото)
         let igCurrentItem = null; let igCurrentIsMine = false;
