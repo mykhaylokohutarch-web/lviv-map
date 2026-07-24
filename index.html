@@ -508,44 +508,46 @@
 
         /* ---- Головна: список людей (мінімалістичний, як у прикладі) ---- */
         #screen-home { background: var(--bg-color); }
-        .home-header { padding: 18px 20px 4px; flex-shrink: 0; }
+        .home-header { padding: 14px 20px 2px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
         .home-header h1 { margin: 0; font-size: 27px; font-weight: 700; letter-spacing: -0.4px; color: var(--text-color); }
-        .app-wordmark { font-family: 'Snell Roundhand', 'Segoe Script', 'Brush Script MT', cursive; font-weight: 600; font-style: italic; font-size: 34px !important; letter-spacing: 0.5px; color: var(--text-color) !important; text-transform: none; }
-        .home-filter-tabs { display: flex; gap: 8px; padding: 4px 20px 8px; flex-shrink: 0; overflow-x: auto; scrollbar-width: none; }
-        .home-filter-tabs::-webkit-scrollbar { display: none; }
+        .app-wordmark { font-family: Georgia, 'Iowan Old Style', 'Times New Roman', serif; font-weight: 500; font-style: italic; font-size: 24px !important; letter-spacing: 0.3px; color: var(--text-color) !important; text-transform: none; }
+        .home-filter-tabs { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-shrink: 0; }
         .filter-tab {
-            display: flex; align-items: center; gap: 6px; flex-shrink: 0; cursor: pointer;
-            padding: 8px 14px; border-radius: 999px; border: 1px solid var(--border-minimal);
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer;
+            width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--border-minimal);
             background: rgba(0,0,0,0.035); color: var(--text-secondary);
             -webkit-tap-highlight-color: transparent; transition: var(--theme-transition), background 0.2s ease, color 0.2s ease;
         }
         body.dark-theme .filter-tab { background: rgba(255,255,255,0.06); }
-        .filter-tab svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
-        .filter-tab span { font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+        .filter-tab svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
         .filter-tab.active { background: var(--accent-main); border-color: var(--accent-main); color: #fff; }
+
+        /* Стильне поле пошуку — зʼявляється знизу, над плаваючою таблеткою навігації */
         .home-search-bar {
-            margin: 0 20px; padding: 0 16px; border-radius: 999px; background: rgba(0,0,0,0.045);
-            display: flex; align-items: center; gap: 8px; flex-shrink: 0; overflow: hidden;
-            max-height: 0; opacity: 0; transition: max-height 0.28s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.2s ease, padding 0.28s ease, margin 0.28s ease, var(--theme-transition);
+            position: fixed; left: 50%; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); z-index: 2650;
+            width: 82%; max-width: 380px;
+            padding: 0 18px; border-radius: 999px; background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(22px) saturate(180%); -webkit-backdrop-filter: blur(22px) saturate(180%);
+            border: 1px solid var(--border-minimal); box-shadow: 0 10px 28px rgba(0,0,0,0.16);
+            display: flex; align-items: center; gap: 8px; overflow: hidden;
+            transform: translate3d(-50%, 0, 0) scale(0.92); max-height: 0; opacity: 0; pointer-events: none;
+            transition: max-height 0.28s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.22s ease, transform 0.28s cubic-bezier(0.25, 1, 0.5, 1), padding 0.28s ease, var(--theme-transition);
         }
-        .home-search-bar.open { max-height: 44px; opacity: 1; padding: 10px 16px; margin: 0 20px 8px; }
-        body.dark-theme .home-search-bar { background: rgba(255,255,255,0.08); }
+        .home-search-bar.open { max-height: 48px; opacity: 1; padding: 12px 18px; transform: translate3d(-50%, 0, 0) scale(1); pointer-events: auto; }
+        body.dark-theme .home-search-bar { background: rgba(28, 28, 30, 0.55); }
         .home-search-bar svg { width: 16px; height: 16px; stroke: var(--text-secondary); fill: none; stroke-width: 2; flex-shrink: 0; }
         .home-search-bar input { border: none; background: transparent; outline: none; font-size: 14px; color: var(--text-color); width: 100%; font-family: inherit; }
         /* ---- Головна: сітка кіл (люди + заклади) по 3 в ряд, як в надісланому прикладі ---- */
-        #home-grid { flex-grow: 1; overflow-y: auto; overflow-x: hidden; padding: 6px 14px 110px; box-sizing: border-box; touch-action: pan-y; -webkit-overflow-scrolling: touch; overscroll-behavior-x: none; }
-        .home-grid-inner { display: grid; grid-template-columns: repeat(3, var(--circle-d, 100px)); justify-content: center; gap: 34px 10px; }
+        #home-grid { flex-grow: 1; overflow-y: auto; overflow-x: hidden; padding: 4px 14px 110px; box-sizing: border-box; touch-action: pan-y; -webkit-overflow-scrolling: touch; overscroll-behavior-x: none; }
+        .home-grid-inner { display: grid; grid-template-columns: repeat(3, var(--circle-d, 100px)); justify-content: center; gap: 22px 10px; }
         .home-circle-item { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
         .home-circle-item:active .home-circle-avatar { transform: scale(0.93); }
+        /* Хмаринка короткого повідомлення — лише на деяких колах, залазить зверху-зліва на фото */
         .home-circle-msg {
-            position: relative; max-width: calc(var(--circle-d, 100px) + 14px); background: var(--card-bg);
-            color: var(--text-color); font-size: 10.5px; font-weight: 600; line-height: 1.25;
-            padding: 4px 9px; border-radius: 11px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 3px;
-        }
-        .home-circle-msg::after {
-            content: ''; position: absolute; left: 50%; bottom: -4px; width: 8px; height: 8px;
-            background: var(--card-bg); transform: translateX(-50%) rotate(45deg); border-radius: 1.5px;
+            position: absolute; top: -7px; left: -10px; z-index: 3; max-width: 78%;
+            background: var(--card-bg); color: var(--text-color); font-size: 10px; font-weight: 600; line-height: 1.2;
+            padding: 4px 8px; border-radius: 12px 12px 12px 3px; box-shadow: 0 3px 10px rgba(0,0,0,0.18);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
         .home-circle-avatar { position: relative; width: var(--circle-d, 100px); height: var(--circle-d, 100px); border-radius: 50%; background-size: cover; background-position: center; background-color: #e5e5ea; transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1); box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
         .home-circle-badge { position: absolute; right: 2%; bottom: 2%; width: 22%; height: 22%; min-width: 16px; min-height: 16px; border-radius: 50%; background: var(--accent-main); border: 2px solid var(--bg-color); display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
@@ -584,7 +586,7 @@
         .ig-grid-item { aspect-ratio: 1/1; border-radius: 50%; background-size: cover; background-position: center; background-color: #e5e5ea; }
     </style>
 </head>
-<body>
+<body class="dark-theme">
 
     <div id="app-container" class="app-screen">
         <!-- Мінімалістична кругла кнопка з тонкими SVG іконками -->
@@ -709,24 +711,19 @@
 
     <!-- ==================== Головна: список людей (мінімалізм, як у прикладі) ==================== -->
     <div id="screen-home" class="app-screen active-screen">
-        <div class="home-header"><h1 class="app-wordmark">moment</h1></div>
-        <div class="home-filter-tabs" id="home-filter-tabs">
-            <button class="filter-tab" data-filter="fav" aria-label="Улюблені">
-                <svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg>
-                <span>Улюблені</span>
-            </button>
-            <button class="filter-tab" data-filter="friends" aria-label="Друзі">
-                <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                <span>Друзі</span>
-            </button>
-            <button class="filter-tab" data-filter="places" aria-label="Заклади">
-                <svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
-                <span>Заклади</span>
-            </button>
-        </div>
-        <div class="home-search-bar" id="home-search-bar">
-            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-3.8-3.8"></path></svg>
-            <input type="text" id="people-search-input" placeholder="Пошук" autocomplete="off">
+        <div class="home-header">
+            <h1 class="app-wordmark">moment</h1>
+            <div class="home-filter-tabs" id="home-filter-tabs">
+                <button class="filter-tab" data-filter="fav" aria-label="Улюблені">
+                    <svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg>
+                </button>
+                <button class="filter-tab" data-filter="friends" aria-label="Друзі">
+                    <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                </button>
+                <button class="filter-tab" data-filter="places" aria-label="Заклади">
+                    <svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                </button>
+            </div>
         </div>
         <div id="home-grid"><div class="home-grid-inner" id="home-grid-inner"></div></div>
     </div>
@@ -784,6 +781,11 @@
             <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-3.8-3.8"></path></svg>
             <span class="nav-dot"></span>
         </button>
+    </div>
+
+    <div class="home-search-bar" id="home-search-bar">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-3.8-3.8"></path></svg>
+        <input type="text" id="people-search-input" placeholder="Пошук" autocomplete="off">
     </div>
 
     <div id="qr-modal">
@@ -909,7 +911,7 @@
         const darkTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
             attribution: '© OpenStreetMap contributors © CARTO', subdomains: 'abcd', maxZoom: 20
         });
-        lightTiles.addTo(map);
+        darkTiles.addTo(map);
 
         const themeBtn = document.getElementById('theme-toggle');
         themeBtn.addEventListener('click', () => {
@@ -1820,14 +1822,14 @@
             const availH = (window.innerHeight - rect.top - navH - padTop) - 8;
             if (availW <= 0 || availH <= 0) return;
 
-            const colGap = 10, rowGap = 34, labelH = 15, innerGap = 6, msgH = 24;
+            const colGap = 10, rowGap = 22, labelH = 15, innerGap = 6;
             let d = (availW - 2 * colGap) / 3;
-            let itemH = d + innerGap + labelH + msgH;
+            let itemH = d + innerGap + labelH;
             let rows = Math.floor((availH + rowGap) / (itemH + rowGap));
 
             if (rows < 3) {
                 itemH = (availH - 2 * rowGap) / 3;
-                d = Math.max(46, itemH - innerGap - labelH - msgH);
+                d = Math.max(46, itemH - innerGap - labelH);
                 rows = 3;
             }
 
@@ -1863,6 +1865,7 @@
             combined.forEach(e => {
                 e.isFav = pseudoStat(e.id, 'is-fav', 0, 99) < 35;
                 e.isFriend = e.type === 'person' && pseudoStat(e.id, 'is-friend', 0, 99) < 45;
+                e.showMsg = pseudoStat(e.id, 'show-msg', 0, 99) < 40;
             });
             // Стабільний "рейтинг дня" для порядку кіл — детермінований, без реального лічильника переглядів.
             combined.sort((a, b) => pseudoStat(b.id, 'today-rank', 0, 999) - pseudoStat(a.id, 'today-rank', 0, 999));
@@ -1887,12 +1890,12 @@
             }
             entries.forEach(e => {
                 const item = document.createElement('div'); item.className = 'home-circle-item';
-                if (e.status) {
-                    const msg = document.createElement('div'); msg.className = 'home-circle-msg'; msg.innerText = e.status;
-                    item.appendChild(msg);
-                }
                 const avatar = document.createElement('div'); avatar.className = 'home-circle-avatar';
                 avatar.style.backgroundImage = `url('${e.photos[0]}')`;
+                if (e.status && e.showMsg) {
+                    const msg = document.createElement('div'); msg.className = 'home-circle-msg'; msg.innerText = e.status;
+                    avatar.appendChild(msg);
+                }
                 if (e.type === 'place') {
                     const badge = document.createElement('div'); badge.className = 'home-circle-badge';
                     badge.innerHTML = placeBadgeSvg;
