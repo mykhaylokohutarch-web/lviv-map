@@ -1934,13 +1934,14 @@
             entries.forEach(e => {
                 const item = document.createElement('div'); item.className = 'home-circle-item';
                 const avatar = document.createElement('div'); avatar.className = 'home-circle-avatar';
+                let vid = null;
                 if (e.video) {
                     avatar.style.backgroundImage = `url('${e.photos[0]}')`;
-                    const vid = document.createElement('video');
+                    vid = document.createElement('video');
                     vid.className = 'home-circle-video';
-                    vid.src = e.video; vid.muted = true; vid.loop = true; vid.playsInline = true; vid.autoplay = true; vid.preload = 'auto'; vid.poster = e.photos[0];
+                    vid.muted = true; vid.loop = true; vid.playsInline = true; vid.autoplay = true; vid.preload = 'auto'; vid.poster = e.photos[0];
                     vid.setAttribute('muted', ''); vid.setAttribute('playsinline', ''); vid.setAttribute('webkit-playsinline', '');
-                    vid.play().catch(() => {});
+                    vid.src = e.video;
                     avatar.appendChild(vid);
                 } else {
                     avatar.style.backgroundImage = `url('${e.photos[0]}')`;
@@ -1961,11 +1962,13 @@
                     else { openIgProfile(e, false); }
                 });
                 box.appendChild(item);
+                if (vid) { vid.play().catch(() => {}); }
             });
         }
         renderHomeGrid('');
         layoutHomeGrid();
         setTimeout(layoutHomeGrid, 150);
+        document.querySelectorAll('.home-circle-video').forEach(v => v.play().catch(() => {}));
 
         document.getElementById('people-search-input').addEventListener('input', (e) => renderHomeGrid(e.target.value));
 
