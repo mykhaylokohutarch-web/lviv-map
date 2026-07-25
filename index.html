@@ -16,6 +16,7 @@
     <style>
         :root {
             --bg-color: #f5f5f7; 
+            --bg-color-fade: rgba(245, 245, 247, 0);
             --card-bg: rgba(255, 255, 255, 0.55); 
             --accent-main: #4542f4;      
             --accent-people: #4542f4;   
@@ -36,6 +37,7 @@
 
         body.dark-theme {
             --bg-color: #000000; 
+            --bg-color-fade: rgba(0, 0, 0, 0);
             --card-bg: rgba(28, 28, 30, 0.75); 
             --text-color: #f5f5f7; 
             --text-secondary: #aeaeB2; 
@@ -602,9 +604,19 @@
         .ig-tab.active svg { stroke: var(--text-color); }
         .ig-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 14px 14px 4px; }
         .ig-grid-item { aspect-ratio: 1/1; border-radius: 50%; background-size: cover; background-position: center; background-color: #e5e5ea; }
+        #top-safe-scrim {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: calc(env(safe-area-inset-top, 0px) + 50px);
+            background: linear-gradient(to bottom, var(--bg-color) 0%, var(--bg-color) 35%, var(--bg-color-fade) 100%);
+            z-index: 9999;
+            pointer-events: none;
+            transition: background 0.25s;
+        }
     </style>
 </head>
 <body class="dark-theme">
+    <div id="top-safe-scrim"></div>
 
     <div id="app-container" class="app-screen">
         <!-- Мінімалістична кругла кнопка з тонкими SVG іконками -->
