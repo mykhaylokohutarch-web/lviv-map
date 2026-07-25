@@ -82,6 +82,11 @@
             transition: filter 0.5s ease;
         }
 
+        /* Світліші дороги та будинки на чорній карті — для кращої читабельності */
+        body.dark-theme .leaflet-tile-pane {
+            filter: brightness(1.55) contrast(1.05) saturate(1.05);
+        }
+
         /* Мітки реальних закладів з OpenStreetMap — маленькі, приглушені, без постійного тексту.
            Стиль навмисно бляклий/білястий, щоб не конкурувати з власними яскравими мітками застосунку
            (людьми та кураторськими закладами) — саме так, як просив користувач: "приглушені, білі". */
@@ -1023,10 +1028,12 @@
         // через безкоштовний Overpass API (без ключа). Мітки — маленькі, приглушені (напівпрозорий
         // білястий кружечок з іконкою), без постійного тексту. Назва з'являється карткою лише
         // при дотику/кліку — так само, як на скріншоті Bump.
+        // Крапки закладів тепер лежать у тих самих layerGroups, що й кнопки-фільтри зверху (food/shopping/events),
+        // тож іконки реально ховають/показують потрібні мітки. "services" (готелі тощо) без окремої кнопки — завжди видимі.
         map.createPane('osmPoiPane');
         map.getPane('osmPoiPane').style.zIndex = 550; // між лінією маршруту (overlayPane 400) і власними аватарками (markerPane 600)
 
-        const osmPoiLayer = L.layerGroup().addTo(map);
+        const OSM_CAT_GROUPS = ['food', 'shopping', 'events', 'services'];
         let osmPoiFetchTimer = null;
         let osmPoiAbortController = null;
         const OSM_POI_MIN_ZOOM = 15; // не тягнемо крапки, поки не наблизились достатньо
@@ -1054,9 +1061,13 @@
             return 18;
         }
 
+        function clearOsmPoiLayers() {
+            OSM_CAT_GROUPS.forEach(cat => layerGroups[cat].clearLayers());
+        }
+
         function fetchOsmPois() {
             const zoom = map.getZoom();
-            if (zoom < OSM_POI_MIN_ZOOM) { osmPoiLayer.clearLayers(); return; }
+            if (zoom < OSM_POI_MIN_ZOOM) { clearOsmPoiLayers(); return; }
             const limit = osmPoiLimitForZoom(zoom);
             const b = map.getBounds();
             const bbox = `${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()}`;
@@ -1073,7 +1084,7 @@
                 .then(data => {
                     if (map.getZoom() !== requestedZoom) return; // масштаб уже змінився — ця відповідь застаріла
                     // Не накопичуємо мітки безкінечно — щоразу малюємо лише актуальний набір для поточного вигляду карти.
-                    osmPoiLayer.clearLayers();
+                    clearOsmPoiLayers();
                     let shown = 0;
                     for (const el of (data.elements || [])) {
                         if (shown >= limit) break;
@@ -1084,7 +1095,7 @@
                             html: `<div class="osm-poi-dot cat-${cat}">${emoji}</div>`,
                             iconSize: [22, 22], iconAnchor: [11, 11]
                         });
-                        const marker = L.marker([el.lat, el.lon], { icon: icon, pane: 'osmPoiPane' }).addTo(osmPoiLayer);
+                        const marker = L.marker([el.lat, el.lon], { icon: icon, pane: 'osmPoiPane' }).addTo(layerGroups[cat]);
                         marker.bindPopup(
                             `<div class="osm-poi-popup"><span class="osm-poi-popup-icon">${emoji}</span><span class="osm-poi-popup-name">${escapeHtml(el.tags.name)}</span></div>`,
                             { closeButton: false, offset: [0, -8], className: 'osm-poi-popup-wrap' }
@@ -1335,8 +1346,9 @@
                 html: `<div class="avatar-ring"><div class="avatar-ring-inner" style="background-image: url('${person.photos[0]}')"></div></div>`,
                 iconSize: [38, 38], iconAnchor: [19, 19]
             });
-            const targetGroup = layerGroups[person.category] || layerGroups.people;
-            const personMarker = L.marker(person.coords, { icon: customIcon }).addTo(targetGroup);
+            // Усі люди (і статичні демо-профілі, і реальні) керуються однією іконкою "Друзі" вгорі —
+            // окремих кнопок для "людей"/"послуг" більше немає, тож категорія тут ні на що не впливає.
+            const personMarker = L.marker(person.coords, { icon: customIcon }).addTo(layerGroups.friends);
             personMarker.on('click', (e) => {
                 L.DomEvent.stopPropagation(e);
                 if (routeSelecting) { buildWalkingRoute(myCoords, person.coords, person.id); return; }
