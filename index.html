@@ -592,6 +592,7 @@
             border-top: 7px solid var(--card-bg);
         }
         .home-circle-avatar { position: relative; width: var(--circle-d, 100px); height: var(--circle-d, 100px); border-radius: 50%; background-size: cover; background-position: center; background-color: #e5e5ea; transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1); box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+        .home-circle-video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; pointer-events: none; }
         .home-circle-badge { position: absolute; right: 2%; bottom: 2%; width: 22%; height: 22%; min-width: 16px; min-height: 16px; border-radius: 50%; background: var(--accent-main); border: 2px solid var(--bg-color); display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
         .home-circle-badge svg { width: 55%; height: 55%; stroke: #fff; fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
         .home-circle-name { font-size: 12px; line-height: 15px; height: 15px; font-weight: 600; color: var(--text-color); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: var(--circle-d, 100px); }
@@ -1212,10 +1213,10 @@
         let myName = localStorage.getItem('chat_username') || "Гість";
 
         const people = [
-            { id: 'p1', type: 'person', name: "Марта, 22", coords: [49.8425, 24.0320], photos: ["https://xsgames.co/randomusers/assets/avatars/female/1.jpg", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500", "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500"], status: "П'ю матчу, ходімо гуляти! ☕", about: "Студентка академії мистецтв.", interests: "Мистецтво, кава, design", category: 'people' },
-            { id: 'p2', type: 'person', name: "Влад, 26", coords: [49.8445, 24.0260], photos: ["https://xsgames.co/randomusers/assets/avatars/male/2.jpg", "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500"], status: "Шукаю компанію на вечірній велозаїзд 🚴‍♂️", about: "Розробник, люблю швидкість.", interests: "Вело, IT, подорожі", category: 'people' },
+            { id: 'p1', type: 'person', name: "Марта, 22", coords: [49.8425, 24.0320], photos: ["https://xsgames.co/randomusers/assets/avatars/female/1.jpg", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500", "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500"], video: "https://www.w3schools.com/html/mov_bbb.mp4", status: "П'ю матчу, ходімо гуляти! ☕", about: "Студентка академії мистецтв.", interests: "Мистецтво, кава, design", category: 'people' },
+            { id: 'p2', type: 'person', name: "Влад, 26", coords: [49.8445, 24.0260], photos: ["https://xsgames.co/randomusers/assets/avatars/male/2.jpg", "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500"], video: "https://www.w3schools.com/html/mov_bbb.mp4", status: "Шукаю компанію на вечірній велозаїзд 🚴‍♂️", about: "Розробник, люблю швидкість.", interests: "Вело, IT, подорожі", category: 'people' },
             { id: 'p3', type: 'person', name: "Олег (Репетитор)", coords: [49.8390, 24.0350], photos: ["https://xsgames.co/randomusers/assets/avatars/male/3.jpg", "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=500", "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=500"], status: "Пропоную послуги розмовної англійської 🇬🇧", about: "Вчитель з досвідом 5 років. Проводжу заняття в кав'ярнях або онлайн.", interests: "Англійська, Коучинг, Лекції", category: 'services' },
-            { id: 'p4', type: 'person', name: "Діана, 21", coords: [49.8410, 24.0220], photos: ["https://xsgames.co/randomusers/assets/avatars/female/4.jpg", "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500", "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=500"], status: "Я на концерті біля Опери! Хто тут? 🎶", about: "Обожнюю живу музику і фестивалі.", interests: "Рок, Концерти, Нічне місто", category: 'events' },
+            { id: 'p4', type: 'person', name: "Діана, 21", coords: [49.8410, 24.0220], photos: ["https://xsgames.co/randomusers/assets/avatars/female/4.jpg", "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500", "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=500"], video: "https://www.w3schools.com/html/mov_bbb.mp4", status: "Я на концерті біля Опери! Хто тут? 🎶", about: "Обожнюю живу музику і фестивалі.", interests: "Рок, Концерти, Нічне місто", category: 'events' },
             { id: 'p5', type: 'person', name: "Катя (Фотограф)", coords: [49.8460, 24.0310], photos: ["https://xsgames.co/randomusers/assets/avatars/female/5.jpg", "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=500", "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=500"], status: "Роблю експрес-фотосесії у парку 📸", about: "Година зйомки — 3 готові фото вже ввечері. Пишіть!", interests: "Фотографія, Портрети, Стиль", category: 'services' },
             { id: 'p6', type: 'person', name: "Макс, 29", coords: [49.8350, 24.0290], photos: ["https://xsgames.co/randomusers/assets/avatars/male/6.jpg", "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=500", "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=500"], status: "Хто грати в настілки у Стрийському? 🎲", about: "Збираю компанію на Колонізаторів.", interests: "Настільні ігри, Стратегії, Пікніки", category: 'people' },
             { id: 'p7', type: 'person', name: "Яна, 25", coords: [49.8370, 24.0180], photos: ["https://xsgames.co/randomusers/assets/avatars/female/7.jpg", "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=500", "https://images.unsplash.com/photo-1554151228-14d9def656e4?w=500"], status: "Шукаю з ким побігати зранку 🏃‍♀️", about: "Старт о 7:30 від парку Франка.", interests: "Біг, ЗСЖ, Кардіо", category: 'people' },
@@ -1933,7 +1934,17 @@
             entries.forEach(e => {
                 const item = document.createElement('div'); item.className = 'home-circle-item';
                 const avatar = document.createElement('div'); avatar.className = 'home-circle-avatar';
-                avatar.style.backgroundImage = `url('${e.photos[0]}')`;
+                if (e.video) {
+                    avatar.style.backgroundImage = `url('${e.photos[0]}')`;
+                    const vid = document.createElement('video');
+                    vid.className = 'home-circle-video';
+                    vid.src = e.video; vid.muted = true; vid.loop = true; vid.playsInline = true; vid.autoplay = true;
+                    vid.setAttribute('muted', ''); vid.setAttribute('playsinline', ''); vid.setAttribute('webkit-playsinline', '');
+                    vid.play().catch(() => {});
+                    avatar.appendChild(vid);
+                } else {
+                    avatar.style.backgroundImage = `url('${e.photos[0]}')`;
+                }
                 if (e.status && e.showMsg) {
                     const msg = document.createElement('div'); msg.className = 'home-circle-msg'; msg.innerText = e.status;
                     avatar.appendChild(msg);
