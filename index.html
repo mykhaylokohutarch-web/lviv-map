@@ -977,9 +977,9 @@
         map.getPane('osmPoiPane').style.zIndex = 550; // між лінією маршруту (overlayPane 400) і власними аватарками (markerPane 600)
 
         const osmPoiLayer = L.layerGroup().addTo(map);
-        const loadedOsmPoiIds = new Set();
         let osmPoiFetchTimer = null;
-        const OSM_POI_MIN_ZOOM = 16; // не тягнемо сотні міток, поки не наблизились достатньо
+        let osmPoiAbortController = null;
+        const OSM_POI_MIN_ZOOM = 15; // не тягнемо крапки, поки не наблизились достатньо
 
         function osmPoiCategory(tags) {
             if (tags.amenity && /^(restaurant|cafe|bar|pub|fast_food|bakery|ice_cream|food_court|biergarten)$/.test(tags.amenity)) return { cat: 'food', emoji: '🍽️' };
@@ -993,19 +993,41 @@
             return String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
         }
 
+        // Скільки крапок показувати залежно від наближення — менше здалеку, більше зблизька,
+        // саме як просив користувач. Це також тримає кількість DOM-міток під контролем,
+        // щоб карта не гальмувала.
+        function osmPoiLimitForZoom(zoom) {
+            if (zoom >= 19) return 200;
+            if (zoom >= 18) return 130;
+            if (zoom >= 17) return 75;
+            if (zoom >= 16) return 40;
+            return 18;
+        }
+
         function fetchOsmPois() {
-            if (map.getZoom() < OSM_POI_MIN_ZOOM) return;
+            const zoom = map.getZoom();
+            if (zoom < OSM_POI_MIN_ZOOM) { osmPoiLayer.clearLayers(); return; }
+            const limit = osmPoiLimitForZoom(zoom);
             const b = map.getBounds();
             const bbox = `${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()}`;
-            const query = `[out:json][timeout:20];(node["amenity"~"^(restaurant|cafe|bar|pub|fast_food|bakery|ice_cream|food_court|biergarten)$"](${bbox});node["shop"](${bbox});node["tourism"~"^(hotel|guest_house|hostel|apartment|museum|attraction|gallery|artwork)$"](${bbox}););out body 300;`;
-            fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: query })
+            const query = `[out:json][timeout:15];(node["amenity"~"^(restaurant|cafe|bar|pub|fast_food|bakery|ice_cream|food_court|biergarten)$"](${bbox});node["shop"](${bbox});node["tourism"~"^(hotel|guest_house|hostel|apartment|museum|attraction|gallery|artwork)$"](${bbox}););out body ${limit};`;
+
+            // Скасовуємо попередній ще не завершений запит — інакше застарілі відповіді
+            // накопичуються і "підвішують" карту при швидкому паруванні/зумі.
+            if (osmPoiAbortController) osmPoiAbortController.abort();
+            osmPoiAbortController = new AbortController();
+            const requestedZoom = zoom;
+
+            fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: query, signal: osmPoiAbortController.signal })
                 .then(r => r.json())
                 .then(data => {
-                    (data.elements || []).forEach(el => {
-                        if (!el.tags || !el.tags.name) return;
-                        const key = 'osm' + el.id;
-                        if (loadedOsmPoiIds.has(key)) return;
-                        loadedOsmPoiIds.add(key);
+                    if (map.getZoom() !== requestedZoom) return; // масштаб уже змінився — ця відповідь застаріла
+                    // Не накопичуємо мітки безкінечно — щоразу малюємо лише актуальний набір для поточного вигляду карти.
+                    osmPoiLayer.clearLayers();
+                    let shown = 0;
+                    for (const el of (data.elements || [])) {
+                        if (shown >= limit) break;
+                        if (!el.tags || !el.tags.name) continue;
                         const { cat, emoji } = osmPoiCategory(el.tags);
                         const icon = L.divIcon({
                             className: 'osm-poi-marker',
@@ -1017,14 +1039,15 @@
                             `<div class="osm-poi-popup"><span class="osm-poi-popup-icon">${emoji}</span><span class="osm-poi-popup-name">${escapeHtml(el.tags.name)}</span></div>`,
                             { closeButton: false, offset: [0, -8], className: 'osm-poi-popup-wrap' }
                         );
-                    });
+                        shown++;
+                    }
                 })
-                .catch(() => { /* Overpass тимчасово недоступний — просто без нових міток цього разу */ });
+                .catch(() => { /* Overpass тимчасово недоступний або запит скасовано — просто лишаємо попередні мітки */ });
         }
 
-        map.on('moveend', () => {
+        map.on('moveend zoomend', () => {
             clearTimeout(osmPoiFetchTimer);
-            osmPoiFetchTimer = setTimeout(fetchOsmPois, 700);
+            osmPoiFetchTimer = setTimeout(fetchOsmPois, 500);
         });
         fetchOsmPois();
 
@@ -1213,10 +1236,10 @@
         let myName = localStorage.getItem('chat_username') || "Гість";
 
         const people = [
-            { id: 'p1', type: 'person', name: "Марта, 22", coords: [49.8425, 24.0320], photos: ["https://xsgames.co/randomusers/assets/avatars/female/1.jpg", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500", "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500"], video: "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4", status: "П'ю матчу, ходімо гуляти! ☕", about: "Студентка академії мистецтв.", interests: "Мистецтво, кава, design", category: 'people' },
-            { id: 'p2', type: 'person', name: "Влад, 26", coords: [49.8445, 24.0260], photos: ["https://xsgames.co/randomusers/assets/avatars/male/2.jpg", "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500"], video: "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4", status: "Шукаю компанію на вечірній велозаїзд 🚴‍♂️", about: "Розробник, люблю швидкість.", interests: "Вело, IT, подорожі", category: 'people' },
+            { id: 'p1', type: 'person', name: "Марта, 22", coords: [49.8425, 24.0320], photos: ["https://xsgames.co/randomusers/assets/avatars/female/1.jpg", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500", "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500"], video: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4", status: "П'ю матчу, ходімо гуляти! ☕", about: "Студентка академії мистецтв.", interests: "Мистецтво, кава, design", category: 'people' },
+            { id: 'p2', type: 'person', name: "Влад, 26", coords: [49.8445, 24.0260], photos: ["https://xsgames.co/randomusers/assets/avatars/male/2.jpg", "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500"], video: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4", status: "Шукаю компанію на вечірній велозаїзд 🚴‍♂️", about: "Розробник, люблю швидкість.", interests: "Вело, IT, подорожі", category: 'people' },
             { id: 'p3', type: 'person', name: "Олег (Репетитор)", coords: [49.8390, 24.0350], photos: ["https://xsgames.co/randomusers/assets/avatars/male/3.jpg", "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=500", "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=500"], status: "Пропоную послуги розмовної англійської 🇬🇧", about: "Вчитель з досвідом 5 років. Проводжу заняття в кав'ярнях або онлайн.", interests: "Англійська, Коучинг, Лекції", category: 'services' },
-            { id: 'p4', type: 'person', name: "Діана, 21", coords: [49.8410, 24.0220], photos: ["https://xsgames.co/randomusers/assets/avatars/female/4.jpg", "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500", "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=500"], video: "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4", status: "Я на концерті біля Опери! Хто тут? 🎶", about: "Обожнюю живу музику і фестивалі.", interests: "Рок, Концерти, Нічне місто", category: 'events' },
+            { id: 'p4', type: 'person', name: "Діана, 21", coords: [49.8410, 24.0220], photos: ["https://xsgames.co/randomusers/assets/avatars/female/4.jpg", "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500", "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=500"], video: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4", status: "Я на концерті біля Опери! Хто тут? 🎶", about: "Обожнюю живу музику і фестивалі.", interests: "Рок, Концерти, Нічне місто", category: 'events' },
             { id: 'p5', type: 'person', name: "Катя (Фотограф)", coords: [49.8460, 24.0310], photos: ["https://xsgames.co/randomusers/assets/avatars/female/5.jpg", "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=500", "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=500"], status: "Роблю експрес-фотосесії у парку 📸", about: "Година зйомки — 3 готові фото вже ввечері. Пишіть!", interests: "Фотографія, Портрети, Стиль", category: 'services' },
             { id: 'p6', type: 'person', name: "Макс, 29", coords: [49.8350, 24.0290], photos: ["https://xsgames.co/randomusers/assets/avatars/male/6.jpg", "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=500", "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=500"], status: "Хто грати в настілки у Стрийському? 🎲", about: "Збираю компанію на Колонізаторів.", interests: "Настільні ігри, Стратегії, Пікніки", category: 'people' },
             { id: 'p7', type: 'person', name: "Яна, 25", coords: [49.8370, 24.0180], photos: ["https://xsgames.co/randomusers/assets/avatars/female/7.jpg", "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=500", "https://images.unsplash.com/photo-1554151228-14d9def656e4?w=500"], status: "Шукаю з ким побігати зранку 🏃‍♀️", about: "Старт о 7:30 від парку Франка.", interests: "Біг, ЗСЖ, Кардіо", category: 'people' },
@@ -1272,21 +1295,9 @@
             registerMarker(person.id, personMarker);
         });
 
-        places.forEach(place => {
-            const customIcon = L.divIcon({
-                className: 'custom-place-marker',
-                html: `<div class="place-ring cat-${place.category}">${place.svg}</div>`,
-                iconSize: [38, 38], iconAnchor: [19, 19]
-            });
-            const targetGroup = layerGroups[place.category] || layerGroups.food;
-            const placeMarker = L.marker(place.coords, { icon: customIcon }).addTo(targetGroup);
-            placeMarker.on('click', (e) => {
-                L.DomEvent.stopPropagation(e);
-                if (routeSelecting) { buildWalkingRoute(myCoords, place.coords, place.id); return; }
-                showSidebar(place);
-            });
-            registerMarker(place.id, placeMarker);
-        });
+        // Заклади на карті більше не мають власних великих міток — вони показані маленькими
+        // приглушеними крапками реальних місць з OpenStreetMap (див. fetchOsmPois нижче).
+        // Масив `places` лишається — він і далі живить стрічку "Сьогодні" на Головній.
 
         function isHeroVideoUrl(url) { return /\.(mp4|webm|mov|m4v)(\?|$)/i.test(url || ''); }
 
