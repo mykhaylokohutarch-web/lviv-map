@@ -184,6 +184,9 @@
         }
 
         #my-profile-btn { left: 20px; right: auto; }
+        #map-layers-btn { right: 70px; }
+        #map-layers-btn.active { background: rgba(69, 66, 244, 0.14); }
+        #map-layers-btn.active .theme-svg { stroke: var(--accent-main); }
 
         /* ---- Редагування власного профілю прямо в стандартній картці ---- */
         #prof-edit-btn {
@@ -232,6 +235,9 @@
         .dm-row:active { background-color: rgba(0,0,0,0.03); }
         body.dark-theme .dm-row:active { background-color: rgba(255,255,255,0.04); }
         .dm-avatar { width: 46px; height: 46px; border-radius: 50%; background-size: cover; background-position: center; flex-shrink: 0; background-color: #e5e5ea; border: 1px solid var(--border-minimal); box-sizing: border-box; }
+        .dm-avatar-saved { background: var(--ultramarine-gradient); border: none; display: flex; align-items: center; justify-content: center; }
+        .dm-avatar-saved svg { width: 21px; height: 21px; fill: #fff; }
+        .dm-row-saved { margin-bottom: 4px; }
         .dm-text-wrap { display: flex; flex-direction: column; overflow: hidden; flex-grow: 1; gap: 2px; }
         .dm-name { font-size: 14px; font-weight: 600; color: var(--text-color); }
         .dm-preview { font-size: 12px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -566,7 +572,8 @@
            але їх більше не видно і по них не можна натиснути. */
         #bottom-bar, #my-profile-btn { display: none !important; }
 
-        /* ---- Нова верхня панель фільтрів на карті: той самий мінімалістичний стиль, що на Головній ---- */
+        /* ---- Нова верхня панель фільтрів на карті: той самий мінімалістичний стиль, що на Головній ----
+           Прихована за замовчуванням — з'являється лише при затисканні кнопки "шари" біля місяця. */
         .map-filter-bar {
             position: absolute;
             top: calc(20px + env(safe-area-inset-top, 0px));
@@ -575,6 +582,25 @@
             display: flex;
             align-items: center;
             gap: 14px;
+            padding: 9px 16px;
+            border-radius: 999px;
+            background: transparent;
+            border: 1px solid transparent;
+            box-sizing: border-box;
+            opacity: 0;
+            transform: translate3d(-18px, 0, 0) scale(0.9);
+            pointer-events: none;
+            transition: opacity 0.3s cubic-bezier(0.25, 1, 0.5, 1), transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), var(--theme-transition);
+        }
+        .map-filter-bar.revealed {
+            opacity: 1;
+            transform: translate3d(0, 0, 0) scale(1);
+            pointer-events: auto;
+            background: var(--card-bg);
+            backdrop-filter: blur(22px) saturate(180%);
+            -webkit-backdrop-filter: blur(22px) saturate(180%);
+            border-color: var(--border-minimal);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.16);
         }
 
 
@@ -679,6 +705,15 @@
             <!-- Іконка Місяця (Dark Mode) -->
             <svg class="theme-svg icon-dark" viewBox="0 0 24 24">
                 <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+            </svg>
+        </button>
+
+        <!-- Кнопка шарів карти: затисни (long-press), щоб показати перемикачі шарів зліва -->
+        <button class="apple-blur-btn" id="map-layers-btn" aria-label="Шари карти">
+            <svg class="theme-svg" viewBox="0 0 24 24">
+                <path d="M12 2 2 7l10 5 10-5-10-5z"></path>
+                <path d="M2 17l10 5 10-5"></path>
+                <path d="M2 12l10 5 10-5"></path>
             </svg>
         </button>
 
@@ -953,6 +988,52 @@
             });
         });
 
+        // ---- Кнопка "шари" біля місяця: затисни (long-press), щоб показати перемикачі шарів зліва ----
+        // Кожен шар вмикається/вимикається окремо (обробник вище), тож можна вибрати кілька одночасно;
+        // активний шар підсвічується синім через .filter-tab.active.
+        (function setupMapLayersReveal() {
+            const btn = document.getElementById('map-layers-btn');
+            const bar = document.getElementById('map-filter-bar');
+            const PRESS_DURATION = 420;
+            const MOVE_TOLERANCE = 12;
+            let timer = null, startX = 0, startY = 0;
+
+            function openBar() {
+                timer = null;
+                bar.classList.add('revealed');
+                btn.classList.add('active');
+                if (navigator.vibrate) navigator.vibrate(15);
+            }
+            function start(e) {
+                const t = e.touches ? e.touches[0] : e;
+                startX = t.clientX; startY = t.clientY;
+                clearTimeout(timer);
+                timer = setTimeout(openBar, PRESS_DURATION);
+            }
+            function cancelPress() { clearTimeout(timer); timer = null; }
+            function moveCheck(e) {
+                if (timer === null) return;
+                const t = e.touches ? e.touches[0] : e;
+                const dx = t.clientX - startX, dy = t.clientY - startY;
+                if (Math.sqrt(dx * dx + dy * dy) > MOVE_TOLERANCE) cancelPress();
+            }
+            btn.addEventListener('touchstart', start, { passive: true });
+            btn.addEventListener('touchmove', moveCheck, { passive: true });
+            btn.addEventListener('touchend', cancelPress);
+            btn.addEventListener('touchcancel', cancelPress);
+            btn.addEventListener('mousedown', start);
+            btn.addEventListener('mouseup', cancelPress);
+            btn.addEventListener('mouseleave', cancelPress);
+
+            // Дотик будь-де поза панеллю й поза самою кнопкою знову ховає перемикачі шарів
+            document.addEventListener('touchstart', (e) => {
+                if (!bar.classList.contains('revealed')) return;
+                if (bar.contains(e.target) || btn.contains(e.target)) return;
+                bar.classList.remove('revealed');
+                btn.classList.remove('active');
+            }, { passive: true });
+        })();
+
         // "Улюблене" зверху на карті — не окремий шар, а підсвітка: показує лише улюблені мітки,
         // решту приглушує (та сама логіка "is-fav", що й у стрічці "Сьогодні" на Головній).
         let favMarkerRegistry = {};
@@ -979,6 +1060,15 @@
             openChatsList();
         }
 
+        // Підсвічує потрібну іконку нижньої навігації відповідно до того, який екран зараз показано —
+        // використовується для повернення підсвітки після закриття чатів.
+        function syncBottomNavToScreen() {
+            document.querySelectorAll('#bottom-nav .nav-btn').forEach(b => b.classList.remove('active'));
+            if (document.getElementById('screen-home').classList.contains('active-screen')) document.getElementById('nav-home').classList.add('active');
+            else if (document.getElementById('app-container').classList.contains('active-screen')) document.getElementById('nav-map').classList.add('active');
+            else if (document.getElementById('screen-ig-profile').classList.contains('active-screen') && igCurrentIsMine) document.getElementById('nav-profile').classList.add('active');
+        }
+
         function openChatsList() {
             currentActiveItem = getMyProfileItem();
             if (currentChatRef) { off(currentChatRef); document.getElementById('chat-messages').innerHTML = ''; }
@@ -992,6 +1082,8 @@
             sidebar.style.transition = 'transform 0.5s cubic-bezier(0.25, 1, 0.5, 1), background-color 0.5s cubic-bezier(0.25, 1, 0.5, 1)';
             sidebar.classList.add('active');
             document.getElementById('chat-fab').classList.add('active');
+            document.querySelectorAll('#bottom-nav .nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('nav-messages').classList.add('active');
             showDmList();
         }
 
@@ -1003,6 +1095,8 @@
             openChatForItem(item);
             document.getElementById('dm-back-row').style.display = 'flex';
             document.getElementById('dm-back-name').innerText = item.name || 'Гість';
+            document.querySelectorAll('#bottom-nav .nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('nav-messages').classList.add('active');
         }
 
         function closeChatTabBackToProfile() {
@@ -1010,6 +1104,7 @@
             document.getElementById('dm-back-row').style.display = 'none';
             if (currentChatRef) { off(currentChatRef); currentChatRef = null; }
             currentChatPath = null; currentChatOtherId = null; chatTabOrigin = null;
+            syncBottomNavToScreen();
         }
 
         // CARTO Positron / Dark Matter — оригінальний стильний мінімалістичний вигляд карти (як і був).
@@ -1470,6 +1565,7 @@
 
         window.closeProfile = function() {
             const sidebar = document.getElementById('profile-sidebar');
+            const wasChatMode = sidebar.classList.contains('chat-mode');
             sidebar.style.transition = 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)';
             sidebar.classList.remove('active'); sidebar.classList.remove('chat-mode'); sidebar.style.transform = ''; 
             document.getElementById('chat-fab').classList.remove('active');
@@ -1477,6 +1573,7 @@
             currentChatPath = null; currentChatOtherId = null; chatTabOrigin = null;
             if (isEditingProfile) exitEditMode(true);
             document.getElementById('dm-back-row').style.display = 'none';
+            if (wasChatMode) syncBottomNavToScreen();
         }
 
         // ---- Свайп по фото картки: вбоки — гортання фото/відео; вниз — закриття картки (як в Instagram/Apple) ----
@@ -1739,11 +1836,21 @@
         function renderDmList() {
             const box = document.getElementById('dm-list');
             box.innerHTML = '';
+
+            // "Збережене" — особисті нотатки собі, як у Telegram: завжди закріплене першим рядком
+            const savedRow = document.createElement('div'); savedRow.className = 'dm-row dm-row-saved';
+            const savedAvatar = document.createElement('div'); savedAvatar.className = 'dm-avatar dm-avatar-saved';
+            savedAvatar.innerHTML = '<svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"></path></svg>';
+            const savedTextWrap = document.createElement('div'); savedTextWrap.className = 'dm-text-wrap';
+            const savedName = document.createElement('span'); savedName.className = 'dm-name'; savedName.innerText = 'Збережене';
+            const savedPreview = document.createElement('span'); savedPreview.className = 'dm-preview'; savedPreview.innerText = 'Нотатки та повідомлення собі';
+            savedTextWrap.appendChild(savedName); savedTextWrap.appendChild(savedPreview);
+            savedRow.appendChild(savedAvatar); savedRow.appendChild(savedTextWrap);
+            savedRow.addEventListener('click', openSavedMessages);
+            box.appendChild(savedRow);
+
             const entries = Object.keys(myConvos).map(id => ({ id, ...myConvos[id] })).sort((a, b) => (b.ts || 0) - (a.ts || 0));
-            if (entries.length === 0) {
-                const empty = document.createElement('p'); empty.className = 'dm-empty'; empty.innerText = 'Поки що немає повідомлень';
-                box.appendChild(empty); return;
-            }
+            if (entries.length === 0) return;
             entries.forEach(c => {
                 const row = document.createElement('div'); row.className = 'dm-row';
                 const avatar = document.createElement('div'); avatar.className = 'dm-avatar';
@@ -1757,6 +1864,20 @@
                 row.addEventListener('click', () => openDmThread(c.id, c.name, c.photo));
                 box.appendChild(row);
             });
+        }
+
+        // Особистий чат "Збережене" — свій власний простір нотаток, окремий від бесід з іншими людьми,
+        // тож не потрапляє в userConvos і не з'являється у списку когось іншого.
+        function openSavedMessages() {
+            chatTabOrigin = 'chatsList';
+            document.getElementById('dm-list').style.display = 'none';
+            document.getElementById('chats-header').style.display = 'none';
+            document.getElementById('chat-thread-wrap').style.display = 'flex';
+            document.getElementById('dm-back-row').style.display = 'flex';
+            document.getElementById('dm-back-name').innerText = 'Збережене';
+            currentChatPath = `savedMessages/${myId}`;
+            currentChatOtherId = null; currentChatOtherName = null; currentChatOtherPhoto = null;
+            loadChat(currentChatPath);
         }
 
         function openDmThread(otherId, otherName, otherPhoto) {
