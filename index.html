@@ -207,6 +207,12 @@
             align-items: center; justify-content: center; cursor: pointer; font-size: 15px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         }
+        #prof-logout-btn {
+            position: absolute; top: 138px; right: 12px; z-index: 12; width: 34px; height: 34px;
+            border-radius: 50%; background: rgba(255,255,255,0.95); border: none; display: none;
+            align-items: center; justify-content: center; cursor: pointer; font-size: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
         .profile-editable[contenteditable="true"] { outline: 1px dashed var(--accent-main); border-radius: 8px; padding: 2px 4px; }
 
         /* ---- Реєстрація нового користувача: повноекранний мінімалістичний wizard ---- */
@@ -844,6 +850,7 @@
             <button id="prof-edit-btn" aria-label="Редагувати">✏️</button>
             <button id="prof-add-photo-btn" aria-label="Додати фото">+</button>
             <button id="prof-move-btn" aria-label="Змінити своє місце на карті">📍</button>
+            <button id="prof-logout-btn" aria-label="Вийти з профілю">🚪</button>
             <input type="file" id="prof-photo-input" accept="image/*" style="display:none;">
 
             <div class="hero-info-panel" id="hero-info-panel">
@@ -1194,6 +1201,7 @@
             document.getElementById('prof-edit-btn').style.display = 'none';
             document.getElementById('prof-add-photo-btn').style.display = 'none';
             document.getElementById('prof-move-btn').style.display = 'none';
+            document.getElementById('prof-logout-btn').style.display = 'none';
             chatTabOrigin = 'chatsList';
             const sidebar = document.getElementById('profile-sidebar');
             sidebar.classList.add('chat-mode');
@@ -1659,6 +1667,7 @@
                 const isMine = item.id === myId;
                 document.getElementById('prof-edit-btn').style.display = isMine ? 'flex' : 'none';
                 document.getElementById('prof-move-btn').style.display = isMine ? 'flex' : 'none';
+                document.getElementById('prof-logout-btn').style.display = isMine ? 'flex' : 'none';
                 msgBtn.style.display = isMine ? 'none' : 'flex';
                 renderHeroStoriesRow(item);
             } else {
@@ -1671,6 +1680,8 @@
                 btn.innerText = "Отримати купон"; btn.style.background = "var(--ultramarine-gradient)";
                 msgBtn.style.display = 'none';
                 document.getElementById('hero-stories-row').style.display = 'none';
+                document.getElementById('prof-move-btn').style.display = 'none';
+                document.getElementById('prof-logout-btn').style.display = 'none';
             }
             sidebarEl.style.transition = 'transform 0.5s cubic-bezier(0.25, 1, 0.5, 1), background-color 0.5s cubic-bezier(0.25, 1, 0.5, 1)';
             sidebarEl.classList.add('active');
@@ -1741,7 +1752,7 @@
 
         const sidebar = document.getElementById('profile-sidebar');
         let startSidebarY = 0, currSidebarY = 0, isSidebarSwiping = false;
-        sidebar.addEventListener('touchstart', (e) => { if (sidebar.classList.contains('chat-mode') || e.target.closest('.profile-hero') || e.target.closest('#chat-messages') || e.target.closest('.chat-input-row') || e.target.closest('.action-btn') || e.target.closest('.info-scroll-area') || e.target.closest('#dm-list') || e.target.closest('.profile-editable') || e.target.closest('#prof-edit-btn') || e.target.closest('#prof-add-photo-btn')) return; startSidebarY = e.touches[0].clientY; isSidebarSwiping = true; sidebar.style.transition = 'none'; }, { passive: true });
+        sidebar.addEventListener('touchstart', (e) => { if (sidebar.classList.contains('chat-mode') || e.target.closest('.profile-hero') || e.target.closest('#chat-messages') || e.target.closest('.chat-input-row') || e.target.closest('.action-btn') || e.target.closest('.info-scroll-area') || e.target.closest('#dm-list') || e.target.closest('.profile-editable') || e.target.closest('#prof-edit-btn') || e.target.closest('#prof-add-photo-btn') || e.target.closest('#prof-move-btn') || e.target.closest('#prof-logout-btn')) return; startSidebarY = e.touches[0].clientY; isSidebarSwiping = true; sidebar.style.transition = 'none'; }, { passive: true });
         sidebar.addEventListener('touchmove', (e) => { if (!isSidebarSwiping) return; currSidebarY = e.touches[0].clientY - startSidebarY; sidebar.style.transform = `translate3d(-50%, calc(-50% + ${currSidebarY}px), 0)`; }, { passive: true });
         sidebar.addEventListener('touchend', () => {
             if (!isSidebarSwiping) return; isSidebarSwiping = false; sidebar.style.transition = 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)';
@@ -2210,6 +2221,15 @@
         document.getElementById('pin-place-cancel').addEventListener('click', () => { hidePinPlacement(); });
 
         document.getElementById('prof-move-btn').addEventListener('click', (e) => { e.stopPropagation(); showPinPlacement(false); });
+
+        document.getElementById('prof-logout-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            const ok = confirm('Вийти з профілю? Дані про вас залишаться на карті, але на цьому пристрої відкриється реєстрація нового користувача.');
+            if (!ok) return;
+            localStorage.removeItem('chat_username');
+            localStorage.removeItem('chat_my_id');
+            location.reload();
+        });
 
         // ---- Wizard реєстрації: welcome → ім'я → фото → про себе → сторіс → місце на карті ----
         const obStepOrder = ['welcome', 'name', 'photo', 'bio', 'story'];
