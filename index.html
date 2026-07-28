@@ -619,35 +619,51 @@
         .home-circle-name { font-size: 12px; line-height: 15px; height: 15px; font-weight: 600; color: var(--text-color); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: var(--circle-d, 100px); }
 
 
-        /* ---- IG-стиль сторінки людини ---- */
+        /* ---- Сторінка профілю: мінімалізм застосунку, свідомо не інстаграм-паттерн ----
+           Замість круглого аватара + рядка лічильників + іконок-табів + квадратної сітки —
+           одне велике фото-обкладинка з ім'ям поверх (як картка людини на карті), потім
+           компактний рядок метаданих одним реченням і горизонтальна стрічка фото. */
         #screen-ig-profile { background: var(--bg-color); }
-        .ig-top-bar { display: flex; align-items: center; justify-content: space-between; padding: calc(14px + env(safe-area-inset-top, 0px)) 10px 2px; flex-shrink: 0; }
-        .ig-back-btn, .ig-more-btn { width: 34px; height: 34px; border-radius: 50%; background: transparent; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-        .ig-back-btn svg, .ig-more-btn svg { width: 20px; height: 20px; stroke: var(--icon-color); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-        .ig-handle-title { font-size: 15px; font-weight: 700; color: var(--text-color); }
-        #ig-content { flex-grow: 1; overflow-y: auto; touch-action: pan-y; -webkit-overflow-scrolling: touch; padding-bottom: 100px; box-sizing: border-box; }
-        .ig-header-row { display: flex; align-items: center; gap: 20px; padding: 8px 20px 14px; }
-        .ig-avatar { width: 84px; height: 84px; border-radius: 50%; background-size: cover; background-position: center; background-color: #e5e5ea; flex-shrink: 0; }
-        .ig-stats { display: flex; flex-grow: 1; justify-content: space-around; text-align: center; }
-        .ig-stat b { display: block; font-size: 17px; font-weight: 700; color: var(--text-color); }
-        .ig-stat span { display: block; font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
-        .ig-bio-block { padding: 0 20px 14px; }
-        .ig-bio-name { font-size: 16px; font-weight: 700; color: var(--text-color); margin: 0 0 2px; }
-        .ig-bio-handle { font-size: 13px; color: var(--text-secondary); margin: 0 0 6px; }
-        .ig-bio-text { font-size: 14px; color: var(--text-color); margin: 0; line-height: 1.35; }
-        .ig-actions-row { display: flex; gap: 8px; padding: 0 20px 16px; }
-        .ig-action-btn { flex: 1; padding: 9px; border-radius: 10px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; background: rgba(0,0,0,0.06); color: var(--text-color); transition: var(--theme-transition); font-family: inherit; }
+        .ig-top-bar {
+            position: absolute; top: 0; left: 0; right: 0; z-index: 20;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: calc(14px + env(safe-area-inset-top, 0px)) 12px 2px;
+        }
+        .ig-back-btn, .ig-more-btn {
+            width: 34px; height: 34px; border-radius: 50%;
+            background: rgba(0,0,0,0.28); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+            border: none; display: flex; align-items: center; justify-content: center; cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .ig-back-btn svg, .ig-more-btn svg { width: 18px; height: 18px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        .ig-handle-title { font-size: 13px; font-weight: 600; color: #fff; text-shadow: 0 1px 6px rgba(0,0,0,0.35); }
+        #ig-content { flex-grow: 1; overflow-y: auto; touch-action: pan-y; -webkit-overflow-scrolling: touch; padding-bottom: 110px; box-sizing: border-box; }
+
+        .ig-hero { position: relative; width: 100%; height: 42vh; min-height: 250px; max-height: 380px; background-color: #e5e5ea; overflow: hidden; }
+        .ig-avatar { position: absolute; inset: 0; background-size: cover; background-position: center; }
+        .ig-hero::after {
+            content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 65%;
+            background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.5) 100%);
+            pointer-events: none;
+        }
+        .ig-hero-info { position: absolute; left: 20px; right: 20px; bottom: 16px; z-index: 2; }
+        .ig-hero-info .ig-bio-name { color: #fff; font-size: 22px; font-weight: 700; margin: 0 0 2px; letter-spacing: -0.3px; }
+        .ig-hero-info .ig-bio-handle { color: rgba(255,255,255,0.82); font-size: 13px; margin: 0; }
+
+        .ig-body { padding: 18px 20px 4px; }
+        .ig-bio-text { font-size: 14.5px; color: var(--text-color); margin: 0 0 10px; line-height: 1.4; }
+        .ig-meta-line { font-size: 12.5px; color: var(--text-secondary); margin: 0 0 18px; }
+        .ig-actions-row { display: flex; gap: 8px; margin-bottom: 24px; }
+        .ig-action-btn { flex: 1; padding: 12px; border-radius: 14px; font-size: 14px; font-weight: 600; border: none; cursor: pointer; background: rgba(0,0,0,0.06); color: var(--text-color); transition: var(--theme-transition); font-family: inherit; }
         body.dark-theme .ig-action-btn { background: rgba(255,255,255,0.1); }
-        .ig-action-btn.primary { background: var(--accent-main); color: #fff; }
-        .ig-action-btn.icon-only { flex: 0 0 40px; display: flex; align-items: center; justify-content: center; }
+        .ig-action-btn.primary { background: var(--ultramarine-gradient); color: #fff; }
+        .ig-action-btn.icon-only { flex: 0 0 46px; display: flex; align-items: center; justify-content: center; }
         .ig-action-btn.icon-only svg { width: 16px; height: 16px; stroke: var(--text-color); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-        .ig-tabs-row { display: flex; border-top: 1px solid var(--border-minimal); }
-        .ig-tab { flex: 1; display: flex; align-items: center; justify-content: center; padding: 12px 0; border-bottom: 1.5px solid transparent; }
-        .ig-tab svg { width: 20px; height: 20px; stroke: var(--text-secondary); fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
-        .ig-tab.active { border-bottom-color: var(--text-color); }
-        .ig-tab.active svg { stroke: var(--text-color); }
-        .ig-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 14px 14px 4px; }
-        .ig-grid-item { aspect-ratio: 1/1; border-radius: 50%; background-size: cover; background-position: center; background-color: #e5e5ea; }
+
+        .ig-gallery-label { font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 10px; }
+        .ig-gallery { display: flex; gap: 8px; overflow-x: auto; overflow-y: hidden; padding-bottom: 4px; touch-action: pan-x; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+        .ig-gallery::-webkit-scrollbar { display: none; }
+        .ig-grid-item { flex: 0 0 auto; width: 116px; height: 146px; border-radius: 18px; background-size: cover; background-position: center; background-color: #e5e5ea; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body class="dark-theme">
@@ -811,7 +827,7 @@
         <div id="home-grid"><div class="home-grid-inner" id="home-grid-inner"></div></div>
     </div>
 
-    <!-- ==================== Сторінка людини в стилі прикладу (Instagram-мінімалізм) ==================== -->
+    <!-- ==================== Сторінка людини: власний мінімалістичний стиль (не інстаграм) ==================== -->
     <div id="screen-ig-profile" class="app-screen">
         <div class="ig-top-bar">
             <button class="ig-back-btn" id="ig-back-btn" aria-label="Назад"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"></path></svg></button>
@@ -819,26 +835,20 @@
             <button class="ig-more-btn" aria-label="Ще"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.4"></circle><circle cx="12" cy="12" r="1.4"></circle><circle cx="19" cy="12" r="1.4"></circle></svg></button>
         </div>
         <div id="ig-content">
-            <div class="ig-header-row">
+            <div class="ig-hero">
                 <div class="ig-avatar" id="ig-avatar"></div>
-                <div class="ig-stats">
-                    <div class="ig-stat"><b id="ig-stat-following">0</b><span>Підписки</span></div>
-                    <div class="ig-stat"><b id="ig-stat-followers">0</b><span>Підписники</span></div>
-                    <div class="ig-stat"><b id="ig-stat-posts">0</b><span>Дописи</span></div>
+                <div class="ig-hero-info">
+                    <p class="ig-bio-name" id="ig-bio-name"></p>
+                    <p class="ig-bio-handle" id="ig-bio-handle"></p>
                 </div>
             </div>
-            <div class="ig-bio-block">
-                <p class="ig-bio-name" id="ig-bio-name"></p>
-                <p class="ig-bio-handle" id="ig-bio-handle"></p>
+            <div class="ig-body">
                 <p class="ig-bio-text" id="ig-bio-text"></p>
+                <p class="ig-meta-line"><span id="ig-stat-posts">0</span> фото · <span id="ig-stat-followers">0</span> підписників · <span id="ig-stat-following">0</span> підписок</p>
+                <div class="ig-actions-row" id="ig-actions-row"></div>
+                <p class="ig-gallery-label">Фото</p>
+                <div class="ig-gallery" id="ig-grid"></div>
             </div>
-            <div class="ig-actions-row" id="ig-actions-row"></div>
-            <div class="ig-tabs-row">
-                <div class="ig-tab active"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect></svg></div>
-                <div class="ig-tab"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"></rect><path d="M10 9l5 3-5 3z"></path></svg></div>
-                <div class="ig-tab"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"></path></svg></div>
-            </div>
-            <div class="ig-grid" id="ig-grid"></div>
         </div>
     </div>
 
@@ -2070,6 +2080,21 @@
             setTimeout(layoutHomeGrid, 300);
         });
 
+        // Автоматично ховає рядок пошуку при дотику до екрана, коли він порожній (не потрібний) —
+        // не чіпає його, якщо там вже введено текст: тоді результати пошуку ще актуальні.
+        document.addEventListener('touchstart', (e) => {
+            const bar = document.getElementById('home-search-bar');
+            if (!bar.classList.contains('open')) return;
+            const navSearchBtn = document.getElementById('nav-search');
+            if (bar.contains(e.target) || navSearchBtn.contains(e.target)) return;
+            const input = document.getElementById('people-search-input');
+            if (input.value.trim()) return;
+            bar.classList.remove('open');
+            navSearchBtn.classList.remove('active');
+            input.blur();
+            setTimeout(layoutHomeGrid, 300);
+        }, { passive: true });
+
         // Відкриває сторінку людини у стилі прикладу (аватар, статистика, біо, сітка фото)
         let igCurrentItem = null; let igCurrentIsMine = false;
         function openIgProfile(item, isMine) {
@@ -2108,12 +2133,11 @@
 
             const grid = document.getElementById('ig-grid');
             grid.innerHTML = '';
-            const gridCount = Math.max(photos.length, 6);
-            for (let i = 0; i < gridCount; i++) {
+            photos.forEach(url => {
                 const cell = document.createElement('div'); cell.className = 'ig-grid-item';
-                cell.style.backgroundImage = `url('${photos[i % photos.length]}')`;
+                cell.style.backgroundImage = `url('${url}')`;
                 grid.appendChild(cell);
-            }
+            });
 
             showScreen('igprofile');
         }
