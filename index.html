@@ -188,31 +188,19 @@
         #map-layers-btn.active { background: rgba(69, 66, 244, 0.14); }
         #map-layers-btn.active .theme-svg { stroke: var(--accent-main); }
 
-        /* ---- Редагування власного профілю прямо в стандартній картці ---- */
-        #prof-edit-btn {
-            position: absolute; top: 12px; right: 12px; z-index: 12; width: 34px; height: 34px;
-            border-radius: 50%; background: rgba(255,255,255,0.95); border: none; display: none;
-            align-items: center; justify-content: center; cursor: pointer; font-size: 15px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        /* ---- Редагування власного профілю: вертикальна скляна панель кнопок у стилі Apple ---- */
+        .prof-tools-col { position: absolute; top: 12px; right: 12px; z-index: 12; display: flex; flex-direction: column; gap: 8px; }
+        .prof-tools-col button {
+            width: 34px; height: 34px; border-radius: 50%; border: none; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(255,255,255,0.16); backdrop-filter: blur(16px) saturate(180%); -webkit-backdrop-filter: blur(16px) saturate(180%);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.18); transition: transform 0.15s ease, background 0.15s ease;
+            -webkit-tap-highlight-color: transparent;
         }
-        #prof-add-photo-btn {
-            position: absolute; top: 54px; right: 12px; z-index: 12; width: 34px; height: 34px;
-            border-radius: 50%; background: rgba(255,255,255,0.95); color: var(--accent-main); border: none; display: none;
-            align-items: center; justify-content: center; cursor: pointer; font-size: 20px; font-weight: 700;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        }
-        #prof-move-btn {
-            position: absolute; top: 96px; right: 12px; z-index: 12; width: 34px; height: 34px;
-            border-radius: 50%; background: rgba(255,255,255,0.95); border: none; display: none;
-            align-items: center; justify-content: center; cursor: pointer; font-size: 15px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        }
-        #prof-logout-btn {
-            position: absolute; top: 138px; right: 12px; z-index: 12; width: 34px; height: 34px;
-            border-radius: 50%; background: rgba(255,255,255,0.95); border: none; display: none;
-            align-items: center; justify-content: center; cursor: pointer; font-size: 15px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        }
+        .prof-tools-col button:active { transform: scale(0.88); background: rgba(255,255,255,0.28); }
+        .prof-tools-col button svg { width: 16px; height: 16px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        .prof-tools-col button.danger:active { background: rgba(255,69,58,0.35); }
+        #prof-edit-btn, #prof-add-photo-btn, #prof-move-btn, #prof-logout-btn { display: none; }
         .profile-editable[contenteditable="true"] { outline: 1px dashed var(--accent-main); border-radius: 8px; padding: 2px 4px; }
 
         /* ---- Реєстрація нового користувача: повноекранний мінімалістичний wizard ---- */
@@ -716,18 +704,13 @@
         .ig-handle-title { font-size: 13px; font-weight: 600; color: #fff; text-shadow: 0 1px 6px rgba(0,0,0,0.35); }
         #ig-content { flex-grow: 1; overflow-y: auto; touch-action: pan-y; -webkit-overflow-scrolling: touch; padding-bottom: 110px; box-sizing: border-box; }
 
-        .ig-hero { position: relative; width: 100%; height: 42vh; min-height: 250px; max-height: 380px; background-color: #e5e5ea; overflow: hidden; }
-        .ig-avatar { position: absolute; inset: 0; background-size: cover; background-position: center; }
-        .ig-hero::after {
-            content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 65%;
-            background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.5) 100%);
-            pointer-events: none;
-        }
-        .ig-hero-info { position: absolute; left: 20px; right: 20px; bottom: 16px; z-index: 2; }
-        .ig-hero-info .ig-bio-name { color: #fff; font-size: 22px; font-weight: 700; margin: 0 0 2px; letter-spacing: -0.3px; }
-        .ig-hero-info .ig-bio-handle { color: rgba(255,255,255,0.82); font-size: 13px; margin: 0; }
+        .ig-hero { display: flex; justify-content: center; padding: calc(76px + env(safe-area-inset-top, 0px)) 0 6px; background: var(--bg-color); }
+        .ig-avatar { width: 108px; height: 108px; border-radius: 50%; background-size: cover; background-position: center; background-color: #2c2c2e; box-shadow: 0 6px 20px rgba(0,0,0,0.18); cursor: pointer; transition: transform 0.15s ease; }
+        .ig-avatar:active { transform: scale(0.96); }
 
-        .ig-body { padding: 18px 20px 4px; }
+        .ig-body { padding: 4px 20px 4px; text-align: center; }
+        .ig-bio-name { color: var(--text-color); font-size: 21px; font-weight: 700; margin: 2px 0 2px; letter-spacing: -0.3px; }
+        .ig-bio-handle { color: var(--text-secondary); font-size: 13px; margin: 0 0 12px; }
         .ig-bio-text { font-size: 14.5px; color: var(--text-color); margin: 0 0 10px; line-height: 1.4; }
         .ig-meta-line { font-size: 12.5px; color: var(--text-secondary); margin: 0 0 18px; }
         .ig-actions-row { display: flex; gap: 8px; margin-bottom: 24px; }
@@ -737,10 +720,11 @@
         .ig-action-btn.icon-only { flex: 0 0 46px; display: flex; align-items: center; justify-content: center; }
         .ig-action-btn.icon-only svg { width: 16px; height: 16px; stroke: var(--text-color); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
-        .ig-gallery-label { font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 10px; }
-        .ig-gallery { display: flex; gap: 8px; overflow-x: auto; overflow-y: hidden; padding-bottom: 4px; touch-action: pan-x; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+        .ig-gallery-label { font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 10px; text-align: left; }
+        .ig-gallery { display: flex; gap: 12px; overflow-x: auto; overflow-y: hidden; padding-bottom: 4px; touch-action: pan-x; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
         .ig-gallery::-webkit-scrollbar { display: none; }
-        .ig-grid-item { flex: 0 0 auto; width: 116px; height: 146px; border-radius: 18px; background-size: cover; background-position: center; background-color: #e5e5ea; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .ig-grid-item { flex: 0 0 auto; width: 84px; height: 84px; border-radius: 50%; background-size: cover; background-position: center; background-color: #e5e5ea; box-shadow: 0 2px 10px rgba(0,0,0,0.12); cursor: pointer; position: relative; }
+        .ig-grid-item.video-thumb::after { content: '▶'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 14px; text-shadow: 0 1px 4px rgba(0,0,0,0.5); }
     </style>
 </head>
 <body class="dark-theme">
@@ -847,10 +831,12 @@
             <div class="hero-dots" id="hero-dots"></div>
             <div class="drag-handle"></div>
             <span class="badge" id="prof-badge" style="display:none;">АКЦІЯ</span>
-            <button id="prof-edit-btn" aria-label="Редагувати">✏️</button>
-            <button id="prof-add-photo-btn" aria-label="Додати фото">+</button>
-            <button id="prof-move-btn" aria-label="Змінити своє місце на карті">📍</button>
-            <button id="prof-logout-btn" aria-label="Вийти з профілю">🚪</button>
+            <div class="prof-tools-col">
+                <button id="prof-edit-btn" aria-label="Редагувати"><svg viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg></button>
+                <button id="prof-add-photo-btn" aria-label="Додати фото"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg></button>
+                <button id="prof-move-btn" aria-label="Змінити своє місце на карті"><svg viewBox="0 0 24 24"><path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg></button>
+                <button id="prof-logout-btn" class="danger" aria-label="Вийти з профілю"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="M16 17l5-5-5-5"></path><path d="M21 12H9"></path></svg></button>
+            </div>
             <input type="file" id="prof-photo-input" accept="image/*" style="display:none;">
 
             <div class="hero-info-panel" id="hero-info-panel">
@@ -926,12 +912,10 @@
         <div id="ig-content">
             <div class="ig-hero">
                 <div class="ig-avatar" id="ig-avatar"></div>
-                <div class="ig-hero-info">
-                    <p class="ig-bio-name" id="ig-bio-name"></p>
-                    <p class="ig-bio-handle" id="ig-bio-handle"></p>
-                </div>
             </div>
             <div class="ig-body">
+                <p class="ig-bio-name" id="ig-bio-name"></p>
+                <p class="ig-bio-handle" id="ig-bio-handle"></p>
                 <p class="ig-bio-text" id="ig-bio-text"></p>
                 <p class="ig-meta-line"><span id="ig-stat-posts">0</span> фото · <span id="ig-stat-followers">0</span> підписників · <span id="ig-stat-following">0</span> підписок</p>
                 <div class="ig-actions-row" id="ig-actions-row"></div>
@@ -1747,8 +1731,17 @@
                 if (Math.abs(heroDy) > 120) { window.closeProfile(); }
                 else { document.getElementById('profile-sidebar').style.transform = 'translate3d(-50%, -50%, 0)'; }
             }
+            heroDidSwipe = heroLock !== null;
             heroLock = null; heroDx = 0; heroDy = 0;
         }, { passive: true });
+
+        let heroDidSwipe = false;
+        heroEl.addEventListener('click', (e) => {
+            if (heroDidSwipe) { heroDidSwipe = false; return; }
+            if (e.target.closest('.hero-info-panel') || e.target.closest('.prof-tools-col')) return;
+            if (!currentActiveItem) return;
+            openMediaGallery(currentActiveItem.photos, heroPhotoIndex, currentActiveItem.name);
+        });
 
         const sidebar = document.getElementById('profile-sidebar');
         let startSidebarY = 0, currSidebarY = 0, isSidebarSwiping = false;
@@ -1974,11 +1967,16 @@
 
         // ---- Повноекранний перегляд сторіс ----
         let storyViewerList = [], storyViewerIdx = 0, storyViewerTimer = null;
+        let storyViewerShowTime = true, storyViewerAutoAdvance = true;
         const STORY_PHOTO_MS = 5000;
 
-        function openStoryViewer(list, startIdx, name) {
+        function openStoryViewer(list, startIdx, name, opts) {
+            opts = opts || {};
+            storyViewerShowTime = opts.showTime !== false;
+            storyViewerAutoAdvance = opts.autoAdvance !== false;
             storyViewerList = list; storyViewerIdx = startIdx;
             document.getElementById('story-viewer-name').innerText = name;
+            document.getElementById('story-viewer-time').style.display = storyViewerShowTime ? '' : 'none';
             document.getElementById('story-viewer').style.display = 'flex';
             const wrap = document.getElementById('story-viewer-bars'); wrap.innerHTML = '';
             storyViewerList.forEach(() => {
@@ -1995,11 +1993,13 @@
             bars.forEach((b, i) => { b.style.transition = 'none'; b.style.width = i < idx ? '100%' : '0%'; });
             const media = document.getElementById('story-viewer-media'); media.innerHTML = '';
             const s = storyViewerList[idx];
-            document.getElementById('story-viewer-time').innerText = formatStoryTime(s.ts);
+            if (storyViewerShowTime) document.getElementById('story-viewer-time').innerText = formatStoryTime(s.ts);
             if (s.type === 'photo') {
                 const img = document.createElement('img'); img.src = s.url; media.appendChild(img);
-                requestAnimationFrame(() => { const b = bars[idx]; if (b) { b.style.transition = `width ${STORY_PHOTO_MS}ms linear`; b.style.width = '100%'; } });
-                storyViewerTimer = setTimeout(() => storyAdvance(1), STORY_PHOTO_MS);
+                if (storyViewerAutoAdvance) {
+                    requestAnimationFrame(() => { const b = bars[idx]; if (b) { b.style.transition = `width ${STORY_PHOTO_MS}ms linear`; b.style.width = '100%'; } });
+                    storyViewerTimer = setTimeout(() => storyAdvance(1), STORY_PHOTO_MS);
+                } else if (bars[idx]) { bars[idx].style.width = '100%'; }
             } else {
                 const v = document.createElement('video'); v.src = s.url; v.autoplay = true; v.playsInline = true; v.controls = false;
                 media.appendChild(v);
@@ -2073,13 +2073,14 @@
         document.getElementById('prof-add-photo-btn').addEventListener('click', (e) => { e.stopPropagation(); document.getElementById('prof-photo-input').click(); });
         document.getElementById('prof-photo-input').addEventListener('change', async (e) => {
             const file = e.target.files[0]; if (!file) return;
-            try {
-                const dataUrl = await resizeImageFile(file, 800, 0.6);
-                myProfile.photos = myProfile.photos || [];
-                myProfile.photos.push(dataUrl);
-                if (currentActiveItem && currentActiveItem.id === myId) { currentActiveItem.photos = myProfile.photos; renderHeroMedia(myProfile.photos); goToHeroSlide(myProfile.photos.length - 1); }
-                await saveMyProfileToFirebase();
-            } catch (err) { alert('Не вдалося обробити фото'); }
+            let dataUrl;
+            try { dataUrl = await resizeImageFile(file, 800, 0.6); }
+            catch (err) { alert('Не вдалося обробити фото. Спробуйте інший файл.'); e.target.value = ''; return; }
+            myProfile.photos = myProfile.photos || [];
+            myProfile.photos.push(dataUrl);
+            if (currentActiveItem && currentActiveItem.id === myId) { currentActiveItem.photos = myProfile.photos; renderHeroMedia(myProfile.photos); goToHeroSlide(myProfile.photos.length - 1); }
+            try { await saveMyProfileToFirebase(); }
+            catch (err) { alert('Фото додано, але не вдалося зберегти на сервер. Перевірте інтернет-з’єднання і спробуйте ще раз.'); }
             e.target.value = '';
         });
 
@@ -2357,7 +2358,7 @@
                     attachLongPress(profileMarkers[id], () => enterRouteSelectionMode(p.coords, myId));
                 }
 
-                if (id === myId) { myProfile = { name: p.name, status: p.status, about: p.about, interests: p.interests, photos: p.photos || [] }; }
+                if (id === myId) { myProfile = { name: p.name, status: p.status, about: p.about, interests: p.interests, photos: p.photos || [], stories: p.stories || [] }; }
             });
         });
 
@@ -2570,6 +2571,7 @@
             const photos = (item.photos && item.photos.length) ? item.photos : ["https://xsgames.co/randomusers/assets/avatars/male/11.jpg"];
 
             document.getElementById('ig-avatar').style.backgroundImage = `url('${photos[0]}')`;
+            document.getElementById('ig-avatar').onclick = () => openMediaGallery(photos, 0, item.name);
             const handle = slugHandle(item.name);
             document.getElementById('ig-top-handle').innerText = handle;
             document.getElementById('ig-bio-handle').innerText = handle;
@@ -2601,13 +2603,20 @@
 
             const grid = document.getElementById('ig-grid');
             grid.innerHTML = '';
-            photos.forEach(url => {
+            photos.forEach((url, i) => {
                 const cell = document.createElement('div'); cell.className = 'ig-grid-item';
                 cell.style.backgroundImage = `url('${url}')`;
+                if (isHeroVideoUrl(url)) cell.classList.add('video-thumb');
+                cell.addEventListener('click', () => openMediaGallery(photos, i, item.name));
                 grid.appendChild(cell);
             });
 
             showScreen('igprofile');
+        }
+
+        function openMediaGallery(photos, startIdx, name) {
+            const list = photos.map(url => ({ type: isHeroVideoUrl(url) ? 'video' : 'photo', url, ts: Date.now() }));
+            openStoryViewer(list, startIdx, name, { showTime: false, autoAdvance: false });
         }
 
         document.getElementById('ig-back-btn').addEventListener('click', () => { showScreen('home'); layoutHomeGrid(); });
