@@ -1512,16 +1512,16 @@
         let myName = localStorage.getItem('chat_username') || "Гість";
 
         const people = [
-            { id: 'p1', type: 'person', name: "Марта, 22", coords: [49.8425, 24.0320], photos: ["https://xsgames.co/randomusers/assets/avatars/female/1.jpg", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500", "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500"], video: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4", status: "П'ю матчу, ходімо гуляти! ☕", about: "Студентка академії мистецтв.", interests: "Мистецтво, кава, design", category: 'people' },
-            { id: 'p2', type: 'person', name: "Влад, 26", coords: [49.8445, 24.0260], photos: ["https://xsgames.co/randomusers/assets/avatars/male/2.jpg", "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500"], video: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4", status: "Шукаю компанію на вечірній велозаїзд 🚴‍♂️", about: "Розробник, люблю швидкість.", interests: "Вело, IT, подорожі", category: 'people' },
+            { id: 'p1', type: 'person', name: "Марта", coords: [49.8425, 24.0320], photos: ["https://xsgames.co/randomusers/assets/avatars/female/1.jpg", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500", "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500"], video: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4", status: "П'ю матчу, ходімо гуляти! ☕", about: "Студентка академії мистецтв.", interests: "Мистецтво, кава, design", category: 'people' },
+            { id: 'p2', type: 'person', name: "Влад", coords: [49.8445, 24.0260], photos: ["https://xsgames.co/randomusers/assets/avatars/male/2.jpg", "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500"], video: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4", status: "Шукаю компанію на вечірній велозаїзд 🚴‍♂️", about: "Розробник, люблю швидкість.", interests: "Вело, IT, подорожі", category: 'people' },
             { id: 'p3', type: 'person', name: "Олег (Репетитор)", coords: [49.8390, 24.0350], photos: ["https://xsgames.co/randomusers/assets/avatars/male/3.jpg", "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=500", "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=500"], status: "Пропоную послуги розмовної англійської 🇬🇧", about: "Вчитель з досвідом 5 років. Проводжу заняття в кав'ярнях або онлайн.", interests: "Англійська, Коучинг, Лекції", category: 'services' },
-            { id: 'p4', type: 'person', name: "Діана, 21", coords: [49.8410, 24.0220], photos: ["https://xsgames.co/randomusers/assets/avatars/female/4.jpg", "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500", "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=500"], video: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4", status: "Я на концерті біля Опери! Хто тут? 🎶", about: "Обожнюю живу музику і фестивалі.", interests: "Рок, Концерти, Нічне місто", category: 'events' },
+            { id: 'p4', type: 'person', name: "Діана", coords: [49.8410, 24.0220], photos: ["https://xsgames.co/randomusers/assets/avatars/female/4.jpg", "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500", "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=500"], video: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4", status: "Я на концерті біля Опери! Хто тут? 🎶", about: "Обожнюю живу музику і фестивалі.", interests: "Рок, Концерти, Нічне місто", category: 'events' },
             { id: 'p5', type: 'person', name: "Катя (Фотограф)", coords: [49.8460, 24.0310], photos: ["https://xsgames.co/randomusers/assets/avatars/female/5.jpg", "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=500", "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=500"], status: "Роблю експрес-фотосесії у парку 📸", about: "Година зйомки — 3 готові фото вже ввечері. Пишіть!", interests: "Фотографія, Портрети, Стиль", category: 'services' },
-            { id: 'p6', type: 'person', name: "Макс, 29", coords: [49.8350, 24.0290], photos: ["https://xsgames.co/randomusers/assets/avatars/male/6.jpg", "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=500", "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=500"], status: "Хто грати в настілки у Стрийському? 🎲", about: "Збираю компанію на Колонізаторів.", interests: "Настільні ігри, Стратегії, Пікніки", category: 'people' },
-            { id: 'p7', type: 'person', name: "Яна, 25", coords: [49.8370, 24.0180], photos: ["https://xsgames.co/randomusers/assets/avatars/female/7.jpg", "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=500", "https://images.unsplash.com/photo-1554151228-14d9def656e4?w=500"], status: "Шукаю з ким побігати зранку 🏃‍♀️", about: "Старт о 7:30 від парку Франка.", interests: "Біг, ЗСЖ, Кардіо", category: 'people' },
+            { id: 'p6', type: 'person', name: "Макс", coords: [49.8350, 24.0290], photos: ["https://xsgames.co/randomusers/assets/avatars/male/6.jpg", "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=500", "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=500"], status: "Хто грати в настілки у Стрийському? 🎲", about: "Збираю компанію на Колонізаторів.", interests: "Настільні ігри, Стратегії, Пікніки", category: 'people' },
+            { id: 'p7', type: 'person', name: "Яна", coords: [49.8370, 24.0180], photos: ["https://xsgames.co/randomusers/assets/avatars/female/7.jpg", "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=500", "https://images.unsplash.com/photo-1554151228-14d9def656e4?w=500"], status: "Шукаю з ким побігати зранку 🏃‍♀️", about: "Старт о 7:30 від парку Франка.", interests: "Біг, ЗСЖ, Кардіо", category: 'people' },
             { id: 'p8', type: 'person', name: "Тарас (Ремонт)", coords: [49.8450, 24.0380], photos: ["https://xsgames.co/randomusers/assets/avatars/male/8.jpg", "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=500", "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=500"], status: "Лагоджу ноути та телефони 💻", about: "Швидка діагностика. Заберу та привезу техніку сам.", interests: "Електроніка, Ремонт, Гаджети", category: 'services' },
-            { id: 'p9', type: 'person', name: "Іра, 23", coords: [49.8330, 24.0330], photos: ["https://xsgames.co/randomusers/assets/avatars/female/9.jpg", "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=500", "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=500"], status: "Йдемо на виставку в Палац Потоцьких? 🏛️", about: "Цікавлюсь історією та архітектурою.", interests: "Музеї, Історія, Книги", category: 'events' },
-            { id: 'p10', type: 'person', name: "Артур, 27", coords: [49.8400, 24.0270], photos: ["https://xsgames.co/randomusers/assets/avatars/male/10.jpg", "https://images.unsplash.com/photo-1489980508314-941910ded1f4?w=500", "https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=500"], status: "Тестую кав'ярні міста. Хто зі мною? ☕", about: "Кавовий сомельє на мінімалках.", interests: "Еспресо, Капінг, Фільтр", category: 'people' }
+            { id: 'p9', type: 'person', name: "Іра", coords: [49.8330, 24.0330], photos: ["https://xsgames.co/randomusers/assets/avatars/female/9.jpg", "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=500", "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=500"], status: "Йдемо на виставку в Палац Потоцьких? 🏛️", about: "Цікавлюсь історією та архітектурою.", interests: "Музеї, Історія, Книги", category: 'events' },
+            { id: 'p10', type: 'person', name: "Артур", coords: [49.8400, 24.0270], photos: ["https://xsgames.co/randomusers/assets/avatars/male/10.jpg", "https://images.unsplash.com/photo-1489980508314-941910ded1f4?w=500", "https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=500"], status: "Тестую кав'ярні міста. Хто зі мною? ☕", about: "Кавовий сомельє на мінімалках.", interests: "Еспресо, Капінг, Фільтр", category: 'people' }
         ];
 
         const svgIcons = {
@@ -1951,6 +1951,18 @@
         function closeAddStoryChooser() { document.getElementById('story-add-sheet').style.display = 'none'; }
         document.getElementById('story-add-cancel-btn').addEventListener('click', closeAddStoryChooser);
         document.getElementById('story-add-sheet').addEventListener('click', (e) => { if (e.target.id === 'story-add-sheet') closeAddStoryChooser(); });
+
+        // Свайп вгору закриває меню вибору сторіс
+        (function () {
+            const el = document.getElementById('story-add-sheet');
+            let sy = 0, st = 0, tracking = false;
+            el.addEventListener('touchstart', (e) => { sy = e.touches[0].clientY; st = Date.now(); tracking = true; }, { passive: true });
+            el.addEventListener('touchend', (e) => {
+                if (!tracking) return; tracking = false;
+                const dy = e.changedTouches[0].clientY - sy;
+                if (dy < -60 && (Date.now() - st) < 400) closeAddStoryChooser();
+            }, { passive: true });
+        })();
         document.getElementById('story-add-photo-btn').addEventListener('click', () => { closeAddStoryChooser(); document.getElementById('story-add-photo-input').click(); });
         document.getElementById('story-add-video-btn').addEventListener('click', () => { closeAddStoryChooser(); document.getElementById('story-add-video-input').click(); });
         document.getElementById('story-add-photo-input').addEventListener('change', async (e) => {
@@ -2026,6 +2038,27 @@
         document.getElementById('story-viewer-close').addEventListener('click', closeStoryViewer);
         document.getElementById('story-nav-prev').addEventListener('click', () => storyAdvance(-1));
         document.getElementById('story-nav-next').addEventListener('click', () => storyAdvance(1));
+
+        // Свайп по повноекранному переглядачу: вбоки — гортання фото/відео, вгору — закриття
+        (function () {
+            const el = document.getElementById('story-viewer');
+            let sx = 0, sy = 0, dx = 0, dy = 0, lock = null, active = false;
+            el.addEventListener('touchstart', (e) => {
+                if (e.target.closest('#story-viewer-close')) { active = false; return; }
+                sx = e.touches[0].clientX; sy = e.touches[0].clientY; dx = 0; dy = 0; lock = null; active = true;
+            }, { passive: true });
+            el.addEventListener('touchmove', (e) => {
+                if (!active) return;
+                dx = e.touches[0].clientX - sx; dy = e.touches[0].clientY - sy;
+                if (!lock) { if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return; lock = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y'; }
+            }, { passive: true });
+            el.addEventListener('touchend', () => {
+                if (!active) return; active = false;
+                if (lock === 'x' && Math.abs(dx) > 60) { storyAdvance(dx < 0 ? 1 : -1); }
+                else if (lock === 'y' && dy < -60) { closeStoryViewer(); }
+                lock = null; dx = 0; dy = 0;
+            }, { passive: true });
+        })();
 
         document.getElementById('my-profile-btn').addEventListener('click', () => showSidebar(getMyProfileItem()));
 
@@ -2620,6 +2653,22 @@
         }
 
         document.getElementById('ig-back-btn').addEventListener('click', () => { showScreen('home'); layoutHomeGrid(); });
+
+        // Свайп вгору по сторінці профілю людини — закриває її (повертає на головну), як інші вкладки
+        (function () {
+            const el = document.getElementById('screen-ig-profile');
+            let sx = 0, sy = 0, st = 0, tracking = false;
+            el.addEventListener('touchstart', (e) => {
+                if (e.target.closest('.ig-top-bar') || e.target.closest('.ig-gallery') || e.target.closest('.ig-actions-row')) { tracking = false; return; }
+                sx = e.touches[0].clientX; sy = e.touches[0].clientY; st = Date.now(); tracking = true;
+            }, { passive: true });
+            el.addEventListener('touchend', (e) => {
+                if (!tracking) return; tracking = false;
+                const t = e.changedTouches[0];
+                const dx = t.clientX - sx, dy = t.clientY - sy, dt = Date.now() - st;
+                if (dy < -70 && Math.abs(dx) < 90 && dt < 400) { showScreen('home'); layoutHomeGrid(); }
+            }, { passive: true });
+        })();
 
         // ---- Нижня навігація: Люди · Карта · Повідомлення · Профіль ----
         // Картка профілю/чату — глобальний оверлей, тож чат і редагування відкриваються прямо
