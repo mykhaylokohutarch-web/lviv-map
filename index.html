@@ -683,6 +683,9 @@
         .home-circle-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center; opacity: 0; transition: opacity 1s ease; }
         .home-circle-layer.is-visible { opacity: 1; }
         .home-circle-video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; pointer-events: none; }
+        /* Два відеошари для кросфейду між різними відео в колі (по 5с кожне) */
+        .home-circle-video-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; pointer-events: none; opacity: 0; transition: opacity 0.6s ease; }
+        .home-circle-video-layer.is-visible { opacity: 1; }
         .home-circle-badge { position: absolute; right: 2%; bottom: 2%; width: 22%; height: 22%; min-width: 16px; min-height: 16px; border-radius: 50%; background: var(--accent-main); border: 2px solid var(--bg-color); display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
         .home-circle-badge svg { width: 55%; height: 55%; stroke: #fff; fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
         /* Тимчасова мітка на карті — з'являється, коли натискають на "мітку" біля кола закладу на Головній */
@@ -1523,14 +1526,14 @@
         const people = [
             { id: 'p1', type: 'person', name: "Марта", coords: [49.8425, 24.0320], photos: ["https://xsgames.co/randomusers/assets/avatars/female/1.jpg", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500", "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500", "https://picsum.photos/seed/p1a/500/500", "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4", "https://picsum.photos/seed/p1b/500/500", "https://picsum.photos/seed/p1c/500/500", "https://picsum.photos/seed/p1d/500/500", "https://picsum.photos/seed/p1e/500/500"], video: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4", status: "П'ю матчу, ходімо гуляти! ☕", about: "Студентка академії мистецтв.", interests: "Мистецтво, кава, design", category: 'people' },
             { id: 'p2', type: 'person', name: "Влад", coords: [49.8445, 24.0260], photos: ["https://xsgames.co/randomusers/assets/avatars/male/2.jpg", "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500", "https://picsum.photos/seed/p2a/500/500", "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/friday.mp4", "https://picsum.photos/seed/p2b/500/500", "https://picsum.photos/seed/p2c/500/500", "https://picsum.photos/seed/p2d/500/500", "https://picsum.photos/seed/p2e/500/500"], video: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/friday.mp4", status: "Шукаю компанію на вечірній велозаїзд 🚴‍♂️", about: "Розробник, люблю швидкість.", interests: "Вело, IT, подорожі", category: 'people' },
-            { id: 'p3', type: 'person', name: "Олег (Репетитор)", coords: [49.8390, 24.0350], photos: ["https://xsgames.co/randomusers/assets/avatars/male/3.jpg", "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=500", "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=500", "https://picsum.photos/seed/p3a/500/500", "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4", "https://picsum.photos/seed/p3b/500/500", "https://picsum.photos/seed/p3c/500/500", "https://picsum.photos/seed/p3d/500/500", "https://picsum.photos/seed/p3e/500/500"], video: "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4", status: "Пропоную послуги розмовної англійської 🇬🇧", about: "Вчитель з досвідом 5 років. Проводжу заняття в кав'ярнях або онлайн.", interests: "Англійська, Коучинг, Лекції", category: 'services' },
-            { id: 'p4', type: 'person', name: "Діана", coords: [49.8410, 24.0220], photos: ["https://xsgames.co/randomusers/assets/avatars/female/4.jpg", "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500", "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=500", "https://picsum.photos/seed/p4a/500/500", "https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4", "https://picsum.photos/seed/p4b/500/500", "https://picsum.photos/seed/p4c/500/500", "https://picsum.photos/seed/p4d/500/500", "https://picsum.photos/seed/p4e/500/500"], video: "https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4", status: "Я на концерті біля Опери! Хто тут? 🎶", about: "Обожнюю живу музику і фестивалі.", interests: "Рок, Концерти, Нічне місто", category: 'events' },
+            { id: 'p3', type: 'person', name: "Олег (Репетитор)", coords: [49.8390, 24.0350], photos: ["https://xsgames.co/randomusers/assets/avatars/male/3.jpg", "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=500", "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=500", "https://picsum.photos/seed/p3a/500/500", "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4", "https://picsum.photos/seed/p3b/500/500", "https://picsum.photos/seed/p3c/500/500", "https://picsum.photos/seed/p3d/500/500", "https://picsum.photos/seed/p3e/500/500"], video: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4", status: "Пропоную послуги розмовної англійської 🇬🇧", about: "Вчитель з досвідом 5 років. Проводжу заняття в кав'ярнях або онлайн.", interests: "Англійська, Коучинг, Лекції", category: 'services' },
+            { id: 'p4', type: 'person', name: "Діана", coords: [49.8410, 24.0220], photos: ["https://xsgames.co/randomusers/assets/avatars/female/4.jpg", "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500", "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=500", "https://picsum.photos/seed/p4a/500/500", "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/friday.mp4", "https://picsum.photos/seed/p4b/500/500", "https://picsum.photos/seed/p4c/500/500", "https://picsum.photos/seed/p4d/500/500", "https://picsum.photos/seed/p4e/500/500"], video: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/friday.mp4", status: "Я на концерті біля Опери! Хто тут? 🎶", about: "Обожнюю живу музику і фестивалі.", interests: "Рок, Концерти, Нічне місто", category: 'events' },
             { id: 'p5', type: 'person', name: "Катя (Фотограф)", coords: [49.8460, 24.0310], photos: ["https://xsgames.co/randomusers/assets/avatars/female/5.jpg", "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=500", "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=500", "https://picsum.photos/seed/p5a/500/500", "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", "https://picsum.photos/seed/p5b/500/500", "https://picsum.photos/seed/p5c/500/500", "https://picsum.photos/seed/p5d/500/500", "https://picsum.photos/seed/p5e/500/500"], video: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", status: "Роблю експрес-фотосесії у парку 📸", about: "Година зйомки — 3 готові фото вже ввечері. Пишіть!", interests: "Фотографія, Портрети, Стиль", category: 'services' },
             { id: 'p6', type: 'person', name: "Макс", coords: [49.8350, 24.0290], photos: ["https://xsgames.co/randomusers/assets/avatars/male/6.jpg", "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=500", "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=500", "https://picsum.photos/seed/p6a/500/500", "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4", "https://picsum.photos/seed/p6b/500/500", "https://picsum.photos/seed/p6c/500/500", "https://picsum.photos/seed/p6d/500/500", "https://picsum.photos/seed/p6e/500/500"], video: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4", status: "Хто грати в настілки у Стрийському? 🎲", about: "Збираю компанію на Колонізаторів.", interests: "Настільні ігри, Стратегії, Пікніки", category: 'people' },
             { id: 'p7', type: 'person', name: "Яна", coords: [49.8370, 24.0180], photos: ["https://xsgames.co/randomusers/assets/avatars/female/7.jpg", "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=500", "https://images.unsplash.com/photo-1554151228-14d9def656e4?w=500", "https://picsum.photos/seed/p7a/500/500", "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4", "https://picsum.photos/seed/p7b/500/500", "https://picsum.photos/seed/p7c/500/500", "https://picsum.photos/seed/p7d/500/500", "https://picsum.photos/seed/p7e/500/500"], video: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4", status: "Шукаю з ким побігати зранку 🏃‍♀️", about: "Старт о 7:30 від парку Франка.", interests: "Біг, ЗСЖ, Кардіо", category: 'people' },
             { id: 'p8', type: 'person', name: "Тарас (Ремонт)", coords: [49.8450, 24.0380], photos: ["https://xsgames.co/randomusers/assets/avatars/male/8.jpg", "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=500", "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=500", "https://picsum.photos/seed/p8a/500/500", "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/friday.mp4", "https://picsum.photos/seed/p8b/500/500", "https://picsum.photos/seed/p8c/500/500", "https://picsum.photos/seed/p8d/500/500", "https://picsum.photos/seed/p8e/500/500"], video: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/friday.mp4", status: "Лагоджу ноути та телефони 💻", about: "Швидка діагностика. Заберу та привезу техніку сам.", interests: "Електроніка, Ремонт, Гаджети", category: 'services' },
-            { id: 'p9', type: 'person', name: "Іра", coords: [49.8330, 24.0330], photos: ["https://xsgames.co/randomusers/assets/avatars/female/9.jpg", "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=500", "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=500", "https://picsum.photos/seed/p9a/500/500", "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4", "https://picsum.photos/seed/p9b/500/500", "https://picsum.photos/seed/p9c/500/500", "https://picsum.photos/seed/p9d/500/500", "https://picsum.photos/seed/p9e/500/500"], video: "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4", status: "Йдемо на виставку в Палац Потоцьких? 🏛️", about: "Цікавлюсь історією та архітектурою.", interests: "Музеї, Історія, Книги", category: 'events' },
-            { id: 'p10', type: 'person', name: "Артур", coords: [49.8400, 24.0270], photos: ["https://xsgames.co/randomusers/assets/avatars/male/10.jpg", "https://images.unsplash.com/photo-1489980508314-941910ded1f4?w=500", "https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=500", "https://picsum.photos/seed/p10a/500/500", "https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4", "https://picsum.photos/seed/p10b/500/500", "https://picsum.photos/seed/p10c/500/500", "https://picsum.photos/seed/p10d/500/500", "https://picsum.photos/seed/p10e/500/500"], video: "https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4", status: "Тестую кав'ярні міста. Хто зі мною? ☕", about: "Кавовий сомельє на мінімалках.", interests: "Еспресо, Капінг, Фільтр", category: 'people' }
+            { id: 'p9', type: 'person', name: "Іра", coords: [49.8330, 24.0330], photos: ["https://xsgames.co/randomusers/assets/avatars/female/9.jpg", "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=500", "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=500", "https://picsum.photos/seed/p9a/500/500", "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4", "https://picsum.photos/seed/p9b/500/500", "https://picsum.photos/seed/p9c/500/500", "https://picsum.photos/seed/p9d/500/500", "https://picsum.photos/seed/p9e/500/500"], video: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4", status: "Йдемо на виставку в Палац Потоцьких? 🏛️", about: "Цікавлюсь історією та архітектурою.", interests: "Музеї, Історія, Книги", category: 'events' },
+            { id: 'p10', type: 'person', name: "Артур", coords: [49.8400, 24.0270], photos: ["https://xsgames.co/randomusers/assets/avatars/male/10.jpg", "https://images.unsplash.com/photo-1489980508314-941910ded1f4?w=500", "https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=500", "https://picsum.photos/seed/p10a/500/500", "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/friday.mp4", "https://picsum.photos/seed/p10b/500/500", "https://picsum.photos/seed/p10c/500/500", "https://picsum.photos/seed/p10d/500/500", "https://picsum.photos/seed/p10e/500/500"], video: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/friday.mp4", status: "Тестую кав'ярні міста. Хто зі мною? ☕", about: "Кавовий сомельє на мінімалках.", interests: "Еспресо, Капінг, Фільтр", category: 'people' }
         ];
 
         const svgIcons = {
@@ -1550,17 +1553,24 @@
             { id: 'c5', type: 'place', name: "Мазох-café", coords: [49.8416, 24.0335], photos: ["https://picsum.photos/id/635/600/400", "https://picsum.photos/id/634/600/400", "https://picsum.photos/id/631/600/400"], video: "https://storage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4", status: "Атмосфера пристрасті та болю 🔥", text1: "вул. Сербська, 7. Унікальне тематичне кафе.", text2: "Екстремальний коктейль у подарунок при чеку від 500 грн.", svg: svgIcons.fire, category: 'food' },
             { id: 'c6', type: 'place', name: "Крамниця українських дизайнерів", coords: [49.8420, 24.0300], photos: ["https://picsum.photos/id/26/600/400", "https://picsum.photos/id/28/600/400", "https://picsum.photos/id/30/600/400"], video: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4", status: "Місцевий одяг та аксесуари 🛍️", text1: "пл. Ринок, 5. Речі від львівських брендів.", text2: "Знижка 10% на весь асортимент.", svg: svgIcons.bag, category: 'shopping' },
             { id: 'c7', type: 'place', name: "Вернісаж (сувеніри)", coords: [49.8402, 24.0325], photos: ["https://picsum.photos/id/48/600/400", "https://picsum.photos/id/55/600/400", "https://picsum.photos/id/60/600/400"], video: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4", status: "Ринок картин та сувенірів 🎨", text1: "просп. Шевченка. Вироби місцевих митців.", text2: "Знижка 5% при покупці від 2 виробів.", svg: svgIcons.bag, category: 'shopping' },
-            { id: 'c8', type: 'place', name: "Львівська опера", coords: [49.8408, 24.0225], photos: ["https://picsum.photos/id/1015/600/400", "https://picsum.photos/id/1016/600/400", "https://picsum.photos/id/1018/600/400"], video: "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4", status: "Вечірня вистава сьогодні 🎭", text1: "пр. Свободи, 28. Оперний театр ім. Соломії Крушельницької.", text2: "Знижка 10% на квитки при показі купона.", svg: svgIcons.ticket, category: 'events' },
-            { id: 'c9', type: 'place', name: "Дім Легенд", coords: [49.8424, 24.0338], photos: ["https://picsum.photos/id/312/600/400", "https://picsum.photos/id/318/600/400", "https://picsum.photos/id/326/600/400"], video: "https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4", status: "Ресторан-музей у центрі 🕯️", text1: "пл. Ринок, 32. Львівські легенди, страви за старовинними рецептами.", text2: "Комплімент від шефа при замовленні від 700 грн.", svg: svgIcons.food, category: 'food' },
-            { id: 'c10', type: 'place', name: "Кнайпа «Гасова Лампа»", coords: [49.8433, 24.0292], photos: ["https://picsum.photos/id/365/600/400", "https://picsum.photos/id/366/600/400", "https://picsum.photos/id/367/600/400"], video: "https://storage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4", status: "Автентична галицька кухня 🏮", text1: "вул. Вірменська, 21. Затишний підвальчик зі старим Львовом.", text2: "Безкоштовний узвар до кожного замовлення.", svg: svgIcons.beer, category: 'food' },
+            { id: 'c8', type: 'place', name: "Львівська опера", coords: [49.8408, 24.0225], photos: ["https://picsum.photos/id/1015/600/400", "https://picsum.photos/id/1016/600/400", "https://picsum.photos/id/1018/600/400"], video: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4", status: "Вечірня вистава сьогодні 🎭", text1: "пр. Свободи, 28. Оперний театр ім. Соломії Крушельницької.", text2: "Знижка 10% на квитки при показі купона.", svg: svgIcons.ticket, category: 'events' },
+            { id: 'c9', type: 'place', name: "Дім Легенд", coords: [49.8424, 24.0338], photos: ["https://picsum.photos/id/312/600/400", "https://picsum.photos/id/318/600/400", "https://picsum.photos/id/326/600/400"], video: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/friday.mp4", status: "Ресторан-музей у центрі 🕯️", text1: "пл. Ринок, 32. Львівські легенди, страви за старовинними рецептами.", text2: "Комплімент від шефа при замовленні від 700 грн.", svg: svgIcons.food, category: 'food' },
+            { id: 'c10', type: 'place', name: "Кнайпа «Гасова Лампа»", coords: [49.8433, 24.0292], photos: ["https://picsum.photos/id/365/600/400", "https://picsum.photos/id/366/600/400", "https://picsum.photos/id/367/600/400"], video: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4", status: "Автентична галицька кухня 🏮", text1: "вул. Вірменська, 21. Затишний підвальчик зі старим Львовом.", text2: "Безкоштовний узвар до кожного замовлення.", svg: svgIcons.beer, category: 'food' },
             { id: 'c11', type: 'place', name: "Пекарня «Файна Булка»", coords: [49.8438, 24.0312], photos: ["https://picsum.photos/id/431/600/400", "https://picsum.photos/id/488/600/400", "https://picsum.photos/id/493/600/400"], video: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/friday.mp4", status: "Свіжа випічка щоранку 🥐", text1: "вул. Краківська, 12. Круасани, штрудлі та кава на винос.", text2: "Друга кава за half ціни до 10:00.", svg: svgIcons.coffee, category: 'food' },
             { id: 'c12', type: 'place', name: "Piccolo Ristorante", coords: [49.8395, 24.0308], photos: ["https://picsum.photos/id/1080/600/400", "https://picsum.photos/id/102/600/400", "https://picsum.photos/id/106/600/400"], video: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", status: "Домашня італійська кухня 🍝", text1: "вул. Личаківська, 6. Паста ручної роботи щодня.", text2: "Бокал вина у подарунок до вечері.", svg: svgIcons.food, category: 'food' },
             { id: 'c13', type: 'place', name: "Sushi Ya", coords: [49.8445, 24.0280], photos: ["https://picsum.photos/id/225/600/400", "https://picsum.photos/id/312/600/400", "https://picsum.photos/id/342/600/400"], video: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4", status: "Суші та роли з доставкою 🍣", text1: "вул. Городоцька, 3. Свіжа риба щодня.", text2: "Знижка 15% на самовивіз.", svg: svgIcons.food, category: 'food' },
-            { id: 'c14', type: 'place', name: "ТРЦ Forum Lviv", coords: [49.8467, 24.0210], photos: ["https://picsum.photos/id/119/600/400", "https://picsum.photos/id/121/600/400", "https://picsum.photos/id/122/600/400"], video: "https://storage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4", status: "Великий торговий центр 🏬", text1: "вул. Промислова, 1. Сотні брендів під одним дахом.", text2: "Купон на 10% знижки у фудкорті.", svg: svgIcons.bag, category: 'shopping' },
+            { id: 'c14', type: 'place', name: "ТРЦ Forum Lviv", coords: [49.8467, 24.0210], photos: ["https://picsum.photos/id/119/600/400", "https://picsum.photos/id/121/600/400", "https://picsum.photos/id/122/600/400"], video: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4", status: "Великий торговий центр 🏬", text1: "вул. Промислова, 1. Сотні брендів під одним дахом.", text2: "Купон на 10% знижки у фудкорті.", svg: svgIcons.bag, category: 'shopping' },
             { id: 'c15', type: 'place', name: "Книгарня «Є»", coords: [49.8425, 24.0318], photos: ["https://picsum.photos/id/24/600/400", "https://picsum.photos/id/36/600/400", "https://picsum.photos/id/42/600/400"], video: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4", status: "Українські книги та подарунки 📚", text1: "просп. Свободи, 7. Затишна книгарня з кав'ярнею.", text2: "Знижка 10% на українську художню літературу.", svg: svgIcons.bag, category: 'shopping' },
-            { id: 'c16', type: 'place', name: "Ринок «Добробут»", coords: [49.8390, 24.0350], photos: ["https://picsum.photos/id/145/600/400", "https://picsum.photos/id/149/600/400", "https://picsum.photos/id/163/600/400"], video: "https://storage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4", status: "Фермерські продукти щодня 🧺", text1: "вул. Городоцька, 40. Свіжі овочі, сир та мед від виробників.", text2: "Дегустація сирів безкоштовно.", svg: svgIcons.bag, category: 'shopping' },
-            { id: 'c17', type: 'place', name: "Vintage Corner", coords: [49.8415, 24.0345], photos: ["https://picsum.photos/id/21/600/400", "https://picsum.photos/id/22/600/400", "https://picsum.photos/id/23/600/400"], video: "https://storage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4", status: "Вінтажний одяг та аксесуари 👒", text1: "вул. Староєврейська, 9. Унікальні речі з Європи.", text2: "Знижка 20% на другу річ у чеку.", svg: svgIcons.bag, category: 'shopping' }
+            { id: 'c16', type: 'place', name: "Ринок «Добробут»", coords: [49.8390, 24.0350], photos: ["https://picsum.photos/id/145/600/400", "https://picsum.photos/id/149/600/400", "https://picsum.photos/id/163/600/400"], video: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4", status: "Фермерські продукти щодня 🧺", text1: "вул. Городоцька, 40. Свіжі овочі, сир та мед від виробників.", text2: "Дегустація сирів безкоштовно.", svg: svgIcons.bag, category: 'shopping' },
+            { id: 'c17', type: 'place', name: "Vintage Corner", coords: [49.8415, 24.0345], photos: ["https://picsum.photos/id/21/600/400", "https://picsum.photos/id/22/600/400", "https://picsum.photos/id/23/600/400"], video: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4", status: "Вінтажний одяг та аксесуари 👒", text1: "вул. Староєврейська, 9. Унікальні речі з Європи.", text2: "Знижка 20% на другу річ у чеку.", svg: svgIcons.bag, category: 'shopping' }
         ];
+
+        // Спільний пул демо-відео (усі унікальні відео з people/places) — використовується, щоб у колі
+        // на головному екрані по черзі програвались РІЗНІ відео, а не одне те саме в циклі.
+        const demoVideoPool = Array.from(new Set([
+            ...people.map(p => p.video).filter(Boolean),
+            ...places.map(pl => pl.video).filter(Boolean)
+        ]));
 
         let currentActiveItem = null; let currentChatRef = null; let heroPhotoIndex = 0; let chatTabOrigin = null;
 
@@ -2526,21 +2536,58 @@
         // щоб не накопичувались зайві setTimeout після пошуку/фільтрів.
         const homeCircleTimers = new Set();
 
-        // Показує одне відео, яке просто грає у циклі без перемикання — для кіл, де є "статичне відео".
-        function startHomeCircleStaticVideo(wrap, url, posterUrl) {
+        // Детерміновано підбирає для кола 3 РІЗНИХ відео (власне відео запису + 2 інших з загального пулу),
+        // щоб у колі на головному екрані відтворювались різні відео, а не одне те саме.
+        // Порядок стабільний для кожного id (не «стрибає» при повторному рендері сітки).
+        function buildCircleVideoList(entry) {
+            if (!entry.video) return [];
+            const others = demoVideoPool.filter(u => u !== entry.video);
+            const shuffled = others
+                .map((u, idx) => ({ u, k: pseudoStat(entry.id, 'vid' + idx, 0, 9999) }))
+                .sort((a, b) => a.k - b.k)
+                .map(x => x.u);
+            return [entry.video, ...shuffled.slice(0, 2)];
+        }
+
+        // Показує кілька РІЗНИХ відео по черзі в колі: кожне грає рівно 5 секунд, тоді — плавний
+        // кросфейд (0.6с) на наступне відео зі списку, і так по колу нескінченно.
+        function startHomeCircleVideoStory(wrap, list, posterUrl) {
+            if (!list || !list.length) return;
             // Фото-підложка лежить під відео завжди: навіть якщо у якогось браузера відео на мить
             // "чорніє" до першого кадру, під ним видно фото, а не чорноту.
-            if (posterUrl) wrap.style.backgroundImage = `url('${posterUrl}')`;
-            wrap.style.backgroundSize = 'cover'; wrap.style.backgroundPosition = 'center';
-            const v = document.createElement('video');
-            v.className = 'home-circle-video';
-            v.muted = true; v.defaultMuted = true; v.loop = true; v.playsInline = true; v.autoplay = true; v.preload = 'auto';
-            v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
-            if (posterUrl) v.setAttribute('poster', posterUrl); // фото видно, поки відео ще довантажується
-            v.src = url;
-            wrap.appendChild(v);
-            attemptCirclePlay(v);
-            allCircleVideos.add(v);
+            if (posterUrl) { wrap.style.backgroundImage = `url('${posterUrl}')`; wrap.style.backgroundSize = 'cover'; wrap.style.backgroundPosition = 'center'; }
+
+            const makeLayer = (visible) => {
+                const v = document.createElement('video');
+                v.className = 'home-circle-video-layer' + (visible ? ' is-visible' : '');
+                v.muted = true; v.defaultMuted = true; v.loop = true; v.playsInline = true; v.autoplay = true; v.preload = 'auto';
+                v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
+                if (posterUrl) v.setAttribute('poster', posterUrl);
+                return v;
+            };
+            let front = makeLayer(true), back = makeLayer(false);
+            wrap.appendChild(front); wrap.appendChild(back);
+            front.src = list[0];
+            attemptCirclePlay(front);
+            allCircleVideos.add(front); allCircleVideos.add(back);
+
+            if (list.length < 2) return; // лише одне доступне відео — просто грає в циклі, перемикати нічого
+
+            const DURATION = 5000; // рівно 5с на кожне відео
+            let i = 0;
+            const showNext = () => {
+                i = (i + 1) % list.length;
+                back.src = list[i];
+                attemptCirclePlay(back);
+                back.classList.add('is-visible');
+                front.classList.remove('is-visible');
+                const tmp = front; front = back; back = tmp;
+                const nextT = setTimeout(showNext, DURATION);
+                homeCircleTimers.add(nextT);
+            };
+            // Випадкова початкова затримка (0–2с) — щоб кола перемикались не одночасно, а хаотично.
+            const startT = setTimeout(showNext, Math.random() * 2000);
+            homeCircleTimers.add(startT);
         }
 
         // Деякі браузери/веб-в'юери блокують автоплей навіть для muted-відео, поки не було жодної
@@ -2607,9 +2654,9 @@
                 const mediaWrap = document.createElement('div'); mediaWrap.className = 'home-circle-media';
                 avatar.appendChild(mediaWrap);
                 if (e.video) {
-                    // Кола з відео-профілем: те саме відео просто грає в циклі й автоматично, без перемикання кадрів.
+                    // Кола з відео-профілем: по черзі відтворюються кілька різних відео, по 5с кожне.
                     const posterPhoto = (e.photos && e.photos.find(u => !isHeroVideoUrl(u))) || null;
-                    startHomeCircleStaticVideo(mediaWrap, e.video, posterPhoto);
+                    startHomeCircleVideoStory(mediaWrap, buildCircleVideoList(e), posterPhoto);
                 } else {
                     const circlePhotos = (e.photos && e.photos.length) ? e.photos.filter(u => !isHeroVideoUrl(u)) : [];
                     startHomeCircleStory(mediaWrap, circlePhotos.length ? circlePhotos : (e.photos || []));
