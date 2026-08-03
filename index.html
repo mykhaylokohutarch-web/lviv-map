@@ -2479,7 +2479,7 @@
         window.addEventListener('orientationchange', () => setTimeout(layoutHomeGrid, 60));
 
         function buildDirectoryEntries() {
-            const entries = people.map(p => ({ id: p.id, type: 'person', name: p.name, status: p.status, photos: p.photos, about: p.about, interests: p.interests }));
+            const entries = people.map(p => ({ id: p.id, type: 'person', name: p.name, status: p.status, photos: p.photos, video: p.video, about: p.about, interests: p.interests }));
             Object.keys(firebaseProfilesCache).forEach(id => {
                 if (id === myId) return;
                 const p = firebaseProfilesCache[id];
@@ -2487,7 +2487,7 @@
                 entries.push({
                     id, type: 'person', name: p.name || 'Гість', status: p.status || '',
                     photos: (p.photos && p.photos.length) ? p.photos : ["https://xsgames.co/randomusers/assets/avatars/male/11.jpg"],
-                    about: p.about || '', interests: p.interests || ''
+                    video: p.video, about: p.about || '', interests: p.interests || ''
                 });
             });
             return entries;
