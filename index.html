@@ -683,6 +683,9 @@
         .home-circle-video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; pointer-events: none; }
         .home-circle-badge { position: absolute; right: 2%; bottom: 2%; width: 22%; height: 22%; min-width: 16px; min-height: 16px; border-radius: 50%; background: var(--accent-main); border: 2px solid var(--bg-color); display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
         .home-circle-badge svg { width: 55%; height: 55%; stroke: #fff; fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+        /* Тимчасова мітка на карті — з'являється, коли натискають на "мітку" біля кола закладу на Головній */
+        .place-focus-marker { width: 34px; height: 34px; border-radius: 50%; background: var(--ultramarine-gradient); border: 2px solid #fff; box-shadow: 0 3px 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
+        .place-focus-marker svg { width: 58%; height: 58%; stroke: #fff; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
         .home-circle-name { font-size: 12px; line-height: 15px; height: 15px; font-weight: 600; color: var(--text-color); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: var(--circle-d, 100px); }
 
 
@@ -1620,6 +1623,22 @@
             document.querySelectorAll('#hero-dots .dot').forEach((d, i) => d.classList.toggle('active', i === heroPhotoIndex));
         }
 
+        // Відкриває карту й показує розташування закладу — викликається натисканням на "мітку" біля кола на Головній.
+        let placeFocusMarker = null;
+        function showPlaceOnMap(item) {
+            showScreen('map');
+            if (placeFocusMarker) { map.removeLayer(placeFocusMarker); placeFocusMarker = null; }
+            const icon = L.divIcon({
+                className: 'place-focus-marker-wrap',
+                html: `<div class="place-focus-marker">${placeBadgeSvg}</div>`,
+                iconSize: [34, 34], iconAnchor: [17, 34]
+            });
+            placeFocusMarker = L.marker(item.coords, { icon }).addTo(map);
+            placeFocusMarker.bindPopup(item.name);
+            map.setView(item.coords, Math.max(map.getZoom(), 16), { animate: true });
+            setTimeout(() => { map.invalidateSize(); placeFocusMarker.openPopup(); }, 120);
+        }
+
         function showSidebar(item) {
             currentActiveItem = item;
             const sidebarEl = document.getElementById('profile-sidebar');
@@ -2439,33 +2458,20 @@
             renderHomeGrid(document.getElementById('people-search-input').value);
         });
 
-        // Розраховує розмір кола так, щоб на екрані вміщалось рівно ціле число рядків по 3 —
-        // мінімум 3 ряди (9 кіл); якщо висота дозволяє ще один цілий ряд, він теж додається.
-        // Далі — однакові кола, гортання лише вертикальне (overflow-x вимкнено окремо в CSS).
+        // Розраховує розмір кола так, щоб рівно 3 кола вміщались у ширину — максимально великі,
+        // наскільки дозволяє ширина екрана. Кількість колонок і порядок кіл лишаються незмінними,
+        // гортання лише вертикальне (overflow-x вимкнено окремо в CSS).
         function layoutHomeGrid() {
             const container = document.getElementById('home-grid');
-            const bottomNav = document.getElementById('bottom-nav');
             if (!container) return;
             const cs = getComputedStyle(container);
             const padLeft = parseFloat(cs.paddingLeft) || 0;
             const padRight = parseFloat(cs.paddingRight) || 0;
-            const padTop = parseFloat(cs.paddingTop) || 0;
-            const rect = container.getBoundingClientRect();
-            const navH = bottomNav ? bottomNav.getBoundingClientRect().height : 0;
             const availW = container.clientWidth - padLeft - padRight;
-            const availH = (window.innerHeight - rect.top - navH - padTop) - 8;
-            if (availW <= 0 || availH <= 0) return;
+            if (availW <= 0) return;
 
-            const colGap = 10, rowGap = 30, labelH = 15, innerGap = 6;
-            let d = (availW - 2 * colGap) / 3;
-            let itemH = d + innerGap + labelH;
-            let rows = Math.floor((availH + rowGap) / (itemH + rowGap));
-
-            if (rows < 3) {
-                itemH = (availH - 2 * rowGap) / 3;
-                d = Math.max(46, itemH - innerGap - labelH);
-                rows = 3;
-            }
+            const colGap = 10;
+            const d = (availW - 2 * colGap) / 3;
 
             container.style.setProperty('--circle-d', d + 'px');
         }
@@ -2583,6 +2589,7 @@
                 if (e.type === 'place') {
                     const badge = document.createElement('div'); badge.className = 'home-circle-badge';
                     badge.innerHTML = placeBadgeSvg;
+                    badge.addEventListener('click', (ev) => { ev.stopPropagation(); showPlaceOnMap(e); });
                     avatar.appendChild(badge);
                 }
                 const nameSpan = document.createElement('span'); nameSpan.className = 'home-circle-name'; nameSpan.innerText = e.name;
