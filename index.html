@@ -2595,8 +2595,23 @@
         // повторюємо спробу для всіх відео кіл по першому ж дотику/кліку будь-де на сторінці.
         const allCircleVideos = new Set();
         function attemptCirclePlay(v) {
-            const p = v.play();
-            if (p && p.catch) p.catch(() => {});
+            const tryPlay = () => {
+                const p = v.play();
+                if (p && p.catch) p.catch(() => {});
+            };
+            tryPlay();
+            // Деякі браузери/веб-в'юери на мить блокують навіть muted-автоплей, поки відео ще не
+            // повністю готове — тому додатково пробуємо в момент готовності даних...
+            v.addEventListener('loadedmetadata', tryPlay, { once: true });
+            v.addEventListener('canplay', tryPlay, { once: true });
+            // ...і ще кілька разів протягом перших 3с, про всяк випадок — так відео стартує
+            // само, без натискання «плей» користувачем.
+            let attempts = 0;
+            const retry = setInterval(() => {
+                attempts++;
+                if (!v.isConnected || (!v.paused && !v.ended) || attempts >= 6) { clearInterval(retry); return; }
+                tryPlay();
+            }, 500);
         }
         ['touchstart', 'click', 'pointerdown'].forEach(evt => {
             document.addEventListener(evt, () => {
