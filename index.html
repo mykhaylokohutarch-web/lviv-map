@@ -659,8 +659,8 @@
         .home-search-bar svg { width: 16px; height: 16px; stroke: var(--text-secondary); fill: none; stroke-width: 2; flex-shrink: 0; }
         .home-search-bar input { border: none; background: transparent; outline: none; font-size: 14px; color: var(--text-color); width: 100%; font-family: inherit; }
         /* ---- Головна: сітка кіл (люди + заклади) по 3 в ряд, як в надісланому прикладі ---- */
-        #home-grid { flex-grow: 1; overflow-y: auto; overflow-x: hidden; padding: calc(78px + env(safe-area-inset-top, 0px)) 14px 110px; box-sizing: border-box; touch-action: pan-y; -webkit-overflow-scrolling: touch; overscroll-behavior-x: none; }
-        .home-grid-inner { display: grid; grid-template-columns: repeat(3, var(--circle-d, 100px)); justify-content: center; gap: 30px 10px; }
+        #home-grid { flex-grow: 1; overflow-y: auto; overflow-x: hidden; padding: calc(78px + env(safe-area-inset-top, 0px)) 6px 110px; box-sizing: border-box; touch-action: pan-y; -webkit-overflow-scrolling: touch; overscroll-behavior-x: none; }
+        .home-grid-inner { display: grid; grid-template-columns: repeat(3, var(--circle-d, 100px)); justify-content: center; gap: 26px 6px; }
         .home-circle-item { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
         .home-circle-item:active .home-circle-avatar { transform: scale(0.93); }
         /* Хмаринка короткого повідомлення — лише на деяких колах, помітно налазить на фото (як в Instagram) */
@@ -2472,7 +2472,7 @@
             const availW = container.clientWidth - padLeft - padRight;
             if (availW <= 0) return;
 
-            const colGap = 10;
+            const colGap = 6;
             const d = (availW - 2 * colGap) / 3;
 
             container.style.setProperty('--circle-d', d + 'px');
