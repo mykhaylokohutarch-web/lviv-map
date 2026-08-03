@@ -2511,36 +2511,41 @@
         // щоб не накопичувались зайві setTimeout після пошуку/фільтрів.
         const homeCircleTimers = new Set();
 
-        // Показує медіа кола (фото чи відео) по черзі, кожен кадр — 10 секунд, з м'яким переходом, у нескінченному циклі.
+        // Показує одне відео, яке просто грає у циклі без перемикання — для кіл, де є "статичне відео".
+        function startHomeCircleStaticVideo(wrap, url) {
+            wrap.style.backgroundImage = 'none';
+            const v = document.createElement('video');
+            v.className = 'home-circle-video';
+            v.muted = true; v.loop = true; v.playsInline = true; v.autoplay = true; v.preload = 'auto';
+            v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
+            v.src = url;
+            wrap.appendChild(v);
+            v.play().catch(() => {});
+        }
+
+        // Показує фото кола по черзі, кожен кадр — приблизно 5 секунд, з м'яким переходом.
+        // Старт і тривалість кожного кадру трохи рандомізовані, тож кола перемикаються не одночасно, а хаотично.
         function startHomeCircleStory(wrap, list) {
             if (!list || !list.length) return;
+            wrap.style.backgroundImage = `url('${list[0]}')`; // перший кадр одразу, щоб коло не було пустим
+            if (list.length < 2) return;
             let i = 0;
+            const jitteredDelay = () => 4200 + Math.random() * 1800; // ~4.2–6с замість рівно 5с — виглядає хаотично
             const showFrame = () => {
+                i = (i + 1) % list.length;
                 const url = list[i];
                 wrap.style.opacity = '0';
                 const fadeT = setTimeout(() => {
-                    wrap.innerHTML = '';
-                    if (isHeroVideoUrl(url)) {
-                        wrap.style.backgroundImage = 'none';
-                        const v = document.createElement('video');
-                        v.className = 'home-circle-video';
-                        v.muted = true; v.loop = true; v.playsInline = true; v.autoplay = true; v.preload = 'auto';
-                        v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
-                        v.src = url;
-                        wrap.appendChild(v);
-                        v.play().catch(() => {});
-                    } else {
-                        wrap.style.backgroundImage = `url('${url}')`;
-                    }
+                    wrap.style.backgroundImage = `url('${url}')`;
                     wrap.style.opacity = '1';
                 }, 220);
                 homeCircleTimers.add(fadeT);
-                if (list.length > 1) {
-                    const nextT = setTimeout(() => { i = (i + 1) % list.length; showFrame(); }, 10000);
-                    homeCircleTimers.add(nextT);
-                }
+                const nextT = setTimeout(showFrame, jitteredDelay());
+                homeCircleTimers.add(nextT);
             };
-            showFrame();
+            // Випадкова початкова затримка перед першим перемиканням — щоб кола не стартували синхронно.
+            const startT = setTimeout(showFrame, Math.random() * 4000);
+            homeCircleTimers.add(startT);
         }
 
         function renderHomeGrid(filterText, filterMode) {
@@ -2564,8 +2569,13 @@
                 const avatar = document.createElement('div'); avatar.className = 'home-circle-avatar';
                 const mediaWrap = document.createElement('div'); mediaWrap.className = 'home-circle-media';
                 avatar.appendChild(mediaWrap);
-                const circleMedia = (e.photos && e.photos.length) ? e.photos : (e.video ? [e.video] : []);
-                startHomeCircleStory(mediaWrap, circleMedia);
+                if (e.video) {
+                    // Деякі кола (з відео-профілем) показують те саме відео у циклі без перемикання кадрів.
+                    startHomeCircleStaticVideo(mediaWrap, e.video);
+                } else {
+                    const circlePhotos = (e.photos && e.photos.length) ? e.photos.filter(u => !isHeroVideoUrl(u)) : [];
+                    startHomeCircleStory(mediaWrap, circlePhotos.length ? circlePhotos : (e.photos || []));
+                }
                 if (e.status && e.showMsg) {
                     const msg = document.createElement('div'); msg.className = 'home-circle-msg'; msg.innerText = e.status;
                     avatar.appendChild(msg);
