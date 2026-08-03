@@ -678,6 +678,8 @@
             border-top: 7px solid var(--card-bg);
         }
         .home-circle-avatar { position: relative; width: var(--circle-d, 100px); height: var(--circle-d, 100px); border-radius: 50%; background-size: cover; background-position: center; background-color: #e5e5ea; transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1); box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+        /* Обгортка медіа кола — циклічно показує фото/відео як міні-сторі, по одному кадру 10с */
+        .home-circle-media { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; overflow: hidden; background-size: cover; background-position: center; background-color: #e5e5ea; opacity: 1; transition: opacity 0.3s ease; }
         .home-circle-video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; pointer-events: none; }
         .home-circle-badge { position: absolute; right: 2%; bottom: 2%; width: 22%; height: 22%; min-width: 16px; min-height: 16px; border-radius: 50%; background: var(--accent-main); border: 2px solid var(--bg-color); display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
         .home-circle-badge svg { width: 55%; height: 55%; stroke: #fff; fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
@@ -2505,10 +2507,47 @@
         }
 
         let currentHomeFilter = null;
+        // Всі активні таймери "сторі"-циклу колець на головній — скидаються при кожному перерендері сітки,
+        // щоб не накопичувались зайві setTimeout після пошуку/фільтрів.
+        const homeCircleTimers = new Set();
+
+        // Показує медіа кола (фото чи відео) по черзі, кожен кадр — 10 секунд, з м'яким переходом, у нескінченному циклі.
+        function startHomeCircleStory(wrap, list) {
+            if (!list || !list.length) return;
+            let i = 0;
+            const showFrame = () => {
+                const url = list[i];
+                wrap.style.opacity = '0';
+                const fadeT = setTimeout(() => {
+                    wrap.innerHTML = '';
+                    if (isHeroVideoUrl(url)) {
+                        wrap.style.backgroundImage = 'none';
+                        const v = document.createElement('video');
+                        v.className = 'home-circle-video';
+                        v.muted = true; v.loop = true; v.playsInline = true; v.autoplay = true; v.preload = 'auto';
+                        v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
+                        v.src = url;
+                        wrap.appendChild(v);
+                        v.play().catch(() => {});
+                    } else {
+                        wrap.style.backgroundImage = `url('${url}')`;
+                    }
+                    wrap.style.opacity = '1';
+                }, 220);
+                homeCircleTimers.add(fadeT);
+                if (list.length > 1) {
+                    const nextT = setTimeout(() => { i = (i + 1) % list.length; showFrame(); }, 10000);
+                    homeCircleTimers.add(nextT);
+                }
+            };
+            showFrame();
+        }
 
         function renderHomeGrid(filterText, filterMode) {
             const box = document.getElementById('home-grid-inner');
             if (!box) return;
+            homeCircleTimers.forEach(id => clearTimeout(id));
+            homeCircleTimers.clear();
             if (filterMode !== undefined) currentHomeFilter = filterMode;
             box.innerHTML = '';
             const q = (filterText || '').trim().toLowerCase();
@@ -2523,18 +2562,10 @@
             entries.forEach(e => {
                 const item = document.createElement('div'); item.className = 'home-circle-item';
                 const avatar = document.createElement('div'); avatar.className = 'home-circle-avatar';
-                let vid = null;
-                if (e.video) {
-                    avatar.style.backgroundImage = `url('${e.photos[0]}')`;
-                    vid = document.createElement('video');
-                    vid.className = 'home-circle-video';
-                    vid.muted = true; vid.loop = true; vid.playsInline = true; vid.autoplay = true; vid.preload = 'auto'; vid.poster = e.photos[0];
-                    vid.setAttribute('muted', ''); vid.setAttribute('playsinline', ''); vid.setAttribute('webkit-playsinline', '');
-                    vid.src = e.video;
-                    avatar.appendChild(vid);
-                } else {
-                    avatar.style.backgroundImage = `url('${e.photos[0]}')`;
-                }
+                const mediaWrap = document.createElement('div'); mediaWrap.className = 'home-circle-media';
+                avatar.appendChild(mediaWrap);
+                const circleMedia = (e.photos && e.photos.length) ? e.photos : (e.video ? [e.video] : []);
+                startHomeCircleStory(mediaWrap, circleMedia);
                 if (e.status && e.showMsg) {
                     const msg = document.createElement('div'); msg.className = 'home-circle-msg'; msg.innerText = e.status;
                     avatar.appendChild(msg);
@@ -2551,13 +2582,11 @@
                     else { openIgProfile(e, false); }
                 });
                 box.appendChild(item);
-                if (vid) { vid.play().catch(() => {}); }
             });
         }
         renderHomeGrid('');
         layoutHomeGrid();
         setTimeout(layoutHomeGrid, 150);
-        document.querySelectorAll('.home-circle-video').forEach(v => v.play().catch(() => {}));
 
         document.getElementById('people-search-input').addEventListener('input', (e) => renderHomeGrid(e.target.value));
 
