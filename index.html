@@ -1126,13 +1126,13 @@
             tap: false
         }).setView([49.8415, 24.0315], 17);
 
-        // Шари карти для кнопок-фільтрів знизу: кожна категорія — свій layerGroup, який можна вмикати/вимикати окремо
+        // Шари карти для кнопок-фільтрів: кожна категорія — свій layerGroup, який можна вмикати/вимикати окремо.
+        // "people" тут немає навмисно — усі живі мітки (демо-люди + реальні профілі) лежать в "friends".
         const layerGroups = {
             food: L.layerGroup().addTo(map),
             events: L.layerGroup().addTo(map),
             shopping: L.layerGroup().addTo(map),
             services: L.layerGroup().addTo(map),
-            people: L.layerGroup().addTo(map),
             friends: L.layerGroup().addTo(map)
         };
 
@@ -2485,9 +2485,13 @@
             obGoTo(0);
         }
 
-        // Завантаження та відображення на карті профілів, створених через "Мою сторінку" (свій та чужі)
+        // Завантаження та відображення на карті профілів, створених через "Мою сторінку" (свій та чужі).
+        // Той самий знімок одразу кешується для стрічки "Головна" (раніше це були дві окремі підписки
+        // на один і той самий шлях — карта й список могли на мить розсинхронізуватись).
+        let firebaseProfilesCache = {};
         onValue(ref(db, 'profiles'), (snap) => {
             const data = snap.val() || {};
+            firebaseProfilesCache = data;
             Object.keys(data).forEach(id => {
                 const p = data[id];
                 if (!p || !p.coords) return;
@@ -2515,6 +2519,9 @@
 
                 if (id === myId) { myProfile = { name: p.name, status: p.status, about: p.about, interests: p.interests, photos: p.photos || [], stories: p.stories || [] }; }
             });
+            if (document.getElementById('people-search-input')) {
+                renderHomeGrid(document.getElementById('people-search-input').value);
+            }
         });
 
         // ==================== Багатоекранний режим: Головна (список людей) + сторінка людини у стилі прикладу ====================
@@ -2550,12 +2557,6 @@
             const cleaned = String(name || 'user').toLowerCase().replace(/[^a-zа-яіїєґ0-9\s]/gi, '').trim();
             return '@' + (cleaned.replace(/\s+/g, '.') || 'user');
         }
-
-        let firebaseProfilesCache = {};
-        onValue(ref(db, 'profiles'), (snap) => {
-            firebaseProfilesCache = snap.val() || {};
-            renderHomeGrid(document.getElementById('people-search-input').value);
-        });
 
         // Розраховує розмір кола так, щоб рівно 3 кола вміщались у ширину — максимально великі,
         // наскільки дозволяє ширина екрана. Кількість колонок і порядок кіл лишаються незмінними,
@@ -2698,7 +2699,12 @@
         }
         ['touchstart', 'click', 'pointerdown'].forEach(evt => {
             document.addEventListener(evt, () => {
-                allCircleVideos.forEach(v => { if (v.isConnected && v.paused) attemptCirclePlay(v); });
+                // Заразом прибираємо з набору відео, які вже відкріплені від DOM (стара сторі/профіль,
+                // що більше не показується) — інакше Set рухається лише "в один бік" і росте без кінця.
+                allCircleVideos.forEach(v => {
+                    if (!v.isConnected) { allCircleVideos.delete(v); return; }
+                    if (v.paused) attemptCirclePlay(v);
+                });
             }, { passive: true });
         });
 
