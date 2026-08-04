@@ -731,44 +731,42 @@
         #screen-ig-profile { background: var(--bg-color); }
         .ig-top-bar {
             position: absolute; top: 0; left: 0; right: 0; z-index: 20;
-            display: flex; align-items: center; justify-content: space-between;
+            display: flex; align-items: center; justify-content: flex-end;
             padding: calc(14px + env(safe-area-inset-top, 0px)) 12px 2px;
         }
-        .ig-back-btn, .ig-more-btn {
+        .ig-more-btn {
             width: 34px; height: 34px; border-radius: 50%;
             background: rgba(0,0,0,0.28); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
             border: none; display: flex; align-items: center; justify-content: center; cursor: pointer;
             -webkit-tap-highlight-color: transparent;
         }
-        .ig-back-btn svg, .ig-more-btn svg { width: 18px; height: 18px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-        .ig-handle-title { font-size: 13px; font-weight: 600; color: #fff; text-shadow: 0 1px 6px rgba(0,0,0,0.35); }
+        .ig-more-btn svg { width: 18px; height: 18px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
         #ig-content { flex-grow: 1; overflow-y: auto; touch-action: pan-y; -webkit-overflow-scrolling: touch; padding-bottom: 110px; box-sizing: border-box; }
 
-        .ig-hero { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: calc(66px + env(safe-area-inset-top, 0px)) 20px 8px; background: var(--bg-color); }
+        .ig-hero { display: flex; align-items: center; gap: 12px; padding: calc(66px + env(safe-area-inset-top, 0px)) 16px 8px; background: var(--bg-color); }
         .ig-avatar { width: 66px; height: 66px; border-radius: 50%; background-size: cover; background-position: center; background-color: #2c2c2e; box-shadow: 0 4px 14px rgba(0,0,0,0.16); cursor: pointer; transition: transform 0.15s ease; flex-shrink: 0; }
         .ig-avatar:active { transform: scale(0.96); }
+        .ig-hero-mid { flex: 1 1 auto; min-width: 0; text-align: center; }
         .ig-hero-action-btn {
-            flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 6px;
-            padding: 0 18px; height: 40px; border-radius: 999px; border: none; cursor: pointer;
-            font-size: 13.5px; font-weight: 600; font-family: inherit; background: rgba(0,0,0,0.06); color: var(--text-color);
+            flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+            width: 44px; height: 44px; border-radius: 50%; border: none; cursor: pointer;
+            font-family: inherit; background: rgba(0,0,0,0.06); color: var(--text-color);
             transition: var(--theme-transition);
         }
         body.dark-theme .ig-hero-action-btn { background: rgba(255,255,255,0.1); }
         .ig-hero-action-btn.primary { background: var(--ultramarine-gradient); color: #fff; }
-        .ig-hero-action-btn.icon-only { width: 40px; padding: 0; }
-        .ig-hero-action-btn svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+        .ig-hero-action-btn svg { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
 
         .ig-body { padding: 0 20px 4px; text-align: center; }
-        .ig-bio-name { color: var(--text-color); font-size: 19px; font-weight: 700; margin: 4px 0 1px; letter-spacing: -0.2px; text-align: center; }
-        .ig-bio-handle { color: var(--text-secondary); font-size: 12.5px; margin: 0; text-align: center; }
-        .ig-bio-text { font-size: 13.5px; color: var(--text-color); margin: 8px 0 6px; line-height: 1.3; text-align: center; }
-        .ig-meta-line { font-size: 12px; color: var(--text-secondary); margin: 0 0 14px; text-align: center; }
-        .ig-actions-row { display: flex; gap: 8px; margin-bottom: 14px; }
+        .ig-bio-name { color: var(--text-color); font-size: 17px; font-weight: 700; margin: 0 0 1px; letter-spacing: -0.2px; text-align: center; }
+        .ig-bio-handle { color: var(--text-secondary); font-size: 12px; margin: 0; text-align: center; }
+        .ig-bio-text { font-size: 12.5px; color: var(--text-color); margin: 6px 0 4px; line-height: 1.3; text-align: center; }
+        .ig-meta-line { font-size: 11.5px; color: var(--text-secondary); margin: 0; text-align: center; }
+        .ig-actions-row { display: flex; gap: 8px; margin: 16px 0 14px; }
         .ig-action-btn { flex: 1; padding: 12px; border-radius: 14px; font-size: 14px; font-weight: 600; border: none; cursor: pointer; background: rgba(0,0,0,0.06); color: var(--text-color); transition: var(--theme-transition); font-family: inherit; }
         body.dark-theme .ig-action-btn { background: rgba(255,255,255,0.1); }
         .ig-action-btn.primary { background: var(--ultramarine-gradient); color: #fff; }
 
-        .ig-gallery-label { font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 8px; text-align: center; }
         .ig-gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px 6px; }
         .ig-grid-item { width: 100%; aspect-ratio: 1 / 1; border-radius: 50%; background-size: cover; background-position: center; background-color: #e5e5ea; box-shadow: 0 2px 10px rgba(0,0,0,0.12); cursor: pointer; position: relative; overflow: hidden; }
         .ig-grid-item-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; pointer-events: none; }
@@ -952,20 +950,20 @@
     <!-- ==================== Сторінка людини: власний мінімалістичний стиль (не інстаграм) ==================== -->
     <div id="screen-ig-profile" class="app-screen">
         <div class="ig-top-bar">
-            <button class="ig-back-btn" id="ig-back-btn" aria-label="Назад"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"></path></svg></button>
-            <span class="ig-handle-title" id="ig-top-handle"></span>
             <button class="ig-more-btn" aria-label="Ще"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.4"></circle><circle cx="12" cy="12" r="1.4"></circle><circle cx="19" cy="12" r="1.4"></circle></svg></button>
         </div>
         <div id="ig-content">
             <div class="ig-hero">
                 <div class="ig-avatar" id="ig-avatar"></div>
+                <div class="ig-hero-mid">
+                    <p class="ig-bio-name" id="ig-bio-name"></p>
+                    <p class="ig-bio-handle" id="ig-bio-handle"></p>
+                    <p class="ig-bio-text" id="ig-bio-text"></p>
+                    <p class="ig-meta-line"><span id="ig-stat-followers">0</span> підписників · <span id="ig-stat-following">0</span> підписок</p>
+                </div>
                 <div id="ig-hero-action-slot"></div>
             </div>
             <div class="ig-body">
-                <p class="ig-bio-name" id="ig-bio-name"></p>
-                <p class="ig-bio-handle" id="ig-bio-handle"></p>
-                <p class="ig-bio-text" id="ig-bio-text"></p>
-                <p class="ig-meta-line"><span id="ig-stat-followers">0</span> підписників · <span id="ig-stat-following">0</span> підписок</p>
                 <div class="ig-actions-row" id="ig-actions-row"></div>
                 <div class="ig-gallery" id="ig-grid"></div>
             </div>
@@ -3019,7 +3017,6 @@
             document.getElementById('ig-avatar').style.backgroundImage = `url('${photos[0]}')`;
             document.getElementById('ig-avatar').onclick = () => openMediaGallery(photos, 0, item.name);
             const handle = slugHandle(item.name);
-            document.getElementById('ig-top-handle').innerText = handle;
             document.getElementById('ig-bio-handle').innerText = handle;
             document.getElementById('ig-bio-name').innerText = item.name || 'Гість';
             document.getElementById('ig-bio-text').innerText = item.about || item.status || '';
@@ -3040,12 +3037,13 @@
                 actionsRow.appendChild(editBtn);
 
                 const shareBtn = document.createElement('button');
-                shareBtn.className = 'ig-hero-action-btn icon-only'; shareBtn.setAttribute('aria-label', 'Поділитись');
+                shareBtn.className = 'ig-hero-action-btn'; shareBtn.setAttribute('aria-label', 'Поділитись');
                 shareBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"></path><path d="M16 6l-4-4-4 4"></path><path d="M12 2v14"></path></svg>';
                 heroSlot.appendChild(shareBtn);
             } else {
                 const msgBtn = document.createElement('button');
-                msgBtn.className = 'ig-hero-action-btn primary'; msgBtn.innerText = 'Написати';
+                msgBtn.className = 'ig-hero-action-btn primary'; msgBtn.setAttribute('aria-label', 'Написати');
+                msgBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>';
                 msgBtn.addEventListener('click', () => { showSidebar(item); openPersonChatTab(item); });
                 heroSlot.appendChild(msgBtn);
             }
@@ -3076,9 +3074,9 @@
             openStoryViewer(list, startIdx, name, { showTime: false, autoAdvance: false });
         }
 
-        document.getElementById('ig-back-btn').addEventListener('click', () => { showScreen('home'); layoutHomeGrid(); });
+        function goBackFromIgProfile() { showScreen('home'); layoutHomeGrid(); }
 
-        // Свайп вгору по сторінці профілю людини — закриває її (повертає на головну), як інші вкладки
+        // Сторінку профілю закривають лише жести: свайп вгору або вправо повертає на головну
         (function () {
             const el = document.getElementById('screen-ig-profile');
             let sx = 0, sy = 0, st = 0, tracking = false;
@@ -3090,7 +3088,9 @@
                 if (!tracking) return; tracking = false;
                 const t = e.changedTouches[0];
                 const dx = t.clientX - sx, dy = t.clientY - sy, dt = Date.now() - st;
-                if (dy < -70 && Math.abs(dx) < 90 && dt < 400) { showScreen('home'); layoutHomeGrid(); }
+                if (dt > 500) return;
+                if (dy < -70 && Math.abs(dx) < 90) { goBackFromIgProfile(); }
+                else if (dx > 70 && Math.abs(dy) < 90) { goBackFromIgProfile(); }
             }, { passive: true });
         })();
 
