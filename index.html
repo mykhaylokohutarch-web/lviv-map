@@ -1946,20 +1946,59 @@
 
         // ---- Сторіс: додавання, збереження, рендер рядка мініатюр у профілі ----
         function checkVideoDurationAndLoad(file, cb) {
+            // Перевірку розміру робимо одразу, а не всередині loadedmetadata — раніше, якщо метадані
+            // не приходили (типово для Safari/iOS, коли відео-елемент не в DOM), нічого не відбувалось.
+            if (file.size > 15 * 1024 * 1024) { alert('Файл занадто великий. Оберіть відео меншого розміру.'); return; }
+
             const url = URL.createObjectURL(file);
             const v = document.createElement('video');
             v.preload = 'metadata';
-            v.onloadedmetadata = () => {
+            v.muted = true; v.defaultMuted = true; v.playsInline = true;
+            v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
+            // На iOS Safari метадані відео інколи не підвантажуються, якщо елемент не приєднаний до DOM —
+            // тримаємо його поза екраном, а не показуємо.
+            v.style.cssText = 'position:fixed; left:-9999px; top:-9999px; width:1px; height:1px; opacity:0;';
+            document.body.appendChild(v);
+
+            let settled = false;
+            const cleanup = () => {
                 URL.revokeObjectURL(url);
-                if (v.duration > 20.5) { alert('Відео має бути не довше 20 секунд. Оберіть коротший файл.'); return; }
-                if (file.size > 15 * 1024 * 1024) { alert('Файл занадто великий. Оберіть відео меншого розміру.'); return; }
+                if (v.parentNode) v.parentNode.removeChild(v);
+            };
+            const proceedWithFile = () => {
+                if (settled) return;
+                settled = true;
+                cleanup();
                 const reader = new FileReader();
                 reader.onload = (e) => cb(e.target.result);
                 reader.onerror = () => alert('Не вдалося обробити відео');
                 reader.readAsDataURL(file);
             };
-            v.onerror = () => alert('Не вдалося прочитати відео');
+            const rejectTooLong = () => {
+                settled = true;
+                cleanup();
+                alert('Відео має бути не довше 20 секунд. Оберіть коротший файл.');
+            };
+
+            v.onloadedmetadata = () => {
+                if (settled) return;
+                const dur = v.duration;
+                // Деякі браузери на цьому етапі повертають Infinity/NaN для тривалості — в такому разі
+                // не блокуємо користувача перевіркою, а просто пропускаємо файл далі.
+                if (isFinite(dur) && dur > 20.5) { rejectTooLong(); return; }
+                proceedWithFile();
+            };
+            v.onerror = () => {
+                if (settled) return;
+                settled = true;
+                cleanup();
+                alert('Не вдалося прочитати відео. Спробуйте інший файл.');
+            };
+            // Якщо подія loadedmetadata взагалі не прийшла за 4с (буває у деяких мобільних браузерах) —
+            // не залишаємо користувача без відповіді, а завантажуємо файл без перевірки тривалості.
+            setTimeout(() => { if (!settled) proceedWithFile(); }, 4000);
             v.src = url;
+            v.load();
         }
 
         async function addStory(type, url) {
@@ -2798,45 +2837,94 @@
         // ==== Свайп по колах на Головній: перемикає фільтри (Улюблені/Друзі/Заклади) і підсвічує іконку ====
         (function initHomeSwipeFilters() {
             const grid = document.getElementById('home-grid');
+            const inner = document.getElementById('home-grid-inner');
             const tabs = document.getElementById('home-filter-tabs');
-            if (!grid || !tabs) return;
+            if (!grid || !inner || !tabs) return;
             const filterOrder = [null, 'fav', 'friends', 'places'];
+            const SWIPE_THRESHOLD = 55;
+            const EASE_IN = 'transform 0.34s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.28s ease';
 
-            function applyHomeFilter(mode) {
+            function setTransition(on) { inner.style.transition = on ? EASE_IN : 'none'; }
+
+            // Плавний перехід між фільтрами, як гортання сторінок на iPhone: поточний вміст
+            // доїжджає й тане в бік свайпу, новий одразу з'являється з протилежного боку.
+            function switchFilter(nextMode, dir) {
                 tabs.querySelectorAll('.filter-tab').forEach(b => {
-                    b.classList.toggle('active', b.dataset.filter === mode);
+                    b.classList.toggle('active', b.dataset.filter === nextMode);
                 });
-                renderHomeGrid(document.getElementById('people-search-input').value, mode);
-                setTimeout(layoutHomeGrid, 0);
+                const outX = dir < 0 ? -46 : 46;
+                setTransition(true);
+                inner.style.transform = `translateX(${outX}px)`;
+                inner.style.opacity = '0';
+                setTimeout(() => {
+                    renderHomeGrid(document.getElementById('people-search-input').value, nextMode);
+                    setTimeout(layoutHomeGrid, 0);
+                    setTransition(false);
+                    inner.style.transform = `translateX(${-outX}px)`;
+                    void inner.offsetWidth; // форсує reflow, щоб наступний перехід точно програвся
+                    requestAnimationFrame(() => {
+                        setTransition(true);
+                        inner.style.transform = 'translateX(0)';
+                        inner.style.opacity = '1';
+                    });
+                }, 190);
             }
 
-            let startX = 0, startY = 0, tracking = false, handled = false;
-            const SWIPE_THRESHOLD = 55;
+            function settleBack() {
+                setTransition(true);
+                inner.style.transform = 'translateX(0)';
+                inner.style.opacity = '1';
+            }
+
+            let startX = 0, startY = 0, tracking = false, dragging = false;
 
             grid.addEventListener('touchstart', (e) => {
                 if (e.touches.length !== 1) return;
                 startX = e.touches[0].clientX;
                 startY = e.touches[0].clientY;
                 tracking = true;
-                handled = false;
+                dragging = false;
             }, { passive: true });
 
             grid.addEventListener('touchmove', (e) => {
-                if (!tracking || handled || e.touches.length !== 1) return;
+                if (!tracking || e.touches.length !== 1) return;
                 const dx = e.touches[0].clientX - startX;
                 const dy = e.touches[0].clientY - startY;
-                if (Math.abs(dx) > SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy) * 1.4) {
-                    handled = true;
+                if (!dragging) {
+                    if (Math.abs(dy) > 12 && Math.abs(dy) >= Math.abs(dx)) { tracking = false; return; } // це вертикальний скрол — не заважаємо йому
+                    if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy) * 1.4) { dragging = true; setTransition(false); }
+                    else return;
+                }
+                // "Гумовий" опір на краях списку фільтрів — важче тягнути далі за перший/останній.
+                const idx = filterOrder.indexOf(currentHomeFilter);
+                const atStart = idx === 0 && dx > 0;
+                const atEnd = idx === filterOrder.length - 1 && dx < 0;
+                const damp = (atStart || atEnd) ? 0.32 : 0.62;
+                inner.style.transform = `translateX(${dx * damp}px)`;
+                inner.style.opacity = String(Math.max(0.55, 1 - Math.abs(dx) / 420));
+            }, { passive: true });
+
+            grid.addEventListener('touchend', (e) => {
+                if (!tracking) return;
+                tracking = false;
+                if (!dragging) return;
+                dragging = false;
+                const dx = e.changedTouches[0].clientX - startX;
+                if (Math.abs(dx) > SWIPE_THRESHOLD) {
                     const idx = filterOrder.indexOf(currentHomeFilter);
                     const nextIdx = dx < 0
                         ? (idx + 1) % filterOrder.length
                         : (idx - 1 + filterOrder.length) % filterOrder.length;
-                    applyHomeFilter(filterOrder[nextIdx]);
+                    switchFilter(filterOrder[nextIdx], dx < 0 ? -1 : 1);
+                } else {
+                    settleBack();
                 }
             }, { passive: true });
 
-            grid.addEventListener('touchend', () => { tracking = false; }, { passive: true });
-            grid.addEventListener('touchcancel', () => { tracking = false; }, { passive: true });
+            grid.addEventListener('touchcancel', () => {
+                if (dragging) settleBack();
+                tracking = false; dragging = false;
+            }, { passive: true });
         })();
 
         document.getElementById('nav-search').addEventListener('click', () => {
