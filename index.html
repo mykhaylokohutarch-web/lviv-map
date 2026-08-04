@@ -744,9 +744,9 @@
         #ig-content { flex-grow: 1; overflow-y: auto; touch-action: pan-y; -webkit-overflow-scrolling: touch; padding-bottom: 110px; box-sizing: border-box; }
 
         .ig-hero { display: flex; align-items: center; gap: 12px; padding: calc(66px + env(safe-area-inset-top, 0px)) 16px 8px; background: var(--bg-color); }
-        .ig-avatar { width: 66px; height: 66px; border-radius: 50%; background-size: cover; background-position: center; background-color: #2c2c2e; box-shadow: 0 4px 14px rgba(0,0,0,0.16); cursor: pointer; transition: transform 0.15s ease; flex-shrink: 0; }
+        .ig-avatar { width: 88px; height: 88px; border-radius: 50%; background-size: cover; background-position: center; background-color: #2c2c2e; box-shadow: 0 4px 14px rgba(0,0,0,0.16); cursor: pointer; transition: transform 0.15s ease; flex-shrink: 0; }
         .ig-avatar:active { transform: scale(0.96); }
-        .ig-hero-mid { flex: 1 1 auto; min-width: 0; text-align: center; }
+        .ig-hero-mid { flex: 1 1 auto; min-width: 0; text-align: left; }
         .ig-hero-action-btn {
             flex-shrink: 0; display: flex; align-items: center; justify-content: center;
             width: 44px; height: 44px; border-radius: 50%; border: none; cursor: pointer;
@@ -757,15 +757,11 @@
         .ig-hero-action-btn.primary { background: var(--ultramarine-gradient); color: #fff; }
         .ig-hero-action-btn svg { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
 
-        .ig-body { padding: 0 20px 4px; text-align: center; }
-        .ig-bio-name { color: var(--text-color); font-size: 17px; font-weight: 700; margin: 0 0 1px; letter-spacing: -0.2px; text-align: center; }
-        .ig-bio-handle { color: var(--text-secondary); font-size: 12px; margin: 0; text-align: center; }
-        .ig-bio-text { font-size: 12.5px; color: var(--text-color); margin: 6px 0 4px; line-height: 1.3; text-align: center; }
-        .ig-meta-line { font-size: 11.5px; color: var(--text-secondary); margin: 0; text-align: center; }
-        .ig-actions-row { display: flex; gap: 8px; margin: 16px 0 14px; }
-        .ig-action-btn { flex: 1; padding: 12px; border-radius: 14px; font-size: 14px; font-weight: 600; border: none; cursor: pointer; background: rgba(0,0,0,0.06); color: var(--text-color); transition: var(--theme-transition); font-family: inherit; }
-        body.dark-theme .ig-action-btn { background: rgba(255,255,255,0.1); }
-        .ig-action-btn.primary { background: var(--ultramarine-gradient); color: #fff; }
+        .ig-body { padding: 0 20px 4px; text-align: left; }
+        .ig-bio-name { color: var(--text-color); font-size: 17px; font-weight: 700; margin: 0 0 1px; letter-spacing: -0.2px; text-align: left; }
+        .ig-bio-handle { color: var(--text-secondary); font-size: 12px; margin: 0; text-align: left; }
+        .ig-bio-text { font-size: 12.5px; color: var(--text-color); margin: 6px 0 4px; line-height: 1.3; text-align: left; }
+        .ig-meta-line { font-size: 11.5px; color: var(--text-secondary); margin: 0; text-align: left; }
 
         .ig-gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px 6px; }
         .ig-grid-item { width: 100%; aspect-ratio: 1 / 1; border-radius: 50%; background-size: cover; background-position: center; background-color: #e5e5ea; box-shadow: 0 2px 10px rgba(0,0,0,0.12); cursor: pointer; position: relative; overflow: hidden; }
@@ -950,7 +946,7 @@
     <!-- ==================== Сторінка людини: власний мінімалістичний стиль (не інстаграм) ==================== -->
     <div id="screen-ig-profile" class="app-screen">
         <div class="ig-top-bar">
-            <button class="ig-more-btn" aria-label="Ще"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.4"></circle><circle cx="12" cy="12" r="1.4"></circle><circle cx="19" cy="12" r="1.4"></circle></svg></button>
+            <button class="ig-more-btn" id="ig-more-btn" aria-label="Ще"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.4"></circle><circle cx="12" cy="12" r="1.4"></circle><circle cx="19" cy="12" r="1.4"></circle></svg></button>
         </div>
         <div id="ig-content">
             <div class="ig-hero">
@@ -964,7 +960,6 @@
                 <div id="ig-hero-action-slot"></div>
             </div>
             <div class="ig-body">
-                <div class="ig-actions-row" id="ig-actions-row"></div>
                 <div class="ig-gallery" id="ig-grid"></div>
             </div>
         </div>
@@ -3025,16 +3020,10 @@
 
             const heroSlot = document.getElementById('ig-hero-action-slot');
             heroSlot.innerHTML = '';
-            const actionsRow = document.getElementById('ig-actions-row');
-            actionsRow.innerHTML = '';
+            const moreBtn = document.getElementById('ig-more-btn');
+            moreBtn.onclick = null;
             if (isMine) {
-                const editBtn = document.createElement('button');
-                editBtn.className = 'ig-action-btn'; editBtn.innerText = 'Редагувати профіль';
-                editBtn.addEventListener('click', () => {
-                    showSidebar(getMyProfileItem());
-                    setTimeout(enterEditMode, 350);
-                });
-                actionsRow.appendChild(editBtn);
+                moreBtn.onclick = () => { showSidebar(getMyProfileItem()); setTimeout(enterEditMode, 350); };
 
                 const shareBtn = document.createElement('button');
                 shareBtn.className = 'ig-hero-action-btn'; shareBtn.setAttribute('aria-label', 'Поділитись');
@@ -3081,7 +3070,7 @@
             const el = document.getElementById('screen-ig-profile');
             let sx = 0, sy = 0, st = 0, tracking = false;
             el.addEventListener('touchstart', (e) => {
-                if (e.target.closest('.ig-top-bar') || e.target.closest('.ig-gallery') || e.target.closest('.ig-actions-row') || e.target.closest('.ig-avatar') || e.target.closest('#ig-hero-action-slot')) { tracking = false; return; }
+                if (e.target.closest('.ig-top-bar') || e.target.closest('.ig-gallery') || e.target.closest('.ig-avatar') || e.target.closest('#ig-hero-action-slot')) { tracking = false; return; }
                 sx = e.touches[0].clientX; sy = e.touches[0].clientY; st = Date.now(); tracking = true;
             }, { passive: true });
             el.addEventListener('touchend', (e) => {
