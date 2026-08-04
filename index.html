@@ -688,6 +688,17 @@
         .home-circle-video-layer.is-visible { opacity: 1; }
         .home-circle-badge { position: absolute; right: 2%; bottom: 2%; width: 22%; height: 22%; min-width: 16px; min-height: 16px; border-radius: 50%; background: var(--accent-main); border: 2px solid var(--bg-color); display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
         .home-circle-badge svg { width: 55%; height: 55%; stroke: #fff; fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+        .home-circle-like {
+            position: absolute; left: 2%; bottom: 2%; width: 22%; height: 22%; min-width: 16px; min-height: 16px;
+            border-radius: 50%; background: rgba(0,0,0,0.45); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+            border: 2px solid var(--bg-color); display: flex; align-items: center; justify-content: center;
+            box-sizing: border-box; cursor: pointer; -webkit-tap-highlight-color: transparent; z-index: 5;
+            transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .home-circle-like svg { width: 60%; height: 60%; stroke: #fff; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; transition: fill 0.15s ease, stroke 0.15s ease; }
+        .home-circle-like.liked { background: rgba(0,0,0,0.45); }
+        .home-circle-like.liked svg { fill: #ff3b30; stroke: #ff3b30; }
+        .home-circle-like.pulse { transform: scale(1.35); }
         /* Власне коло на Головній: тонке кольорове кільце-натяк, що можна додати сторі */
         .home-circle-avatar.is-me { box-shadow: 0 0 0 2px var(--bg-color), 0 0 0 4px var(--accent-main), 0 2px 10px rgba(0,0,0,0.08); }
         /* Мінікоп'я аватарки зверху зліва — лишається на місці й не ховається під фото/відео сторі */
@@ -1103,6 +1114,14 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
+        // ---- Улюблене: справжній стан (не декоративний), зберігається на пристрої ----
+        function loadFavorites() {
+            try { return new Set(JSON.parse(localStorage.getItem('my_favorites') || '[]')); }
+            catch (e) { return new Set(); }
+        }
+        function saveFavorites() { localStorage.setItem('my_favorites', JSON.stringify([...myFavorites])); }
+        let myFavorites = loadFavorites();
+
         const map = L.map('map', { 
             zoomControl: false,
             doubleClickZoom: false,
@@ -1175,11 +1194,11 @@
         })();
 
         // "Улюблене" зверху на карті — не окремий шар, а підсвітка: показує лише улюблені мітки,
-        // решту приглушує (та сама логіка "is-fav", що й у стрічці "Сьогодні" на Головній).
+        // решту приглушує (той самий реальний стан myFavorites, що й у стрічці "Сьогодні" на Головній).
         let favMarkerRegistry = {};
         let favOnlyActive = false;
         function registerFavMarker(id, marker) {
-            const isFav = pseudoStat(id, 'is-fav', 0, 99) < 35;
+            const isFav = myFavorites.has(id);
             favMarkerRegistry[id] = { marker, isFav };
             marker.setOpacity(!favOnlyActive || isFav ? 1 : 0.15);
         }
@@ -2583,9 +2602,8 @@
             const peopleEntries = buildDirectoryEntries();
             const placeEntries = places.map(pl => ({ id: pl.id, type: 'place', name: pl.name, status: pl.status, photos: pl.photos, video: pl.video, text1: pl.text1, text2: pl.text2, svg: pl.svg, category: pl.category }));
             const combined = peopleEntries.concat(placeEntries);
-            // Стабільні (детерміновані) позначки "улюблене" / "друг" — суто оформлення вітрини для фільтрів.
             combined.forEach(e => {
-                e.isFav = pseudoStat(e.id, 'is-fav', 0, 99) < 35;
+                e.isFav = myFavorites.has(e.id);
                 e.isFriend = e.type === 'person' && pseudoStat(e.id, 'is-friend', 0, 99) < 45;
                 e.showMsg = pseudoStat(e.id, 'show-msg', 0, 99) < 40;
             });
@@ -2795,6 +2813,13 @@
                     badge.addEventListener('click', (ev) => { ev.stopPropagation(); showPlaceOnMap(e); });
                     avatar.appendChild(badge);
                 }
+                if (!e.isMe) {
+                    const likeBtn = document.createElement('div'); likeBtn.className = 'home-circle-like' + (e.isFav ? ' liked' : '');
+                    likeBtn.setAttribute('aria-label', 'Подвійний клік/тап — додати в улюблене');
+                    likeBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg>';
+                    attachLikeDoubleTrigger(likeBtn, e);
+                    avatar.appendChild(likeBtn);
+                }
                 if (e.isMe) {
                     // Міні-аватарка лишається зверху зліва поверх будь-якого фото/відео сторі —
                     // так завжди видно, що це саме ваше коло, навіть коли крутиться нова сторі.
@@ -2817,6 +2842,32 @@
                 box.appendChild(item);
             });
         }
+        function toggleFavorite(entry, likeBtn) {
+            const nowFav = !myFavorites.has(entry.id);
+            if (nowFav) myFavorites.add(entry.id); else myFavorites.delete(entry.id);
+            saveFavorites();
+            entry.isFav = nowFav;
+            if (likeBtn) {
+                likeBtn.classList.toggle('liked', nowFav);
+                likeBtn.classList.add('pulse');
+                setTimeout(() => likeBtn.classList.remove('pulse'), 180);
+            }
+            // Якщо активний фільтр "Улюблені" — прибираємо/повертаємо коло одразу.
+            if (currentHomeFilter === 'fav') renderHomeGrid(document.getElementById('people-search-input').value);
+        }
+
+        // Подвійний клік (десктоп) і подвійний тап (мобільний) — додає/прибирає з улюбленого.
+        function attachLikeDoubleTrigger(likeBtn, entry) {
+            likeBtn.addEventListener('dblclick', (ev) => { ev.stopPropagation(); ev.preventDefault(); toggleFavorite(entry, likeBtn); });
+            let lastTapTs = 0;
+            likeBtn.addEventListener('touchend', (ev) => {
+                const now = Date.now();
+                if (now - lastTapTs < 320) { ev.stopPropagation(); ev.preventDefault(); toggleFavorite(entry, likeBtn); lastTapTs = 0; }
+                else { lastTapTs = now; }
+            });
+            likeBtn.addEventListener('click', (ev) => { ev.stopPropagation(); });
+        }
+
         renderHomeGrid('');
         layoutHomeGrid();
         setTimeout(layoutHomeGrid, 150);
