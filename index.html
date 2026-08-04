@@ -688,6 +688,25 @@
         .home-circle-video-layer.is-visible { opacity: 1; }
         .home-circle-badge { position: absolute; right: 2%; bottom: 2%; width: 22%; height: 22%; min-width: 16px; min-height: 16px; border-radius: 50%; background: var(--accent-main); border: 2px solid var(--bg-color); display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
         .home-circle-badge svg { width: 55%; height: 55%; stroke: #fff; fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+        /* Власне коло на Головній: тонке кольорове кільце-натяк, що можна додати сторі */
+        .home-circle-avatar.is-me { box-shadow: 0 0 0 2px var(--bg-color), 0 0 0 4px var(--accent-main), 0 2px 10px rgba(0,0,0,0.08); }
+        /* Мінікоп'я аватарки зверху зліва — лишається на місці й не ховається під фото/відео сторі */
+        .home-circle-mini-avatar {
+            position: absolute; top: -3px; left: -3px; z-index: 5;
+            width: 32%; height: 32%; min-width: 24px; min-height: 24px;
+            border-radius: 50%; background-size: cover; background-position: center; background-color: #e5e5ea;
+            border: 2px solid var(--bg-color); box-shadow: 0 1px 6px rgba(0,0,0,0.28); box-sizing: border-box;
+        }
+        /* Кнопка "+" для завантаження фото/відео у власне коло (знизу справа, не заважає міні-аватарці) */
+        .home-circle-add-badge {
+            position: absolute; right: 2%; bottom: 2%; z-index: 6;
+            width: 26%; height: 26%; min-width: 20px; min-height: 20px;
+            border-radius: 50%; background: var(--accent-main); border: 2px solid var(--bg-color);
+            display: flex; align-items: center; justify-content: center; box-sizing: border-box;
+            cursor: pointer; -webkit-tap-highlight-color: transparent;
+        }
+        .home-circle-add-badge:active { transform: scale(0.9); }
+        .home-circle-add-badge svg { width: 58%; height: 58%; stroke: #fff; fill: none; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
         /* Тимчасова мітка на карті — з'являється, коли натискають на "мітку" біля кола закладу на Головній */
         .place-focus-marker { width: 34px; height: 34px; border-radius: 50%; background: var(--ultramarine-gradient); border: 2px solid #fff; box-shadow: 0 3px 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
         .place-focus-marker svg { width: 58%; height: 58%; stroke: #fff; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
@@ -1948,6 +1967,11 @@
             myProfile.stories.push({ type, url, ts: Date.now() });
             if (myProfile.stories.length > 10) myProfile.stories = myProfile.stories.slice(-10);
             if (currentActiveItem && currentActiveItem.id === myId) { currentActiveItem.stories = myProfile.stories; renderHeroStoriesRow(currentActiveItem); }
+            // Одразу оновлюємо власне коло на Головній, щоб нова сторі почала програватись там же.
+            if (typeof renderHomeGrid === 'function' && document.getElementById('home-grid-inner')) {
+                const searchInput = document.getElementById('people-search-input');
+                renderHomeGrid(searchInput ? searchInput.value : '');
+            }
             try { await saveMyProfileToFirebase(); } catch (e) { alert('Не вдалося зберегти сторі. Перевірте з’єднання.'); }
         }
 
@@ -2528,7 +2552,11 @@
             });
             // Стабільний "рейтинг дня" для порядку кіл — детермінований, без реального лічильника переглядів.
             combined.sort((a, b) => pseudoStat(b.id, 'today-rank', 0, 999) - pseudoStat(a.id, 'today-rank', 0, 999));
-            return combined;
+            // Власне коло завжди першим, як "Ваша історія" — без хмаринки-статусу над ним,
+            // щоб текст ніколи не накладався на міні-аватарку.
+            const meEntry = getMyProfileItem();
+            meEntry.isMe = true; meEntry.isFav = false; meEntry.isFriend = false; meEntry.showMsg = false;
+            return [meEntry, ...combined];
         }
 
         let currentHomeFilter = null;
@@ -2619,6 +2647,37 @@
             }, { passive: true });
         });
 
+        // Показує власні сторі (фото та відео впереміш) у великому колі на Головній — по черзі,
+        // кожен кадр ~5с. Фото показуємо кросфейдом, відео — простою заміною шару.
+        function startHomeCircleMixedStory(wrap, items) {
+            if (!items || !items.length) return;
+            const DURATION = 5000;
+            let idx = 0;
+            const renderFrame = () => {
+                wrap.innerHTML = '';
+                const it = items[idx];
+                if (it.type === 'video') {
+                    const v = document.createElement('video');
+                    v.className = 'home-circle-video';
+                    v.muted = true; v.defaultMuted = true; v.loop = true; v.playsInline = true; v.autoplay = true; v.preload = 'auto';
+                    v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
+                    v.src = it.url;
+                    wrap.appendChild(v);
+                    attemptCirclePlay(v); allCircleVideos.add(v);
+                } else {
+                    const layer = document.createElement('div');
+                    layer.className = 'home-circle-layer is-visible';
+                    layer.style.backgroundImage = `url('${it.url}')`;
+                    wrap.appendChild(layer);
+                }
+                if (items.length > 1) {
+                    const t = setTimeout(() => { idx = (idx + 1) % items.length; renderFrame(); }, DURATION);
+                    homeCircleTimers.add(t);
+                }
+            };
+            renderFrame();
+        }
+
         // Показує фото кола по черзі — справжній кросфейд (нове фото плавно проявляється поверх
         // попереднього, без "миготіння"), кожен кадр тримається приблизно 5 секунд.
         // Старт і тривалість кожного кадру трохи рандомізовані, тож кола перемикаються не одночасно, а хаотично.
@@ -2656,19 +2715,30 @@
             box.innerHTML = '';
             const q = (filterText || '').trim().toLowerCase();
             let entries = buildTodayEntries().filter(e => !q || e.name.toLowerCase().includes(q));
+            const meIdx = entries.findIndex(e => e.isMe);
+            const meEntry = meIdx >= 0 ? entries.splice(meIdx, 1)[0] : null;
             if (currentHomeFilter === 'fav') entries = entries.filter(e => e.isFav);
             else if (currentHomeFilter === 'friends') entries = entries.filter(e => e.isFriend);
             else if (currentHomeFilter === 'places') entries = entries.filter(e => e.type === 'place');
+            // Власне коло не залежить від фільтрів "Улюблені/Друзі/Заклади" — воно завжди перше, як своя історія.
+            if (meEntry) entries.unshift(meEntry);
             if (!entries.length) {
                 const empty = document.createElement('p'); empty.className = 'dm-empty'; empty.innerText = 'Нічого не знайдено';
                 box.appendChild(empty); return;
             }
             entries.forEach(e => {
                 const item = document.createElement('div'); item.className = 'home-circle-item';
-                const avatar = document.createElement('div'); avatar.className = 'home-circle-avatar';
+                const avatar = document.createElement('div'); avatar.className = 'home-circle-avatar' + (e.isMe ? ' is-me' : '');
                 const mediaWrap = document.createElement('div'); mediaWrap.className = 'home-circle-media';
                 avatar.appendChild(mediaWrap);
-                if (e.video) {
+                if (e.isMe) {
+                    // Власне коло: власні сторі (фото/відео), або поточне фото профілю, якщо сторі ще немає.
+                    const myAvatarUrl = (e.photos && e.photos[0]) || '';
+                    const storyItems = (e.stories && e.stories.length)
+                        ? e.stories.map(s => ({ type: s.type, url: s.url }))
+                        : [{ type: 'photo', url: myAvatarUrl }];
+                    startHomeCircleMixedStory(mediaWrap, storyItems);
+                } else if (e.video) {
                     // Кола з відео-профілем: по черзі відтворюються кілька різних відео, по 5с кожне.
                     const posterPhoto = (e.photos && e.photos.find(u => !isHeroVideoUrl(u))) || null;
                     startHomeCircleVideoStory(mediaWrap, buildCircleVideoList(e), posterPhoto);
@@ -2686,7 +2756,20 @@
                     badge.addEventListener('click', (ev) => { ev.stopPropagation(); showPlaceOnMap(e); });
                     avatar.appendChild(badge);
                 }
-                const nameSpan = document.createElement('span'); nameSpan.className = 'home-circle-name'; nameSpan.innerText = e.name;
+                if (e.isMe) {
+                    // Міні-аватарка лишається зверху зліва поверх будь-якого фото/відео сторі —
+                    // так завжди видно, що це саме ваше коло, навіть коли крутиться нова сторі.
+                    const mini = document.createElement('div'); mini.className = 'home-circle-mini-avatar';
+                    mini.style.backgroundImage = `url('${(e.photos && e.photos[0]) || ''}')`;
+                    avatar.appendChild(mini);
+                    // Кнопка "+" знизу справа — додати нове фото/відео в сторі, не заходячи в профіль.
+                    const addBadge = document.createElement('div'); addBadge.className = 'home-circle-add-badge';
+                    addBadge.setAttribute('aria-label', 'Додати сторі');
+                    addBadge.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>';
+                    addBadge.addEventListener('click', (ev) => { ev.stopPropagation(); openAddStoryChooser(); });
+                    avatar.appendChild(addBadge);
+                }
+                const nameSpan = document.createElement('span'); nameSpan.className = 'home-circle-name'; nameSpan.innerText = e.isMe ? 'Ви' : e.name;
                 item.appendChild(avatar); item.appendChild(nameSpan);
                 item.addEventListener('click', () => {
                     if (e.type === 'place') { showSidebar(e); }
@@ -2711,6 +2794,50 @@
                 setTimeout(layoutHomeGrid, 0);
             });
         });
+
+        // ==== Свайп по колах на Головній: перемикає фільтри (Улюблені/Друзі/Заклади) і підсвічує іконку ====
+        (function initHomeSwipeFilters() {
+            const grid = document.getElementById('home-grid');
+            const tabs = document.getElementById('home-filter-tabs');
+            if (!grid || !tabs) return;
+            const filterOrder = [null, 'fav', 'friends', 'places'];
+
+            function applyHomeFilter(mode) {
+                tabs.querySelectorAll('.filter-tab').forEach(b => {
+                    b.classList.toggle('active', b.dataset.filter === mode);
+                });
+                renderHomeGrid(document.getElementById('people-search-input').value, mode);
+                setTimeout(layoutHomeGrid, 0);
+            }
+
+            let startX = 0, startY = 0, tracking = false, handled = false;
+            const SWIPE_THRESHOLD = 55;
+
+            grid.addEventListener('touchstart', (e) => {
+                if (e.touches.length !== 1) return;
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+                tracking = true;
+                handled = false;
+            }, { passive: true });
+
+            grid.addEventListener('touchmove', (e) => {
+                if (!tracking || handled || e.touches.length !== 1) return;
+                const dx = e.touches[0].clientX - startX;
+                const dy = e.touches[0].clientY - startY;
+                if (Math.abs(dx) > SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy) * 1.4) {
+                    handled = true;
+                    const idx = filterOrder.indexOf(currentHomeFilter);
+                    const nextIdx = dx < 0
+                        ? (idx + 1) % filterOrder.length
+                        : (idx - 1 + filterOrder.length) % filterOrder.length;
+                    applyHomeFilter(filterOrder[nextIdx]);
+                }
+            }, { passive: true });
+
+            grid.addEventListener('touchend', () => { tracking = false; }, { passive: true });
+            grid.addEventListener('touchcancel', () => { tracking = false; }, { passive: true });
+        })();
 
         document.getElementById('nav-search').addEventListener('click', () => {
             closeMessagesWindowIfOpen();
