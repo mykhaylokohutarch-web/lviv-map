@@ -352,7 +352,8 @@
         }
         .profile-hero { position: absolute; inset: 0; width: 100%; height: 100%; background-color: #1c1c1e; touch-action: none; overflow: hidden; }
         .hero-track { display: flex; width: 100%; height: 100%; will-change: transform; }
-        .hero-slide { flex: 0 0 100%; width: 100%; height: 100%; background-size: cover; background-position: center; background-color: #1c1c1e; }
+        .hero-slide { flex: 0 0 100%; width: 100%; height: 100%; background-size: cover; background-position: center; background-color: #1c1c1e; opacity: 0; transition: opacity 0.25s ease; }
+        .hero-slide.loaded { opacity: 1; }
         .hero-slide video { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
         .hero-bottom-fade { position: absolute; left: 0; right: 0; bottom: 0; height: 46%; pointer-events: none; background: linear-gradient(to top, rgba(0,0,0,0.45), rgba(0,0,0,0)); z-index: 4; }
         .hero-dots { position: absolute; top: 14px; left: 50%; transform: translate3d(-50%, 0, 0); display: flex; gap: 5px; z-index: 8; }
@@ -1601,13 +1602,6 @@
             { id: 'c17', type: 'place', name: "Vintage Corner", coords: [49.8415, 24.0345], photos: ["https://picsum.photos/id/21/600/400", "https://picsum.photos/id/22/600/400", "https://picsum.photos/id/23/600/400"], video: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4", status: "Вінтажний одяг та аксесуари 👒", text1: "вул. Староєврейська, 9. Унікальні речі з Європи.", text2: "Знижка 20% на другу річ у чеку.", svg: svgIcons.bag, category: 'shopping' }
         ];
 
-        // Спільний пул демо-відео (усі унікальні відео з people/places) — використовується, щоб у колі
-        // на головному екрані по черзі програвались РІЗНІ відео, а не одне те саме в циклі.
-        const demoVideoPool = Array.from(new Set([
-            ...people.map(p => p.video).filter(Boolean),
-            ...places.map(pl => pl.video).filter(Boolean)
-        ]));
-
         let currentActiveItem = null; let currentChatRef = null; let heroPhotoIndex = 0; let chatTabOrigin = null;
 
         people.forEach(person => {
@@ -1649,8 +1643,15 @@
                     const video = document.createElement('video');
                     video.src = src; video.autoplay = true; video.muted = true; video.loop = true; video.playsInline = true; video.setAttribute('webkit-playsinline', '');
                     slide.appendChild(video);
+                    slide.classList.add('loaded');
                 } else {
-                    slide.style.backgroundImage = `url('${src}')`;
+                    // Фото підвантажується заздалегідь: показуємо його лише коли воно вже готове —
+                    // так замість різкого чорного фону буде плавна поява (без "спалаху" чорного).
+                    const preload = new Image();
+                    preload.onload = () => { slide.style.backgroundImage = `url('${src}')`; slide.classList.add('loaded'); };
+                    preload.onerror = () => { slide.classList.add('loaded'); };
+                    preload.src = src;
+                    if (preload.complete) { slide.style.backgroundImage = `url('${src}')`; slide.classList.add('loaded'); }
                 }
                 track.appendChild(slide);
             });
@@ -2620,60 +2621,6 @@
         // щоб не накопичувались зайві setTimeout після пошуку/фільтрів.
         const homeCircleTimers = new Set();
 
-        // Детерміновано підбирає для кола 3 РІЗНИХ відео (власне відео запису + 2 інших з загального пулу),
-        // щоб у колі на головному екрані відтворювались різні відео, а не одне те саме.
-        // Порядок стабільний для кожного id (не «стрибає» при повторному рендері сітки).
-        function buildCircleVideoList(entry) {
-            if (!entry.video) return [];
-            const others = demoVideoPool.filter(u => u !== entry.video);
-            const shuffled = others
-                .map((u, idx) => ({ u, k: pseudoStat(entry.id, 'vid' + idx, 0, 9999) }))
-                .sort((a, b) => a.k - b.k)
-                .map(x => x.u);
-            return [entry.video, ...shuffled.slice(0, 2)];
-        }
-
-        // Показує кілька РІЗНИХ відео по черзі в колі: кожне грає рівно 5 секунд, тоді — плавний
-        // кросфейд (0.6с) на наступне відео зі списку, і так по колу нескінченно.
-        function startHomeCircleVideoStory(wrap, list, posterUrl) {
-            if (!list || !list.length) return;
-            // Фото-підложка лежить під відео завжди: навіть якщо у якогось браузера відео на мить
-            // "чорніє" до першого кадру, під ним видно фото, а не чорноту.
-            if (posterUrl) { wrap.style.backgroundImage = `url('${posterUrl}')`; wrap.style.backgroundSize = 'cover'; wrap.style.backgroundPosition = 'center'; }
-
-            const makeLayer = (visible) => {
-                const v = document.createElement('video');
-                v.className = 'home-circle-video-layer' + (visible ? ' is-visible' : '');
-                v.muted = true; v.defaultMuted = true; v.loop = true; v.playsInline = true; v.autoplay = true; v.preload = 'auto';
-                v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
-                if (posterUrl) v.setAttribute('poster', posterUrl);
-                return v;
-            };
-            let front = makeLayer(true), back = makeLayer(false);
-            wrap.appendChild(front); wrap.appendChild(back);
-            front.src = list[0];
-            attemptCirclePlay(front);
-            allCircleVideos.add(front); allCircleVideos.add(back);
-
-            if (list.length < 2) return; // лише одне доступне відео — просто грає в циклі, перемикати нічого
-
-            const DURATION = 5000; // рівно 5с на кожне відео
-            let i = 0;
-            const showNext = () => {
-                i = (i + 1) % list.length;
-                back.src = list[i];
-                attemptCirclePlay(back);
-                back.classList.add('is-visible');
-                front.classList.remove('is-visible');
-                const tmp = front; front = back; back = tmp;
-                const nextT = setTimeout(showNext, DURATION);
-                homeCircleTimers.add(nextT);
-            };
-            // Випадкова початкова затримка (0–2с) — щоб кола перемикались не одночасно, а хаотично.
-            const startT = setTimeout(showNext, Math.random() * 2000);
-            homeCircleTimers.add(startT);
-        }
-
         // Деякі браузери/веб-в'юери блокують автоплей навіть для muted-відео, поки не було жодної
         // взаємодії користувача зі сторінкою. Тому пробуємо відтворити одразу, а якщо не вдалось —
         // повторюємо спробу для всіх відео кіл по першому ж дотику/кліку будь-де на сторінці.
@@ -2707,37 +2654,6 @@
                 });
             }, { passive: true });
         });
-
-        // Показує власні сторі (фото та відео впереміш) у великому колі на Головній — по черзі,
-        // кожен кадр ~5с. Фото показуємо кросфейдом, відео — простою заміною шару.
-        function startHomeCircleMixedStory(wrap, items) {
-            if (!items || !items.length) return;
-            const DURATION = 5000;
-            let idx = 0;
-            const renderFrame = () => {
-                wrap.innerHTML = '';
-                const it = items[idx];
-                if (it.type === 'video') {
-                    const v = document.createElement('video');
-                    v.className = 'home-circle-video';
-                    v.muted = true; v.defaultMuted = true; v.loop = true; v.playsInline = true; v.autoplay = true; v.preload = 'auto';
-                    v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
-                    v.src = it.url;
-                    wrap.appendChild(v);
-                    attemptCirclePlay(v); allCircleVideos.add(v);
-                } else {
-                    const layer = document.createElement('div');
-                    layer.className = 'home-circle-layer is-visible';
-                    layer.style.backgroundImage = `url('${it.url}')`;
-                    wrap.appendChild(layer);
-                }
-                if (items.length > 1) {
-                    const t = setTimeout(() => { idx = (idx + 1) % items.length; renderFrame(); }, DURATION);
-                    homeCircleTimers.add(t);
-                }
-            };
-            renderFrame();
-        }
 
         // Показує фото кола по черзі — справжній кросфейд (нове фото плавно проявляється поверх
         // попереднього, без "миготіння"), кожен кадр тримається приблизно 5 секунд.
@@ -2793,17 +2709,16 @@
                 const mediaWrap = document.createElement('div'); mediaWrap.className = 'home-circle-media';
                 avatar.appendChild(mediaWrap);
                 if (e.isMe) {
-                    // Власне коло: власні сторі (фото/відео), або поточне фото профілю, якщо сторі ще немає.
+                    // Власне коло: фото-кросфейд (без відео — щоб при відкритті застосунку не блимала кнопка play).
                     const myAvatarUrl = (e.photos && e.photos[0]) || '';
-                    const storyItems = (e.stories && e.stories.length)
-                        ? e.stories.map(s => ({ type: s.type, url: s.url }))
-                        : [{ type: 'photo', url: myAvatarUrl }];
-                    startHomeCircleMixedStory(mediaWrap, storyItems);
-                } else if (e.video) {
-                    // Кола з відео-профілем: по черзі відтворюються кілька різних відео, по 5с кожне.
-                    const posterPhoto = (e.photos && e.photos.find(u => !isHeroVideoUrl(u))) || null;
-                    startHomeCircleVideoStory(mediaWrap, buildCircleVideoList(e), posterPhoto);
+                    const myPhotoStories = (e.stories && e.stories.length)
+                        ? e.stories.filter(s => s.type === 'photo').map(s => s.url)
+                        : [];
+                    startHomeCircleStory(mediaWrap, myPhotoStories.length ? myPhotoStories : [myAvatarUrl]);
                 } else {
+                    // Усі кола на Головній — лише фото-кросфейд, навіть якщо в людини є відео-профіль:
+                    // справжній <video> тег на автозапуску іноді "застряє" на паузі з іконкою play,
+                    // поки браузер не дозволить автовідтворення — фото такої проблеми не має.
                     const circlePhotos = (e.photos && e.photos.length) ? e.photos.filter(u => !isHeroVideoUrl(u)) : [];
                     startHomeCircleStory(mediaWrap, circlePhotos.length ? circlePhotos : (e.photos || []));
                 }
