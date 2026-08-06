@@ -666,20 +666,21 @@
         .home-grid-inner { display: grid; grid-template-columns: repeat(3, var(--circle-d, 100px)); justify-content: center; gap: 26px 6px; }
         .home-circle-item { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
         .home-circle-item:active .home-circle-avatar { transform: scale(0.93); }
-        /* Компактна хмаринка короткого статусу — трохи налазить на фото, як в Instagram, напівпрозорий фон */
+        /* Хмаринка як у месенджері — з чітким хвостиком, трохи нижче, до 2 коротких рядків */
         .home-circle-msg {
-            position: absolute; top: -10px; left: 4%; z-index: 3;
-            max-width: 78%;
+            position: absolute; top: 2px; left: 2%; z-index: 3;
+            max-width: 82%;
             background: var(--msg-solid-bg); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-            color: var(--text-color); font-size: 10.5px; font-weight: 700; line-height: 1.15;
-            padding: 5px 10px; border-radius: 12px;
+            color: var(--text-color); font-size: 10.5px; font-weight: 700; line-height: 1.2;
+            padding: 6px 10px; border-radius: 13px; border-bottom-left-radius: 4px;
             box-shadow: 0 3px 10px rgba(0,0,0,0.2);
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+            overflow: hidden; text-overflow: ellipsis; white-space: normal; word-break: break-word;
         }
         .home-circle-msg::after {
-            content: ""; position: absolute; left: 14px; bottom: -5px; width: 0; height: 0;
-            border-left: 4px solid transparent; border-right: 4px solid transparent;
-            border-top: 6px solid var(--msg-solid-bg);
+            content: ""; position: absolute; left: -1px; bottom: -1px; width: 10px; height: 10px;
+            background: var(--msg-solid-bg);
+            clip-path: polygon(0 0, 100% 100%, 0 100%);
         }
         .home-circle-avatar { position: relative; width: var(--circle-d, 100px); height: var(--circle-d, 100px); border-radius: 50%; background-size: cover; background-position: center; background-color: #e5e5ea; transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1); box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
         /* Обгортка медіа кола — циклічно показує фото/відео як міні-сторі, по одному кадру 10с */
@@ -2726,7 +2727,9 @@
                     startHomeCircleStory(mediaWrap, circlePhotos.length ? circlePhotos : (e.photos || []));
                 }
                 if (e.status && e.showMsg) {
-                    const msg = document.createElement('div'); msg.className = 'home-circle-msg'; msg.innerText = e.status;
+                    const msg = document.createElement('div'); msg.className = 'home-circle-msg';
+                    const msgLimit = 34;
+                    msg.innerText = e.status.length > msgLimit ? e.status.slice(0, msgLimit).trimEnd() + '…' : e.status;
                     avatar.appendChild(msg);
                 }
                 if (e.type === 'place') {
