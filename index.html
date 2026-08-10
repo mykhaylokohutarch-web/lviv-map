@@ -408,6 +408,14 @@
         .hero-msg-btn .bottom-icon-wrap { width: 40px; height: 40px; }
         .hero-msg-btn:active .bottom-icon-wrap { transform: scale(0.92); }
         .hero-msg-btn svg { stroke: var(--accent-main); }
+        /* Кнопка локації в профілі — той самий вигляд, що й кнопка "лайк" на колах Головної:
+           темне напівпрозоре скляне коло з білою іконкою, без окремої рамки. */
+        #hero-location-btn .bottom-icon-wrap {
+            background: rgba(0,0,0,0.45); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+            border: none; box-shadow: none;
+        }
+        #hero-location-btn svg { stroke: #fff; }
+        #hero-location-btn:active .bottom-icon-wrap { transform: scale(1.12); }
 
         .info-scroll-area { max-height: 78px; overflow-y: auto; margin-top: 10px; flex-shrink: 1; touch-action: pan-y; -webkit-overflow-scrolling: touch; }
         .profile-section { margin-bottom: 6px; }
@@ -680,8 +688,8 @@
         .home-search-bar svg { width: 16px; height: 16px; stroke: var(--text-secondary); fill: none; stroke-width: 2; flex-shrink: 0; }
         .home-search-bar input { border: none; background: transparent; outline: none; font-size: 14px; color: var(--text-color); width: 100%; font-family: inherit; }
         /* ---- Головна: сітка кіл (люди + заклади) по 3 в ряд, як в надісланому прикладі ---- */
-        #home-grid { flex-grow: 1; overflow-y: auto; overflow-x: hidden; padding: calc(78px + env(safe-area-inset-top, 0px)) 6px 110px; box-sizing: border-box; touch-action: pan-y; -webkit-overflow-scrolling: touch; overscroll-behavior-x: none; }
-        .home-grid-inner { display: grid; grid-template-columns: repeat(3, var(--circle-d, 100px)); justify-content: center; gap: 26px 12px; }
+        #home-grid { flex-grow: 1; overflow-y: auto; overflow-x: hidden; padding: calc(78px + env(safe-area-inset-top, 0px)) 2px 110px; box-sizing: border-box; touch-action: pan-y; -webkit-overflow-scrolling: touch; overscroll-behavior-x: none; }
+        .home-grid-inner { display: grid; grid-template-columns: repeat(3, var(--circle-d, 100px)); justify-content: center; gap: 22px 4px; }
         .home-circle-item { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
         .home-circle-item:active .home-circle-avatar { transform: scale(0.93); }
         /* Хмаринка як у месенджері — з великим хвостиком, піднята до верхнього краю кола,
@@ -2622,7 +2630,7 @@
             const availW = container.clientWidth - padLeft - padRight;
             if (availW <= 0) return;
 
-            const colGap = 12;
+            const colGap = 4;
             const d = (availW - 2 * colGap) / 3;
 
             container.style.setProperty('--circle-d', d + 'px');
@@ -2791,12 +2799,13 @@
                     attachLikeDoubleTrigger(likeBtn, e);
                     avatar.appendChild(likeBtn);
                 }
+                // Міні-аватарка лишається зверху зліва поверх будь-якого фото/відео сторі —
+                // так завжди видно, чиє це коло, навіть коли крутиться нова сторі. Тепер це
+                // стосується кожного кола, а не лише власного.
+                const mini = document.createElement('div'); mini.className = 'home-circle-mini-avatar' + ((e.stories && e.stories.length) ? ' has-story' : '');
+                mini.style.backgroundImage = `url('${(e.photos && e.photos[0]) || ''}')`;
+                avatar.appendChild(mini);
                 if (e.isMe) {
-                    // Міні-аватарка лишається зверху зліва поверх будь-якого фото/відео сторі —
-                    // так завжди видно, що це саме ваше коло, навіть коли крутиться нова сторі.
-                    const mini = document.createElement('div'); mini.className = 'home-circle-mini-avatar' + ((e.stories && e.stories.length) ? ' has-story' : '');
-                    mini.style.backgroundImage = `url('${(e.photos && e.photos[0]) || ''}')`;
-                    avatar.appendChild(mini);
                     // Кнопка "+" знизу справа — додати нове фото/відео в сторі, не заходячи в профіль.
                     const addBadge = document.createElement('div'); addBadge.className = 'home-circle-add-badge';
                     addBadge.setAttribute('aria-label', 'Додати сторі');
