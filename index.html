@@ -279,18 +279,31 @@
         .story-viewer-user { color: #fff; font-size: 13px; font-weight: 700; display: flex; gap: 8px; align-items: baseline; }
         .story-viewer-user span:last-child { font-weight: 400; color: rgba(255,255,255,0.5); font-size: 11px; }
         #story-viewer-close { background: rgba(255,255,255,0.12); border: none; color: #fff; width: 30px; height: 30px; border-radius: 50%; font-size: 14px; cursor: pointer; flex-shrink: 0; }
-        /* Лайк і локація показуються лише тут, у повноекранному перегляді сторі —
+        /* Таблетка знизу перегляду сторі: короткий опис зліва + ряд кнопок-дій справа —
            той самий прозорий скляний стиль, що й лайк на колах Головної. */
-        .story-viewer-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+        .story-viewer-pill {
+            position: absolute; left: 12px; right: 12px; bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+            z-index: 20; display: flex; align-items: center; gap: 10px;
+            background: rgba(28,28,30,0.55); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 30px;
+            padding: 8px 8px 8px 16px; box-sizing: border-box; box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        .story-viewer-pill-text {
+            flex: 1; min-width: 0; color: #fff; font-size: 12.5px; font-weight: 600; line-height: 1.3;
+            overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+        }
+        .story-viewer-pill-text:empty { display: none; }
+        .story-viewer-pill-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
         .story-viewer-action-btn {
-            width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,0.12);
+            width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,0.12);
             backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
             border: none; display: flex; align-items: center; justify-content: center;
             box-sizing: border-box; cursor: pointer; -webkit-tap-highlight-color: transparent;
             transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-        .story-viewer-action-btn svg { width: 60%; height: 60%; stroke: #fff; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; transition: fill 0.15s ease, stroke 0.15s ease; }
+        .story-viewer-action-btn svg { width: 55%; height: 55%; stroke: #fff; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; transition: fill 0.15s ease, stroke 0.15s ease; }
         .story-viewer-action-btn.liked svg { fill: #ff3b30; stroke: #ff3b30; }
+        .story-viewer-action-btn.saved svg { fill: #fff; }
         .story-viewer-action-btn.pulse { transform: scale(1.25); }
         .story-viewer-media { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
         .story-viewer-media img, .story-viewer-media video { max-width: 100%; max-height: 100%; object-fit: contain; }
@@ -1138,20 +1151,30 @@
         <div class="story-viewer-bars" id="story-viewer-bars"></div>
         <div class="story-viewer-header">
             <div class="story-viewer-user"><span id="story-viewer-name"></span><span id="story-viewer-time"></span></div>
-            <div class="story-viewer-actions">
-                <button class="story-viewer-action-btn" id="story-viewer-like-btn" aria-label="Додати в улюблене">
-                    <svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg>
-                </button>
-                <button class="story-viewer-action-btn" id="story-viewer-location-btn" aria-label="Показати на карті">
-                    <svg viewBox="0 0 24 24"><path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                </button>
-                <button id="story-viewer-close" aria-label="Закрити">✕</button>
-            </div>
+            <button id="story-viewer-close" aria-label="Закрити">✕</button>
         </div>
         <div class="story-viewer-media" id="story-viewer-media"></div>
         <div class="story-viewer-nav">
             <div class="story-nav-zone left" id="story-nav-prev"></div>
             <div class="story-nav-zone right" id="story-nav-next"></div>
+        </div>
+        <!-- "Таблетка" знизу: короткий опис + дії (лайк, збереження, локація, написати) -->
+        <div class="story-viewer-pill" id="story-viewer-pill">
+            <div class="story-viewer-pill-text" id="story-viewer-pill-text"></div>
+            <div class="story-viewer-pill-actions">
+                <button class="story-viewer-action-btn" id="story-viewer-like-btn" aria-label="Додати в улюблене">
+                    <svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg>
+                </button>
+                <button class="story-viewer-action-btn" id="story-viewer-save-btn" aria-label="Зберегти">
+                    <svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+                </button>
+                <button class="story-viewer-action-btn" id="story-viewer-location-btn" aria-label="Показати на карті">
+                    <svg viewBox="0 0 24 24"><path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                </button>
+                <button class="story-viewer-action-btn" id="story-viewer-msg-btn" aria-label="Написати">
+                    <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -1190,6 +1213,14 @@
         }
         function saveFavorites() { localStorage.setItem('my_favorites', JSON.stringify([...myFavorites])); }
         let myFavorites = loadFavorites();
+
+        // ---- Збережене (окремо від "улюблене"/лайк) — теж справжній стан на пристрої ----
+        function loadSaved() {
+            try { return new Set(JSON.parse(localStorage.getItem('my_saved') || '[]')); }
+            catch (e) { return new Set(); }
+        }
+        function saveSaved() { localStorage.setItem('my_saved', JSON.stringify([...mySaved])); }
+        let mySaved = loadSaved();
 
         const map = L.map('map', { 
             zoomControl: false,
@@ -2195,12 +2226,21 @@
             document.getElementById('story-viewer-time').style.display = storyViewerShowTime ? '' : 'none';
             document.getElementById('story-viewer').style.display = 'flex';
             const likeBtn = document.getElementById('story-viewer-like-btn');
+            const saveBtn = document.getElementById('story-viewer-save-btn');
             const locBtn = document.getElementById('story-viewer-location-btn');
-            const canLike = !!(storyViewerEntry && storyViewerEntry.id && storyViewerEntry.id !== myId);
+            const msgBtn = document.getElementById('story-viewer-msg-btn');
+            const pillText = document.getElementById('story-viewer-pill-text');
+            const hasEntry = !!(storyViewerEntry && storyViewerEntry.id);
+            const canLike = hasEntry && storyViewerEntry.id !== myId;
             likeBtn.style.display = canLike ? 'flex' : 'none';
             likeBtn.classList.toggle('liked', canLike && myFavorites.has(storyViewerEntry.id));
+            saveBtn.style.display = canLike ? 'flex' : 'none';
+            saveBtn.classList.toggle('saved', canLike && mySaved.has(storyViewerEntry.id));
             const canLocate = !!(storyViewerEntry && storyViewerEntry.coords);
             locBtn.style.display = canLocate ? 'flex' : 'none';
+            msgBtn.style.display = canLike ? 'flex' : 'none';
+            pillText.innerText = (storyViewerEntry && storyViewerEntry.status) ? storyViewerEntry.status : '';
+            document.getElementById('story-viewer-pill').style.display = hasEntry ? 'flex' : 'none';
             const wrap = document.getElementById('story-viewer-bars'); wrap.innerHTML = '';
             storyViewerList.forEach(() => {
                 const bar = document.createElement('div'); bar.className = 'story-bar';
@@ -2262,6 +2302,17 @@
             btn.classList.add('pulse');
             setTimeout(() => btn.classList.remove('pulse'), 180);
         });
+        document.getElementById('story-viewer-save-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (!storyViewerEntry) return;
+            const nowSaved = !mySaved.has(storyViewerEntry.id);
+            if (nowSaved) mySaved.add(storyViewerEntry.id); else mySaved.delete(storyViewerEntry.id);
+            saveSaved();
+            const btn = e.currentTarget;
+            btn.classList.toggle('saved', nowSaved);
+            btn.classList.add('pulse');
+            setTimeout(() => btn.classList.remove('pulse'), 180);
+        });
         document.getElementById('story-viewer-location-btn').addEventListener('click', (e) => {
             e.stopPropagation();
             if (!storyViewerEntry || !storyViewerEntry.coords) return;
@@ -2270,13 +2321,20 @@
             showScreen('map');
             map.panTo(coords);
         });
+        document.getElementById('story-viewer-msg-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (!storyViewerEntry || storyViewerEntry.id === myId) return;
+            const entry = storyViewerEntry;
+            closeStoryViewer();
+            openPersonChatTab(entry);
+        });
 
         // Свайп по повноекранному переглядачу: вбоки — гортання фото/відео, вгору — закриття
         (function () {
             const el = document.getElementById('story-viewer');
             let sx = 0, sy = 0, dx = 0, dy = 0, lock = null, active = false;
             el.addEventListener('touchstart', (e) => {
-                if (e.target.closest('#story-viewer-close')) { active = false; return; }
+                if (e.target.closest('#story-viewer-close') || e.target.closest('#story-viewer-pill')) { active = false; return; }
                 sx = e.touches[0].clientX; sy = e.touches[0].clientY; dx = 0; dy = 0; lock = null; active = true;
             }, { passive: true });
             el.addEventListener('touchmove', (e) => {
@@ -2817,28 +2875,41 @@
                 const avatar = document.createElement('div'); avatar.className = 'home-circle-avatar' + (e.isMe ? ' is-me' : '');
                 const mediaWrap = document.createElement('div'); mediaWrap.className = 'home-circle-media';
                 avatar.appendChild(mediaWrap);
+                let storyPhotoList = [];
                 if (e.isMe) {
                     // Власне коло: фото-кросфейд (без відео — щоб при відкритті застосунку не блимала кнопка play).
                     const myAvatarUrl = (e.photos && e.photos[0]) || '';
                     const myPhotoStories = (e.stories && e.stories.length)
                         ? e.stories.filter(s => s.type === 'photo').map(s => s.url)
                         : [];
-                    startHomeCircleStory(mediaWrap, myPhotoStories.length ? myPhotoStories : [myAvatarUrl]);
+                    storyPhotoList = myPhotoStories.length ? myPhotoStories : [myAvatarUrl];
+                    startHomeCircleStory(mediaWrap, storyPhotoList);
                 } else {
                     // Усі кола на Головній — лише фото-кросфейд, навіть якщо в людини є відео-профіль:
                     // справжній <video> тег на автозапуску іноді "застряє" на паузі з іконкою play,
                     // поки браузер не дозволить автовідтворення — фото такої проблеми не має.
                     const circlePhotos = (e.photos && e.photos.length) ? e.photos.filter(u => !isHeroVideoUrl(u)) : [];
-                    startHomeCircleStory(mediaWrap, circlePhotos.length ? circlePhotos : (e.photos || []));
+                    storyPhotoList = circlePhotos.length ? circlePhotos : (e.photos || []);
+                    startHomeCircleStory(mediaWrap, storyPhotoList);
                 }
-                if (e.type === 'place') {
-                    // Клік по колу закладу відкриває картку з адресою; окремої кнопки локації
-                    // на самому колі більше немає — вона тепер лише в перегляді сторі.
-                }
+                // Тап по самому колу (фото) — відкриває сторі на весь екран.
+                avatar.addEventListener('click', (ev) => {
+                    ev.stopPropagation();
+                    const list = (storyPhotoList.length ? storyPhotoList : (e.photos || [])).map(url => (
+                        { type: isHeroVideoUrl(url) ? 'video' : 'photo', url, ts: Date.now() }
+                    ));
+                    if (!list.length) return;
+                    openStoryViewer(list, 0, e.isMe ? 'Ви' : e.name, { showTime: false }, e);
+                });
                 // Міні-аватарка тепер знизу зліва поверх будь-якого фото/відео сторі —
                 // так завжди видно, чиє це коло, навіть коли крутиться нова сторі.
+                // Тап саме по ній — окремо від кола — веде на сторінку профілю/закладу.
                 const mini = document.createElement('div'); mini.className = 'home-circle-mini-avatar' + ((e.stories && e.stories.length) ? ' has-story' : '');
                 mini.style.backgroundImage = `url('${(e.photos && e.photos[0]) || ''}')`;
+                mini.addEventListener('click', (ev) => {
+                    ev.stopPropagation();
+                    if (e.type === 'place') { showSidebar(e); } else { openIgProfile(e, false); }
+                });
                 avatar.appendChild(mini);
                 if (e.isMe) {
                     // Кнопка "+" знизу справа — додати нове фото/відео в сторі, не заходячи в профіль.
@@ -2849,11 +2920,11 @@
                     avatar.appendChild(addBadge);
                 }
                 const nameSpan = document.createElement('span'); nameSpan.className = 'home-circle-name'; nameSpan.innerText = e.isMe ? 'Ви' : e.name;
-                item.appendChild(avatar); item.appendChild(nameSpan);
-                item.addEventListener('click', () => {
-                    if (e.type === 'place') { showSidebar(e); }
-                    else { openIgProfile(e, false); }
+                nameSpan.addEventListener('click', (ev) => {
+                    ev.stopPropagation();
+                    if (e.type === 'place') { showSidebar(e); } else { openIgProfile(e, false); }
                 });
+                item.appendChild(avatar); item.appendChild(nameSpan);
                 box.appendChild(item);
             });
         }
