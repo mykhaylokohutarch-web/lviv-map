@@ -279,6 +279,19 @@
         .story-viewer-user { color: #fff; font-size: 13px; font-weight: 700; display: flex; gap: 8px; align-items: baseline; }
         .story-viewer-user span:last-child { font-weight: 400; color: rgba(255,255,255,0.5); font-size: 11px; }
         #story-viewer-close { background: rgba(255,255,255,0.12); border: none; color: #fff; width: 30px; height: 30px; border-radius: 50%; font-size: 14px; cursor: pointer; flex-shrink: 0; }
+        /* Лайк і локація показуються лише тут, у повноекранному перегляді сторі —
+           той самий прозорий скляний стиль, що й лайк на колах Головної. */
+        .story-viewer-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+        .story-viewer-action-btn {
+            width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,0.12);
+            backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+            border: none; display: flex; align-items: center; justify-content: center;
+            box-sizing: border-box; cursor: pointer; -webkit-tap-highlight-color: transparent;
+            transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .story-viewer-action-btn svg { width: 60%; height: 60%; stroke: #fff; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; transition: fill 0.15s ease, stroke 0.15s ease; }
+        .story-viewer-action-btn.liked svg { fill: #ff3b30; stroke: #ff3b30; }
+        .story-viewer-action-btn.pulse { transform: scale(1.25); }
         .story-viewer-media { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
         .story-viewer-media img, .story-viewer-media video { max-width: 100%; max-height: 100%; object-fit: contain; }
         .story-viewer-nav { position: absolute; inset: 0; display: flex; }
@@ -739,7 +752,7 @@
         /* Мінікоп'я аватарки зверху зліва — лишається на місці й не ховається під фото/відео сторі.
            Трохи більша, якщо у людини є активні сторі. */
         .home-circle-mini-avatar {
-            position: absolute; top: -3px; left: -3px; z-index: 5;
+            position: absolute; bottom: -3px; left: -3px; z-index: 5;
             width: 32%; height: 32%; min-width: 24px; min-height: 24px;
             border-radius: 50%; background-size: cover; background-position: center; background-color: #e5e5ea;
             border: 2px solid var(--bg-color); box-shadow: 0 1px 6px rgba(0,0,0,0.28); box-sizing: border-box;
@@ -1125,7 +1138,15 @@
         <div class="story-viewer-bars" id="story-viewer-bars"></div>
         <div class="story-viewer-header">
             <div class="story-viewer-user"><span id="story-viewer-name"></span><span id="story-viewer-time"></span></div>
-            <button id="story-viewer-close" aria-label="Закрити">✕</button>
+            <div class="story-viewer-actions">
+                <button class="story-viewer-action-btn" id="story-viewer-like-btn" aria-label="Додати в улюблене">
+                    <svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg>
+                </button>
+                <button class="story-viewer-action-btn" id="story-viewer-location-btn" aria-label="Показати на карті">
+                    <svg viewBox="0 0 24 24"><path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                </button>
+                <button id="story-viewer-close" aria-label="Закрити">✕</button>
+            </div>
         </div>
         <div class="story-viewer-media" id="story-viewer-media"></div>
         <div class="story-viewer-nav">
@@ -2124,7 +2145,7 @@
                     attemptCirclePlay(v); allCircleVideos.add(v);
                 }
                 thumb.appendChild(inner);
-                thumb.addEventListener('click', (e) => { e.stopPropagation(); openStoryViewer(stories, i, item.name); });
+                thumb.addEventListener('click', (e) => { e.stopPropagation(); openStoryViewer(stories, i, item.name, null, item); });
                 row.appendChild(thumb);
             });
         }
@@ -2161,17 +2182,25 @@
 
         // ---- Повноекранний перегляд сторіс ----
         let storyViewerList = [], storyViewerIdx = 0, storyViewerTimer = null;
-        let storyViewerShowTime = true, storyViewerAutoAdvance = true;
+        let storyViewerShowTime = true, storyViewerAutoAdvance = true, storyViewerEntry = null;
         const STORY_PHOTO_MS = 5000;
 
-        function openStoryViewer(list, startIdx, name, opts) {
+        function openStoryViewer(list, startIdx, name, opts, entry) {
             opts = opts || {};
             storyViewerShowTime = opts.showTime !== false;
             storyViewerAutoAdvance = opts.autoAdvance !== false;
             storyViewerList = list; storyViewerIdx = startIdx;
+            storyViewerEntry = entry || null;
             document.getElementById('story-viewer-name').innerText = name;
             document.getElementById('story-viewer-time').style.display = storyViewerShowTime ? '' : 'none';
             document.getElementById('story-viewer').style.display = 'flex';
+            const likeBtn = document.getElementById('story-viewer-like-btn');
+            const locBtn = document.getElementById('story-viewer-location-btn');
+            const canLike = !!(storyViewerEntry && storyViewerEntry.id && storyViewerEntry.id !== myId);
+            likeBtn.style.display = canLike ? 'flex' : 'none';
+            likeBtn.classList.toggle('liked', canLike && myFavorites.has(storyViewerEntry.id));
+            const canLocate = !!(storyViewerEntry && storyViewerEntry.coords);
+            locBtn.style.display = canLocate ? 'flex' : 'none';
             const wrap = document.getElementById('story-viewer-bars'); wrap.innerHTML = '';
             storyViewerList.forEach(() => {
                 const bar = document.createElement('div'); bar.className = 'story-bar';
@@ -2216,10 +2245,31 @@
             clearTimeout(storyViewerTimer);
             document.getElementById('story-viewer-media').innerHTML = '';
             document.getElementById('story-viewer').style.display = 'none';
+            storyViewerEntry = null;
         }
         document.getElementById('story-viewer-close').addEventListener('click', closeStoryViewer);
         document.getElementById('story-nav-prev').addEventListener('click', () => storyAdvance(-1));
         document.getElementById('story-nav-next').addEventListener('click', () => storyAdvance(1));
+        document.getElementById('story-viewer-like-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (!storyViewerEntry) return;
+            const nowFav = !myFavorites.has(storyViewerEntry.id);
+            if (nowFav) myFavorites.add(storyViewerEntry.id); else myFavorites.delete(storyViewerEntry.id);
+            saveFavorites();
+            storyViewerEntry.isFav = nowFav;
+            const btn = e.currentTarget;
+            btn.classList.toggle('liked', nowFav);
+            btn.classList.add('pulse');
+            setTimeout(() => btn.classList.remove('pulse'), 180);
+        });
+        document.getElementById('story-viewer-location-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (!storyViewerEntry || !storyViewerEntry.coords) return;
+            const coords = storyViewerEntry.coords;
+            closeStoryViewer();
+            showScreen('map');
+            map.panTo(coords);
+        });
 
         // Свайп по повноекранному переглядачу: вбоки — гортання фото/відео, вгору — закриття
         (function () {
@@ -2781,27 +2831,12 @@
                     const circlePhotos = (e.photos && e.photos.length) ? e.photos.filter(u => !isHeroVideoUrl(u)) : [];
                     startHomeCircleStory(mediaWrap, circlePhotos.length ? circlePhotos : (e.photos || []));
                 }
-                if (e.status && e.showMsg) {
-                    const msg = document.createElement('div'); msg.className = 'home-circle-msg';
-                    msg.innerText = e.status;
-                    avatar.appendChild(msg);
-                }
                 if (e.type === 'place') {
-                    const badge = document.createElement('div'); badge.className = 'home-circle-badge';
-                    badge.innerHTML = placeBadgeSvg;
-                    badge.addEventListener('click', (ev) => { ev.stopPropagation(); showPlaceOnMap(e); });
-                    avatar.appendChild(badge);
+                    // Клік по колу закладу відкриває картку з адресою; окремої кнопки локації
+                    // на самому колі більше немає — вона тепер лише в перегляді сторі.
                 }
-                if (!e.isMe) {
-                    const likeBtn = document.createElement('div'); likeBtn.className = 'home-circle-like' + (e.isFav ? ' liked' : '');
-                    likeBtn.setAttribute('aria-label', 'Подвійний клік/тап — додати в улюблене');
-                    likeBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg>';
-                    attachLikeDoubleTrigger(likeBtn, e);
-                    avatar.appendChild(likeBtn);
-                }
-                // Міні-аватарка лишається зверху зліва поверх будь-якого фото/відео сторі —
-                // так завжди видно, чиє це коло, навіть коли крутиться нова сторі. Тепер це
-                // стосується кожного кола, а не лише власного.
+                // Міні-аватарка тепер знизу зліва поверх будь-якого фото/відео сторі —
+                // так завжди видно, чиє це коло, навіть коли крутиться нова сторі.
                 const mini = document.createElement('div'); mini.className = 'home-circle-mini-avatar' + ((e.stories && e.stories.length) ? ' has-story' : '');
                 mini.style.backgroundImage = `url('${(e.photos && e.photos[0]) || ''}')`;
                 avatar.appendChild(mini);
