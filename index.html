@@ -794,8 +794,8 @@
         #screen-home { background: var(--bg-color); position: relative; }
         .home-header {
             position: absolute; top: 0; left: 0; right: 0; z-index: 30;
-            margin: 0; padding: calc(4px + env(safe-area-inset-top, 0px)) 16px 24px;
-            display: flex; align-items: center; justify-content: space-between; gap: 10px;
+            margin: 0; padding: calc(40px + env(safe-area-inset-top, 0px)) 16px 24px;
+            display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); align-items: center; gap: 10px;
             transition: var(--theme-transition);
         }
         .home-header::before {
@@ -808,27 +808,27 @@
             mask-image: linear-gradient(to bottom, black 0%, black 40%, transparent 100%);
             transition: var(--theme-transition);
         }
-        .home-header h1 { margin: 0; font-size: 27px; font-weight: 700; letter-spacing: -0.4px; color: var(--text-color); }
+        .home-header h1 { margin: 0; font-size: 27px; font-weight: 700; letter-spacing: -0.4px; color: var(--text-color); grid-column: 2; justify-self: center; }
         .app-wordmark { font-family: 'Yellowtail', 'Segoe Script', 'Bradley Hand', cursive; font-weight: 400; font-style: normal; font-size: 32px !important; letter-spacing: 0.4px; color: var(--text-color) !important; text-transform: none; line-height: 1; }
-        .home-filter-tabs { display: flex; align-items: center; justify-content: flex-end; gap: 18px; flex-shrink: 0; }
+        .home-filter-tabs { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-shrink: 0; grid-column: 3; justify-self: end; }
         .filter-tab {
             display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer;
-            width: 36px; height: 36px; border-radius: 50%; border: none;
+            width: 30px; height: 30px; border-radius: 50%; border: none;
             background: transparent;
             color: var(--icon-color);
             -webkit-tap-highlight-color: transparent; transition: transform 0.2s ease, color 0.2s ease;
         }
         .filter-tab:active { transform: scale(0.88); }
-        .filter-tab svg { width: 23px; height: 23px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+        .filter-tab svg { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
         .filter-tab.active { color: var(--accent-main); }
         .home-header-add-btn {
             display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer;
-            width: 36px; height: 36px; border-radius: 50%; border: none;
+            width: 30px; height: 30px; border-radius: 50%; border: none;
             background: transparent; color: var(--icon-color);
             -webkit-tap-highlight-color: transparent; transition: transform 0.2s ease;
         }
         .home-header-add-btn:active { transform: scale(0.88); }
-        .home-header-add-btn svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+        .home-header-add-btn svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 
         /* ---- Модалка "Додати друга": NFC (піднести телефони) + QR як запасний варіант ---- */
         #add-friend-modal {
@@ -914,7 +914,7 @@
         .home-search-bar svg { width: 16px; height: 16px; stroke: var(--text-secondary); fill: none; stroke-width: 2; flex-shrink: 0; }
         .home-search-bar input { border: none; background: transparent; outline: none; font-size: 14px; color: var(--text-color); width: 100%; font-family: inherit; }
         /* ---- Головна: сітка кіл (люди + заклади) по 3 в ряд, як в надісланому прикладі ---- */
-        #home-grid { flex-grow: 1; overflow-y: auto; overflow-x: hidden; padding: calc(78px + env(safe-area-inset-top, 0px)) 5px 110px; box-sizing: border-box; touch-action: pan-y; -webkit-overflow-scrolling: touch; overscroll-behavior-x: none; }
+        #home-grid { flex-grow: 1; overflow-y: auto; overflow-x: hidden; padding: calc(114px + env(safe-area-inset-top, 0px)) 5px 110px; box-sizing: border-box; touch-action: pan-y; -webkit-overflow-scrolling: touch; overscroll-behavior-x: none; }
         .home-grid-inner { display: grid; grid-template-columns: repeat(3, var(--circle-d, 100px)); justify-content: center; gap: 24px 8px; }
         .home-circle-item { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
         .home-circle-item:active .home-circle-avatar { transform: scale(0.93); }
@@ -1253,9 +1253,6 @@
                     <svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
                 </button>
             </div>
-            <button class="home-header-add-btn" id="add-friend-btn" aria-label="Додати друга">
-                <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M19 8v6M22 11h-6"></path></svg>
-            </button>
         </div>
         <div id="home-grid"><div class="home-grid-inner" id="home-grid-inner"></div></div>
     </div>
@@ -3614,8 +3611,14 @@
             if (meEntry) entries.unshift(meEntry);
             if (!entries.length) {
                 const empty = document.createElement('p'); empty.className = 'dm-empty'; empty.innerText = 'Нічого не знайдено';
-                box.appendChild(empty); return;
+                box.appendChild(empty);
+                // Якщо йде активний пошук (є текст) і за ним нічого не знайдено — дозволяємо
+                // сховати смужку пошуку тапом по екрану (див. обробник touchstart нижче).
+                // Коли ж результати є, тап поза смужкою нічого не ховає, щоб не губити їх.
+                window.homeSearchNoResults = !!q;
+                return;
             }
+            window.homeSearchNoResults = false;
             entries.forEach(e => {
                 const item = document.createElement('div'); item.className = 'home-circle-item';
                 const avatar = document.createElement('div'); avatar.className = 'home-circle-avatar' + (e.isMe ? ' is-me' : '');
@@ -3822,15 +3825,17 @@
             setTimeout(layoutHomeGrid, 300);
         });
 
-        // Автоматично ховає рядок пошуку при дотику до екрана, коли він порожній (не потрібний) —
-        // не чіпає його, якщо там вже введено текст: тоді результати пошуку ще актуальні.
+        // Автоматично ховає рядок пошуку при дотику до екрана, коли він порожній (не потрібний),
+        // або коли за введеним текстом нічого не знайдено — тоді результатів все одно немає й
+        // тримати смужку відкритою сенсу нема. Якщо ж результати є — тап поза смужкою її не чіпає,
+        // щоб не губити активний пошук.
         document.addEventListener('touchstart', (e) => {
             const bar = document.getElementById('home-search-bar');
             if (!bar.classList.contains('open')) return;
             const navSearchBtn = document.getElementById('nav-search');
             if (bar.contains(e.target) || navSearchBtn.contains(e.target)) return;
             const input = document.getElementById('people-search-input');
-            if (input.value.trim()) return;
+            if (input.value.trim() && !window.homeSearchNoResults) return;
             bar.classList.remove('open');
             navSearchBtn.classList.remove('active');
             input.blur();
@@ -3875,6 +3880,12 @@
             moreBtn.onclick = null;
             if (isMine) {
                 moreBtn.onclick = () => { showSidebar(getMyProfileItem()); setTimeout(enterEditMode, 350); };
+
+                const addFriendBtn = document.createElement('button');
+                addFriendBtn.className = 'ig-hero-action-btn'; addFriendBtn.setAttribute('aria-label', 'Додати друга');
+                addFriendBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M19 8v6M22 11h-6"></path></svg>';
+                addFriendBtn.addEventListener('click', openAddFriendModal);
+                heroSlot.appendChild(addFriendBtn);
 
                 const shareBtn = document.createElement('button');
                 shareBtn.className = 'ig-hero-action-btn'; shareBtn.setAttribute('aria-label', 'Поділитись');
@@ -4033,7 +4044,8 @@
             }
         }
 
-        document.getElementById('add-friend-btn').addEventListener('click', openAddFriendModal);
+        // Кнопка "Додати друга" тепер створюється динамічно на особистій сторінці (у openIgProfile),
+        // окремий обробник тут більше не потрібен.
         document.getElementById('add-friend-close-btn').addEventListener('click', closeAddFriendModal);
 
         // Сторінку профілю закривають лише жести: свайп вгору або вправо повертає на головну
