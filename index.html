@@ -2045,9 +2045,26 @@
         document.getElementById('qr-close-btn').addEventListener('click', window.closeQr);
 
         // ==================== Моя персональна сторінка ====================
-        // Стабільний ідентифікатор пристрою, зберігається окремо від імені (яке може змінюватись)
-        let myId = localStorage.getItem('chat_my_id');
-        if (!myId) { myId = 'u_' + Math.random().toString(36).slice(2, 10); localStorage.setItem('chat_my_id', myId); }
+        // Реєстрація через Telegram: якщо застосунок відкрито в Telegram, одразу беремо
+        // стабільний ідентифікатор, ім'я та фото людини з Telegram — без окремої форми реєстрації.
+        const tgUser = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) || null;
+
+        // Стабільний ідентифікатор людини. У Telegram — прив'язаний до реального Telegram-акаунту
+        // (той самий на будь-якому пристрої, де людина відкриє застосунок), поза Telegram —
+        // випадковий локальний, як і раніше (для тестування у звичайному браузері).
+        let myId = tgUser ? ('tg_' + tgUser.id) : localStorage.getItem('chat_my_id');
+        if (!myId) { myId = 'u_' + Math.random().toString(36).slice(2, 10); }
+        localStorage.setItem('chat_my_id', myId);
+
+        if (tgUser) {
+            // Ім'я й юзернейм з Telegram підставляємо лише якщо людина ще сама нічого
+            // не міняла в профілі — її власне редагування завжди має пріоритет.
+            if (!localStorage.getItem('chat_username')) {
+                const tgFullName = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ').trim();
+                if (tgFullName) { myName = tgFullName; localStorage.setItem('chat_username', myName); }
+            }
+            if (tgUser.username) localStorage.setItem('chat_tg_username', tgUser.username);
+        }
 
         // Детермінований невеликий зсув координат від моєї точки на карті (щоб мітки не накладались одна на одну)
         function hashOffset(str) {
@@ -2056,7 +2073,10 @@
         }
         const myCoords = [49.8415 + hashOffset(myId), 24.0315 + hashOffset(myId + 'x')];
 
-        let myProfile = { name: myName, status: "Ще не заповнено", about: "", interests: "", photos: [], stories: [] };
+        let myProfile = {
+            name: myName, status: "Ще не заповнено", about: "", interests: "",
+            photos: (tgUser && tgUser.photo_url) ? [tgUser.photo_url] : [], stories: []
+        };
         let profileMarkers = {};
         let isEditingProfile = false;
         let myConvos = {};
@@ -3148,6 +3168,7 @@
                 const shareBtn = document.createElement('button');
                 shareBtn.className = 'ig-hero-action-btn'; shareBtn.setAttribute('aria-label', 'Поділитись');
                 shareBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"></path><path d="M16 6l-4-4-4 4"></path><path d="M12 2v14"></path></svg>';
+                shareBtn.addEventListener('click', shareReferralLink);
                 heroSlot.appendChild(shareBtn);
             } else {
                 const msgBtn = document.createElement('button');
@@ -3184,6 +3205,39 @@
         }
 
         function goBackFromIgProfile() { showScreen('home'); layoutHomeGrid(); }
+
+        // ==================== Запрошення друзів (рефералка через Telegram) ====================
+        // ВАЖЛИВО: підставте сюди юзернейм свого бота (той, що показує ваш Mini App), без @.
+        const TELEGRAM_BOT_USERNAME = 'misha_architect';
+
+        function referralLink() {
+            return `https://t.me/${TELEGRAM_BOT_USERNAME}?startapp=ref_${myId}`;
+        }
+
+        function shareReferralLink() {
+            const link = referralLink();
+            const text = `Приєднуйся до мене у Львові — ${myProfile.name || myName} запрошує тебе 👋`;
+            const tg = window.Telegram && window.Telegram.WebApp;
+            if (tg && typeof tg.openTelegramLink === 'function') {
+                // Відкриває рідний вибір чату/групи Telegram, куди переслати запрошення.
+                tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`);
+            } else if (navigator.share) {
+                navigator.share({ title: 'Запрошення', text, url: link }).catch(() => {});
+            } else {
+                navigator.clipboard?.writeText(link);
+                if (typeof showToast === 'function') showToast('Посилання скопійовано');
+            }
+        }
+
+        // Якщо застосунок відкрито за чужим реферальним посиланням — запам'ятовуємо, хто запросив
+        // (лише один раз, для першого відкриття; далі це можна використати для бонусів тощо).
+        (function captureReferral() {
+            const startParam = tgUser && window.Telegram.WebApp.initDataUnsafe.start_param;
+            if (startParam && startParam.startsWith('ref_') && !localStorage.getItem('invited_by')) {
+                const inviterId = startParam.slice(4);
+                if (inviterId && inviterId !== myId) localStorage.setItem('invited_by', inviterId);
+            }
+        })();
 
         // Сторінку профілю закривають лише жести: свайп вгору або вправо повертає на головну
         (function () {
