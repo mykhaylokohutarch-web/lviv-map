@@ -402,14 +402,114 @@
         /* ---- Режим "лише чати": кнопка Чат внизу відкриває одразу список бесід, без домашньої сторінки ---- */
         #chats-header { display: none; align-items: center; justify-content: space-between; padding: calc(10px + env(safe-area-inset-top, 0px)) 4px 10px 6px; flex-shrink: 0; }
         #chats-header span { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; color: var(--text-color); }
-        #chats-close-btn {
+        .chats-header-actions { display: flex; align-items: center; gap: 8px; }
+        #new-group-btn, #chats-close-btn {
             width: 28px; height: 28px; border-radius: 50%; background: transparent;
             border: 1px solid var(--border-minimal); color: var(--icon-color); font-size: 13px;
             display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;
             transition: var(--theme-transition);
         }
+        #new-group-btn svg { width: 15px; height: 15px; stroke: var(--icon-color); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
         #profile-sidebar.chat-mode .profile-hero { display: none !important; }
         #profile-sidebar.chat-mode #chat-container { display: flex !important; }
+
+        /* ==== Режим чатів: суцільний чорний фон, незалежний від світлої/темної теми застосунку ==== */
+        #profile-sidebar.chat-mode { background-color: #000000 !important; }
+        #profile-sidebar.chat-mode #chat-container { background-color: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; }
+        #profile-sidebar.chat-mode #chats-header span,
+        #profile-sidebar.chat-mode #dm-back-name,
+        #profile-sidebar.chat-mode .dm-name { color: #ffffff; }
+        #profile-sidebar.chat-mode .dm-preview { color: rgba(255,255,255,0.55); }
+        #profile-sidebar.chat-mode #new-group-btn,
+        #profile-sidebar.chat-mode #chats-close-btn { border-color: rgba(255,255,255,0.18); color: #ffffff; }
+        #profile-sidebar.chat-mode #new-group-btn svg { stroke: #ffffff; }
+        #profile-sidebar.chat-mode #dm-back-row span.arrow { color: #ffffff; }
+        #profile-sidebar.chat-mode .msg-other { background: rgba(255,255,255,0.12); color: #ffffff; }
+        #profile-sidebar.chat-mode .msg-user-name { color: rgba(255,255,255,0.5); }
+        #profile-sidebar.chat-mode .chat-input-row { background: rgba(255,255,255,0.09); }
+        #profile-sidebar.chat-mode .chat-input-row input { color: #ffffff; }
+        #profile-sidebar.chat-mode .chat-input-row input::placeholder { color: rgba(255,255,255,0.4); }
+
+        /* ==== Чати з людьми як напівпрозорі кольорові "таблетки" ==== */
+        #dm-list { padding: 2px 2px 12px; }
+        .dm-row {
+            display: flex; align-items: center; gap: 10px; cursor: pointer; -webkit-tap-highlight-color: transparent;
+            padding: 9px 12px; margin: 0 0 8px; border-radius: 999px;
+            background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.10);
+            transition: transform 0.15s ease, background-color 0.3s ease, border-color 0.3s ease;
+        }
+        .dm-row:active { transform: scale(0.98); }
+        .dm-row-saved { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.10); }
+        .dm-avatar { width: 40px; height: 40px; border-radius: 50%; background-size: cover; background-position: center; flex-shrink: 0; background-color: #2c2c2e; border: 1px solid rgba(255,255,255,0.12); box-sizing: border-box; }
+        .dm-avatar-group { display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: #fff; background: var(--ultramarine-gradient); }
+        .dm-avatar-saved { background: var(--ultramarine-gradient); border: none; display: flex; align-items: center; justify-content: center; }
+        .dm-avatar-saved svg { width: 19px; height: 19px; fill: #fff; }
+        .dm-row-saved { margin-bottom: 10px; }
+        .dm-text-wrap { display: flex; flex-direction: column; overflow: hidden; flex-grow: 1; gap: 1px; min-width: 0; }
+        .dm-name { font-size: 14px; font-weight: 600; }
+        .dm-preview { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .dm-empty { color: rgba(255,255,255,0.5); font-size: 13px; text-align: center; margin-top: 24px; }
+        .dm-color-dot { width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0; border: 2px solid rgba(255,255,255,0.5); box-sizing: border-box; cursor: pointer; }
+
+        /* Попап палітри кольорів для "таблетки" чату */
+        #chat-color-popover {
+            display: none; position: fixed; z-index: 3200; background: rgba(28,28,30,0.96);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.12); border-radius: 20px; padding: 10px;
+            grid-template-columns: repeat(5, 1fr); gap: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        #chat-color-popover.open { display: grid; }
+        .color-swatch-btn { width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; }
+        .color-swatch-btn.selected { border-color: #ffffff; }
+
+        /* ==== Стрічка папок над списком чатів (у стилі Telegram) ==== */
+        #chat-folders-row { display: none; gap: 8px; padding: 0 4px 10px; overflow-x: auto; flex-shrink: 0; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+        #chat-folders-row::-webkit-scrollbar { display: none; }
+        #chat-folders-row.visible { display: flex; }
+        .folder-tab {
+            flex-shrink: 0; padding: 7px 16px; border-radius: 999px; font-size: 13px; font-weight: 600;
+            background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.10); color: rgba(255,255,255,0.7);
+            cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 6px;
+            transition: background-color 0.25s ease, color 0.25s ease;
+        }
+        .folder-tab.active { background: var(--ultramarine-gradient); color: #ffffff; border-color: transparent; }
+        .folder-tab.add-tab { background: transparent; border: 1px dashed rgba(255,255,255,0.28); color: rgba(255,255,255,0.6); font-size: 16px; padding: 7px 14px; }
+        .folder-tab .folder-del { font-size: 11px; opacity: 0.8; margin-left: 2px; }
+
+        /* ==== Модалки: нова група / нова папка ==== */
+        #new-group-modal, #new-folder-modal {
+            display: none; position: fixed; inset: 0; z-index: 3300; background: rgba(0,0,0,0.55);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            align-items: flex-end; justify-content: center;
+        }
+        #new-group-modal.open, #new-folder-modal.open { display: flex; }
+        #new-group-sheet, #new-folder-sheet {
+            width: 100%; max-width: 480px; max-height: 78vh; background: #111113; border-radius: 24px 24px 0 0;
+            padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px)); box-sizing: border-box;
+            display: flex; flex-direction: column; box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
+        }
+        .ng-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-shrink: 0; }
+        .ng-header span { font-size: 17px; font-weight: 700; color: #ffffff; }
+        .ng-header button { width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.1); border: none; color: #fff; font-size: 13px; cursor: pointer; }
+        #ng-name-input, #nf-name-input {
+            background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 14px;
+            padding: 12px 14px; font-size: 14px; color: #fff; outline: none; margin-bottom: 14px; flex-shrink: 0;
+        }
+        #ng-name-input::placeholder, #nf-name-input::placeholder { color: rgba(255,255,255,0.35); }
+        .ng-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: rgba(255,255,255,0.45); margin: 0 2px 8px; flex-shrink: 0; }
+        #ng-people-list, #nf-chats-list { overflow-y: auto; flex-grow: 1; display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; }
+        .ng-person-row { display: flex; align-items: center; gap: 10px; padding: 8px 6px; border-radius: 12px; cursor: pointer; }
+        .ng-person-row:active { background: rgba(255,255,255,0.06); }
+        .ng-person-row .dm-avatar { width: 36px; height: 36px; }
+        .ng-person-name { flex-grow: 1; font-size: 14px; font-weight: 500; color: #fff; }
+        .ng-check { width: 20px; height: 20px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.3); flex-shrink: 0; box-sizing: border-box; display: flex; align-items: center; justify-content: center; }
+        .ng-person-row.checked .ng-check { background: var(--accent-main); border-color: var(--accent-main); }
+        .ng-person-row.checked .ng-check::after { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #fff; }
+        #ng-create-btn, #nf-create-btn {
+            background: var(--ultramarine-gradient); border: none; padding: 13px; border-radius: 16px;
+            font-size: 15px; font-weight: 700; color: #fff; cursor: pointer; flex-shrink: 0;
+        }
+        #ng-create-btn:disabled, #nf-create-btn:disabled { opacity: 0.35; pointer-events: none; }
 
         /* Решта твоїх незмінних стилів нижче для правильної роботи інтерфейсу */
         .action-btn:active, .chat-input-row button:active, .qr-close:active {
@@ -1087,7 +1187,14 @@
         </div>
 
         <div id="chat-container">
-            <div id="chats-header"><span>Чати</span><button id="chats-close-btn" aria-label="Закрити">✕</button></div>
+            <div id="chats-header">
+                <span>Чати</span>
+                <div class="chats-header-actions">
+                    <button id="new-group-btn" aria-label="Нова група"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M19 8v6M22 11h-6"></path></svg></button>
+                    <button id="chats-close-btn" aria-label="Закрити">✕</button>
+                </div>
+            </div>
+            <div id="chat-folders-row"></div>
             <div id="dm-back-row"><span class="arrow">←</span><span id="dm-back-name"></span></div>
             <div id="dm-list"></div>
             <div id="chat-thread-wrap">
@@ -1096,6 +1203,37 @@
                     <input type="text" id="chat-msg-input" placeholder="Повідомлення" />
                     <button id="chat-send-btn">▲</button>
                 </div>
+            </div>
+        </div>
+
+        <!-- Попап вибору кольору "таблетки" чату -->
+        <div id="chat-color-popover"></div>
+
+        <!-- Модалка створення нової групи -->
+        <div id="new-group-modal">
+            <div id="new-group-sheet">
+                <div class="ng-header">
+                    <span>Нова група</span>
+                    <button id="ng-close-btn" aria-label="Закрити">✕</button>
+                </div>
+                <input type="text" id="ng-name-input" placeholder="Назва групи" maxlength="40" />
+                <p class="ng-label">Учасники</p>
+                <div id="ng-people-list"></div>
+                <button id="ng-create-btn" disabled>Створити</button>
+            </div>
+        </div>
+
+        <!-- Модалка створення нової папки -->
+        <div id="new-folder-modal">
+            <div id="new-folder-sheet">
+                <div class="ng-header">
+                    <span>Нова папка</span>
+                    <button id="nf-close-btn" aria-label="Закрити">✕</button>
+                </div>
+                <input type="text" id="nf-name-input" placeholder="Назва папки" maxlength="24" />
+                <p class="ng-label">Чати в папці</p>
+                <div id="nf-chats-list"></div>
+                <button id="nf-create-btn" disabled>Створити</button>
             </div>
         </div>
     </div>
@@ -1482,7 +1620,9 @@
             document.getElementById('prof-logout-btn').style.display = 'none';
             chatTabOrigin = 'chatsList';
             const sidebar = document.getElementById('profile-sidebar');
+            sidebar.style.transition = 'none';
             sidebar.classList.add('chat-mode');
+            void sidebar.offsetHeight; // форсуємо перерахунок стилів, щоб стартова позиція (знизу) встигла застосуватись до анімації
             sidebar.style.transition = 'transform 0.5s cubic-bezier(0.25, 1, 0.5, 1), background-color 0.5s cubic-bezier(0.25, 1, 0.5, 1)';
             sidebar.classList.add('active');
             document.getElementById('chat-fab').classList.add('active');
@@ -1508,6 +1648,7 @@
             document.getElementById('dm-back-row').style.display = 'none';
             if (currentChatRef) { off(currentChatRef); currentChatRef = null; }
             currentChatPath = null; currentChatOtherId = null; chatTabOrigin = null;
+            currentChatIsGroup = false; currentGroupId = null; currentGroupMembers = [];
             syncBottomNavToScreen();
         }
 
@@ -1979,14 +2120,23 @@
             const sidebar = document.getElementById('profile-sidebar');
             const wasChatMode = sidebar.classList.contains('chat-mode');
             sidebar.style.transition = 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)';
-            sidebar.classList.remove('active'); sidebar.classList.remove('chat-mode'); sidebar.style.transform = ''; 
+            sidebar.classList.remove('active');
+            sidebar.style.transform = '';
             document.getElementById('chat-fab').classList.remove('active');
             document.getElementById('bottom-nav').style.display = '';
             if (currentChatRef) off(currentChatRef); currentActiveItem = null;
             currentChatPath = null; currentChatOtherId = null; chatTabOrigin = null;
             if (isEditingProfile) exitEditMode(true);
             document.getElementById('dm-back-row').style.display = 'none';
-            if (wasChatMode) syncBottomNavToScreen();
+            if (wasChatMode) {
+                // Спершу програти вихід вниз (той самий шар, ті самі розміри), і лише
+                // після завершення анімації прибрати chat-mode — інакше сайдбар миттєво
+                // «перескакує» у геометрію звичайної картки посеред руху й видно кут.
+                setTimeout(() => { sidebar.classList.remove('chat-mode'); }, 420);
+                syncBottomNavToScreen();
+            } else {
+                sidebar.classList.remove('chat-mode');
+            }
         }
 
         // ---- Свайп по фото картки: вбоки — гортання фото/відео; вниз — закриття картки (як в Instagram/Apple) ----
@@ -2101,6 +2251,7 @@
         // NPC-картки (p*/c*) лишаються спільною "стіною" повідомлень, як і раніше
         function openChatForItem(item) {
             document.getElementById('dm-list').style.display = 'none';
+            document.getElementById('chat-folders-row').classList.remove('visible');
             document.getElementById('chat-thread-wrap').style.display = 'flex';
             document.getElementById('dm-back-row').style.display = 'none';
             if (item.id.startsWith('u_') && item.id !== myId) {
@@ -2111,6 +2262,7 @@
                 currentChatPath = `chats/${item.id}`;
                 currentChatOtherId = null; currentChatOtherName = null; currentChatOtherPhoto = null;
             }
+            currentChatIsGroup = false; currentGroupId = null; currentGroupMembers = [];
             loadChat(currentChatPath);
         }
 
@@ -2119,7 +2271,17 @@
             const input = document.getElementById('chat-msg-input'); const text = input.value.trim(); if (!text) return;
             push(ref(db, currentChatPath), { senderId: myId, senderName: myName, text: text, timestamp: Date.now() });
             input.value = '';
-            if (currentChatOtherId) {
+            if (currentChatIsGroup && currentGroupId) {
+                // Оновлюємо список бесід месенджера в усіх учасників групи одночасно
+                const myLabel = (myProfile && myProfile.name) || myName;
+                currentGroupMembers.forEach(uid => {
+                    set(ref(db, `userConvos/${uid}/${currentGroupId}`), {
+                        name: currentGroupName || 'Група', photo: '', ts: Date.now(),
+                        lastMsg: (uid === myId ? text : `${myLabel}: ${text}`), lastMine: uid === myId,
+                        isGroup: true, groupId: currentGroupId
+                    });
+                });
+            } else if (currentChatOtherId) {
                 // Оновлюємо список бесід месенджера з обох боків, щоб розмова з'явилась у нас і у співрозмовника
                 set(ref(db, `userConvos/${myId}/${currentChatOtherId}`), { name: currentChatOtherName || 'Гість', photo: currentChatOtherPhoto || '', ts: Date.now(), lastMsg: text, lastMine: true });
                 set(ref(db, `userConvos/${currentChatOtherId}/${myId}`), { name: (myProfile && myProfile.name) || myName, photo: (myProfile && myProfile.photos && myProfile.photos[0]) || '', ts: Date.now(), lastMsg: text, lastMine: false });
@@ -2172,6 +2334,35 @@
         let profileMarkers = {};
         let isEditingProfile = false;
         let myConvos = {};
+
+        // ---- Кольорові "таблетки" чатів, папки та групи (локальні налаштування пристрою) ----
+        const CHAT_PILL_COLORS = ['#ff453a', '#ff9f0a', '#ffd60a', '#30d158', '#64d2ff', '#0a84ff', '#5e5ce6', '#bf5af2', '#ff375f', '#a2845e'];
+        function loadChatColors() { try { return JSON.parse(localStorage.getItem('chat_colors') || '{}'); } catch (e) { return {}; } }
+        function saveChatColors(map) { localStorage.setItem('chat_colors', JSON.stringify(map)); }
+        let chatColors = loadChatColors();
+        function hashStr(s) { let h = 0; for (let i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) >>> 0; } return h; }
+        function getChatColor(id) {
+            if (chatColors[id]) return chatColors[id];
+            const color = CHAT_PILL_COLORS[hashStr(id) % CHAT_PILL_COLORS.length];
+            chatColors[id] = color; saveChatColors(chatColors);
+            return color;
+        }
+        function setChatColor(id, color) { chatColors[id] = color; saveChatColors(chatColors); renderDmList(); }
+        function hexToRgba(hex, alpha) {
+            const h = hex.replace('#', '');
+            const r = parseInt(h.substring(0, 2), 16), g = parseInt(h.substring(2, 4), 16), b = parseInt(h.substring(4, 6), 16);
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+
+        function loadChatFolders() { try { return JSON.parse(localStorage.getItem('chat_folders') || '[]'); } catch (e) { return []; } }
+        function saveChatFolders(list) { localStorage.setItem('chat_folders', JSON.stringify(list)); }
+        let chatFolders = loadChatFolders();
+        let activeFolderId = 'all';
+
+        let currentChatIsGroup = false;
+        let currentGroupId = null;
+        let currentGroupName = null;
+        let currentGroupMembers = [];
 
         // ---- Друзі: справжній, двосторонній список у Firebase (не випадкова заглушка) ----
         let myFriends = new Set();
@@ -2564,59 +2755,150 @@
             document.getElementById('chats-header').style.display = sidebar.classList.contains('chat-mode') ? 'flex' : 'none';
             if (currentChatRef) { off(currentChatRef); currentChatRef = null; }
             currentChatPath = null; currentChatOtherId = null;
+            currentChatIsGroup = false; currentGroupId = null; currentGroupMembers = [];
+            document.getElementById('chat-folders-row').classList.toggle('visible', sidebar.classList.contains('chat-mode'));
+            renderChatFolders();
             renderDmList();
+        }
+
+        // ---- Стрічка папок (як у Telegram) над списком чатів ----
+        function renderChatFolders() {
+            const row = document.getElementById('chat-folders-row');
+            row.innerHTML = '';
+            const allTab = document.createElement('div');
+            allTab.className = 'folder-tab' + (activeFolderId === 'all' ? ' active' : '');
+            allTab.innerText = 'Усі';
+            allTab.addEventListener('click', () => { activeFolderId = 'all'; renderChatFolders(); renderDmList(); });
+            row.appendChild(allTab);
+
+            chatFolders.forEach(f => {
+                const tab = document.createElement('div');
+                tab.className = 'folder-tab' + (activeFolderId === f.id ? ' active' : '');
+                const label = document.createElement('span'); label.innerText = f.name;
+                tab.appendChild(label);
+                if (activeFolderId === f.id) {
+                    const del = document.createElement('span'); del.className = 'folder-del'; del.innerText = '✕';
+                    del.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        chatFolders = chatFolders.filter(x => x.id !== f.id);
+                        saveChatFolders(chatFolders);
+                        activeFolderId = 'all';
+                        renderChatFolders(); renderDmList();
+                    });
+                    tab.appendChild(del);
+                }
+                tab.addEventListener('click', () => { activeFolderId = f.id; renderChatFolders(); renderDmList(); });
+                row.appendChild(tab);
+            });
+
+            const addTab = document.createElement('div');
+            addTab.className = 'folder-tab add-tab';
+            addTab.innerText = '+';
+            addTab.addEventListener('click', openNewFolderModal);
+            row.appendChild(addTab);
         }
 
         function renderDmList() {
             const box = document.getElementById('dm-list');
             box.innerHTML = '';
+            const folder = chatFolders.find(f => f.id === activeFolderId);
 
-            // "Збережене" — особисті нотатки собі, як у Telegram: завжди закріплене першим рядком
-            const savedRow = document.createElement('div'); savedRow.className = 'dm-row dm-row-saved';
-            const savedAvatar = document.createElement('div'); savedAvatar.className = 'dm-avatar dm-avatar-saved';
-            savedAvatar.innerHTML = '<svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"></path></svg>';
-            const savedTextWrap = document.createElement('div'); savedTextWrap.className = 'dm-text-wrap';
-            const savedName = document.createElement('span'); savedName.className = 'dm-name'; savedName.innerText = 'Збережене';
-            const savedPreview = document.createElement('span'); savedPreview.className = 'dm-preview'; savedPreview.innerText = 'Нотатки та повідомлення собі';
-            savedTextWrap.appendChild(savedName); savedTextWrap.appendChild(savedPreview);
-            savedRow.appendChild(savedAvatar); savedRow.appendChild(savedTextWrap);
-            savedRow.addEventListener('click', openSavedMessages);
-            box.appendChild(savedRow);
+            // "Збережене" — особисті нотатки собі, як у Telegram: завжди закріплене першим рядком (поза папками)
+            if (!folder) {
+                const savedRow = document.createElement('div'); savedRow.className = 'dm-row dm-row-saved';
+                const savedAvatar = document.createElement('div'); savedAvatar.className = 'dm-avatar dm-avatar-saved';
+                savedAvatar.innerHTML = '<svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"></path></svg>';
+                const savedTextWrap = document.createElement('div'); savedTextWrap.className = 'dm-text-wrap';
+                const savedName = document.createElement('span'); savedName.className = 'dm-name'; savedName.innerText = 'Збережене';
+                const savedPreview = document.createElement('span'); savedPreview.className = 'dm-preview'; savedPreview.innerText = 'Нотатки та повідомлення собі';
+                savedTextWrap.appendChild(savedName); savedTextWrap.appendChild(savedPreview);
+                savedRow.appendChild(savedAvatar); savedRow.appendChild(savedTextWrap);
+                savedRow.addEventListener('click', openSavedMessages);
+                box.appendChild(savedRow);
+            }
 
-            const entries = Object.keys(myConvos).map(id => ({ id, ...myConvos[id] })).sort((a, b) => (b.ts || 0) - (a.ts || 0));
-            if (entries.length === 0) return;
+            let entries = Object.keys(myConvos).map(id => ({ id, ...myConvos[id] })).sort((a, b) => (b.ts || 0) - (a.ts || 0));
+            if (folder) entries = entries.filter(c => folder.chatIds.includes(c.id));
+            if (entries.length === 0) {
+                if (folder) { const empty = document.createElement('div'); empty.className = 'dm-empty'; empty.innerText = 'У цій папці ще немає чатів'; box.appendChild(empty); }
+                return;
+            }
             entries.forEach(c => {
+                const color = getChatColor(c.id);
                 const row = document.createElement('div'); row.className = 'dm-row';
-                const avatar = document.createElement('div'); avatar.className = 'dm-avatar';
-                avatar.style.backgroundImage = `url('${c.photo || "https://xsgames.co/randomusers/assets/avatars/male/11.jpg"}')`;
+                row.style.background = hexToRgba(color, 0.20);
+                row.style.borderColor = hexToRgba(color, 0.45);
+
+                const avatar = document.createElement('div');
+                if (c.isGroup) {
+                    avatar.className = 'dm-avatar dm-avatar-group';
+                    avatar.innerText = (c.name || 'Г').trim().charAt(0).toUpperCase();
+                } else {
+                    avatar.className = 'dm-avatar';
+                    avatar.style.backgroundImage = `url('${c.photo || "https://xsgames.co/randomusers/assets/avatars/male/11.jpg"}')`;
+                }
                 const textWrap = document.createElement('div'); textWrap.className = 'dm-text-wrap';
-                const nameSpan = document.createElement('span'); nameSpan.className = 'dm-name'; nameSpan.innerText = c.name || 'Гість';
+                const nameSpan = document.createElement('span'); nameSpan.className = 'dm-name'; nameSpan.innerText = (c.isGroup ? '👥 ' : '') + (c.name || 'Гість');
                 const previewSpan = document.createElement('span'); previewSpan.className = 'dm-preview';
                 previewSpan.innerText = c.lastMsg ? (c.lastMine ? 'Ви: ' + c.lastMsg : c.lastMsg) : 'Немає повідомлень';
                 textWrap.appendChild(nameSpan); textWrap.appendChild(previewSpan);
-                row.appendChild(avatar); row.appendChild(textWrap);
-                row.addEventListener('click', () => openDmThread(c.id, c.name, c.photo));
+
+                const colorDot = document.createElement('div'); colorDot.className = 'dm-color-dot'; colorDot.style.background = color;
+                colorDot.addEventListener('click', (e) => { e.stopPropagation(); openChatColorPopover(e.currentTarget, c.id); });
+
+                row.appendChild(avatar); row.appendChild(textWrap); row.appendChild(colorDot);
+                row.addEventListener('click', () => { c.isGroup ? openGroupThread(c.groupId || c.id, c.name) : openDmThread(c.id, c.name, c.photo); });
                 box.appendChild(row);
             });
         }
+
+        // ---- Попап вибору кольору "таблетки" ----
+        function openChatColorPopover(anchorEl, chatId) {
+            const pop = document.getElementById('chat-color-popover');
+            pop.innerHTML = '';
+            const current = getChatColor(chatId);
+            CHAT_PILL_COLORS.forEach(color => {
+                const btn = document.createElement('button');
+                btn.className = 'color-swatch-btn' + (color === current ? ' selected' : '');
+                btn.style.background = color;
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    setChatColor(chatId, color);
+                    closeChatColorPopover();
+                });
+                pop.appendChild(btn);
+            });
+            const rect = anchorEl.getBoundingClientRect();
+            pop.style.top = (rect.bottom + 8) + 'px';
+            pop.style.left = Math.max(10, rect.right - 168) + 'px';
+            pop.classList.add('open');
+        }
+        function closeChatColorPopover() { document.getElementById('chat-color-popover').classList.remove('open'); }
+        document.addEventListener('touchstart', (e) => {
+            const pop = document.getElementById('chat-color-popover');
+            if (pop.classList.contains('open') && !e.target.closest('#chat-color-popover') && !e.target.closest('.dm-color-dot')) closeChatColorPopover();
+        }, { passive: true });
 
         // Особистий чат "Збережене" — свій власний простір нотаток, окремий від бесід з іншими людьми,
         // тож не потрапляє в userConvos і не з'являється у списку когось іншого.
         function openSavedMessages() {
             chatTabOrigin = 'chatsList';
             document.getElementById('dm-list').style.display = 'none';
+            document.getElementById('chat-folders-row').classList.remove('visible');
             document.getElementById('chats-header').style.display = 'none';
             document.getElementById('chat-thread-wrap').style.display = 'flex';
             document.getElementById('dm-back-row').style.display = 'flex';
             document.getElementById('dm-back-name').innerText = 'Збережене';
             currentChatPath = `savedMessages/${myId}`;
             currentChatOtherId = null; currentChatOtherName = null; currentChatOtherPhoto = null;
+            currentChatIsGroup = false; currentGroupId = null; currentGroupMembers = [];
             loadChat(currentChatPath);
         }
 
         function openDmThread(otherId, otherName, otherPhoto) {
             chatTabOrigin = 'chatsList';
             document.getElementById('dm-list').style.display = 'none';
+            document.getElementById('chat-folders-row').classList.remove('visible');
             document.getElementById('chats-header').style.display = 'none';
             document.getElementById('chat-thread-wrap').style.display = 'flex';
             document.getElementById('dm-back-row').style.display = 'flex';
@@ -2624,7 +2906,39 @@
             const convId = [myId, otherId].sort().join('__');
             currentChatPath = `dms/${convId}`;
             currentChatOtherId = otherId; currentChatOtherName = otherName; currentChatOtherPhoto = otherPhoto;
+            currentChatIsGroup = false; currentGroupId = null; currentGroupMembers = [];
             loadChat(currentChatPath);
+        }
+
+        // ---- Груповий чат: спільна кімната з кількома учасниками ----
+        function openGroupThread(groupId, groupName) {
+            chatTabOrigin = 'chatsList';
+            document.getElementById('dm-list').style.display = 'none';
+            document.getElementById('chat-folders-row').classList.remove('visible');
+            document.getElementById('chats-header').style.display = 'none';
+            document.getElementById('chat-thread-wrap').style.display = 'flex';
+            document.getElementById('dm-back-row').style.display = 'flex';
+            document.getElementById('dm-back-name').innerText = groupName || 'Група';
+            currentChatPath = `groups/${groupId}`;
+            currentChatOtherId = null; currentChatOtherName = null; currentChatOtherPhoto = null;
+            currentChatIsGroup = true; currentGroupId = groupId; currentGroupName = groupName;
+            currentGroupMembers = [];
+            get(ref(db, `groupsMeta/${groupId}/members`)).then(snap => {
+                currentGroupMembers = Object.keys(snap.val() || {});
+            }).catch(() => { currentGroupMembers = [myId]; });
+            loadChat(currentChatPath);
+        }
+
+        function createGroup(name, memberIds) {
+            const groupId = 'g_' + Math.random().toString(36).slice(2, 10);
+            const members = {}; members[myId] = true; memberIds.forEach(id => { members[id] = true; });
+            const allMembers = Object.keys(members);
+            set(ref(db, `groupsMeta/${groupId}`), { name, members, createdBy: myId, ts: Date.now() });
+            allMembers.forEach(uid => {
+                set(ref(db, `userConvos/${uid}/${groupId}`), { name, photo: '', ts: Date.now(), lastMsg: '', lastMine: false, isGroup: true, groupId });
+            });
+            closeNewGroupModal();
+            openGroupThread(groupId, name);
         }
 
         document.getElementById('dm-back-row').addEventListener('click', () => {
@@ -2633,6 +2947,99 @@
         });
 
         onValue(ref(db, `userConvos/${myId}`), (snap) => { myConvos = snap.val() || {}; renderDmList(); });
+
+        // ==================== Модалка "Нова група" ====================
+        let ngSelectedIds = new Set();
+        function openNewGroupModal() {
+            ngSelectedIds = new Set();
+            document.getElementById('ng-name-input').value = '';
+            const list = document.getElementById('ng-people-list');
+            list.innerHTML = '';
+            const ids = Object.keys(firebaseProfilesCache).filter(id => id !== myId);
+            if (ids.length === 0) {
+                const empty = document.createElement('div'); empty.className = 'dm-empty'; empty.innerText = 'Поки що немає інших людей для групи';
+                list.appendChild(empty);
+            }
+            ids.forEach(id => {
+                const p = firebaseProfilesCache[id] || {};
+                const photos = p.photos || [];
+                const row = document.createElement('div'); row.className = 'ng-person-row';
+                const avatar = document.createElement('div'); avatar.className = 'dm-avatar';
+                avatar.style.backgroundImage = `url('${photos[0] || "https://xsgames.co/randomusers/assets/avatars/male/11.jpg"}')`;
+                const nameSpan = document.createElement('span'); nameSpan.className = 'ng-person-name'; nameSpan.innerText = p.name || 'Гість';
+                const check = document.createElement('div'); check.className = 'ng-check';
+                row.appendChild(avatar); row.appendChild(nameSpan); row.appendChild(check);
+                row.addEventListener('click', () => {
+                    if (ngSelectedIds.has(id)) { ngSelectedIds.delete(id); row.classList.remove('checked'); }
+                    else { ngSelectedIds.add(id); row.classList.add('checked'); }
+                    syncNgCreateBtn();
+                });
+                list.appendChild(row);
+            });
+            syncNgCreateBtn();
+            document.getElementById('new-group-modal').classList.add('open');
+        }
+        function syncNgCreateBtn() {
+            const name = document.getElementById('ng-name-input').value.trim();
+            document.getElementById('ng-create-btn').disabled = !(name.length > 0 && ngSelectedIds.size > 0);
+        }
+        function closeNewGroupModal() { document.getElementById('new-group-modal').classList.remove('open'); }
+        document.getElementById('new-group-btn').addEventListener('click', openNewGroupModal);
+        document.getElementById('ng-close-btn').addEventListener('click', closeNewGroupModal);
+        document.getElementById('ng-name-input').addEventListener('input', syncNgCreateBtn);
+        document.getElementById('ng-create-btn').addEventListener('click', () => {
+            const name = document.getElementById('ng-name-input').value.trim();
+            if (!name || ngSelectedIds.size === 0) return;
+            createGroup(name, [...ngSelectedIds]);
+        });
+
+        // ==================== Модалка "Нова папка" ====================
+        let nfSelectedIds = new Set();
+        function openNewFolderModal() {
+            nfSelectedIds = new Set();
+            document.getElementById('nf-name-input').value = '';
+            const list = document.getElementById('nf-chats-list');
+            list.innerHTML = '';
+            const entries = Object.keys(myConvos).map(id => ({ id, ...myConvos[id] }));
+            if (entries.length === 0) {
+                const empty = document.createElement('div'); empty.className = 'dm-empty'; empty.innerText = 'Поки що немає чатів для папки';
+                list.appendChild(empty);
+            }
+            entries.forEach(c => {
+                const row = document.createElement('div'); row.className = 'ng-person-row';
+                const avatar = document.createElement('div');
+                if (c.isGroup) { avatar.className = 'dm-avatar dm-avatar-group'; avatar.innerText = (c.name || 'Г').trim().charAt(0).toUpperCase(); }
+                else { avatar.className = 'dm-avatar'; avatar.style.backgroundImage = `url('${c.photo || "https://xsgames.co/randomusers/assets/avatars/male/11.jpg"}')`; }
+                const nameSpan = document.createElement('span'); nameSpan.className = 'ng-person-name'; nameSpan.innerText = c.name || 'Гість';
+                const check = document.createElement('div'); check.className = 'ng-check';
+                row.appendChild(avatar); row.appendChild(nameSpan); row.appendChild(check);
+                row.addEventListener('click', () => {
+                    if (nfSelectedIds.has(c.id)) { nfSelectedIds.delete(c.id); row.classList.remove('checked'); }
+                    else { nfSelectedIds.add(c.id); row.classList.add('checked'); }
+                    syncNfCreateBtn();
+                });
+                list.appendChild(row);
+            });
+            syncNfCreateBtn();
+            document.getElementById('new-folder-modal').classList.add('open');
+        }
+        function syncNfCreateBtn() {
+            const name = document.getElementById('nf-name-input').value.trim();
+            document.getElementById('nf-create-btn').disabled = !(name.length > 0 && nfSelectedIds.size > 0);
+        }
+        function closeNewFolderModal() { document.getElementById('new-folder-modal').classList.remove('open'); }
+        document.getElementById('nf-close-btn').addEventListener('click', closeNewFolderModal);
+        document.getElementById('nf-name-input').addEventListener('input', syncNfCreateBtn);
+        document.getElementById('nf-create-btn').addEventListener('click', () => {
+            const name = document.getElementById('nf-name-input').value.trim();
+            if (!name || nfSelectedIds.size === 0) return;
+            const folder = { id: 'f_' + Math.random().toString(36).slice(2, 9), name, chatIds: [...nfSelectedIds] };
+            chatFolders.push(folder);
+            saveChatFolders(chatFolders);
+            activeFolderId = folder.id;
+            closeNewFolderModal();
+            renderChatFolders(); renderDmList();
+        });
 
         // Власна мітка одразу на карті (локально), не чекаючи, поки профіль уперше збережеться у Firebase —
         // інакше на новому пристрої/сесії просто немає власної іконки, на якій можна затиснути палець для маршруту.
