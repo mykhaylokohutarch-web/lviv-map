@@ -2310,12 +2310,16 @@
         if (!myId) { myId = 'u_' + Math.random().toString(36).slice(2, 10); }
         localStorage.setItem('chat_my_id', myId);
 
+        // Чи редагувала людина колись профіль сама вручну (ім'я/фото) — лише тоді її
+        // редагування має пріоритет над даними з Telegram. Поки цього прапорця нема,
+        // ім'я й фото щоразу автоматично підтягуються з Telegram.
+        const hasManualProfileEdit = localStorage.getItem('chat_profile_edited') === '1';
+        let tgPhotoUrl = null;
         if (tgUser) {
-            // Ім'я й юзернейм з Telegram підставляємо лише якщо людина ще сама нічого
-            // не міняла в профілі — її власне редагування завжди має пріоритет.
-            if (!localStorage.getItem('chat_username')) {
+            if (!hasManualProfileEdit) {
                 const tgFullName = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ').trim();
                 if (tgFullName) { myName = tgFullName; localStorage.setItem('chat_username', myName); }
+                if (tgUser.photo_url) tgPhotoUrl = tgUser.photo_url;
             }
             if (tgUser.username) localStorage.setItem('chat_tg_username', tgUser.username);
         }
@@ -2329,7 +2333,7 @@
 
         let myProfile = {
             name: myName, status: "Ще не заповнено", about: "", interests: "",
-            photos: (tgUser && tgUser.photo_url) ? [tgUser.photo_url] : [], stories: []
+            photos: tgPhotoUrl ? [tgPhotoUrl] : [], stories: []
         };
         let profileMarkers = {};
         let isEditingProfile = false;
@@ -2713,6 +2717,7 @@
             const newInterests = document.getElementById('prof-text2').innerText.trim();
 
             myName = newName; localStorage.setItem('chat_username', myName);
+            localStorage.setItem('chat_profile_edited', '1');
             myProfile.name = myName; myProfile.status = newStatus || "Ще не заповнено";
             myProfile.about = newAbout; myProfile.interests = newInterests;
 
@@ -2741,6 +2746,7 @@
             catch (err) { alert('Не вдалося обробити фото. Спробуйте інший файл.'); e.target.value = ''; return; }
             myProfile.photos = myProfile.photos || [];
             myProfile.photos.push(dataUrl);
+            localStorage.setItem('chat_profile_edited', '1');
             if (currentActiveItem && currentActiveItem.id === myId) { currentActiveItem.photos = myProfile.photos; renderHeroMedia(myProfile.photos); goToHeroSlide(myProfile.photos.length - 1); }
             try { await saveMyProfileToFirebase(); }
             catch (err) { alert('Фото додано, але не вдалося зберегти на сервер. Перевірте інтернет-з’єднання і спробуйте ще раз.'); }
@@ -3157,6 +3163,8 @@
             if (!ok) return;
             localStorage.removeItem('chat_username');
             localStorage.removeItem('chat_my_id');
+            localStorage.removeItem('chat_onboarded');
+            localStorage.removeItem('chat_profile_edited');
             location.reload();
         });
 
@@ -3243,7 +3251,9 @@
         })();
 
         // ---- Wizard реєстрації: welcome → ім'я → фото → про себе → сторіс → місце на карті ----
-        const obStepOrder = ['welcome', 'name', 'photo', 'bio', 'story'];
+        // Кроки з іменем і фото пропускаємо для Telegram-користувачів — ці дані вже
+        // автоматично підтягнуті з Telegram, вводити їх вручну не потрібно.
+        const obStepOrder = (tgUser && !hasManualProfileEdit) ? ['welcome', 'bio', 'story'] : ['welcome', 'name', 'photo', 'bio', 'story'];
         let obIndex = 0;
         let obPhotoDataUrl = null;
         let obStoryData = null;
@@ -3327,6 +3337,7 @@
         });
 
         function obFinishWizard() {
+            localStorage.setItem('chat_onboarded', '1');
             document.getElementById('onboarding-modal').style.display = 'none';
             showPinPlacement(true);
             if (obStoryData) { addStory(obStoryData.type, obStoryData.url); }
@@ -3334,8 +3345,18 @@
         document.getElementById('ob-story-next').addEventListener('click', obFinishWizard);
         document.getElementById('ob-story-skip').addEventListener('click', obFinishWizard);
 
-        // Показуємо реєстрацію лише тим, хто ще жодного разу не заходив (немає збереженого імені)
-        if (!localStorage.getItem('chat_username')) {
+        // Міграція для тих, хто вже користувався застосунком до цієї зміни: якщо ім'я вже
+        // збережене, але нового прапорця ще нема — людина точно вже проходила реєстрацію
+        // раніше, повторно показувати їй онбординг не треба.
+        if (localStorage.getItem('chat_username') && !localStorage.getItem('chat_onboarded')) {
+            localStorage.setItem('chat_onboarded', '1');
+        }
+
+        // Показуємо реєстрацію лише тим, хто ще жодного разу не заходив (не завершували її раніше).
+        // Окремий прапорець від chat_username, бо для Telegram-користувачів ім'я тепер
+        // проставляється автоматично ще до цієї перевірки — саме по собі воно більше
+        // не означає "людина вже проходила реєстрацію".
+        if (!localStorage.getItem('chat_onboarded')) {
             document.getElementById('onboarding-modal').style.display = 'flex';
             obGoTo(0);
         }
@@ -3372,7 +3393,19 @@
                     attachLongPress(profileMarkers[id], () => enterRouteSelectionMode(p.coords, myId));
                 }
 
-                if (id === myId) { myProfile = { name: p.name, status: p.status, about: p.about, interests: p.interests, photos: p.photos || [], stories: p.stories || [] }; }
+                if (id === myId) {
+                    // Ім'я й перше фото — якщо профіль ще не редагували вручну, завжди беремо
+                    // свіжі дані з Telegram (а не те, що колись давно збереглось у базі),
+                    // навіть якщо в базі вже є запис. Решту полів (статус/про себе/інтереси/сторі)
+                    // все одно тягнемо з бази — це не з Telegram.
+                    const restPhotos = (p.photos || []).slice(1);
+                    myProfile = {
+                        name: hasManualProfileEdit ? p.name : (myName || p.name),
+                        status: p.status, about: p.about, interests: p.interests,
+                        photos: hasManualProfileEdit ? (p.photos || []) : [tgPhotoUrl || (p.photos && p.photos[0]) || null, ...restPhotos].filter(Boolean),
+                        stories: p.stories || []
+                    };
+                }
             });
             if (document.getElementById('people-search-input')) {
                 renderHomeGrid(document.getElementById('people-search-input').value);
@@ -3786,6 +3819,23 @@
             input.blur();
             setTimeout(layoutHomeGrid, 300);
         }, { passive: true });
+
+        // Баг WebKit/iOS: коли клавіатуру закривають дотиком поза полем вводу (навіть якщо цей
+        // хендлер вище нічого не ховає, бо в полі вже є текст), сама клавіатура все одно ховається
+        // — і саме тоді WebKit іноді "губить" правильну позицію position:fixed-елементів внизу
+        // екрана (той самий клас бага, що й з --app-height вище). Смужка пошуку лишається
+        // технічно "відкритою" (клас .open на місці), але візуально зникає чи зʼїжджає за межі
+        // екрана. Форсуємо рефлоу після кожної зміни висоти видимої області, поки смужка
+        // відкрита, щоб WebKit перерахував її позицію заново.
+        function reflowHomeSearchBar() {
+            const bar = document.getElementById('home-search-bar');
+            if (!bar || !bar.classList.contains('open')) return;
+            bar.style.display = 'none';
+            void bar.offsetHeight; // форсує реальний рефлоу, а не просто читання стилю
+            bar.style.display = '';
+        }
+        window.addEventListener('resize', reflowHomeSearchBar);
+        if (window.visualViewport) { window.visualViewport.addEventListener('resize', reflowHomeSearchBar); }
 
         // Відкриває сторінку людини у стилі прикладу (аватар, статистика, біо, сітка фото)
         let igCurrentItem = null; let igCurrentIsMine = false;
