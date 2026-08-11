@@ -124,6 +124,9 @@
             background-color: #e5e5ea;
             transition: filter 0.5s ease;
         }
+        /* Поки тайли карти ще не підвантажились під час швидкого перетягування —
+           у темній темі краще чорна підкладка (не білий "спалах"), у світлій лишаємо світлу. */
+        body.dark-theme #map { background-color: #000000; }
 
         /* Прибираємо напис-атрибуцію ("OpenStreetMap...") у кутку карти. */
         .leaflet-control-attribution { display: none !important; }
@@ -2729,7 +2732,16 @@
             if (name === 'map') document.getElementById('nav-map').classList.add('active');
             if (name === 'igprofile' && igCurrentIsMine) document.getElementById('nav-profile').classList.add('active');
 
-            if (name === 'map') setTimeout(() => map.invalidateSize(), 60);
+            if (name === 'map') {
+                // Поки вкладка "Карта" схована (display:none), контейнер має нульовий розмір,
+                // тож перший запит закладів під час завантаження сторінки міг піти з "сплюснутими"
+                // межами (bbox) і нічого не знайти. Тепер щоразу при відкритті карти примусово
+                // перераховуємо розмір і перезапитуємо заклади для вже видимої області.
+                setTimeout(() => {
+                    map.invalidateSize();
+                    if (typeof fetchOsmPois === 'function') fetchOsmPois();
+                }, 80);
+            }
         }
 
         // Детерміновані (стабільні для одного й того ж id) числа підписок/підписників — суто оформлення вітрини,
