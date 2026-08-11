@@ -861,6 +861,28 @@
             background: rgba(120,120,128,0.16); color: var(--text-color); font-size: 15px; font-weight: 600; cursor: pointer;
         }
 
+        /* ---- Модалка "Налаштування" — той самий bottom-sheet стиль, що й "Додати друга" ---- */
+        #settings-modal {
+            display: none; position: fixed; inset: 0; z-index: 3100;
+            background: rgba(0,0,0,0.4); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            align-items: flex-end; justify-content: center;
+        }
+        body.dark-theme #settings-modal { background: rgba(0,0,0,0.65); }
+        #settings-modal .add-friend-sheet h3 { margin-bottom: 14px; }
+        .settings-row {
+            display: flex; align-items: center; justify-content: space-between; width: 100%;
+            padding: 14px 4px; border: none; background: transparent; box-sizing: border-box;
+            border-top: 1px solid rgba(120,120,128,0.18); font-family: inherit; cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .settings-row-label { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 500; color: var(--text-color); }
+        .settings-row-label svg { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+        .settings-row-danger .settings-row-label { color: #ff3b30; }
+        .settings-toggle { width: 46px; height: 28px; border-radius: 14px; background: rgba(120,120,128,0.3); position: relative; flex-shrink: 0; transition: background 0.2s ease; }
+        .settings-toggle.on { background: var(--accent-main); }
+        .settings-toggle-knob { position: absolute; top: 2px; left: 2px; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: transform 0.2s ease; }
+        .settings-toggle.on .settings-toggle-knob { transform: translateX(18px); }
+
         /* Стара нижня панель шарів і кнопка "моя сторінка" (топ-ліво) на карті — прибрані з вигляду
            за проханням користувача; елементи лишаються в DOM, бо на них досі посилається інший код,
            але їх більше не видно і по них не можна натиснути. */
@@ -995,16 +1017,19 @@
         #screen-ig-profile { background: var(--bg-color); }
         .ig-top-bar {
             position: absolute; top: 0; left: 0; right: 0; z-index: 20;
-            display: flex; align-items: center; justify-content: flex-end;
+            display: flex; align-items: center; justify-content: space-between;
             padding: calc(14px + env(safe-area-inset-top, 0px)) 12px 2px;
         }
         .ig-more-btn {
             width: 34px; height: 34px; border-radius: 50%;
             background: rgba(0,0,0,0.28); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
             border: none; display: flex; align-items: center; justify-content: center; cursor: pointer;
-            -webkit-tap-highlight-color: transparent;
+            -webkit-tap-highlight-color: transparent; flex-shrink: 0;
         }
         .ig-more-btn svg { width: 18px; height: 18px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        /* Ім'я по центру верхньої панелі, під "островком" — решта тексту (нік, біо, статистика)
+           лишається на своєму місці поруч з аватаркою нижче. */
+        .ig-top-bar-name { flex: 1 1 auto; min-width: 0; text-align: center; font-size: 16px; font-weight: 700; color: var(--text-color); letter-spacing: -0.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0; padding: 0 8px; }
         #ig-content { flex-grow: 1; overflow-y: auto; touch-action: pan-y; -webkit-overflow-scrolling: touch; padding-bottom: 110px; box-sizing: border-box; }
 
         .ig-hero { display: flex; align-items: center; gap: 12px; padding: calc(66px + env(safe-area-inset-top, 0px)) 16px 8px; background: var(--bg-color); }
@@ -1022,14 +1047,14 @@
         .ig-hero-action-btn svg { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
 
         .ig-body { padding: 0 14px 4px; text-align: left; }
-        .ig-bio-name { color: var(--text-color); font-size: 17px; font-weight: 700; margin: 0 0 1px; letter-spacing: -0.2px; text-align: left; }
         .ig-bio-handle { color: var(--text-secondary); font-size: 12px; margin: 0; text-align: left; }
         .ig-bio-text { font-size: 12.5px; color: var(--text-color); margin: 6px 0 4px; line-height: 1.3; text-align: left; }
         .ig-meta-line { font-size: 11.5px; color: var(--text-secondary); margin: 0; text-align: left; }
 
         /* Зазор між колами навмисно = 2px кільця з кожного боку + невеликий проміжок між кільцями,
-           щоб сусідні кільця-сторіс не злипались одне з одним. */
-        .ig-gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; padding: 2px; }
+           щоб сусідні кільця-сторіс не злипались одне з одним. Трішки відступу зверху, щоб сітка
+           не тулилась впритул до тексту біо над нею. */
+        .ig-gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; padding: 2px; margin-top: 14px; }
         .ig-grid-item { width: 100%; aspect-ratio: 1 / 1; border-radius: 50%; background-size: cover; background-position: center; background-color: #e5e5ea; box-shadow: 0 2px 10px rgba(0,0,0,0.12); cursor: pointer; position: relative; }
         /* Кільце-сторіс: тонка градієнтна облямівка товщиною 2px навколо кожного кола фото. */
         .ig-grid-item::before {
@@ -1260,13 +1285,14 @@
     <!-- ==================== Сторінка людини: власний мінімалістичний стиль (не інстаграм) ==================== -->
     <div id="screen-ig-profile" class="app-screen">
         <div class="ig-top-bar">
+            <button class="ig-more-btn" id="ig-settings-btn" aria-label="Налаштування"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82A1.65 1.65 0 0 0 3 9.09H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 4.6a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.11.35.35.66.68.85.28.16.6.24.92.24H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button>
+            <p class="ig-top-bar-name" id="ig-top-name"></p>
             <button class="ig-more-btn" id="ig-more-btn" aria-label="Ще"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.4"></circle><circle cx="12" cy="12" r="1.4"></circle><circle cx="19" cy="12" r="1.4"></circle></svg></button>
         </div>
         <div id="ig-content">
             <div class="ig-hero">
                 <div class="ig-avatar" id="ig-avatar"></div>
                 <div class="ig-hero-mid">
-                    <p class="ig-bio-name" id="ig-bio-name"></p>
                     <p class="ig-bio-handle" id="ig-bio-handle"></p>
                     <p class="ig-bio-text" id="ig-bio-text"></p>
                     <p class="ig-meta-line"><span id="ig-stat-followers">0</span> підписників · <span id="ig-stat-following">0</span> підписок</p>
@@ -1337,6 +1363,29 @@
             <button class="add-friend-close-btn" id="add-friend-close-btn">Закрити</button>
         </div>
     </div>
+
+    <!-- ---- Модалка "Налаштування" (шестерня на сторінці профілю) ---- -->
+    <div id="settings-modal">
+        <div class="add-friend-sheet">
+            <div class="add-friend-sheet-handle"></div>
+            <h3>Налаштування</h3>
+            <div class="settings-row" id="settings-theme-row">
+                <span class="settings-row-label">
+                    <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                    Нічний режим
+                </span>
+                <span class="settings-toggle" id="settings-theme-toggle"><span class="settings-toggle-knob"></span></span>
+            </div>
+            <button class="settings-row settings-row-danger" id="settings-logout-row">
+                <span class="settings-row-label">
+                    <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="M16 17l5-5-5-5"></path><path d="M21 12H9"></path></svg>
+                    Вийти з профілю
+                </span>
+            </button>
+            <button class="add-friend-close-btn" id="settings-close-btn">Закрити</button>
+        </div>
+    </div>
+
 
 
     <!-- ---- Реєстрація нового користувача: повноекранний мінімалістичний wizard ---- -->
@@ -3863,13 +3912,20 @@
         let igCurrentItem = null; let igCurrentIsMine = false;
         function openIgProfile(item, isMine) {
             igCurrentItem = item; igCurrentIsMine = isMine;
-            const photos = (item.photos && item.photos.length) ? item.photos : ["https://xsgames.co/randomusers/assets/avatars/male/11.jpg"];
+            // Сторі, додані на Головній (кнопкою "+" на власному колі), одразу зʼявляються тут же,
+            // у сітці великих кружечків — найновіші спочатку. Дублікати (та саме фото/відео) прибираємо.
+            const storyUrls = (item.stories && item.stories.length)
+                ? [...item.stories].sort((a, b) => (b.ts || 0) - (a.ts || 0)).map(s => s.url)
+                : [];
+            const basePhotos = (item.photos && item.photos.length) ? item.photos : ["https://xsgames.co/randomusers/assets/avatars/male/11.jpg"];
+            const seen = new Set();
+            const photos = [...storyUrls, ...basePhotos].filter(u => { if (seen.has(u)) return false; seen.add(u); return true; });
 
-            document.getElementById('ig-avatar').style.backgroundImage = `url('${photos[0]}')`;
+            document.getElementById('ig-avatar').style.backgroundImage = `url('${basePhotos[0]}')`;
             document.getElementById('ig-avatar').onclick = () => openMediaGallery(photos, 0, item.name);
             const handle = slugHandle(item.name);
             document.getElementById('ig-bio-handle').innerText = handle;
-            document.getElementById('ig-bio-name').innerText = item.name || 'Гість';
+            document.getElementById('ig-top-name').innerText = item.name || 'Гість';
             document.getElementById('ig-bio-text').innerText = item.about || item.status || '';
             document.getElementById('ig-stat-following').innerText = pseudoStat(item.id, 'following', 20, 480);
             document.getElementById('ig-stat-followers').innerText = pseudoStat(item.id, 'followers', 50, 3200);
@@ -4011,6 +4067,28 @@
             document.getElementById('add-friend-modal').style.display = 'none';
             if (nfcController) { nfcController.abort(); nfcController = null; }
         }
+
+        // ---- Модалка "Налаштування" (шестерня на сторінці профілю) ----
+        // Пункти в ній не дублюють логіку, а просто "натискають" уже наявні кнопки
+        // (перемикач теми зверху на карті, вихід із профілю), щоб не плодити код.
+        function openSettingsModal() {
+            const toggle = document.getElementById('settings-theme-toggle');
+            toggle.classList.toggle('on', document.body.classList.contains('dark-theme'));
+            document.getElementById('settings-modal').style.display = 'flex';
+        }
+        function closeSettingsModal() {
+            document.getElementById('settings-modal').style.display = 'none';
+        }
+        document.getElementById('ig-settings-btn').addEventListener('click', openSettingsModal);
+        document.getElementById('settings-close-btn').addEventListener('click', closeSettingsModal);
+        document.getElementById('settings-theme-toggle').addEventListener('click', () => {
+            document.getElementById('theme-toggle').click();
+            document.getElementById('settings-theme-toggle').classList.toggle('on', document.body.classList.contains('dark-theme'));
+        });
+        document.getElementById('settings-logout-row').addEventListener('click', () => {
+            closeSettingsModal();
+            document.getElementById('prof-logout-btn').click();
+        });
 
         // Web NFC (NDEFReader) працює лише в Chrome для Android з увімкненим NFC — на iOS та
         // в інших браузерах його немає, тому QR-код завжди лишається робочим запасним варіантом.
