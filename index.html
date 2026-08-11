@@ -2247,14 +2247,15 @@
             });
         }
 
-        // Визначає шлях чату для конкретної картки: реальні профілі (id починається з 'u_') отримують приватні DM,
-        // NPC-картки (p*/c*) лишаються спільною "стіною" повідомлень, як і раніше
+        // Визначає шлях чату для конкретної картки: реальні профілі (id починається з 'tg_' —
+        // Telegram-акаунт) отримують приватні DM, NPC-картки (p*/c*) лишаються спільною
+        // "стіною" повідомлень, як і раніше
         function openChatForItem(item) {
             document.getElementById('dm-list').style.display = 'none';
             document.getElementById('chat-folders-row').classList.remove('visible');
             document.getElementById('chat-thread-wrap').style.display = 'flex';
             document.getElementById('dm-back-row').style.display = 'none';
-            if (item.id.startsWith('u_') && item.id !== myId) {
+            if (item.id.startsWith('tg_') && item.id !== myId) {
                 const convId = [myId, item.id].sort().join('__');
                 currentChatPath = `dms/${convId}`;
                 currentChatOtherId = item.id; currentChatOtherName = item.name; currentChatOtherPhoto = item.photos && item.photos[0];
@@ -2303,11 +2304,27 @@
         // стабільний ідентифікатор, ім'я та фото людини з Telegram — без окремої форми реєстрації.
         const tgUser = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) || null;
 
-        // Стабільний ідентифікатор людини. У Telegram — прив'язаний до реального Telegram-акаунту
-        // (той самий на будь-якому пристрої, де людина відкриє застосунок), поза Telegram —
-        // випадковий локальний, як і раніше (для тестування у звичайному браузері).
-        let myId = tgUser ? ('tg_' + tgUser.id) : localStorage.getItem('chat_my_id');
-        if (!myId) { myId = 'u_' + Math.random().toString(36).slice(2, 10); }
+        // Доступ лише через Telegram: без tgUser раніше створювався випадковий гостьовий
+        // акаунт (u_xxxxx), що засмічувало карту й списки людьми, яких не можна впізнати
+        // чи достукатись. Тепер поза Telegram застосунок просто не відкривається.
+        if (!tgUser) {
+            document.body.innerHTML = `
+                <div style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;
+                    justify-content:center;gap:12px;padding:32px;text-align:center;background:#0f1115;
+                    color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+                    <div style="font-size:40px;">📱</div>
+                    <div style="font-size:18px;font-weight:600;">Відкрийте застосунок через Telegram</div>
+                    <div style="font-size:14px;opacity:.7;max-width:320px;">
+                        Цей застосунок працює лише як Telegram Mini App — так у кожного є справжній,
+                        підтверджений профіль. У звичайному браузері він не відкривається.
+                    </div>
+                </div>`;
+            throw new Error('Blocked: app opened outside Telegram');
+        }
+
+        // Стабільний ідентифікатор людини, прив'язаний до реального Telegram-акаунту —
+        // той самий на будь-якому пристрої, де людина відкриє застосунок.
+        let myId = 'tg_' + tgUser.id;
         localStorage.setItem('chat_my_id', myId);
 
         // Чи редагувала людина колись профіль сама вручну (ім'я/фото) — лише тоді її
