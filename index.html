@@ -2753,27 +2753,24 @@
             location.reload();
         });
 
-        // ---- Прихована адмін-функція: видалення акаунтів — доступна лише розробнику ----
-        // Секретний жест: 7 швидких тапів по назві "moment" на Головній відкривають запит пароля.
-        // ВАЖЛИВО (лишаю коментар для розробника): це проста клієнтська перевірка, а не справжня
-        // авторизація — заміни пароль нижче на свій і за бажання додатково обмеж запис/видалення
-        // у самих правилах Firebase (Realtime Database Rules) лише для свого myId, для надійності.
-        const ADMIN_SECRET_PASSWORD = 'moment-admin-2026';
-        const ADMIN_UNLOCK_KEY = 'moment_admin_unlocked';
+        // ---- Прихована адмін-функція: видалення акаунтів — доступна ЛИШЕ з одного конкретного ID ----
+        // Секретний жест: 7 швидких тапів по назві "moment" на Головній.
+        // ВАЖЛИВО: встав СЮДИ свій власний ID (див. інструкцію в чаті, як його дізнатись) —
+        // без збігу myId з цим значенням адмін-панель не відкриється в принципі, навіть якщо
+        // хтось знайде і повторить секретний жест.
+        const ADMIN_DEV_ID = 'ВСТАВ_СЮДИ_СВІЙ_ID';
         let adminTapCount = 0, adminTapTimer = null;
 
-        function isAdminUnlocked() { return sessionStorage.getItem(ADMIN_UNLOCK_KEY) === '1'; }
-
         function tryUnlockAdmin() {
-            if (isAdminUnlocked()) { openAdminPanel(); return; }
-            const pass = prompt('Пароль адміністратора:');
-            if (pass === null) return;
-            if (pass === ADMIN_SECRET_PASSWORD) {
-                sessionStorage.setItem(ADMIN_UNLOCK_KEY, '1');
-                openAdminPanel();
-            } else if (pass !== '') {
-                alert('Невірний пароль.');
+            if (ADMIN_DEV_ID === 'ВСТАВ_СЮДИ_СВІЙ_ID') {
+                // Тимчасово, поки ID не прописано в коді: показуємо його для копіювання.
+                // Видалення акаунтів у цьому режимі однаково НЕ працює нікому — сама функція
+                // deleteAccount() перевіряє збіг ID окремо.
+                alert('Твій ID для адмін-доступу:\n\n' + myId + '\n\nВстав це значення у ADMIN_DEV_ID у коді — після цього доступ буде лише в тебе.');
+                return;
             }
+            if (myId !== ADMIN_DEV_ID) return; // не твій ID — нічого не відбувається, навіть без повідомлення
+            openAdminPanel();
         }
 
         document.querySelectorAll('.app-wordmark').forEach(logo => {
@@ -2809,6 +2806,7 @@
         }
 
         async function deleteAccount(id, name) {
+            if (myId !== ADMIN_DEV_ID) return;
             const ok = confirm(`Видалити акаунт "${name}"?\nЦе прибере профіль з карти й Головної назавжди. Дію не можна скасувати.`);
             if (!ok) return;
             try {
