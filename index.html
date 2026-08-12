@@ -1027,6 +1027,7 @@
             -webkit-tap-highlight-color: transparent; flex-shrink: 0;
         }
         .ig-more-btn svg { width: 18px; height: 18px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        .ig-top-bar-spacer { width: 34px; height: 34px; flex-shrink: 0; }
         /* Ім'я по центру верхньої панелі, під "островком" — решта тексту (нік, біо, статистика)
            лишається на своєму місці поруч з аватаркою нижче. */
         .ig-top-bar-name { flex: 1 1 auto; min-width: 0; text-align: center; font-size: 16px; font-weight: 700; color: var(--text-color); letter-spacing: -0.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0; padding: 0 8px; }
@@ -1287,6 +1288,7 @@
         <div class="ig-top-bar">
             <button class="ig-more-btn" id="ig-settings-btn" aria-label="Налаштування"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82A1.65 1.65 0 0 0 3 9.09H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 4.6a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.11.35.35.66.68.85.28.16.6.24.92.24H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button>
             <p class="ig-top-bar-name" id="ig-top-name"></p>
+            <span class="ig-top-bar-spacer" aria-hidden="true"></span>
         </div>
         <div id="ig-content">
             <div class="ig-hero">
