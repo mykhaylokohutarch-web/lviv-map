@@ -142,19 +142,19 @@
         .osm-poi-marker { background: none !important; border: none !important; box-shadow: none !important; }
         .osm-poi-marker-wrap { display: flex; flex-direction: column; align-items: center; }
         .osm-poi-dot {
-            width: 28px; height: 28px; border-radius: 50%;
+            width: 20px; height: 20px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            font-size: 15px; line-height: 1;
-            border: 2px solid #fff;
-            box-shadow: 0 2px 7px rgba(0, 0, 0, 0.32);
-            transition: var(--theme-transition), transform 0.2s ease;
+            font-size: 11px; line-height: 1; opacity: 0.82;
+            border: 1.5px solid rgba(255,255,255,0.85);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22);
+            transition: var(--theme-transition), transform 0.2s ease, opacity 0.2s ease;
         }
-        .osm-poi-marker:active .osm-poi-dot { transform: scale(0.88); }
-        .osm-poi-dot.cat-food { background: #ff5a36; }
-        .osm-poi-dot.cat-shopping { background: #af52de; }
-        .osm-poi-dot.cat-events { background: #ff9500; }
-        .osm-poi-dot.cat-services { background: #0a84ff; }
-        body.dark-theme .osm-poi-dot { border-color: rgba(28, 28, 30, 0.92); }
+        .osm-poi-marker:active .osm-poi-dot { transform: scale(0.88); opacity: 1; }
+        .osm-poi-dot.cat-food { background: #d9714f; }
+        .osm-poi-dot.cat-shopping { background: #9068ab; }
+        .osm-poi-dot.cat-events { background: #c98a3e; }
+        .osm-poi-dot.cat-services { background: #4a7fad; }
+        body.dark-theme .osm-poi-dot { border-color: rgba(28, 28, 30, 0.85); }
         .osm-poi-label {
             margin-top: 3px; padding: 2px 7px; border-radius: 8px;
             background: var(--card-bg); color: var(--text-color);
@@ -1937,7 +1937,16 @@
             OSM_CAT_GROUPS.forEach(cat => layerGroups[cat].clearLayers());
         }
 
-        function fetchOsmPois() {
+        // Публічний Overpass API часто "мовчки" не відповідає (перевантаження/таймаут) —
+        // тримаємо кілька дзеркал і пробуємо їх по черзі, поки одне не спрацює.
+        const OVERPASS_MIRRORS = [
+            'https://overpass-api.de/api/interpreter',
+            'https://overpass.kumi.systems/api/interpreter',
+            'https://overpass.openstreetmap.ru/api/interpreter'
+        ];
+
+        function fetchOsmPois(mirrorIndex) {
+            mirrorIndex = mirrorIndex || 0;
             const zoom = map.getZoom();
             if (zoom < OSM_POI_MIN_ZOOM) { clearOsmPoiLayers(); return; }
             const limit = osmPoiLimitForZoom(zoom);
@@ -1951,8 +1960,8 @@
             osmPoiAbortController = new AbortController();
             const requestedZoom = zoom;
 
-            fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: query, signal: osmPoiAbortController.signal })
-                .then(r => r.json())
+            fetch(OVERPASS_MIRRORS[mirrorIndex], { method: 'POST', body: query, signal: osmPoiAbortController.signal })
+                .then(r => { if (!r.ok) throw new Error('bad status'); return r.json(); })
                 .then(data => {
                     if (map.getZoom() !== requestedZoom) return; // масштаб уже змінився — ця відповідь застаріла
                     // Не накопичуємо мітки безкінечно — щоразу малюємо лише актуальний набір для поточного вигляду карти.
@@ -1965,7 +1974,7 @@
                         const icon = L.divIcon({
                             className: 'osm-poi-marker',
                             html: `<div class="osm-poi-marker-wrap"><div class="osm-poi-dot cat-${cat}">${emoji}</div><div class="osm-poi-label">${escapeHtml(el.tags.name)}</div></div>`,
-                            iconSize: [28, 28], iconAnchor: [14, 14]
+                            iconSize: [20, 20], iconAnchor: [10, 10]
                         });
                         const marker = L.marker([el.lat, el.lon], { icon: icon, pane: 'osmPoiPane' }).addTo(layerGroups[cat]);
                         marker.bindPopup(
@@ -1975,7 +1984,12 @@
                         shown++;
                     }
                 })
-                .catch(() => { /* Overpass тимчасово недоступний або запит скасовано — просто лишаємо попередні мітки */ });
+                .catch((err) => {
+                    if (err && err.name === 'AbortError') return; // скасовано новим запитом — нормально, не помилка
+                    // Це дзеркало не відповіло — пробуємо наступне, поки не закінчаться варіанти.
+                    if (mirrorIndex < OVERPASS_MIRRORS.length - 1) { fetchOsmPois(mirrorIndex + 1); }
+                    // Якщо відповіли всі дзеркала — лишаємо попередні мітки на місці (не зникають у порожнечу).
+                });
         }
 
         function updatePoiLabelsVisibility() {
@@ -2186,35 +2200,9 @@
 
         const placeBadgeSvg = `<svg viewBox="0 0 24 24"><path d="M12 22s7-7.58 7-12.5A7 7 0 0 0 5 9.5C5 14.42 12 22 12 22z"></path><circle cx="12" cy="9.5" r="2.3"></circle></svg>`;
 
-        const places = [
-            { id: 'pl1', name: 'Площа Ринок', coords: [49.8419, 24.0316], status: 'Історичний центр Львова', text1: 'Головна площа старого міста, оточена кам\'яницями та Ратушею.', text2: '🏛️ Пам\'ятка ЮНЕСКО', svg: 'ticket', category: 'services', photos: ['https://picsum.photos/seed/lviv-rynok/800/800'] },
-            { id: 'pl2', name: 'Львівська опера', coords: [49.8398, 24.0316], status: 'Театр опери та балету', text1: 'Один із найкрасивіших оперних театрів Європи, збудований у 1900 році.', text2: '🎭 Вистави щовечора', svg: 'ticket', category: 'events', photos: ['https://picsum.photos/seed/lviv-opera/800/800'] },
-            { id: 'pl3', name: 'Високий Замок', coords: [49.8443, 24.0361], status: 'Оглядовий майданчик', text1: 'Найвища точка міста з панорамою на весь Львів.', text2: '⛰️ Найкращий вид на місто', svg: 'ticket', category: 'events', photos: ['https://picsum.photos/seed/lviv-castle/800/800'] },
-            { id: 'pl4', name: 'Личаківський цвинтар', coords: [49.8323, 24.0565], status: 'Історичний некрополь', text1: 'Один із найстаріших і найкрасивіших цвинтарів Європи.', text2: '🌿 Музей просто неба', svg: 'ticket', category: 'events', photos: ['https://picsum.photos/seed/lviv-lychakiv/800/800'] },
-            { id: 'pl5', name: 'Латинська катедра', coords: [49.8412, 24.0308], status: 'Архикатедральний собор', text1: 'Головний римо-католицький храм Львова.', text2: '⛪ Один із найстаріших храмів', svg: 'ticket', category: 'events', photos: ['https://picsum.photos/seed/lviv-cathedral/800/800'] },
-            { id: 'pl6', name: 'Кав\'ярня "Копальня кави"', coords: [49.8422, 24.0324], status: 'Легендарна кав\'ярня', text1: 'Атмосферна "шахта", де каву подають у дуже великих чашках.', text2: '☕ Обов\'язково скуштувати', svg: 'coffee', category: 'food', photos: ['https://picsum.photos/seed/lviv-coffeemine/800/800'] },
-            { id: 'pl7', name: 'Ресторан "Криївка"', coords: [49.8419, 24.0311], status: 'Тематичний ресторан УПА', text1: 'Один з найвідоміших ресторанів Львова з паролем на вході.', text2: '🔥 Бронювання наперед', svg: 'fire', category: 'food', photos: ['https://picsum.photos/seed/lviv-kryivka/800/800'] },
-            { id: 'pl8', name: 'Пивна ресторація "Правда"', coords: [49.8410, 24.0300], status: 'Броварня', text1: 'Власне пиво просто на місці, жива музика вечорами.', text2: '🍺 Власна броварня', svg: 'beer', category: 'food', photos: ['https://picsum.photos/seed/lviv-pravda/800/800'] },
-            { id: 'pl9', name: 'Львівська майстерня шоколаду', coords: [49.8407, 24.0325], status: 'Шоколадна крамниця', text1: 'Ручна робота, гарячий шоколад і сувеніри з какао.', text2: '🍫 Дегустація на місці', svg: 'bag', category: 'shopping', photos: ['https://picsum.photos/seed/lviv-chocolate/800/800'] },
-            { id: 'pl10', name: 'Вернісаж', coords: [49.8424, 24.0330], status: 'Сувенірний ринок', text1: 'Ринок картин, вишиванок та сувенірів під відкритим небом.', text2: '🎁 Подарунки та вишиванки', svg: 'bag', category: 'shopping', photos: ['https://picsum.photos/seed/lviv-vernisage/800/800'] }
-        ];
-
-        // ---- Постійний шар закладів: не залежить від живого запиту до Overpass (OSM), тож завжди видимий ----
-        map.createPane('placesPane');
-        map.getPane('placesPane').style.zIndex = 640; // вище власних аватарок (markerPane 600) — цей шар завжди зверху
-        layerGroups.places = L.layerGroup().addTo(map);
-        places.forEach(pl => {
-            const icon = L.divIcon({
-                className: 'place-focus-marker-wrap',
-                html: `<div class="place-focus-marker">${svgIcons[pl.svg] || placeBadgeSvg}</div>`,
-                iconSize: [34, 34], iconAnchor: [17, 34]
-            });
-            const marker = L.marker(pl.coords, { icon, pane: 'placesPane' }).addTo(layerGroups.places);
-            marker.on('click', (e) => {
-                L.DomEvent.stopPropagation(e);
-                showSidebar({ id: pl.id, type: 'place', name: pl.name, coords: pl.coords, status: pl.status, photos: pl.photos, text1: pl.text1, text2: pl.text2, svg: pl.svg, category: pl.category });
-            });
-        });
+        // Масив "places" живить стрічку "Сьогодні" на Головній для карток закладів, у яких є власна
+        // сторінка (фото/опис/купон). Реальні точки на самій карті — окремо, у живому OSM-шарі нижче.
+        const places = [];
 
         let currentActiveItem = null; let currentChatRef = null; let heroPhotoIndex = 0; let chatTabOrigin = null;
 
