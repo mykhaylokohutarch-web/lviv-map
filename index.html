@@ -1080,9 +1080,12 @@
         #screen-ig-profile { background: var(--bg-color); }
         .ig-top-bar {
             position: absolute; top: 0; left: 0; right: 0; z-index: 20;
-            display: flex; align-items: center; justify-content: space-between;
-            padding: calc(14px + env(safe-area-inset-top, 0px)) 12px 2px 1cm;
+            display: flex; flex-direction: column;
+            padding: calc(8px + env(safe-area-inset-top, 0px)) 0 2px;
         }
+        /* Ім'я — окремим рядком, вище і по центру, під "островком". */
+        .ig-top-bar-name-row { text-align: center; padding: 0 16px; }
+        .ig-top-bar-icons-row { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; padding: 0 12px 0 1cm; }
         .ig-more-btn {
             width: 34px; height: 34px; border-radius: 50%;
             background: rgba(0,0,0,0.28); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
@@ -1093,10 +1096,10 @@
         .ig-top-bar-spacer { width: 34px; height: 34px; flex-shrink: 0; }
         /* Ім'я по центру верхньої панелі, під "островком" — решта тексту (нік, біо, статистика)
            лишається на своєму місці поруч з аватаркою нижче. */
-        .ig-top-bar-name { flex: 1 1 auto; min-width: 0; text-align: center; font-size: 16px; font-weight: 700; color: var(--text-color); letter-spacing: -0.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0; padding: 0 8px; }
+        .ig-top-bar-name { flex: none; min-width: 0; text-align: center; font-size: 16px; font-weight: 700; color: var(--text-color); letter-spacing: -0.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0; }
         #ig-content { flex-grow: 1; overflow-y: auto; touch-action: pan-y; -webkit-overflow-scrolling: touch; padding-bottom: 110px; box-sizing: border-box; }
 
-        .ig-hero { display: flex; align-items: center; gap: 12px; padding: calc(66px + env(safe-area-inset-top, 0px)) 16px 8px; background: var(--bg-color); }
+        .ig-hero { display: flex; align-items: center; gap: 12px; padding: calc(78px + env(safe-area-inset-top, 0px)) 16px 8px; background: var(--bg-color); }
         .ig-avatar { width: 88px; height: 88px; border-radius: 50%; background-size: cover; background-position: center; background-color: #2c2c2e; box-shadow: 0 4px 14px rgba(0,0,0,0.16); cursor: pointer; transition: transform 0.15s ease; flex-shrink: 0; }
         .ig-avatar:active { transform: scale(0.96); }
         .ig-hero-mid { flex: 1 1 auto; min-width: 0; text-align: left; }
@@ -1349,9 +1352,11 @@
     <!-- ==================== Сторінка людини: власний мінімалістичний стиль (не інстаграм) ==================== -->
     <div id="screen-ig-profile" class="app-screen">
         <div class="ig-top-bar">
-            <button class="ig-more-btn" id="ig-settings-btn" aria-label="Налаштування"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82A1.65 1.65 0 0 0 3 9.09H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 4.6a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.11.35.35.66.68.85.28.16.6.24.92.24H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button>
-            <p class="ig-top-bar-name" id="ig-top-name"></p>
-            <span class="ig-top-bar-spacer" aria-hidden="true"></span>
+            <div class="ig-top-bar-name-row"><p class="ig-top-bar-name" id="ig-top-name"></p></div>
+            <div class="ig-top-bar-icons-row">
+                <button class="ig-more-btn" id="ig-settings-btn" aria-label="Налаштування"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82A1.65 1.65 0 0 0 3 9.09H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 4.6a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.11.35.35.66.68.85.28.16.6.24.92.24H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button>
+                <span class="ig-top-bar-spacer" aria-hidden="true"></span>
+            </div>
         </div>
         <div id="ig-content">
             <div class="ig-hero">
