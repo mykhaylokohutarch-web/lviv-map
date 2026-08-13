@@ -861,27 +861,78 @@
             background: rgba(120,120,128,0.16); color: var(--text-color); font-size: 15px; font-weight: 600; cursor: pointer;
         }
 
-        /* ---- Модалка "Налаштування" — той самий bottom-sheet стиль, що й "Додати друга" ---- */
+        /* ---- Модалка "Налаштування" — iOS-стиль: згруповані картки з кольоровими іконками ---- */
         #settings-modal {
             display: none; position: fixed; inset: 0; z-index: 3100;
             background: rgba(0,0,0,0.4); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             align-items: flex-end; justify-content: center;
         }
         body.dark-theme #settings-modal { background: rgba(0,0,0,0.65); }
-        #settings-modal .add-friend-sheet h3 { margin-bottom: 14px; }
+        .settings-sheet {
+            width: 100%; max-width: 480px; background: var(--card-bg); color: var(--text-color);
+            border-radius: 22px 22px 0 0; padding: 10px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+            box-sizing: border-box; max-height: 82vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+        }
+        .settings-sheet-handle { width: 36px; height: 4px; border-radius: 2px; background: rgba(120,120,128,0.35); margin: 6px auto 16px; }
+        .settings-sheet h3 { margin: 0 0 18px; font-size: 20px; font-weight: 700; text-align: center; }
+        .settings-section { margin-bottom: 22px; }
+        .settings-section:last-of-type { margin-bottom: 6px; }
+        .settings-section-title { margin: 0 0 6px; padding: 0 12px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-secondary, #8e8e93); text-align: left; }
+        .settings-card { background: rgba(120,120,128,0.10); border-radius: 14px; overflow: hidden; }
+        body.dark-theme .settings-card { background: rgba(255,255,255,0.07); }
         .settings-row {
             display: flex; align-items: center; justify-content: space-between; width: 100%;
-            padding: 14px 4px; border: none; background: transparent; box-sizing: border-box;
-            border-top: 1px solid rgba(120,120,128,0.18); font-family: inherit; cursor: pointer;
-            -webkit-tap-highlight-color: transparent;
+            padding: 11px 12px; border: none; background: transparent; box-sizing: border-box;
+            font-family: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; text-align: left; gap: 10px;
         }
-        .settings-row-label { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 500; color: var(--text-color); }
-        .settings-row-label svg { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
-        .settings-row-danger .settings-row-label { color: #ff3b30; }
+        .settings-card .settings-row + .settings-row { border-top: 1px solid rgba(120,120,128,0.18); }
+        .settings-row-label { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 500; color: var(--text-color); min-width: 0; }
+        .settings-icon { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .settings-icon svg { width: 16px; height: 16px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        .settings-icon.c-blue { background: #0a84ff; } .settings-icon.c-purple { background: #af52de; }
+        .settings-icon.c-pink { background: #ff2d55; } .settings-icon.c-orange { background: #ff9500; }
+        .settings-icon.c-green { background: #34c759; } .settings-icon.c-gray { background: #8e8e93; }
+        .settings-row-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+        .settings-row-value { font-size: 14px; color: var(--text-secondary, #8e8e93); white-space: nowrap; }
+        .settings-chevron { width: 16px; height: 16px; stroke: #c7c7cc; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+        .settings-row-danger { justify-content: center; }
+        .settings-row-danger .settings-row-label { color: #ff3b30; justify-content: center; width: 100%; font-weight: 600; }
         .settings-toggle { width: 46px; height: 28px; border-radius: 14px; background: rgba(120,120,128,0.3); position: relative; flex-shrink: 0; transition: background 0.2s ease; }
         .settings-toggle.on { background: var(--accent-main); }
         .settings-toggle-knob { position: absolute; top: 2px; left: 2px; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: transform 0.2s ease; }
         .settings-toggle.on .settings-toggle-knob { transform: translateX(18px); }
+
+        /* ---- Редактор фото: єдиний квадратний кроп для всіх фото профілю + міні-набір налаштувань як в Інстаграмі ---- */
+        #photo-editor-modal {
+            display: none; position: fixed; inset: 0; z-index: 3300; background: #000;
+            flex-direction: column; box-sizing: border-box;
+            padding: env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px);
+        }
+        .pe-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; flex-shrink: 0; }
+        .pe-header button { background: none; border: none; font-size: 15px; font-weight: 600; color: #fff; cursor: pointer; padding: 6px; -webkit-tap-highlight-color: transparent; }
+        .pe-header #pe-done-btn { color: var(--accent-main, #0a84ff); }
+        .pe-header h3 { margin: 0; font-size: 15px; font-weight: 700; color: #fff; }
+        .pe-crop-wrap { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0; padding: 8px 16px; }
+        .pe-crop-frame {
+            position: relative; width: min(78vw, 340px); height: min(78vw, 340px); border-radius: 16px;
+            overflow: hidden; background: #111; touch-action: none; box-shadow: 0 0 0 3000px rgba(0,0,0,0.55);
+        }
+        .pe-crop-frame img { position: absolute; top: 0; left: 0; transform-origin: top left; user-select: none; -webkit-user-drag: none; pointer-events: none; will-change: transform; }
+        .pe-zoom-row { display: flex; align-items: center; gap: 10px; padding: 4px 24px 14px; flex-shrink: 0; }
+        .pe-zoom-row svg { width: 16px; height: 16px; stroke: #fff; fill: none; stroke-width: 1.8; flex-shrink: 0; opacity: 0.7; }
+        .pe-zoom-row input[type="range"] { flex: 1; accent-color: var(--accent-main, #0a84ff); }
+        .pe-filters { display: flex; gap: 10px; padding: 4px 16px 6px; overflow-x: auto; flex-shrink: 0; -webkit-overflow-scrolling: touch; }
+        .pe-filter-btn {
+            flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 6px;
+            background: none; border: none; cursor: pointer; -webkit-tap-highlight-color: transparent; padding: 4px;
+        }
+        .pe-filter-thumb { width: 52px; height: 52px; border-radius: 10px; background-size: cover; background-position: center; border: 2px solid transparent; box-sizing: border-box; }
+        .pe-filter-btn.active .pe-filter-thumb { border-color: var(--accent-main, #0a84ff); }
+        .pe-filter-btn span { font-size: 11px; color: rgba(255,255,255,0.75); }
+        .pe-filter-btn.active span { color: #fff; font-weight: 600; }
+        .pe-adjust-row { display: flex; align-items: center; gap: 10px; padding: 4px 24px calc(16px + env(safe-area-inset-bottom,0px)); flex-shrink: 0; }
+        .pe-adjust-row label { font-size: 13px; color: rgba(255,255,255,0.75); width: 84px; flex-shrink: 0; }
+        .pe-adjust-row input[type="range"] { flex: 1; accent-color: var(--accent-main, #0a84ff); }
 
         /* Стара нижня панель шарів і кнопка "моя сторінка" (топ-ліво) на карті — прибрані з вигляду
            за проханням користувача; елементи лишаються в DOM, бо на них досі посилається інший код,
@@ -1365,25 +1416,134 @@
         </div>
     </div>
 
-    <!-- ---- Модалка "Налаштування" (шестерня на сторінці профілю) ---- -->
+    <!-- ---- Модалка "Налаштування" (шестерня на сторінці профілю) — стиль iOS ---- -->
     <div id="settings-modal">
-        <div class="add-friend-sheet">
-            <div class="add-friend-sheet-handle"></div>
+        <div class="settings-sheet">
+            <div class="settings-sheet-handle"></div>
             <h3>Налаштування</h3>
-            <div class="settings-row" id="settings-theme-row">
-                <span class="settings-row-label">
-                    <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-                    Нічний режим
-                </span>
-                <span class="settings-toggle" id="settings-theme-toggle"><span class="settings-toggle-knob"></span></span>
+
+            <div class="settings-section">
+                <div class="settings-section-title">Профіль</div>
+                <div class="settings-card">
+                    <button class="settings-row" id="settings-edit-profile-row">
+                        <span class="settings-row-label">
+                            <span class="settings-icon c-blue"><svg viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg></span>
+                            Редагувати профіль
+                        </span>
+                        <svg class="settings-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"></path></svg>
+                    </button>
+                    <button class="settings-row" id="settings-private-row">
+                        <span class="settings-row-label">
+                            <span class="settings-icon c-purple"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span>
+                            Приватний акаунт
+                        </span>
+                        <span class="settings-toggle" id="settings-private-toggle"><span class="settings-toggle-knob"></span></span>
+                    </button>
+                </div>
             </div>
-            <button class="settings-row settings-row-danger" id="settings-logout-row">
-                <span class="settings-row-label">
-                    <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="M16 17l5-5-5-5"></path><path d="M21 12H9"></path></svg>
-                    Вийти з профілю
-                </span>
-            </button>
+
+            <div class="settings-section">
+                <div class="settings-section-title">Фото та відео</div>
+                <div class="settings-card">
+                    <button class="settings-row" id="settings-hq-photo-row">
+                        <span class="settings-row-label">
+                            <span class="settings-icon c-pink"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="9" cy="9" r="2"></circle><path d="M21 15l-5-5L5 21"></path></svg></span>
+                            Оригінальна якість фото
+                        </span>
+                        <span class="settings-toggle" id="settings-hq-photo-toggle"><span class="settings-toggle-knob"></span></span>
+                    </button>
+                    <button class="settings-row" id="settings-video-quality-row">
+                        <span class="settings-row-label">
+                            <span class="settings-icon c-orange"><svg viewBox="0 0 24 24"><path d="M23 7l-7 5 7 5V7z"></path><rect x="1" y="5" width="15" height="14" rx="2"></rect></svg></span>
+                            Якість відео
+                        </span>
+                        <span class="settings-row-right">
+                            <span class="settings-row-value" id="settings-video-quality-value">Авто</span>
+                            <svg class="settings-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"></path></svg>
+                        </span>
+                    </button>
+                    <button class="settings-row" id="settings-autosave-row">
+                        <span class="settings-row-label">
+                            <span class="settings-icon c-green"><svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><path d="M17 21v-8H7v8"></path><path d="M7 3v5h8"></path></svg></span>
+                            Зберігати в галерею
+                        </span>
+                        <span class="settings-toggle" id="settings-autosave-toggle"><span class="settings-toggle-knob"></span></span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <div class="settings-section-title">Сповіщення</div>
+                <div class="settings-card">
+                    <button class="settings-row" id="settings-notif-row">
+                        <span class="settings-row-label">
+                            <span class="settings-icon c-orange"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg></span>
+                            Сповіщення
+                        </span>
+                        <span class="settings-toggle" id="settings-notif-toggle"><span class="settings-toggle-knob"></span></span>
+                    </button>
+                    <button class="settings-row" id="settings-sound-row">
+                        <span class="settings-row-label">
+                            <span class="settings-icon c-blue"><svg viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4V5z"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg></span>
+                            Звук
+                        </span>
+                        <span class="settings-toggle" id="settings-sound-toggle"><span class="settings-toggle-knob"></span></span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <div class="settings-section-title">Вигляд</div>
+                <div class="settings-card">
+                    <button class="settings-row" id="settings-theme-row">
+                        <span class="settings-row-label">
+                            <span class="settings-icon c-gray"><svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg></span>
+                            Нічний режим
+                        </span>
+                        <span class="settings-toggle" id="settings-theme-toggle"><span class="settings-toggle-knob"></span></span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <div class="settings-card">
+                    <button class="settings-row settings-row-danger" id="settings-logout-row">
+                        <span class="settings-row-label">Вийти з профілю</span>
+                    </button>
+                </div>
+            </div>
+
             <button class="add-friend-close-btn" id="settings-close-btn">Закрити</button>
+        </div>
+    </div>
+
+    <!-- ---- Редактор фото: квадратний кроп (щоб усі фото профілю були однакового розміру) + міні-фільтри й яскравість ---- -->
+    <div id="photo-editor-modal">
+        <div class="pe-header">
+            <button id="pe-cancel-btn">Скасувати</button>
+            <h3>Редагувати фото</h3>
+            <button id="pe-done-btn">Готово</button>
+        </div>
+        <div class="pe-crop-wrap">
+            <div class="pe-crop-frame" id="pe-crop-frame">
+                <img id="pe-image" draggable="false" alt="">
+            </div>
+        </div>
+        <div class="pe-zoom-row">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path><path d="M8 11h6"></path></svg>
+            <input type="range" id="pe-zoom-range" min="100" max="300" value="100">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path><path d="M11 8v6"></path><path d="M8 11h6"></path></svg>
+        </div>
+        <div class="pe-filters" id="pe-filters">
+            <button class="pe-filter-btn active" data-filter="none"><span class="pe-filter-thumb" id="pe-thumb-none"></span><span>Оригінал</span></button>
+            <button class="pe-filter-btn" data-filter="vivid"><span class="pe-filter-thumb" id="pe-thumb-vivid"></span><span>Яскраво</span></button>
+            <button class="pe-filter-btn" data-filter="warm"><span class="pe-filter-thumb" id="pe-thumb-warm"></span><span>Тепло</span></button>
+            <button class="pe-filter-btn" data-filter="cool"><span class="pe-filter-thumb" id="pe-thumb-cool"></span><span>Прохолода</span></button>
+            <button class="pe-filter-btn" data-filter="bw"><span class="pe-filter-thumb" id="pe-thumb-bw"></span><span>Ч/Б</span></button>
+        </div>
+        <div class="pe-adjust-row">
+            <label>Яскравість</label>
+            <input type="range" id="pe-brightness-range" min="-40" max="40" value="0">
         </div>
     </div>
 
@@ -2467,6 +2627,133 @@
             });
         }
 
+        // ---- Редактор фото: однаковий квадратний кроп для всіх фото профілю + мінімальні налаштування (як в Інстаграмі) ----
+        const PE_FILTERS = {
+            none: '',
+            vivid: 'saturate(1.35) contrast(1.08)',
+            warm: 'sepia(0.28) saturate(1.15) contrast(1.03)',
+            cool: 'saturate(1.1) hue-rotate(-8deg) contrast(1.04) brightness(1.02)',
+            bw: 'grayscale(1) contrast(1.08)'
+        };
+        function openPhotoEditor(file) {
+            return new Promise((resolve, reject) => {
+                const modal = document.getElementById('photo-editor-modal');
+                const frame = document.getElementById('pe-crop-frame');
+                const imgEl = document.getElementById('pe-image');
+                const zoomRange = document.getElementById('pe-zoom-range');
+                const brightnessRange = document.getElementById('pe-brightness-range');
+                const filterBtns = document.querySelectorAll('#pe-filters .pe-filter-btn');
+                modal.style.display = 'flex';
+
+                const reader = new FileReader();
+                reader.onerror = () => reject(new Error('read-failed'));
+                reader.onload = (e) => {
+                    imgEl.src = e.target.result;
+                    Object.keys(PE_FILTERS).forEach(key => {
+                        const thumb = document.getElementById('pe-thumb-' + key);
+                        if (thumb) { thumb.style.backgroundImage = `url(${e.target.result})`; thumb.style.filter = PE_FILTERS[key]; }
+                    });
+                };
+                reader.readAsDataURL(file);
+
+                let naturalW = 0, naturalH = 0, frameSize = 0, baseScale = 1, zoom = 1;
+                let offX = 0, offY = 0, activeFilter = 'none', brightness = 0;
+                let dragging = false, startX = 0, startY = 0, startOffX = 0, startOffY = 0;
+
+                function applyTransform() {
+                    const scale = baseScale * zoom;
+                    imgEl.style.width = (naturalW * scale) + 'px';
+                    imgEl.style.height = (naturalH * scale) + 'px';
+                    imgEl.style.transform = `translate(${offX}px, ${offY}px)`;
+                }
+                function clampOffsets() {
+                    const scale = baseScale * zoom;
+                    const dispW = naturalW * scale, dispH = naturalH * scale;
+                    offX = Math.min(0, Math.max(frameSize - dispW, offX));
+                    offY = Math.min(0, Math.max(frameSize - dispH, offY));
+                }
+                function currentCssFilter() {
+                    const b = 1 + brightness / 100;
+                    return [PE_FILTERS[activeFilter], `brightness(${b})`].filter(Boolean).join(' ');
+                }
+
+                imgEl.onload = () => {
+                    naturalW = imgEl.naturalWidth; naturalH = imgEl.naturalHeight;
+                    frameSize = frame.getBoundingClientRect().width;
+                    baseScale = frameSize / Math.min(naturalW, naturalH);
+                    zoom = 1;
+                    offX = (frameSize - naturalW * baseScale) / 2;
+                    offY = (frameSize - naturalH * baseScale) / 2;
+                    imgEl.style.filter = currentCssFilter();
+                    clampOffsets();
+                    applyTransform();
+                };
+
+                function onPointerDown(e) {
+                    dragging = true; startX = e.clientX; startY = e.clientY; startOffX = offX; startOffY = offY;
+                    frame.setPointerCapture && e.pointerId != null && frame.setPointerCapture(e.pointerId);
+                }
+                function onPointerMove(e) {
+                    if (!dragging) return;
+                    offX = startOffX + (e.clientX - startX);
+                    offY = startOffY + (e.clientY - startY);
+                    clampOffsets();
+                    applyTransform();
+                }
+                function onPointerUp() { dragging = false; }
+                frame.addEventListener('pointerdown', onPointerDown);
+                frame.addEventListener('pointermove', onPointerMove);
+                frame.addEventListener('pointerup', onPointerUp);
+                frame.addEventListener('pointercancel', onPointerUp);
+                frame.addEventListener('pointerleave', onPointerUp);
+
+                function onZoomInput() { zoom = Number(zoomRange.value) / 100; clampOffsets(); applyTransform(); }
+                zoomRange.addEventListener('input', onZoomInput);
+
+                function onBrightnessInput() { brightness = Number(brightnessRange.value); imgEl.style.filter = currentCssFilter(); }
+                brightnessRange.addEventListener('input', onBrightnessInput);
+
+                function onFilterClick(e) {
+                    const btn = e.currentTarget;
+                    activeFilter = btn.getAttribute('data-filter');
+                    filterBtns.forEach(b => b.classList.toggle('active', b === btn));
+                    imgEl.style.filter = currentCssFilter();
+                }
+                filterBtns.forEach(btn => btn.addEventListener('click', onFilterClick));
+
+                function cleanup() {
+                    modal.style.display = 'none';
+                    frame.removeEventListener('pointerdown', onPointerDown);
+                    frame.removeEventListener('pointermove', onPointerMove);
+                    frame.removeEventListener('pointerup', onPointerUp);
+                    frame.removeEventListener('pointercancel', onPointerUp);
+                    frame.removeEventListener('pointerleave', onPointerUp);
+                    zoomRange.removeEventListener('input', onZoomInput);
+                    brightnessRange.removeEventListener('input', onBrightnessInput);
+                    filterBtns.forEach(btn => btn.removeEventListener('click', onFilterClick));
+                    zoomRange.value = 100; brightnessRange.value = 0;
+                    filterBtns.forEach(b => b.classList.toggle('active', b.getAttribute('data-filter') === 'none'));
+                    document.getElementById('pe-cancel-btn').onclick = null;
+                    document.getElementById('pe-done-btn').onclick = null;
+                }
+
+                document.getElementById('pe-cancel-btn').onclick = () => { cleanup(); resolve(null); };
+                document.getElementById('pe-done-btn').onclick = () => {
+                    const OUT = 640;
+                    const scale = baseScale * zoom;
+                    const srcX = -offX / scale, srcY = -offY / scale, srcSize = frameSize / scale;
+                    const canvas = document.createElement('canvas');
+                    canvas.width = OUT; canvas.height = OUT;
+                    const ctx = canvas.getContext('2d');
+                    ctx.filter = currentCssFilter();
+                    ctx.drawImage(imgEl, srcX, srcY, srcSize, srcSize, 0, 0, OUT, OUT);
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                    cleanup();
+                    resolve(dataUrl);
+                };
+            });
+        }
+
         function saveMyProfileToFirebase() {
             return set(ref(db, `profiles/${myId}`), {
                 name: myProfile.name, status: myProfile.status, about: myProfile.about,
@@ -2806,15 +3093,16 @@
         document.getElementById('prof-photo-input').addEventListener('change', async (e) => {
             const file = e.target.files[0]; if (!file) return;
             let dataUrl;
-            try { dataUrl = await resizeImageFile(file, 800, 0.6); }
+            try { dataUrl = await openPhotoEditor(file); }
             catch (err) { alert('Не вдалося обробити фото. Спробуйте інший файл.'); e.target.value = ''; return; }
+            e.target.value = '';
+            if (!dataUrl) return; // користувач натиснув "Скасувати"
             myProfile.photos = myProfile.photos || [];
             myProfile.photos.push(dataUrl);
             localStorage.setItem('chat_profile_edited', '1');
             if (currentActiveItem && currentActiveItem.id === myId) { currentActiveItem.photos = myProfile.photos; renderHeroMedia(myProfile.photos); goToHeroSlide(myProfile.photos.length - 1); }
             try { await saveMyProfileToFirebase(); }
             catch (err) { alert('Фото додано, але не вдалося зберегти на сервер. Перевірте інтернет-з’єднання і спробуйте ще раз.'); }
-            e.target.value = '';
         });
 
         // ---- Месенджер: список бесід ----
@@ -4076,10 +4364,7 @@
         function closeSettingsModal() {
             document.getElementById('settings-modal').style.display = 'none';
         }
-        document.getElementById('ig-settings-btn').addEventListener('click', () => {
-            if (igCurrentIsMine) { showSidebar(getMyProfileItem()); setTimeout(enterEditMode, 350); }
-            else { openSettingsModal(); }
-        });
+        document.getElementById('ig-settings-btn').addEventListener('click', openSettingsModal);
         document.getElementById('settings-close-btn').addEventListener('click', closeSettingsModal);
         document.getElementById('settings-theme-toggle').addEventListener('click', () => {
             document.getElementById('theme-toggle').click();
@@ -4089,6 +4374,45 @@
             closeSettingsModal();
             document.getElementById('prof-logout-btn').click();
         });
+        document.getElementById('settings-edit-profile-row').addEventListener('click', () => {
+            closeSettingsModal();
+            showSidebar(getMyProfileItem());
+            setTimeout(enterEditMode, 350);
+        });
+
+        // ---- Прості перемикачі "Профіль / Фото та відео / Сповіщення" — зберігаються в localStorage,
+        // за замовчуванням: приватність вимкнена, оригінальна якість фото увімкнена, автозбереження вимкнене,
+        // сповіщення та звук увімкнені.
+        function initSettingsToggle(rowId, toggleId, storageKey, defaultOn) {
+            const row = document.getElementById(rowId);
+            const toggleEl = document.getElementById(toggleId);
+            const isOn = () => (localStorage.getItem(storageKey) ?? (defaultOn ? '1' : '0')) === '1';
+            toggleEl.classList.toggle('on', isOn());
+            row.addEventListener('click', () => {
+                const next = !isOn();
+                localStorage.setItem(storageKey, next ? '1' : '0');
+                toggleEl.classList.toggle('on', next);
+            });
+        }
+        initSettingsToggle('settings-private-row', 'settings-private-toggle', 'settings_private_account', false);
+        initSettingsToggle('settings-hq-photo-row', 'settings-hq-photo-toggle', 'settings_hq_photo', true);
+        initSettingsToggle('settings-autosave-row', 'settings-autosave-toggle', 'settings_autosave_gallery', false);
+        initSettingsToggle('settings-notif-row', 'settings-notif-toggle', 'settings_notifications', true);
+        initSettingsToggle('settings-sound-row', 'settings-sound-toggle', 'settings_sound', true);
+
+        const videoQualityOptions = ['Авто', 'Висока', 'Економія'];
+        function initVideoQualityRow() {
+            const valueEl = document.getElementById('settings-video-quality-value');
+            const current = () => localStorage.getItem('settings_video_quality') || videoQualityOptions[0];
+            valueEl.textContent = current();
+            document.getElementById('settings-video-quality-row').addEventListener('click', () => {
+                const idx = videoQualityOptions.indexOf(current());
+                const next = videoQualityOptions[(idx + 1) % videoQualityOptions.length];
+                localStorage.setItem('settings_video_quality', next);
+                valueEl.textContent = next;
+            });
+        }
+        initVideoQualityRow();
 
         // Web NFC (NDEFReader) працює лише в Chrome для Android з увімкненим NFC — на iOS та
         // в інших браузерах його немає, тому QR-код завжди лишається робочим запасним варіантом.
