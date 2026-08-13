@@ -137,21 +137,33 @@
         }
 
         /* Мітки реальних закладів з OpenStreetMap — маленькі, приглушені, без постійного тексту.
-           Стиль навмисно бляклий/білястий, щоб не конкурувати з власними яскравими мітками застосунку
-           (людьми та кураторськими закладами) — саме так, як просив користувач: "приглушені, білі". */
+           Стиль — яскравий, з кольором за категорією і підписом назви, помітний на карті,
+           як хотів користувач: "видимі, як на Гуглі". */
         .osm-poi-marker { background: none !important; border: none !important; box-shadow: none !important; }
+        .osm-poi-marker-wrap { display: flex; flex-direction: column; align-items: center; }
         .osm-poi-dot {
-            width: 22px; height: 22px; border-radius: 50%;
-            background: rgba(255, 255, 255, 0.55);
-            border: 1px solid rgba(0, 0, 0, 0.06);
+            width: 28px; height: 28px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            font-size: 11px; line-height: 1;
-            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.10);
-            opacity: 0.85;
+            font-size: 15px; line-height: 1;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 7px rgba(0, 0, 0, 0.32);
             transition: var(--theme-transition), transform 0.2s ease;
         }
         .osm-poi-marker:active .osm-poi-dot { transform: scale(0.88); }
-        body.dark-theme .osm-poi-dot { background: rgba(44, 44, 46, 0.55); border-color: rgba(255, 255, 255, 0.08); }
+        .osm-poi-dot.cat-food { background: #ff5a36; }
+        .osm-poi-dot.cat-shopping { background: #af52de; }
+        .osm-poi-dot.cat-events { background: #ff9500; }
+        .osm-poi-dot.cat-services { background: #0a84ff; }
+        body.dark-theme .osm-poi-dot { border-color: rgba(28, 28, 30, 0.92); }
+        .osm-poi-label {
+            margin-top: 3px; padding: 2px 7px; border-radius: 8px;
+            background: var(--card-bg); color: var(--text-color);
+            font-size: 11px; font-weight: 600; white-space: nowrap;
+            max-width: 130px; overflow: hidden; text-overflow: ellipsis;
+            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.22);
+            display: none;
+        }
+        .leaflet-container.poi-labels-on .osm-poi-label { display: block; }
 
         /* Картка-підпис, що з'являється тільки при дотику до мітки (як картка "Салалат" у Bump) */
         .osm-poi-popup-wrap .leaflet-popup-content-wrapper {
@@ -1893,7 +1905,8 @@
         const OSM_CAT_GROUPS = ['food', 'shopping', 'events', 'services'];
         let osmPoiFetchTimer = null;
         let osmPoiAbortController = null;
-        const OSM_POI_MIN_ZOOM = 15; // не тягнемо крапки, поки не наблизились достатньо
+        const OSM_POI_MIN_ZOOM = 13; // з'являються раніше — помітні, як на Google Maps
+        const OSM_POI_LABEL_MIN_ZOOM = 17; // підписи назв — тільки коли наблизились впритул, щоб не захаращувати
 
         function osmPoiCategory(tags) {
             if (tags.amenity && /^(restaurant|cafe|bar|pub|fast_food|bakery|ice_cream|food_court|biergarten)$/.test(tags.amenity)) return { cat: 'food', emoji: '🍽️' };
@@ -1915,7 +1928,9 @@
             if (zoom >= 18) return 130;
             if (zoom >= 17) return 75;
             if (zoom >= 16) return 40;
-            return 18;
+            if (zoom >= 15) return 25;
+            if (zoom >= 14) return 14;
+            return 8;
         }
 
         function clearOsmPoiLayers() {
@@ -1949,13 +1964,13 @@
                         const { cat, emoji } = osmPoiCategory(el.tags);
                         const icon = L.divIcon({
                             className: 'osm-poi-marker',
-                            html: `<div class="osm-poi-dot cat-${cat}">${emoji}</div>`,
-                            iconSize: [22, 22], iconAnchor: [11, 11]
+                            html: `<div class="osm-poi-marker-wrap"><div class="osm-poi-dot cat-${cat}">${emoji}</div><div class="osm-poi-label">${escapeHtml(el.tags.name)}</div></div>`,
+                            iconSize: [28, 28], iconAnchor: [14, 14]
                         });
                         const marker = L.marker([el.lat, el.lon], { icon: icon, pane: 'osmPoiPane' }).addTo(layerGroups[cat]);
                         marker.bindPopup(
                             `<div class="osm-poi-popup"><span class="osm-poi-popup-icon">${emoji}</span><span class="osm-poi-popup-name">${escapeHtml(el.tags.name)}</span></div>`,
-                            { closeButton: false, offset: [0, -8], className: 'osm-poi-popup-wrap' }
+                            { closeButton: false, offset: [0, -10], className: 'osm-poi-popup-wrap' }
                         );
                         shown++;
                     }
@@ -1963,10 +1978,15 @@
                 .catch(() => { /* Overpass тимчасово недоступний або запит скасовано — просто лишаємо попередні мітки */ });
         }
 
+        function updatePoiLabelsVisibility() {
+            map.getContainer().classList.toggle('poi-labels-on', map.getZoom() >= OSM_POI_LABEL_MIN_ZOOM);
+        }
         map.on('moveend zoomend', () => {
+            updatePoiLabelsVisibility();
             clearTimeout(osmPoiFetchTimer);
             osmPoiFetchTimer = setTimeout(fetchOsmPois, 500);
         });
+        updatePoiLabelsVisibility();
         fetchOsmPois();
 
         // Весь інший JS-код (карта, логіка сайдбару, Firebase чат) залишається незмінним
