@@ -2184,7 +2184,37 @@
             ticket: `<svg class="place-icon-svg" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v3M16 2v3M3.5 9h17"/><rect x="3.5" y="4.5" width="17" height="16" rx="2"/></svg>`
         };
 
-        const places = [];
+        const placeBadgeSvg = `<svg viewBox="0 0 24 24"><path d="M12 22s7-7.58 7-12.5A7 7 0 0 0 5 9.5C5 14.42 12 22 12 22z"></path><circle cx="12" cy="9.5" r="2.3"></circle></svg>`;
+
+        const places = [
+            { id: 'pl1', name: 'Площа Ринок', coords: [49.8419, 24.0316], status: 'Історичний центр Львова', text1: 'Головна площа старого міста, оточена кам\'яницями та Ратушею.', text2: '🏛️ Пам\'ятка ЮНЕСКО', svg: 'ticket', category: 'services', photos: ['https://picsum.photos/seed/lviv-rynok/800/800'] },
+            { id: 'pl2', name: 'Львівська опера', coords: [49.8398, 24.0316], status: 'Театр опери та балету', text1: 'Один із найкрасивіших оперних театрів Європи, збудований у 1900 році.', text2: '🎭 Вистави щовечора', svg: 'ticket', category: 'events', photos: ['https://picsum.photos/seed/lviv-opera/800/800'] },
+            { id: 'pl3', name: 'Високий Замок', coords: [49.8443, 24.0361], status: 'Оглядовий майданчик', text1: 'Найвища точка міста з панорамою на весь Львів.', text2: '⛰️ Найкращий вид на місто', svg: 'ticket', category: 'events', photos: ['https://picsum.photos/seed/lviv-castle/800/800'] },
+            { id: 'pl4', name: 'Личаківський цвинтар', coords: [49.8323, 24.0565], status: 'Історичний некрополь', text1: 'Один із найстаріших і найкрасивіших цвинтарів Європи.', text2: '🌿 Музей просто неба', svg: 'ticket', category: 'events', photos: ['https://picsum.photos/seed/lviv-lychakiv/800/800'] },
+            { id: 'pl5', name: 'Латинська катедра', coords: [49.8412, 24.0308], status: 'Архикатедральний собор', text1: 'Головний римо-католицький храм Львова.', text2: '⛪ Один із найстаріших храмів', svg: 'ticket', category: 'events', photos: ['https://picsum.photos/seed/lviv-cathedral/800/800'] },
+            { id: 'pl6', name: 'Кав\'ярня "Копальня кави"', coords: [49.8422, 24.0324], status: 'Легендарна кав\'ярня', text1: 'Атмосферна "шахта", де каву подають у дуже великих чашках.', text2: '☕ Обов\'язково скуштувати', svg: 'coffee', category: 'food', photos: ['https://picsum.photos/seed/lviv-coffeemine/800/800'] },
+            { id: 'pl7', name: 'Ресторан "Криївка"', coords: [49.8419, 24.0311], status: 'Тематичний ресторан УПА', text1: 'Один з найвідоміших ресторанів Львова з паролем на вході.', text2: '🔥 Бронювання наперед', svg: 'fire', category: 'food', photos: ['https://picsum.photos/seed/lviv-kryivka/800/800'] },
+            { id: 'pl8', name: 'Пивна ресторація "Правда"', coords: [49.8410, 24.0300], status: 'Броварня', text1: 'Власне пиво просто на місці, жива музика вечорами.', text2: '🍺 Власна броварня', svg: 'beer', category: 'food', photos: ['https://picsum.photos/seed/lviv-pravda/800/800'] },
+            { id: 'pl9', name: 'Львівська майстерня шоколаду', coords: [49.8407, 24.0325], status: 'Шоколадна крамниця', text1: 'Ручна робота, гарячий шоколад і сувеніри з какао.', text2: '🍫 Дегустація на місці', svg: 'bag', category: 'shopping', photos: ['https://picsum.photos/seed/lviv-chocolate/800/800'] },
+            { id: 'pl10', name: 'Вернісаж', coords: [49.8424, 24.0330], status: 'Сувенірний ринок', text1: 'Ринок картин, вишиванок та сувенірів під відкритим небом.', text2: '🎁 Подарунки та вишиванки', svg: 'bag', category: 'shopping', photos: ['https://picsum.photos/seed/lviv-vernisage/800/800'] }
+        ];
+
+        // ---- Постійний шар закладів: не залежить від живого запиту до Overpass (OSM), тож завжди видимий ----
+        map.createPane('placesPane');
+        map.getPane('placesPane').style.zIndex = 640; // вище власних аватарок (markerPane 600) — цей шар завжди зверху
+        layerGroups.places = L.layerGroup().addTo(map);
+        places.forEach(pl => {
+            const icon = L.divIcon({
+                className: 'place-focus-marker-wrap',
+                html: `<div class="place-focus-marker">${svgIcons[pl.svg] || placeBadgeSvg}</div>`,
+                iconSize: [34, 34], iconAnchor: [17, 34]
+            });
+            const marker = L.marker(pl.coords, { icon, pane: 'placesPane' }).addTo(layerGroups.places);
+            marker.on('click', (e) => {
+                L.DomEvent.stopPropagation(e);
+                showSidebar({ id: pl.id, type: 'place', name: pl.name, coords: pl.coords, status: pl.status, photos: pl.photos, text1: pl.text1, text2: pl.text2, svg: pl.svg, category: pl.category });
+            });
+        });
 
         let currentActiveItem = null; let currentChatRef = null; let heroPhotoIndex = 0; let chatTabOrigin = null;
 
@@ -3862,7 +3892,6 @@
             return entries;
         }
 
-        const placeBadgeSvg = `<svg viewBox="0 0 24 24"><path d="M12 22s7-7.58 7-12.5A7 7 0 0 0 5 9.5C5 14.42 12 22 12 22z"></path><circle cx="12" cy="9.5" r="2.3"></circle></svg>`;
 
         // "Топ за сьогодні": люди + заклади разом, одна сітка кіл (як у Instagram-прикладі),
         // без окремих екранів чи списків — усе прокручується вниз, а карта відкривається лише кнопкою.
