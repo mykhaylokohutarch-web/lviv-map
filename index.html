@@ -299,11 +299,18 @@
         .hero-story-thumb-inner { width: 100%; height: 100%; border-radius: 50%; background-size: cover; background-position: center; background-color: #1c1c1e; border: none; box-sizing: border-box; position: relative; overflow: hidden; }
         .hero-story-thumb-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; pointer-events: none; }
 
-        /* ---- Меню вибору типу сторіс (фото/відео) ---- */
-        #story-add-sheet { display: none; position: fixed; inset: 0; z-index: 4500; background: rgba(0,0,0,0.5); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); align-items: flex-end; justify-content: center; }
-        .story-add-card { width: 100%; max-width: 420px; background: rgba(28,28,30,0.92); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-radius: 22px 22px 0 0; padding: 10px 16px calc(20px + env(safe-area-inset-bottom, 0px)); box-sizing: border-box; display: flex; flex-direction: column; gap: 8px; }
-        .story-add-card button { background: rgba(255,255,255,0.07); border: none; color: #fff; font-size: 15px; font-weight: 600; padding: 15px; border-radius: 14px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-        .story-add-card #story-add-cancel-btn { background: none; color: rgba(255,255,255,0.5); font-weight: 500; margin-top: 4px; }
+        /* ---- Меню вибору типу сторіс (фото/відео), а також фото/відео на сторінку профілю ---- */
+        #story-add-sheet, #prof-media-add-sheet, #chat-attach-sheet { display: none; position: fixed; inset: 0; z-index: 4500; background: rgba(0,0,0,0.5); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); align-items: flex-end; justify-content: center; }
+        .story-add-card, .chat-attach-card { width: 100%; max-width: 420px; background: rgba(28,28,30,0.92); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-radius: 22px 22px 0 0; padding: 10px 16px calc(20px + env(safe-area-inset-bottom, 0px)); box-sizing: border-box; display: flex; flex-direction: column; gap: 8px; }
+        .story-add-card button, .chat-attach-card button { background: rgba(255,255,255,0.07); border: none; color: #fff; font-size: 15px; font-weight: 600; padding: 15px; border-radius: 14px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        .story-add-card #story-add-cancel-btn, .chat-attach-card #chat-attach-cancel-btn { background: none; color: rgba(255,255,255,0.5); font-weight: 500; margin-top: 4px; }
+        #chat-attach-btn {
+            flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; border: none; background: transparent;
+            color: var(--icon-color); display: flex; align-items: center; justify-content: center; cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        #chat-attach-btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        #profile-sidebar.chat-mode #chat-attach-btn { color: rgba(255,255,255,0.65); }
 
         /* ---- Прихована адмін-панель: тільки для розробника, видалення акаунтів ---- */
         #admin-panel { display: none; position: fixed; inset: 0; z-index: 6000; background: #000; flex-direction: column; }
@@ -641,6 +648,19 @@
         body.dark-theme .msg-other { background: rgba(255, 255, 255, 0.1); }
         .msg-me { background: var(--accent-main); color: white; align-self: flex-end; }
         .msg-user-name { display: block; font-weight: 600; font-size: 10px; color: var(--text-secondary); margin-bottom: 2px; }
+        li.msg-media { padding: 4px !important; overflow: hidden; }
+        li.msg-media img, li.msg-media video { display: block; width: 100%; max-width: 220px; border-radius: 14px; cursor: pointer; }
+        .msg-file-card { display: flex; align-items: center; gap: 10px; min-width: 170px; cursor: pointer; }
+        .msg-file-icon { width: 34px; height: 34px; border-radius: 10px; background: rgba(255,255,255,0.15); flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+        .msg-file-icon svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        .msg-file-info { display: flex; flex-direction: column; overflow: hidden; }
+        .msg-file-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+        .msg-file-size { font-size: 11px; opacity: 0.7; }
+        .msg-location-card { display: flex; align-items: center; gap: 10px; cursor: pointer; min-width: 170px; }
+        .msg-location-icon { width: 34px; height: 34px; border-radius: 50%; background: var(--ultramarine-gradient); flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+        .msg-location-icon svg { width: 17px; height: 17px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        .msg-location-text { font-size: 13px; font-weight: 600; }
+        .msg-location-sub { font-size: 11px; opacity: 0.7; }
         .chat-input-row { display: flex; gap: 8px; background: rgba(0, 0, 0, 0.04); padding: 6px 6px 6px 14px; border-radius: 22px; flex-shrink: 0; align-items: center; margin-bottom: 4px; transition: var(--theme-transition); }
         body.dark-theme .chat-input-row { background: rgba(255, 255, 255, 0.06); }
         .chat-input-row input { flex-grow: 1; border: none; background: transparent; font-size: 14px; outline: none; color: var(--text-color); user-select: text; }
@@ -1240,6 +1260,7 @@
                 <button id="prof-logout-btn" class="danger" aria-label="Вийти з профілю"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="M16 17l5-5-5-5"></path><path d="M21 12H9"></path></svg></button>
             </div>
             <input type="file" id="prof-photo-input" accept="image/*" style="display:none;">
+            <input type="file" id="prof-video-input" accept="video/*" style="display:none;">
 
             <div class="hero-info-panel" id="hero-info-panel">
                 <div class="hero-info-top">
@@ -1292,10 +1313,25 @@
             <div id="chat-thread-wrap">
                 <ul id="chat-messages"></ul>
                 <div class="chat-input-row">
+                    <button id="chat-attach-btn" type="button" aria-label="Додати вкладення"><svg viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg></button>
                     <input type="text" id="chat-msg-input" placeholder="Повідомлення" />
                     <button id="chat-send-btn">▲</button>
                 </div>
             </div>
+        </div>
+
+        <!-- ---- Меню вибору вкладення для чату ---- -->
+        <div id="chat-attach-sheet">
+            <div class="chat-attach-card">
+                <button id="chat-attach-photo-btn">📷 Фото</button>
+                <button id="chat-attach-video-btn">🎥 Відео</button>
+                <button id="chat-attach-file-btn">📎 Файл</button>
+                <button id="chat-attach-location-btn">📍 Локація</button>
+                <button id="chat-attach-cancel-btn">Скасувати</button>
+            </div>
+            <input type="file" id="chat-attach-photo-input" accept="image/*" style="display:none;">
+            <input type="file" id="chat-attach-video-input" accept="video/*" style="display:none;">
+            <input type="file" id="chat-attach-file-input" style="display:none;">
         </div>
 
         <!-- Попап вибору кольору "таблетки" чату -->
@@ -1604,7 +1640,7 @@
 
             <section class="ob-step" data-step="story">
                 <h2 class="ob-title">Додайте Story</h2>
-                <p class="ob-sub">Фото або відео до 20 секунд</p>
+                <p class="ob-sub">Фото або відео до 1 хвилини</p>
                 <div class="ob-story-picker">
                     <div class="ob-story-preview" id="ob-story-preview">
                         <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M23 7l-7 5 7 5V7z"></path><rect x="1" y="5" width="15" height="14" rx="2"></rect></svg>
@@ -1626,11 +1662,20 @@
     <div id="story-add-sheet">
         <div class="story-add-card">
             <button id="story-add-photo-btn">📷 Фото</button>
-            <button id="story-add-video-btn">🎥 Відео (до 20с)</button>
+            <button id="story-add-video-btn">🎥 Відео (до 1 хв)</button>
             <button id="story-add-cancel-btn">Скасувати</button>
         </div>
         <input type="file" id="story-add-photo-input" accept="image/*" style="display:none;">
         <input type="file" id="story-add-video-input" accept="video/*" style="display:none;">
+    </div>
+
+    <!-- ---- Меню вибору "Фото / Відео" для додавання на сторінку профілю ---- -->
+    <div id="prof-media-add-sheet">
+        <div class="story-add-card">
+            <button id="prof-media-add-photo-btn">📷 Фото</button>
+            <button id="prof-media-add-video-btn">🎥 Відео (до 1 хв)</button>
+            <button id="prof-media-add-cancel-btn">Скасувати</button>
+        </div>
     </div>
 
     <!-- ---- Прихована адмін-панель: доступна лише через секретний жест + пароль ---- -->
@@ -1711,6 +1756,141 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
+
+        // ==== Зберігання усіх медіа (фото й відео) на сервері Telegram (замість Firebase) ====
+        // Як налаштувати (одноразово):
+        //   1) У Telegram напишіть @BotFather → /newbot → отримаєте токен виду "123456789:AA...".
+        //      (Якщо у вас вже є бот для цього застосунку — можна використати той самий токен,
+        //      новий бот не потрібен.) Вставте токен у TELEGRAM_BOT_TOKEN нижче.
+        //   2) Створіть приватний канал (наприклад "Мої медіа-архіви"), додайте туди бота
+        //      як адміністратора (права на публікацію повідомлень достатньо).
+        //   3) Дізнайтесь chat_id каналу: перешліть будь-яке повідомлення з каналу боту
+        //      @userinfobot, або відкрийте в браузері
+        //      https://api.telegram.org/bot<ВАШ_ТОКЕН>/getUpdates після того, як напишете щось
+        //      у каналі — у відповіді буде поле "chat":{"id": -100...}. Вставте це число (разом
+        //      зі знаком "-") у TELEGRAM_CHAT_ID нижче.
+        // Усі фото та відео вивантажуються напряму з браузера користувача на сервери Telegram і
+        // там і зберігаються назавжди (у Firebase лишається тільки посилання на файл, не сам файл).
+        const TELEGRAM_BOT_TOKEN = 'ВАШ_ТОКЕН_БОТА';
+        const TELEGRAM_CHAT_ID = 'ВАШ_CHAT_ID';
+        // Telegram дозволяє звантажувати назад (getFile) файли розміром не більше ~20 МБ —
+        // тож перевіряємо розмір ще до спроби завантаження, з невеликим запасом.
+        const TELEGRAM_MAX_VIDEO_BYTES = 19 * 1024 * 1024;
+
+        function telegramIsConfigured() {
+            return TELEGRAM_BOT_TOKEN && !TELEGRAM_BOT_TOKEN.startsWith('ВАШ_') &&
+                   TELEGRAM_CHAT_ID && !TELEGRAM_CHAT_ID.startsWith('ВАШ_');
+        }
+
+        // Людяне повідомлення про помилку завантаження — однакове для фото й відео.
+        function mediaUploadErrorMessage(err) {
+            if (err && err.message === 'telegram-not-configured') {
+                return 'Завантаження медіа ще не налаштоване: вкажіть TELEGRAM_BOT_TOKEN і TELEGRAM_CHAT_ID у коді застосунку.';
+            }
+            return 'Не вдалося завантажити файл на сервер. Перевірте з’єднання і спробуйте ще раз.';
+        }
+
+        // Невеликий оверлей із прогресом — показуємо на час завантаження фото/відео на сервер.
+        function ensureUploadOverlay() {
+            let el = document.getElementById('tg-upload-overlay');
+            if (el) return el;
+            el = document.createElement('div');
+            el.id = 'tg-upload-overlay';
+            el.style.cssText = 'display:none; position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,0.55); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); align-items:center; justify-content:center; flex-direction:column; gap:14px;';
+            el.innerHTML = `
+                <div style="width:40px; height:40px; border-radius:50%; border:3px solid rgba(255,255,255,0.25); border-top-color:#fff; animation: tg-spin 0.8s linear infinite;"></div>
+                <div id="tg-upload-overlay-text" style="color:#fff; font-size:14px; font-weight:600;">Завантаження…</div>
+                <style>@keyframes tg-spin { to { transform: rotate(360deg); } }</style>
+            `;
+            document.body.appendChild(el);
+            return el;
+        }
+        let uploadOverlayLabel = 'Завантаження…';
+        function showUploadOverlay(text) {
+            uploadOverlayLabel = text || 'Завантаження…';
+            const el = ensureUploadOverlay();
+            document.getElementById('tg-upload-overlay-text').innerText = uploadOverlayLabel;
+            el.style.display = 'flex';
+        }
+        function updateUploadOverlayProgress(fraction) {
+            const t = document.getElementById('tg-upload-overlay-text');
+            if (t) t.innerText = `${uploadOverlayLabel} ${Math.round(fraction * 100)}%`;
+        }
+        function hideUploadOverlay() {
+            const el = document.getElementById('tg-upload-overlay');
+            if (el) el.style.display = 'none';
+        }
+
+        // Дізнається пряме постійне посилання на файл за його file_id.
+        // kind === 'video' додає до URL хвостик "#v.mp4", щоб застосунок безпомилково впізнавав
+        // відео за розширенням у посиланні (фрагмент після # на сервер не надсилається і на
+        // завантаження файлу жодним чином не впливає).
+        function resolveTelegramFileUrl(fileId, kind) {
+            return fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getFile?file_id=${encodeURIComponent(fileId)}`)
+                .then(r => r.json())
+                .then(res => {
+                    if (!res.ok) throw new Error(res.description || 'getFile-failed');
+                    const path = res.result.file_path;
+                    const base = `https://api.telegram.org/file/bot${TELEGRAM_BOT_TOKEN}/${path}`;
+                    return kind === 'video' ? `${base}#v.mp4` : base;
+                });
+        }
+
+        // Універсальне завантаження файлу (фото чи відео) на сервер Telegram — повертає постійне
+        // посилання на нього. Прогрес завантаження оновлює оверлей, показаний викликачем заздалегідь.
+        function uploadMediaToTelegram(blob, filename, kind) {
+            return new Promise((resolve, reject) => {
+                if (!telegramIsConfigured()) {
+                    reject(new Error('telegram-not-configured'));
+                    return;
+                }
+                const method = kind === 'video' ? 'sendVideo' : (kind === 'file' ? 'sendDocument' : 'sendPhoto');
+                const field = kind === 'video' ? 'video' : (kind === 'file' ? 'document' : 'photo');
+                const form = new FormData();
+                form.append('chat_id', TELEGRAM_CHAT_ID);
+                form.append(field, blob, filename);
+                if (kind === 'video') form.append('supports_streaming', 'true');
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/${method}`);
+                xhr.upload.onprogress = (e) => {
+                    if (e.lengthComputable) updateUploadOverlayProgress(e.loaded / e.total);
+                };
+                xhr.onload = () => {
+                    let res;
+                    try { res = JSON.parse(xhr.responseText); }
+                    catch (err) { reject(new Error('bad-response')); return; }
+                    if (!res.ok) { reject(new Error(res.description || 'telegram-error')); return; }
+                    let fileObj;
+                    if (kind === 'video') {
+                        fileObj = res.result.video || res.result.document;
+                    } else if (kind === 'file') {
+                        fileObj = res.result.document;
+                    } else {
+                        // Telegram повертає масив розмірів фото — останній елемент найбільший.
+                        const sizes = res.result.photo;
+                        fileObj = sizes && sizes.length ? sizes[sizes.length - 1] : null;
+                    }
+                    if (!fileObj || !fileObj.file_id) { reject(new Error('no-file-in-response')); return; }
+                    resolveTelegramFileUrl(fileObj.file_id, kind).then(resolve).catch(reject);
+                };
+                xhr.onerror = () => reject(new Error('network-error'));
+                xhr.send(form);
+            });
+        }
+
+        // Файл (документ): та сама механіка завантаження, що й фото/відео.
+        function uploadFileToTelegram(file) {
+            return uploadMediaToTelegram(file, file.name || 'file', 'file');
+        }
+
+        // Відео: тонка обгортка над uploadMediaToTelegram — лишена для сумісності викликів нижче.
+        function uploadVideoToTelegram(file) {
+            return uploadMediaToTelegram(file, file.name || 'video.mp4', 'video');
+        }
+        // Фото: та сама обгортка, для викликів, що вже мають готовий Blob.
+        function uploadPhotoToTelegram(blob, filename) {
+            return uploadMediaToTelegram(blob, filename || 'photo.jpg', 'photo');
+        }
 
         // ---- Улюблене: справжній стан (не декоративний), зберігається на пристрої ----
         function loadFavorites() {
@@ -2458,7 +2638,7 @@
         let msgSwipeStartX = 0, msgSwipeStartY = 0, msgSwipeStartTime = 0, msgSwipeTracking = false;
         document.addEventListener('touchstart', (e) => {
             if (!(sidebar.classList.contains('chat-mode') && sidebar.classList.contains('active'))) { msgSwipeTracking = false; return; }
-            if (e.target.closest('.chat-input-row') || e.target.closest('#chat-send-btn')) { msgSwipeTracking = false; return; }
+            if (e.target.closest('.chat-input-row') || e.target.closest('#chat-send-btn') || e.target.closest('#chat-attach-sheet')) { msgSwipeTracking = false; return; }
             msgSwipeStartX = e.touches[0].clientX; msgSwipeStartY = e.touches[0].clientY; msgSwipeStartTime = Date.now(); msgSwipeTracking = true;
         }, { passive: true });
         document.addEventListener('touchend', (e) => {
@@ -2480,6 +2660,44 @@
         let currentChatOtherName = null;
         let currentChatOtherPhoto = null;
 
+        function buildMessageContent(li, msg) {
+            const type = msg.type || 'text';
+            if (type === 'image') {
+                li.classList.add('msg-media');
+                const img = document.createElement('img'); img.src = msg.url; img.loading = 'lazy';
+                img.addEventListener('click', () => openStoryViewer([{ type: 'photo', url: msg.url, ts: msg.timestamp || Date.now() }], 0, 'Фото', { showTime: false, autoAdvance: false }));
+                li.appendChild(img);
+            } else if (type === 'video') {
+                li.classList.add('msg-media');
+                const video = document.createElement('video'); video.src = msg.url; video.controls = true; video.playsInline = true;
+                li.appendChild(video);
+            } else if (type === 'file') {
+                const card = document.createElement('div'); card.className = 'msg-file-card';
+                card.innerHTML = `<div class="msg-file-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path></svg></div>
+                    <div class="msg-file-info"><span class="msg-file-name">${escapeHtml(msg.fileName || 'Файл')}</span><span class="msg-file-size">${msg.fileSize ? formatFileSize(msg.fileSize) : ''}</span></div>`;
+                card.addEventListener('click', () => window.open(msg.url, '_blank'));
+                li.appendChild(card);
+            } else if (type === 'location') {
+                const card = document.createElement('div'); card.className = 'msg-location-card';
+                card.innerHTML = `<div class="msg-location-icon"><svg viewBox="0 0 24 24"><path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg></div>
+                    <div><div class="msg-location-text">Локація</div><div class="msg-location-sub">Показати на карті</div></div>`;
+                card.addEventListener('click', () => {
+                    window.closeProfile();
+                    showScreen('map');
+                    map.setView([msg.lat, msg.lng], 17, { animate: true });
+                });
+                li.appendChild(card);
+            } else {
+                li.appendChild(document.createTextNode(msg.text || ''));
+            }
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' Б';
+            if (bytes < 1024 * 1024) return Math.round(bytes / 1024) + ' КБ';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' МБ';
+        }
+
         function loadChat(path) {
             const chatMessagesUl = document.getElementById('chat-messages'); chatMessagesUl.innerHTML = '';
             if (currentChatRef) off(currentChatRef);
@@ -2491,8 +2709,9 @@
                 const li = document.createElement('li'); li.className = isMine ? 'msg-me' : 'msg-other';
                 if (!isMine) {
                     const nameSpan = document.createElement('span'); nameSpan.className = 'msg-user-name'; nameSpan.innerText = senderName;
-                    li.appendChild(nameSpan); li.appendChild(document.createTextNode(msg.text));
-                } else { li.innerText = msg.text; }
+                    li.appendChild(nameSpan);
+                }
+                buildMessageContent(li, msg);
                 chatMessagesUl.appendChild(li); chatMessagesUl.scrollTop = chatMessagesUl.scrollHeight;
             });
         }
@@ -2517,29 +2736,89 @@
             loadChat(currentChatPath);
         }
 
-        function sendMessage() {
-            if (!currentChatPath) return;
-            const input = document.getElementById('chat-msg-input'); const text = input.value.trim(); if (!text) return;
-            push(ref(db, currentChatPath), { senderId: myId, senderName: myName, text: text, timestamp: Date.now() });
-            input.value = '';
+        // Оновлює прев'ю бесіди в списку чатів (текст останнього повідомлення) — і в групі, і в приватній.
+        // Використовується і для звичайного тексту, і для вкладень (фото/відео/файл/локація).
+        function updateConvoPreview(previewText) {
             if (currentChatIsGroup && currentGroupId) {
-                // Оновлюємо список бесід месенджера в усіх учасників групи одночасно
                 const myLabel = (myProfile && myProfile.name) || myName;
                 currentGroupMembers.forEach(uid => {
                     set(ref(db, `userConvos/${uid}/${currentGroupId}`), {
                         name: currentGroupName || 'Група', photo: '', ts: Date.now(),
-                        lastMsg: (uid === myId ? text : `${myLabel}: ${text}`), lastMine: uid === myId,
+                        lastMsg: (uid === myId ? previewText : `${myLabel}: ${previewText}`), lastMine: uid === myId,
                         isGroup: true, groupId: currentGroupId
                     });
                 });
             } else if (currentChatOtherId) {
-                // Оновлюємо список бесід месенджера з обох боків, щоб розмова з'явилась у нас і у співрозмовника
-                set(ref(db, `userConvos/${myId}/${currentChatOtherId}`), { name: currentChatOtherName || 'Гість', photo: currentChatOtherPhoto || '', ts: Date.now(), lastMsg: text, lastMine: true });
-                set(ref(db, `userConvos/${currentChatOtherId}/${myId}`), { name: (myProfile && myProfile.name) || myName, photo: (myProfile && myProfile.photos && myProfile.photos[0]) || '', ts: Date.now(), lastMsg: text, lastMine: false });
+                set(ref(db, `userConvos/${myId}/${currentChatOtherId}`), { name: currentChatOtherName || 'Гість', photo: currentChatOtherPhoto || '', ts: Date.now(), lastMsg: previewText, lastMine: true });
+                set(ref(db, `userConvos/${currentChatOtherId}/${myId}`), { name: (myProfile && myProfile.name) || myName, photo: (myProfile && myProfile.photos && myProfile.photos[0]) || '', ts: Date.now(), lastMsg: previewText, lastMine: false });
             }
+        }
+
+        function sendMessage() {
+            if (!currentChatPath) return;
+            const input = document.getElementById('chat-msg-input'); const text = input.value.trim(); if (!text) return;
+            push(ref(db, currentChatPath), { type: 'text', senderId: myId, senderName: myName, text: text, timestamp: Date.now() });
+            input.value = '';
+            updateConvoPreview(text);
         }
         document.getElementById('chat-send-btn').addEventListener('click', sendMessage);
         document.getElementById('chat-msg-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+
+        // ---- Вкладення в чаті: фото / відео / файл / локація ----
+        function sendAttachmentMessage(payload, previewText) {
+            if (!currentChatPath) return;
+            push(ref(db, currentChatPath), Object.assign({ senderId: myId, senderName: myName, timestamp: Date.now() }, payload));
+            updateConvoPreview(previewText);
+        }
+
+        function openChatAttachSheet() { document.getElementById('chat-attach-sheet').style.display = 'flex'; }
+        function closeChatAttachSheet() { document.getElementById('chat-attach-sheet').style.display = 'none'; }
+        document.getElementById('chat-attach-btn').addEventListener('click', openChatAttachSheet);
+        document.getElementById('chat-attach-cancel-btn').addEventListener('click', closeChatAttachSheet);
+        document.getElementById('chat-attach-sheet').addEventListener('click', (e) => { if (e.target.id === 'chat-attach-sheet') closeChatAttachSheet(); });
+
+        document.getElementById('chat-attach-photo-btn').addEventListener('click', () => { closeChatAttachSheet(); document.getElementById('chat-attach-photo-input').click(); });
+        document.getElementById('chat-attach-photo-input').addEventListener('change', async (e) => {
+            const file = e.target.files[0]; if (!file) return; e.target.value = '';
+            try {
+                const url = await resizeImageFile(file, 1280, 0.75);
+                sendAttachmentMessage({ type: 'image', url }, '📷 Фото');
+            } catch (err) { alert(mediaUploadErrorMessage(err)); }
+        });
+
+        document.getElementById('chat-attach-video-btn').addEventListener('click', () => { closeChatAttachSheet(); document.getElementById('chat-attach-video-input').click(); });
+        document.getElementById('chat-attach-video-input').addEventListener('change', (e) => {
+            const file = e.target.files[0]; if (!file) return; e.target.value = '';
+            checkVideoDurationAndLoad(file, (url) => { sendAttachmentMessage({ type: 'video', url }, '🎥 Відео'); });
+        });
+
+        document.getElementById('chat-attach-file-btn').addEventListener('click', () => { closeChatAttachSheet(); document.getElementById('chat-attach-file-input').click(); });
+        document.getElementById('chat-attach-file-input').addEventListener('change', async (e) => {
+            const file = e.target.files[0]; if (!file) return; e.target.value = '';
+            if (file.size > TELEGRAM_MAX_VIDEO_BYTES) { alert('Файл занадто великий (максимум ~19 МБ).'); return; }
+            if (!telegramIsConfigured()) { alert(mediaUploadErrorMessage(new Error('telegram-not-configured'))); return; }
+            showUploadOverlay('Завантаження файлу…');
+            try {
+                const url = await uploadFileToTelegram(file);
+                hideUploadOverlay();
+                sendAttachmentMessage({ type: 'file', url, fileName: file.name, fileSize: file.size }, `📎 ${file.name}`);
+            } catch (err) { hideUploadOverlay(); alert(mediaUploadErrorMessage(err)); }
+        });
+
+        document.getElementById('chat-attach-location-btn').addEventListener('click', () => {
+            closeChatAttachSheet();
+            if (!navigator.geolocation) { alert('Геолокація недоступна в цьому браузері.'); return; }
+            showUploadOverlay('Визначення місця…');
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    hideUploadOverlay();
+                    sendAttachmentMessage({ type: 'location', lat: pos.coords.latitude, lng: pos.coords.longitude }, '📍 Локація');
+                },
+                () => { hideUploadOverlay(); alert('Не вдалося визначити місцезнаходження. Перевірте дозвіл на геолокацію.'); },
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
+        });
+
         document.getElementById('prof-btn').addEventListener('click', () => {
             if (!currentActiveItem || currentActiveItem.type !== 'place') return;
             const qrSpace = document.getElementById('qr-code-space'); const randomCode = Math.floor(100000 + Math.random() * 900000);
@@ -2649,7 +2928,8 @@
             set(ref(db, `friends/${otherId}/${myId}`), true);
         }
 
-        // Стискаємо фото на клієнті перед збереженням в базу (без Firebase Storage)
+        // Стискаємо фото на клієнті, а тоді одразу вивантажуємо на сервер Telegram —
+        // повертає постійне посилання на файл (замість base64 у Firebase).
         function resizeImageFile(file, maxDim, quality) {
             return new Promise((resolve, reject) => {
                 const img = new Image();
@@ -2663,7 +2943,13 @@
                     const canvas = document.createElement('canvas');
                     canvas.width = w; canvas.height = h;
                     canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                    resolve(canvas.toDataURL('image/jpeg', quality));
+                    canvas.toBlob((blob) => {
+                        if (!blob) { reject(new Error('canvas-blob-failed')); return; }
+                        showUploadOverlay('Завантаження фото…');
+                        uploadPhotoToTelegram(blob, 'photo.jpg')
+                            .then((url) => { hideUploadOverlay(); resolve(url); })
+                            .catch((err) => { hideUploadOverlay(); reject(err); });
+                    }, 'image/jpeg', quality);
                 };
                 img.onerror = reject;
                 reader.readAsDataURL(file);
@@ -2790,9 +3076,16 @@
                     const ctx = canvas.getContext('2d');
                     ctx.filter = currentCssFilter();
                     ctx.drawImage(imgEl, srcX, srcY, srcSize, srcSize, 0, 0, OUT, OUT);
-                    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
                     cleanup();
-                    resolve(dataUrl);
+                    // Кроп готовий локально — тепер вивантажуємо результат на сервер Telegram і
+                    // повертаємо вже постійне посилання на нього (замість base64 у Firebase).
+                    canvas.toBlob((blob) => {
+                        if (!blob) { reject(new Error('canvas-blob-failed')); return; }
+                        showUploadOverlay('Завантаження фото…');
+                        uploadPhotoToTelegram(blob, 'photo.jpg')
+                            .then((url) => { hideUploadOverlay(); resolve(url); })
+                            .catch((err) => { hideUploadOverlay(); reject(err); });
+                    }, 'image/jpeg', 0.85);
                 };
             });
         }
@@ -2811,11 +3104,20 @@
                       interests: myProfile.interests || "Додайте свої інтереси", stories: myProfile.stories || [] };
         }
 
-        // ---- Сторіс: додавання, збереження, рендер рядка мініатюр у профілі ----
+        // ---- Сторіс і фото/відео профілю: додавання, збереження, рендер мініатюр ----
+        // Відео (до 1 хв) вивантажується на сервер Telegram, а не кодується у base64 — це і
+        // економить базу Firebase, і дозволяє зберігати довші/важчі файли.
         function checkVideoDurationAndLoad(file, cb) {
             // Перевірку розміру робимо одразу, а не всередині loadedmetadata — раніше, якщо метадані
             // не приходили (типово для Safari/iOS, коли відео-елемент не в DOM), нічого не відбувалось.
-            if (file.size > 15 * 1024 * 1024) { alert('Файл занадто великий. Оберіть відео меншого розміру.'); return; }
+            if (file.size > TELEGRAM_MAX_VIDEO_BYTES) {
+                alert('Файл занадто великий (максимум ~19 МБ). Оберіть коротше відео або нижчу якість зйомки.');
+                return;
+            }
+            if (!telegramIsConfigured()) {
+                alert(mediaUploadErrorMessage(new Error('telegram-not-configured')));
+                return;
+            }
 
             const url = URL.createObjectURL(file);
             const v = document.createElement('video');
@@ -2836,15 +3138,19 @@
                 if (settled) return;
                 settled = true;
                 cleanup();
-                const reader = new FileReader();
-                reader.onload = (e) => cb(e.target.result);
-                reader.onerror = () => alert('Не вдалося обробити відео');
-                reader.readAsDataURL(file);
+                showUploadOverlay('Завантаження відео…');
+                uploadVideoToTelegram(file)
+                    .then((fileUrl) => { hideUploadOverlay(); cb(fileUrl); })
+                    .catch((err) => {
+                        hideUploadOverlay();
+                        console.error('Telegram upload error', err);
+                        alert(mediaUploadErrorMessage(err));
+                    });
             };
             const rejectTooLong = () => {
                 settled = true;
                 cleanup();
-                alert('Відео має бути не довше 20 секунд. Оберіть коротший файл.');
+                alert('Відео має бути не довше 1 хвилини. Оберіть коротший файл.');
             };
 
             v.onloadedmetadata = () => {
@@ -2852,7 +3158,7 @@
                 const dur = v.duration;
                 // Деякі браузери на цьому етапі повертають Infinity/NaN для тривалості — в такому разі
                 // не блокуємо користувача перевіркою, а просто пропускаємо файл далі.
-                if (isFinite(dur) && dur > 20.5) { rejectTooLong(); return; }
+                if (isFinite(dur) && dur > 60.5) { rejectTooLong(); return; }
                 proceedWithFile();
             };
             v.onerror = () => {
@@ -2940,7 +3246,7 @@
         document.getElementById('story-add-photo-input').addEventListener('change', async (e) => {
             const file = e.target.files[0]; if (!file) return;
             try { const dataUrl = await resizeImageFile(file, 900, 0.65); await addStory('photo', dataUrl); }
-            catch (err) { alert('Не вдалося обробити фото'); }
+            catch (err) { alert(mediaUploadErrorMessage(err)); }
             e.target.value = '';
         });
         document.getElementById('story-add-video-input').addEventListener('change', (e) => {
@@ -3005,7 +3311,7 @@
                 const v = document.createElement('video'); v.src = s.url; v.autoplay = true; v.playsInline = true; v.controls = false;
                 media.appendChild(v);
                 v.onloadedmetadata = () => {
-                    const dur = Math.min(v.duration * 1000, 20000);
+                    const dur = Math.min(v.duration * 1000, 60000);
                     requestAnimationFrame(() => { const b = bars[idx]; if (b) { b.style.transition = `width ${dur}ms linear`; b.style.width = '100%'; } });
                 };
                 v.onended = () => storyAdvance(1);
@@ -3132,20 +3438,48 @@
             }
         }
 
-        document.getElementById('prof-add-photo-btn').addEventListener('click', (e) => { e.stopPropagation(); document.getElementById('prof-photo-input').click(); });
+        // Спільна логіка додавання нового фото/відео у список фото профілю (photos[]).
+        async function addProfileMedia(url) {
+            myProfile.photos = myProfile.photos || [];
+            myProfile.photos.push(url);
+            localStorage.setItem('chat_profile_edited', '1');
+            if (currentActiveItem && currentActiveItem.id === myId) { currentActiveItem.photos = myProfile.photos; renderHeroMedia(myProfile.photos); goToHeroSlide(myProfile.photos.length - 1); }
+            try { await saveMyProfileToFirebase(); }
+            catch (err) { alert('Додано, але не вдалося зберегти на сервер. Перевірте інтернет-з’єднання і спробуйте ще раз.'); }
+        }
+
+        // "+" на сторінці профілю тепер відкриває вибір "Фото / Відео", як і у сторіс.
+        document.getElementById('prof-add-photo-btn').addEventListener('click', (e) => { e.stopPropagation(); document.getElementById('prof-media-add-sheet').style.display = 'flex'; });
+        function closeProfMediaAddSheet() { document.getElementById('prof-media-add-sheet').style.display = 'none'; }
+        document.getElementById('prof-media-add-cancel-btn').addEventListener('click', closeProfMediaAddSheet);
+        document.getElementById('prof-media-add-sheet').addEventListener('click', (e) => { if (e.target.id === 'prof-media-add-sheet') closeProfMediaAddSheet(); });
+        document.getElementById('prof-media-add-photo-btn').addEventListener('click', (e) => { e.stopPropagation(); closeProfMediaAddSheet(); document.getElementById('prof-photo-input').click(); });
+        document.getElementById('prof-media-add-video-btn').addEventListener('click', (e) => { e.stopPropagation(); closeProfMediaAddSheet(); document.getElementById('prof-video-input').click(); });
+        // Свайп вгору закриває меню вибору фото/відео (так само, як у сторіс).
+        (function () {
+            const el = document.getElementById('prof-media-add-sheet');
+            let sy = 0, st = 0, tracking = false;
+            el.addEventListener('touchstart', (e) => { sy = e.touches[0].clientY; st = Date.now(); tracking = true; }, { passive: true });
+            el.addEventListener('touchend', (e) => {
+                if (!tracking) return; tracking = false;
+                const dy = e.changedTouches[0].clientY - sy;
+                if (dy < -60 && (Date.now() - st) < 400) closeProfMediaAddSheet();
+            }, { passive: true });
+        })();
+
         document.getElementById('prof-photo-input').addEventListener('change', async (e) => {
             const file = e.target.files[0]; if (!file) return;
             let dataUrl;
             try { dataUrl = await openPhotoEditor(file); }
-            catch (err) { alert('Не вдалося обробити фото. Спробуйте інший файл.'); e.target.value = ''; return; }
+            catch (err) { alert(mediaUploadErrorMessage(err)); e.target.value = ''; return; }
             e.target.value = '';
             if (!dataUrl) return; // користувач натиснув "Скасувати"
-            myProfile.photos = myProfile.photos || [];
-            myProfile.photos.push(dataUrl);
-            localStorage.setItem('chat_profile_edited', '1');
-            if (currentActiveItem && currentActiveItem.id === myId) { currentActiveItem.photos = myProfile.photos; renderHeroMedia(myProfile.photos); goToHeroSlide(myProfile.photos.length - 1); }
-            try { await saveMyProfileToFirebase(); }
-            catch (err) { alert('Фото додано, але не вдалося зберегти на сервер. Перевірте інтернет-з’єднання і спробуйте ще раз.'); }
+            await addProfileMedia(dataUrl);
+        });
+        document.getElementById('prof-video-input').addEventListener('change', (e) => {
+            const file = e.target.files[0]; if (!file) return;
+            checkVideoDurationAndLoad(file, async (fileUrl) => { await addProfileMedia(fileUrl); });
+            e.target.value = '';
         });
 
         // ---- Месенджер: список бесід ----
@@ -3691,7 +4025,7 @@
                 obPhotoDataUrl = dataUrl;
                 document.getElementById('ob-avatar-preview').style.backgroundImage = `url('${dataUrl}')`;
                 document.getElementById('ob-avatar-plus').style.display = 'none';
-            } catch (err) { alert('Не вдалося обробити фото'); }
+            } catch (err) { alert(mediaUploadErrorMessage(err)); }
             e.target.value = '';
         });
         document.getElementById('ob-photo-next').addEventListener('click', () => {
@@ -3716,7 +4050,7 @@
                 obStoryData = { type: 'photo', url: dataUrl };
                 const prev = document.getElementById('ob-story-preview');
                 prev.innerHTML = ''; prev.style.backgroundImage = `url('${dataUrl}')`;
-            } catch (err) { alert('Не вдалося обробити фото'); }
+            } catch (err) { alert(mediaUploadErrorMessage(err)); }
             e.target.value = '';
         });
         document.getElementById('ob-story-video-input').addEventListener('change', (e) => {
