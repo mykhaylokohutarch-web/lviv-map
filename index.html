@@ -1743,6 +1743,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, push, onChildAdded, onValue, set, off, get, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBELuWP-2ElBYWH5R_jb-hmfnYk02a_JfY",
@@ -1756,36 +1757,30 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
+        const storage = getStorage(app);
 
-        // ==== Зберігання усіх медіа (фото й відео) на сервері Telegram (замість Firebase) ====
-        // Як налаштувати (одноразово):
-        //   1) У Telegram напишіть @BotFather → /newbot → отримаєте токен виду "123456789:AA...".
-        //      (Якщо у вас вже є бот для цього застосунку — можна використати той самий токен,
-        //      новий бот не потрібен.) Вставте токен у TELEGRAM_BOT_TOKEN нижче.
-        //   2) Створіть приватний канал (наприклад "Мої медіа-архіви"), додайте туди бота
-        //      як адміністратора (права на публікацію повідомлень достатньо).
-        //   3) Дізнайтесь chat_id каналу: перешліть будь-яке повідомлення з каналу боту
-        //      @userinfobot, або відкрийте в браузері
-        //      https://api.telegram.org/bot<ВАШ_ТОКЕН>/getUpdates після того, як напишете щось
-        //      у каналі — у відповіді буде поле "chat":{"id": -100...}. Вставте це число (разом
-        //      зі знаком "-") у TELEGRAM_CHAT_ID нижче.
-        // Усі фото та відео вивантажуються напряму з браузера користувача на сервери Telegram і
-        // там і зберігаються назавжди (у Firebase лишається тільки посилання на файл, не сам файл).
-        const TELEGRAM_BOT_TOKEN = 'ВАШ_ТОКЕН_БОТА';
-        const TELEGRAM_CHAT_ID = 'ВАШ_CHAT_ID';
-        // Telegram дозволяє звантажувати назад (getFile) файли розміром не більше ~20 МБ —
-        // тож перевіряємо розмір ще до спроби завантаження, з невеликим запасом.
-        const TELEGRAM_MAX_VIDEO_BYTES = 19 * 1024 * 1024;
+        // ==== Зберігання усіх медіа (фото, відео, будь-які файли) у Firebase Storage ====
+        // Нічого додатково налаштовувати не треба — bucket вже вказаний вище (storageBucket
+        // у firebaseConfig), той самий проєкт, що й для бази даних. Єдине, що варто перевірити
+        // в консолі Firebase → Storage → Rules: чи дозволений запис (write) для застосунку
+        // (наприклад, authenticated write або тимчасово test-mode на час розробки).
+        // Файл завантажується напряму з браузера користувача у Storage, а в базі даних
+        // лишається тільки постійне посилання на нього (не сам файл).
+        const TELEGRAM_BOT_TOKEN = 'ВАШ_ТОКЕН_БОТА'; // легасі-константа, більше не використовується
+        const TELEGRAM_CHAT_ID = 'ВАШ_CHAT_ID'; // легасі-константа, більше не використовується
+        // Клієнтський запобіжник на розмір файлу — 500 МБ. У Firebase Storage (на відміну від
+        // Telegram getFile) немає жорсткого ліміту ~20 МБ, тож це значення можна й підвищити.
+        const TELEGRAM_MAX_VIDEO_BYTES = 500 * 1024 * 1024;
+
 
         function telegramIsConfigured() {
-            return TELEGRAM_BOT_TOKEN && !TELEGRAM_BOT_TOKEN.startsWith('ВАШ_') &&
-                   TELEGRAM_CHAT_ID && !TELEGRAM_CHAT_ID.startsWith('ВАШ_');
+            return true; // Firebase Storage вже налаштований разом з рештою Firebase — додаткових ключів не треба.
         }
 
         // Людяне повідомлення про помилку завантаження — однакове для фото й відео.
         function mediaUploadErrorMessage(err) {
-            if (err && err.message === 'telegram-not-configured') {
-                return 'Завантаження медіа ще не налаштоване: вкажіть TELEGRAM_BOT_TOKEN і TELEGRAM_CHAT_ID у коді застосунку.';
+            if (err && err.code === 'storage/unauthorized') {
+                return 'Немає дозволу на завантаження файлів у сховище. Перевірте правила доступу (Storage Rules) у Firebase.';
             }
             return 'Не вдалося завантажити файл на сервер. Перевірте з’єднання і спробуйте ще раз.';
         }
@@ -1821,60 +1816,32 @@
             if (el) el.style.display = 'none';
         }
 
-        // Дізнається пряме постійне посилання на файл за його file_id.
+        // Дізнається пряме постійне посилання на щойно завантажений у Storage файл.
         // kind === 'video' додає до URL хвостик "#v.mp4", щоб застосунок безпомилково впізнавав
-        // відео за розширенням у посиланні (фрагмент після # на сервер не надсилається і на
+        // відео за розширенням у посиланні (фрагмент після # ігнорується сервером і на
         // завантаження файлу жодним чином не впливає).
-        function resolveTelegramFileUrl(fileId, kind) {
-            return fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getFile?file_id=${encodeURIComponent(fileId)}`)
-                .then(r => r.json())
-                .then(res => {
-                    if (!res.ok) throw new Error(res.description || 'getFile-failed');
-                    const path = res.result.file_path;
-                    const base = `https://api.telegram.org/file/bot${TELEGRAM_BOT_TOKEN}/${path}`;
-                    return kind === 'video' ? `${base}#v.mp4` : base;
-                });
+        function resolveTelegramFileUrl(url, kind) {
+            return Promise.resolve(kind === 'video' ? `${url}#v.mp4` : url);
         }
 
-        // Універсальне завантаження файлу (фото чи відео) на сервер Telegram — повертає постійне
-        // посилання на нього. Прогрес завантаження оновлює оверлей, показаний викликачем заздалегідь.
+        // Універсальне завантаження файлу (фото/відео/будь-який файл) у Firebase Storage —
+        // повертає постійне посилання на нього. Прогрес завантаження оновлює оверлей,
+        // показаний викликачем заздалегідь. Обмеження на розмір файлу знято аж до 100 МБ
+        // (див. TELEGRAM_MAX_VIDEO_BYTES) — Firebase Storage, на відміну від Telegram getFile,
+        // не має жорсткого ліміту ~20 МБ.
         function uploadMediaToTelegram(blob, filename, kind) {
             return new Promise((resolve, reject) => {
-                if (!telegramIsConfigured()) {
-                    reject(new Error('telegram-not-configured'));
-                    return;
-                }
-                const method = kind === 'video' ? 'sendVideo' : (kind === 'file' ? 'sendDocument' : 'sendPhoto');
-                const field = kind === 'video' ? 'video' : (kind === 'file' ? 'document' : 'photo');
-                const form = new FormData();
-                form.append('chat_id', TELEGRAM_CHAT_ID);
-                form.append(field, blob, filename);
-                if (kind === 'video') form.append('supports_streaming', 'true');
-                const xhr = new XMLHttpRequest();
-                xhr.open('POST', `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/${method}`);
-                xhr.upload.onprogress = (e) => {
-                    if (e.lengthComputable) updateUploadOverlayProgress(e.loaded / e.total);
-                };
-                xhr.onload = () => {
-                    let res;
-                    try { res = JSON.parse(xhr.responseText); }
-                    catch (err) { reject(new Error('bad-response')); return; }
-                    if (!res.ok) { reject(new Error(res.description || 'telegram-error')); return; }
-                    let fileObj;
-                    if (kind === 'video') {
-                        fileObj = res.result.video || res.result.document;
-                    } else if (kind === 'file') {
-                        fileObj = res.result.document;
-                    } else {
-                        // Telegram повертає масив розмірів фото — останній елемент найбільший.
-                        const sizes = res.result.photo;
-                        fileObj = sizes && sizes.length ? sizes[sizes.length - 1] : null;
-                    }
-                    if (!fileObj || !fileObj.file_id) { reject(new Error('no-file-in-response')); return; }
-                    resolveTelegramFileUrl(fileObj.file_id, kind).then(resolve).catch(reject);
-                };
-                xhr.onerror = () => reject(new Error('network-error'));
-                xhr.send(form);
+                const folder = kind === 'video' ? 'videos' : (kind === 'file' ? 'files' : 'photos');
+                const safeName = (filename || 'file').replace(/[^a-zA-Z0-9._-]/g, '_');
+                const path = `uploads/${folder}/${myId}_${Date.now()}_${safeName}`;
+                const fileRef = storageRef(storage, path);
+                const metadata = (blob && blob.type) ? { contentType: blob.type } : undefined;
+                const task = uploadBytesResumable(fileRef, blob, metadata);
+                task.on('state_changed',
+                    (snap) => { if (snap.totalBytes) updateUploadOverlayProgress(snap.bytesTransferred / snap.totalBytes); },
+                    (err) => reject(err),
+                    () => { getDownloadURL(task.snapshot.ref).then((url) => resolveTelegramFileUrl(url, kind)).then(resolve).catch(reject); }
+                );
             });
         }
 
@@ -2795,7 +2762,7 @@
         document.getElementById('chat-attach-file-btn').addEventListener('click', () => { closeChatAttachSheet(); document.getElementById('chat-attach-file-input').click(); });
         document.getElementById('chat-attach-file-input').addEventListener('change', async (e) => {
             const file = e.target.files[0]; if (!file) return; e.target.value = '';
-            if (file.size > TELEGRAM_MAX_VIDEO_BYTES) { alert('Файл занадто великий (максимум ~19 МБ).'); return; }
+            if (file.size > TELEGRAM_MAX_VIDEO_BYTES) { alert('Файл занадто великий (максимум 500 МБ).'); return; }
             if (!telegramIsConfigured()) { alert(mediaUploadErrorMessage(new Error('telegram-not-configured'))); return; }
             showUploadOverlay('Завантаження файлу…');
             try {
@@ -3111,7 +3078,7 @@
             // Перевірку розміру робимо одразу, а не всередині loadedmetadata — раніше, якщо метадані
             // не приходили (типово для Safari/iOS, коли відео-елемент не в DOM), нічого не відбувалось.
             if (file.size > TELEGRAM_MAX_VIDEO_BYTES) {
-                alert('Файл занадто великий (максимум ~19 МБ). Оберіть коротше відео або нижчу якість зйомки.');
+                alert('Файл занадто великий (максимум 500 МБ). Оберіть коротше відео або нижчу якість зйомки.');
                 return;
             }
             if (!telegramIsConfigured()) {
