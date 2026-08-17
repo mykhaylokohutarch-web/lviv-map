@@ -1743,7 +1743,6 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, push, onChildAdded, onValue, set, off, get, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-        import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBELuWP-2ElBYWH5R_jb-hmfnYk02a_JfY",
@@ -1757,30 +1756,25 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        const storage = getStorage(app);
 
-        // ==== Зберігання усіх медіа (фото, відео, будь-які файли) у Firebase Storage ====
-        // Нічого додатково налаштовувати не треба — bucket вже вказаний вище (storageBucket
-        // у firebaseConfig), той самий проєкт, що й для бази даних. Єдине, що варто перевірити
-        // в консолі Firebase → Storage → Rules: чи дозволений запис (write) для застосунку
-        // (наприклад, authenticated write або тимчасово test-mode на час розробки).
-        // Файл завантажується напряму з браузера користувача у Storage, а в базі даних
-        // лишається тільки постійне посилання на нього (не сам файл).
-        const TELEGRAM_BOT_TOKEN = 'ВАШ_ТОКЕН_БОТА'; // легасі-константа, більше не використовується
-        const TELEGRAM_CHAT_ID = 'ВАШ_CHAT_ID'; // легасі-константа, більше не використовується
-        // Клієнтський запобіжник на розмір файлу — 500 МБ. У Firebase Storage (на відміну від
-        // Telegram getFile) немає жорсткого ліміту ~20 МБ, тож це значення можна й підвищити.
+        // ==== Зберігання усіх медіа (фото, відео, будь-які файли) у Cloudinary ====
+        // Хмара й пресет для завантаження — саме ті, що налаштовані в Cloudinary Console
+        // (Settings → Upload → Upload Presets). Пресет "unsigned", тому ключі/секрети тут
+        // не потрібні — завантаження йде напряму з браузера.
+        const CLOUDINARY_CLOUD_NAME = 'wj6a90a1';
+        const CLOUDINARY_UPLOAD_PRESET = 'lviv_app_uploads';
+        // Клієнтський запобіжник на розмір файлу — 500 МБ.
         const TELEGRAM_MAX_VIDEO_BYTES = 500 * 1024 * 1024;
 
 
         function telegramIsConfigured() {
-            return true; // Firebase Storage вже налаштований разом з рештою Firebase — додаткових ключів не треба.
+            return true; // Cloudinary налаштований вище (cloud name + unsigned upload preset).
         }
 
         // Людяне повідомлення про помилку завантаження — однакове для фото й відео.
         function mediaUploadErrorMessage(err) {
-            if (err && err.code === 'storage/unauthorized') {
-                return 'Немає дозволу на завантаження файлів у сховище. Перевірте правила доступу (Storage Rules) у Firebase.';
+            if (err && err.message === 'file-too-large') {
+                return 'Файл завеликий. Спробуйте коротше відео або менше фото.';
             }
             return 'Не вдалося завантажити файл на сервер. Перевірте з’єднання і спробуйте ще раз.';
         }
@@ -1816,32 +1810,38 @@
             if (el) el.style.display = 'none';
         }
 
-        // Дізнається пряме постійне посилання на щойно завантажений у Storage файл.
-        // kind === 'video' додає до URL хвостик "#v.mp4", щоб застосунок безпомилково впізнавав
-        // відео за розширенням у посиланні (фрагмент після # ігнорується сервером і на
-        // завантаження файлу жодним чином не впливає).
+        // Відео в Cloudinary зберігаємо в resource_type "video", файли-документи — в "raw",
+        // фото — у звичайному "image". Для відео Cloudinary сам повертає посилання з правильним
+        // розширенням, окремого хвостика "#v.mp4", як раніше з Telegram, більше не треба.
         function resolveTelegramFileUrl(url, kind) {
-            return Promise.resolve(kind === 'video' ? `${url}#v.mp4` : url);
+            return Promise.resolve(url);
         }
 
-        // Універсальне завантаження файлу (фото/відео/будь-який файл) у Firebase Storage —
+        // Універсальне завантаження файлу (фото/відео/будь-який файл) у Cloudinary —
         // повертає постійне посилання на нього. Прогрес завантаження оновлює оверлей,
-        // показаний викликачем заздалегідь. Обмеження на розмір файлу знято аж до 100 МБ
-        // (див. TELEGRAM_MAX_VIDEO_BYTES) — Firebase Storage, на відміну від Telegram getFile,
-        // не має жорсткого ліміту ~20 МБ.
+        // показаний викликачем заздалегідь.
         function uploadMediaToTelegram(blob, filename, kind) {
             return new Promise((resolve, reject) => {
-                const folder = kind === 'video' ? 'videos' : (kind === 'file' ? 'files' : 'photos');
-                const safeName = (filename || 'file').replace(/[^a-zA-Z0-9._-]/g, '_');
-                const path = `uploads/${folder}/${myId}_${Date.now()}_${safeName}`;
-                const fileRef = storageRef(storage, path);
-                const metadata = (blob && blob.type) ? { contentType: blob.type } : undefined;
-                const task = uploadBytesResumable(fileRef, blob, metadata);
-                task.on('state_changed',
-                    (snap) => { if (snap.totalBytes) updateUploadOverlayProgress(snap.bytesTransferred / snap.totalBytes); },
-                    (err) => reject(err),
-                    () => { getDownloadURL(task.snapshot.ref).then((url) => resolveTelegramFileUrl(url, kind)).then(resolve).catch(reject); }
-                );
+                if (blob && blob.size > TELEGRAM_MAX_VIDEO_BYTES) { reject(new Error('file-too-large')); return; }
+                const resourceType = kind === 'video' ? 'video' : (kind === 'file' ? 'raw' : 'image');
+                const formData = new FormData();
+                formData.append('file', blob, filename || 'file');
+                formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`);
+                xhr.upload.onprogress = (e) => { if (e.lengthComputable) updateUploadOverlayProgress(e.loaded / e.total); };
+                xhr.onload = () => {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        try {
+                            const data = JSON.parse(xhr.responseText);
+                            resolveTelegramFileUrl(data.secure_url, kind).then(resolve).catch(reject);
+                        } catch (err) { reject(err); }
+                    } else {
+                        reject(new Error('cloudinary-upload-failed-' + xhr.status));
+                    }
+                };
+                xhr.onerror = () => reject(new Error('network-error'));
+                xhr.send(formData);
             });
         }
 
