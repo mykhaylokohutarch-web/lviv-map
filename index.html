@@ -259,29 +259,6 @@
         }
 
         #my-profile-btn { left: 20px; right: auto; }
-        #map-layers-btn { right: 70px; }
-        #map-search-btn { right: 120px; }
-        #map-layers-btn.active { background: rgba(69, 66, 244, 0.14); }
-        #map-layers-btn.active .theme-svg { stroke: var(--accent-main); }
-
-        /* ---- Панель пошуку на карті ---- */
-        #map-search-bar {
-            position: absolute; left: 20px; right: 20px; top: calc(66px + env(safe-area-inset-top, 0px)); z-index: 2500;
-            display: none; align-items: center; gap: 8px; padding: 8px 8px 8px 14px; border-radius: 999px;
-            background: var(--card-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--border-minimal); box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-        }
-        #map-search-bar.open { display: flex; }
-        #map-search-input { flex: 1; border: none; background: transparent; outline: none; font-size: 14px; color: var(--text-color); min-width: 0; font-family: inherit; }
-        #map-search-find-btn {
-            flex-shrink: 0; border: none; background: var(--ultramarine-gradient); color: #fff; font-weight: 600;
-            font-size: 13px; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;
-        }
-        #map-search-close-btn {
-            flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; border: none; background: rgba(0,0,0,0.06);
-            color: var(--icon-color); font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center;
-        }
-        body.dark-theme #map-search-close-btn { background: rgba(255,255,255,0.1); }
 
         /* ---- Підсвітка знайденого на карті місця ---- */
         .map-search-highlight { position: relative; width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; pointer-events: none; }
@@ -860,6 +837,19 @@
             transition: var(--theme-transition);
         }
         body.dark-theme #bottom-nav { background: rgba(28, 28, 30, 0.18); box-shadow: 0 8px 24px rgba(0,0,0,0.35); }
+        /* Кнопки теми й шарів карти живуть у самій таблетці, але видно їх лише на екрані Карти
+           (клас .map-context на #bottom-nav вмикає JS при перемиканні екранів) — на інших екранах
+           таблетка звужується назад до звичних п'яти іконок. */
+        #bottom-nav #theme-toggle, #bottom-nav #map-layers-btn { display: none; }
+        #bottom-nav.map-context #theme-toggle, #bottom-nav.map-context #map-layers-btn { display: flex; }
+        #bottom-nav .apple-blur-btn {
+            position: static; width: 23px; height: 23px; background: transparent; border: none;
+            box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none;
+        }
+        #bottom-nav .apple-blur-btn:active { transform: scale(0.88); background: none; }
+        #bottom-nav .apple-blur-btn .theme-svg { width: 21px; height: 21px; }
+        #bottom-nav #map-layers-btn.active { background: none; }
+        #bottom-nav #map-layers-btn.active .theme-svg { stroke: var(--accent-main); }
         .nav-btn {
             background: transparent; border: none; padding: 4px 2px; display: flex; flex-direction: column;
             align-items: center; justify-content: center; gap: 5px; cursor: pointer;
@@ -1067,6 +1057,16 @@
         body.dark-theme .home-search-bar { background: rgba(28, 28, 30, 0.55); }
         .home-search-bar svg { width: 16px; height: 16px; stroke: var(--text-secondary); fill: none; stroke-width: 2; flex-shrink: 0; }
         .home-search-bar input { border: none; background: transparent; outline: none; font-size: 14px; color: var(--text-color); width: 100%; font-family: inherit; }
+        /* "Знайти" — з'являється лише в режимі пошуку місця на карті (клас .map-mode), решту часу
+           (пошук людей на Головній) прихована. Мінімалістична, напівпрозора — не окрема кнопка з
+           фоном, а ледь помітне текстове посилання поруч із полем. */
+        #home-search-find-btn {
+            display: none; flex-shrink: 0; border: none; background: none; padding: 0; margin: 0;
+            font-size: 13px; font-weight: 500; color: var(--text-color); opacity: 0.45; cursor: pointer;
+            font-family: inherit; -webkit-tap-highlight-color: transparent; transition: opacity 0.15s ease;
+        }
+        #home-search-find-btn:active { opacity: 0.75; }
+        .home-search-bar.map-mode #home-search-find-btn { display: block; }
         /* ---- Головна: сітка кіл (люди + заклади) по 3 в ряд, як в надісланому прикладі ---- */
         #home-grid { flex-grow: 1; overflow-y: auto; overflow-x: hidden; padding: calc(114px + env(safe-area-inset-top, 0px)) 5px 110px; box-sizing: border-box; touch-action: pan-y; -webkit-overflow-scrolling: touch; overscroll-behavior-x: none; }
         .home-grid-inner { display: grid; grid-template-columns: repeat(3, var(--circle-d, 100px)); justify-content: center; gap: 24px 8px; }
@@ -1203,33 +1203,6 @@
 <body class="dark-theme">
 
     <div id="app-container" class="app-screen">
-        <!-- Мінімалістична кругла кнопка з тонкими SVG іконками -->
-        <button class="apple-blur-btn" id="theme-toggle" aria-label="Змінити тему">
-            <!-- Іконка Сонця (Light Mode) -->
-            <svg class="theme-svg icon-light" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="4"></circle>
-                <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
-            </svg>
-            <!-- Іконка Місяця (Dark Mode) -->
-            <svg class="theme-svg icon-dark" viewBox="0 0 24 24">
-                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
-            </svg>
-        </button>
-
-        <!-- Кнопка пошуку місця на карті -->
-        <button class="apple-blur-btn" id="map-search-btn" aria-label="Пошук на карті">
-            <svg class="theme-svg" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-3.8-3.8"></path></svg>
-        </button>
-
-        <!-- Кнопка шарів карти: затисни (long-press), щоб показати перемикачі шарів зліва -->
-        <button class="apple-blur-btn" id="map-layers-btn" aria-label="Шари карти">
-            <svg class="theme-svg" viewBox="0 0 24 24">
-                <path d="M12 2 2 7l10 5 10-5-10-5z"></path>
-                <path d="M2 17l10 5 10-5"></path>
-                <path d="M2 12l10 5 10-5"></path>
-            </svg>
-        </button>
-
         <!-- Кнопка входу на власну персональну сторінку -->
         <button class="apple-blur-btn" id="my-profile-btn" aria-label="Моя сторінка">
             <svg class="theme-svg" viewBox="0 0 24 24">
@@ -1238,12 +1211,8 @@
             </svg>
         </button>
 
-        <!-- Панель пошуку на карті: з'являється зверху по натисканню на лупу -->
-        <div id="map-search-bar">
-            <input type="text" id="map-search-input" placeholder="Пошук місця, вулиці, закладу…" autocomplete="off">
-            <button id="map-search-find-btn">Знайти</button>
-            <button id="map-search-close-btn" aria-label="Закрити пошук">✕</button>
-        </div>
+        <!-- Пошук місця на карті тепер живе внизу, у тій самій смужці пошуку, що й на Головній
+             (відкривається іконкою пошуку в нижній навігації) — окремої верхньої панелі більше нема. -->
 
         <!-- Верхня панель фільтрів карти: їжа, магазини, події, друзі, улюблене — той самий стиль, що на Головній -->
         <div class="map-filter-bar" id="map-filter-bar">
@@ -1473,6 +1442,18 @@
 
     <!-- ==================== Глобальна нижня навігація ==================== -->
     <div id="bottom-nav">
+        <!-- Кнопка теми ("місяць") — з'являється лише на екрані Карти, розширюючи таблетку зліва -->
+        <button class="apple-blur-btn" id="theme-toggle" aria-label="Змінити тему">
+            <!-- Іконка Сонця (Light Mode) -->
+            <svg class="theme-svg icon-light" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="4"></circle>
+                <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
+            </svg>
+            <!-- Іконка Місяця (Dark Mode) -->
+            <svg class="theme-svg icon-dark" viewBox="0 0 24 24">
+                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+            </svg>
+        </button>
         <button class="nav-btn active" id="nav-home" aria-label="Люди">
             <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"></path><path d="M5 10v10h14V10"></path></svg>
             <span class="nav-dot"></span>
@@ -1493,11 +1474,21 @@
             <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-3.8-3.8"></path></svg>
             <span class="nav-dot"></span>
         </button>
+        <!-- Кнопка шарів карти ("шари") — з'являється лише на екрані Карти, розширюючи таблетку справа.
+             Затисни (long-press), щоб показати перемикачі шарів зліва на карті. -->
+        <button class="apple-blur-btn" id="map-layers-btn" aria-label="Шари карти">
+            <svg class="theme-svg" viewBox="0 0 24 24">
+                <path d="M12 2 2 7l10 5 10-5-10-5z"></path>
+                <path d="M2 17l10 5 10-5"></path>
+                <path d="M2 12l10 5 10-5"></path>
+            </svg>
+        </button>
     </div>
 
     <div class="home-search-bar" id="home-search-bar">
         <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-3.8-3.8"></path></svg>
         <input type="text" id="people-search-input" placeholder="Пошук" autocomplete="off">
+        <button id="home-search-find-btn" type="button">Знайти</button>
     </div>
 
     <div id="qr-modal">
@@ -2174,50 +2165,10 @@
         ];
 
         function fetchOsmPois(mirrorIndex) {
-            mirrorIndex = mirrorIndex || 0;
-            const zoom = map.getZoom();
-            if (zoom < OSM_POI_MIN_ZOOM) { clearOsmPoiLayers(); return; }
-            const limit = osmPoiLimitForZoom(zoom);
-            const b = map.getBounds();
-            const bbox = `${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()}`;
-            const query = `[out:json][timeout:15];(node["amenity"~"^(restaurant|cafe|bar|pub|fast_food|bakery|ice_cream|food_court|biergarten)$"](${bbox});node["shop"](${bbox});node["tourism"~"^(hotel|guest_house|hostel|apartment|museum|attraction|gallery|artwork)$"](${bbox}););out body ${limit};`;
-
-            // Скасовуємо попередній ще не завершений запит — інакше застарілі відповіді
-            // накопичуються і "підвішують" карту при швидкому паруванні/зумі.
-            if (osmPoiAbortController) osmPoiAbortController.abort();
-            osmPoiAbortController = new AbortController();
-            const requestedZoom = zoom;
-
-            fetch(OVERPASS_MIRRORS[mirrorIndex], { method: 'POST', body: query, signal: osmPoiAbortController.signal })
-                .then(r => { if (!r.ok) throw new Error('bad status'); return r.json(); })
-                .then(data => {
-                    if (map.getZoom() !== requestedZoom) return; // масштаб уже змінився — ця відповідь застаріла
-                    // Не накопичуємо мітки безкінечно — щоразу малюємо лише актуальний набір для поточного вигляду карти.
-                    clearOsmPoiLayers();
-                    let shown = 0;
-                    for (const el of (data.elements || [])) {
-                        if (shown >= limit) break;
-                        if (!el.tags || !el.tags.name) continue;
-                        const { cat, emoji } = osmPoiCategory(el.tags);
-                        const icon = L.divIcon({
-                            className: 'osm-poi-marker',
-                            html: `<div class="osm-poi-marker-wrap"><div class="osm-poi-dot cat-${cat}">${emoji}</div><div class="osm-poi-label">${escapeHtml(el.tags.name)}</div></div>`,
-                            iconSize: [20, 20], iconAnchor: [10, 10]
-                        });
-                        const marker = L.marker([el.lat, el.lon], { icon: icon, pane: 'osmPoiPane' }).addTo(layerGroups[cat]);
-                        marker.bindPopup(
-                            `<div class="osm-poi-popup"><span class="osm-poi-popup-icon">${emoji}</span><span class="osm-poi-popup-name">${escapeHtml(el.tags.name)}</span></div>`,
-                            { closeButton: false, offset: [0, -10], className: 'osm-poi-popup-wrap' }
-                        );
-                        shown++;
-                    }
-                })
-                .catch((err) => {
-                    if (err && err.name === 'AbortError') return; // скасовано новим запитом — нормально, не помилка
-                    // Це дзеркало не відповіло — пробуємо наступне, поки не закінчаться варіанти.
-                    if (mirrorIndex < OVERPASS_MIRRORS.length - 1) { fetchOsmPois(mirrorIndex + 1); }
-                    // Якщо відповіли всі дзеркала — лишаємо попередні мітки на місці (не зникають у порожнечу).
-                });
+            // Мітки існуючих закладів (кафе, магазини, події тощо) з OSM/Overpass прибрано з карти
+            // на прохання користувача. Функцію лишаємо no-op'ом (замість видалення всієї
+            // інфраструктури нижче) — просто чистимо шари категорій і нічого не довантажуємо.
+            clearOsmPoiLayers();
         }
 
         function updatePoiLabelsVisibility() {
@@ -3954,8 +3905,8 @@
         }
 
         async function performMapSearch() {
-            const input = document.getElementById('map-search-input');
-            const btn = document.getElementById('map-search-find-btn');
+            const input = document.getElementById('people-search-input');
+            const btn = document.getElementById('home-search-find-btn');
             const query = input.value.trim();
             if (!query) return;
             const originalLabel = btn.innerText;
@@ -3968,6 +3919,7 @@
                     const lat = parseFloat(best.lat), lon = parseFloat(best.lon);
                     map.setView([lat, lon], 17, { animate: true });
                     showMapSearchHighlight(lat, lon);
+                    closeHomeSearchBar();
                 } else {
                     alert('Нічого не знайдено — спробуйте інший запит.');
                 }
@@ -3977,23 +3929,7 @@
                 btn.innerText = originalLabel; btn.disabled = false;
             }
         }
-
-        function openMapSearchBar() {
-            document.getElementById('map-search-bar').classList.add('open');
-            setTimeout(() => document.getElementById('map-search-input').focus(), 150);
-        }
-        function closeMapSearchBar() {
-            document.getElementById('map-search-bar').classList.remove('open');
-            document.getElementById('map-search-input').value = '';
-            clearMapSearchHighlight();
-        }
-        document.getElementById('map-search-btn').addEventListener('click', () => {
-            const bar = document.getElementById('map-search-bar');
-            if (bar.classList.contains('open')) closeMapSearchBar(); else openMapSearchBar();
-        });
-        document.getElementById('map-search-close-btn').addEventListener('click', closeMapSearchBar);
-        document.getElementById('map-search-find-btn').addEventListener('click', performMapSearch);
-        document.getElementById('map-search-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); performMapSearch(); } });
+        document.getElementById('home-search-find-btn').addEventListener('click', performMapSearch);
 
         function hidePinPlacement() {
             placingPin = false;
@@ -4290,6 +4226,10 @@
             if (name === 'map') document.getElementById('nav-map').classList.add('active');
             if (name === 'igprofile' && igCurrentIsMine) document.getElementById('nav-profile').classList.add('active');
 
+            // Кнопки теми й шарів карти живуть у самій таблетці нижньої навігації, але видимі лише
+            // на екрані Карти — розширюють таблетку зліва (тема) і справа (шари) саме тоді.
+            document.getElementById('bottom-nav').classList.toggle('map-context', name === 'map');
+
             if (name === 'map') {
                 // Поки вкладка "Карта" схована (display:none), контейнер має нульовий розмір,
                 // тож перший запит закладів під час завантаження сторінки міг піти з "сплюснутими"
@@ -4553,7 +4493,7 @@
         layoutHomeGrid();
         setTimeout(layoutHomeGrid, 150);
 
-        document.getElementById('people-search-input').addEventListener('input', (e) => renderHomeGrid(e.target.value));
+        document.getElementById('people-search-input').addEventListener('input', (e) => { if (homeSearchMode === 'people') renderHomeGrid(e.target.value); });
 
         document.querySelectorAll('.filter-tab').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -4659,30 +4599,57 @@
             }, { passive: true });
         })();
 
+        // Один і той самий пошук унизу тепер обслуговує і Головну (пошук людей/закладів у стрічці —
+        // живий фільтр на кожен символ), і Карту (пошук адреси/вулиці — по слову "Знайти" чи Enter,
+        // бо тут це запит до зовнішнього геокодера, не миттєвий фільтр). Режим визначається тим,
+        // який екран активний у момент відкриття смужки.
+        let homeSearchMode = 'people';
+        function closeHomeSearchBar() {
+            const bar = document.getElementById('home-search-bar');
+            const input = document.getElementById('people-search-input');
+            bar.classList.remove('open', 'map-mode');
+            document.getElementById('nav-search').classList.remove('active');
+            input.value = '';
+            if (homeSearchMode === 'people') renderHomeGrid('');
+            clearMapSearchHighlight();
+            setTimeout(layoutHomeGrid, 300);
+        }
         document.getElementById('nav-search').addEventListener('click', () => {
             closeMessagesWindowIfOpen();
             const bar = document.getElementById('home-search-bar');
             const btn = document.getElementById('nav-search');
+            const input = document.getElementById('people-search-input');
             const opening = !bar.classList.contains('open');
-            bar.classList.toggle('open', opening);
-            btn.classList.toggle('active', opening);
-            if (opening) { setTimeout(() => document.getElementById('people-search-input').focus(), 260); }
-            else { const input = document.getElementById('people-search-input'); input.value = ''; renderHomeGrid(''); }
-            setTimeout(layoutHomeGrid, 300);
+            if (opening) {
+                const isMapScreen = document.getElementById('app-container').classList.contains('active-screen');
+                homeSearchMode = isMapScreen ? 'map' : 'people';
+                bar.classList.toggle('map-mode', homeSearchMode === 'map');
+                input.placeholder = homeSearchMode === 'map' ? 'Пошук місця, вулиці, закладу…' : 'Пошук';
+                bar.classList.add('open');
+                btn.classList.add('active');
+                setTimeout(() => input.focus(), 260);
+            } else {
+                closeHomeSearchBar();
+            }
+        });
+        document.getElementById('people-search-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && homeSearchMode === 'map') { e.preventDefault(); performMapSearch(); }
         });
 
         // Автоматично ховає рядок пошуку при дотику до екрана, коли він порожній (не потрібний),
         // або коли за введеним текстом нічого не знайдено — тоді результатів все одно немає й
         // тримати смужку відкритою сенсу нема. Якщо ж результати є — тап поза смужкою її не чіпає,
-        // щоб не губити активний пошук.
+        // щоб не губити активний пошук. У режимі пошуку по карті ця перевірка на "нічого не знайдено"
+        // не діє (там немає живого списку результатів) — бар просто лишається відкритим, поки не
+        // натиснуть "Знайти"/Enter чи не закриють вручну.
         document.addEventListener('touchstart', (e) => {
             const bar = document.getElementById('home-search-bar');
             if (!bar.classList.contains('open')) return;
             const navSearchBtn = document.getElementById('nav-search');
             if (bar.contains(e.target) || navSearchBtn.contains(e.target)) return;
             const input = document.getElementById('people-search-input');
-            if (input.value.trim() && !window.homeSearchNoResults) return;
-            bar.classList.remove('open');
+            if (input.value.trim() && (homeSearchMode === 'map' || !window.homeSearchNoResults)) return;
+            bar.classList.remove('open', 'map-mode');
             navSearchBtn.classList.remove('active');
             input.blur();
             setTimeout(layoutHomeGrid, 300);
