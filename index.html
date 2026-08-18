@@ -51,6 +51,17 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Заздалегідь відкриваємо з'єднання до тайлового сервера карти (DNS + TLS-хендшейк наперед) —
+         сама карта після цього починає малюватись помітно швидше, бо перші тайли не чекають
+         на встановлення з'єднання. -->
+    <link rel="preconnect" href="https://a.tile.openstreetmap.org">
+    <link rel="preconnect" href="https://b.tile.openstreetmap.org">
+    <link rel="preconnect" href="https://c.tile.openstreetmap.org">
+    <link rel="dns-prefetch" href="https://a.tile.openstreetmap.org">
+    <link rel="dns-prefetch" href="https://b.tile.openstreetmap.org">
+    <link rel="dns-prefetch" href="https://c.tile.openstreetmap.org">
+    <link rel="preconnect" href="https://api.cloudinary.com">
+    <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Yellowtail&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -1807,35 +1818,24 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // ==== Зберігання усіх медіа (фото й відео) на сервері Telegram (замість Firebase) ====
-        // Як налаштувати (одноразово):
-        //   1) У Telegram напишіть @BotFather → /newbot → отримаєте токен виду "123456789:AA...".
-        //      (Якщо у вас вже є бот для цього застосунку — можна використати той самий токен,
-        //      новий бот не потрібен.) Вставте токен у TELEGRAM_BOT_TOKEN нижче.
-        //   2) Створіть приватний канал (наприклад "Мої медіа-архіви"), додайте туди бота
-        //      як адміністратора (права на публікацію повідомлень достатньо).
-        //   3) Дізнайтесь chat_id каналу: перешліть будь-яке повідомлення з каналу боту
-        //      @userinfobot, або відкрийте в браузері
-        //      https://api.telegram.org/bot<ВАШ_ТОКЕН>/getUpdates після того, як напишете щось
-        //      у каналі — у відповіді буде поле "chat":{"id": -100...}. Вставте це число (разом
-        //      зі знаком "-") у TELEGRAM_CHAT_ID нижче.
-        // Усі фото та відео вивантажуються напряму з браузера користувача на сервери Telegram і
-        // там і зберігаються назавжди (у Firebase лишається тільки посилання на файл, не сам файл).
-        const TELEGRAM_BOT_TOKEN = 'ВАШ_ТОКЕН_БОТА';
-        const TELEGRAM_CHAT_ID = 'ВАШ_CHAT_ID';
-        // Telegram дозволяє звантажувати назад (getFile) файли розміром не більше ~20 МБ —
-        // тож перевіряємо розмір ще до спроби завантаження, з невеликим запасом.
-        const TELEGRAM_MAX_VIDEO_BYTES = 19 * 1024 * 1024;
+        // ==== Зберігання усіх медіа (фото, відео, будь-які файли) у Cloudinary ====
+        // Хмара й пресет для завантаження — саме ті, що налаштовані в Cloudinary Console
+        // (Settings → Upload → Upload Presets). Пресет "unsigned", тому ключі/секрети тут
+        // не потрібні — завантаження йде напряму з браузера.
+        const CLOUDINARY_CLOUD_NAME = 'wj6a90a1';
+        const CLOUDINARY_UPLOAD_PRESET = 'lviv_app_uploads';
+        // Клієнтський запобіжник на розмір файлу — 100 МБ (ліміт безкоштовного плану Cloudinary
+        // на один файл). Якщо перейдете на платний план з вищим лімітом, підніміть це число.
+        const TELEGRAM_MAX_VIDEO_BYTES = 100 * 1024 * 1024;
 
         function telegramIsConfigured() {
-            return TELEGRAM_BOT_TOKEN && !TELEGRAM_BOT_TOKEN.startsWith('ВАШ_') &&
-                   TELEGRAM_CHAT_ID && !TELEGRAM_CHAT_ID.startsWith('ВАШ_');
+            return true; // Cloudinary налаштований вище (cloud name + unsigned upload preset).
         }
 
         // Людяне повідомлення про помилку завантаження — однакове для фото й відео.
         function mediaUploadErrorMessage(err) {
-            if (err && err.message === 'telegram-not-configured') {
-                return 'Завантаження медіа ще не налаштоване: вкажіть TELEGRAM_BOT_TOKEN і TELEGRAM_CHAT_ID у коді застосунку.';
+            if (err && err.message === 'file-too-large') {
+                return 'Файл завеликий. Спробуйте коротше відео або менше фото.';
             }
             return 'Не вдалося завантажити файл на сервер. Перевірте з’єднання і спробуйте ще раз.';
         }
@@ -1871,60 +1871,56 @@
             if (el) el.style.display = 'none';
         }
 
-        // Дізнається пряме постійне посилання на файл за його file_id.
-        // kind === 'video' додає до URL хвостик "#v.mp4", щоб застосунок безпомилково впізнавав
-        // відео за розширенням у посиланні (фрагмент після # на сервер не надсилається і на
-        // завантаження файлу жодним чином не впливає).
-        function resolveTelegramFileUrl(fileId, kind) {
-            return fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getFile?file_id=${encodeURIComponent(fileId)}`)
-                .then(r => r.json())
-                .then(res => {
-                    if (!res.ok) throw new Error(res.description || 'getFile-failed');
-                    const path = res.result.file_path;
-                    const base = `https://api.telegram.org/file/bot${TELEGRAM_BOT_TOKEN}/${path}`;
-                    return kind === 'video' ? `${base}#v.mp4` : base;
-                });
+        // Утримує екран увімкненим на час завантаження файлу — інакше телефон гасне за тайм-аутом,
+        // а мобільний браузер у фоні обриває мережеве з'єднання (XHR), і завантаження зривається
+        // саме посередині. Підтримується не всюди (напр. старі iOS) — тоді просто тихо не спрацює.
+        let uploadWakeLock = null;
+        async function acquireUploadWakeLock() {
+            try { if ('wakeLock' in navigator) uploadWakeLock = await navigator.wakeLock.request('screen'); }
+            catch (e) { uploadWakeLock = null; }
+        }
+        function releaseUploadWakeLock() {
+            if (uploadWakeLock) { uploadWakeLock.release().catch(() => {}); uploadWakeLock = null; }
+        }
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && document.getElementById('tg-upload-overlay')?.style.display === 'flex') {
+                acquireUploadWakeLock();
+            }
+        });
+
+        // Cloudinary сам повертає посилання на завантажений файл — окремого кроку "дізнатись URL"
+        // (як раніше з Telegram getFile) більше не потрібно.
+        function resolveTelegramFileUrl(url, kind) {
+            return Promise.resolve(url);
         }
 
-        // Універсальне завантаження файлу (фото чи відео) на сервер Telegram — повертає постійне
-        // посилання на нього. Прогрес завантаження оновлює оверлей, показаний викликачем заздалегідь.
+        // Універсальне завантаження файлу (фото/відео/будь-який файл) у Cloudinary —
+        // повертає постійне посилання на нього. Прогрес завантаження оновлює оверлей,
+        // показаний викликачем заздалегідь.
         function uploadMediaToTelegram(blob, filename, kind) {
             return new Promise((resolve, reject) => {
-                if (!telegramIsConfigured()) {
-                    reject(new Error('telegram-not-configured'));
-                    return;
-                }
-                const method = kind === 'video' ? 'sendVideo' : (kind === 'file' ? 'sendDocument' : 'sendPhoto');
-                const field = kind === 'video' ? 'video' : (kind === 'file' ? 'document' : 'photo');
-                const form = new FormData();
-                form.append('chat_id', TELEGRAM_CHAT_ID);
-                form.append(field, blob, filename);
-                if (kind === 'video') form.append('supports_streaming', 'true');
+                if (blob && blob.size > TELEGRAM_MAX_VIDEO_BYTES) { reject(new Error('file-too-large')); return; }
+                acquireUploadWakeLock();
+                const resourceType = kind === 'video' ? 'video' : (kind === 'file' ? 'raw' : 'image');
+                const formData = new FormData();
+                formData.append('file', blob, filename || 'file');
+                formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
                 const xhr = new XMLHttpRequest();
-                xhr.open('POST', `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/${method}`);
-                xhr.upload.onprogress = (e) => {
-                    if (e.lengthComputable) updateUploadOverlayProgress(e.loaded / e.total);
-                };
+                xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`);
+                xhr.upload.onprogress = (e) => { if (e.lengthComputable) updateUploadOverlayProgress(e.loaded / e.total); };
                 xhr.onload = () => {
-                    let res;
-                    try { res = JSON.parse(xhr.responseText); }
-                    catch (err) { reject(new Error('bad-response')); return; }
-                    if (!res.ok) { reject(new Error(res.description || 'telegram-error')); return; }
-                    let fileObj;
-                    if (kind === 'video') {
-                        fileObj = res.result.video || res.result.document;
-                    } else if (kind === 'file') {
-                        fileObj = res.result.document;
+                    releaseUploadWakeLock();
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        try {
+                            const data = JSON.parse(xhr.responseText);
+                            resolveTelegramFileUrl(data.secure_url, kind).then(resolve).catch(reject);
+                        } catch (err) { reject(err); }
                     } else {
-                        // Telegram повертає масив розмірів фото — останній елемент найбільший.
-                        const sizes = res.result.photo;
-                        fileObj = sizes && sizes.length ? sizes[sizes.length - 1] : null;
+                        reject(new Error('cloudinary-upload-failed-' + xhr.status));
                     }
-                    if (!fileObj || !fileObj.file_id) { reject(new Error('no-file-in-response')); return; }
-                    resolveTelegramFileUrl(fileObj.file_id, kind).then(resolve).catch(reject);
                 };
-                xhr.onerror = () => reject(new Error('network-error'));
-                xhr.send(form);
+                xhr.onerror = () => { releaseUploadWakeLock(); reject(new Error('network-error')); };
+                xhr.send(formData);
             });
         }
 
@@ -1961,7 +1957,8 @@
         const map = L.map('map', { 
             zoomControl: false,
             doubleClickZoom: false,
-            tap: false
+            tap: false,
+            preferCanvas: true // мітки малюються через <canvas> замість окремих DOM-елементів — суттєво швидше, коли їх багато
         }).setView([49.842074, 24.032137], 17);
 
         // Шари карти для кнопок-фільтрів: кожна категорія — свій layerGroup, який можна вмикати/вимикати окремо.
@@ -2110,7 +2107,9 @@
         // немає, тож темний режим робимо CSS-інверсією кольорів самого шару тайлів (лише карти,
         // мітки та іконки це не чіпає — вони в іншому шарі Leaflet).
         const osmTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors', subdomains: 'abc', maxZoom: 19
+            attribution: '© OpenStreetMap contributors', subdomains: 'abc', maxZoom: 19,
+            keepBuffer: 2,          // менше "запасних" тайлів навколо екрана — швидший перший показ
+            updateWhenZooming: false // не довантажує нові тайли посеред анімації зуму, лише по завершенню
         });
         osmTiles.addTo(map);
         map.getContainer().classList.toggle('map-dark-mode', document.body.classList.contains('dark-theme'));
@@ -2840,7 +2839,7 @@
         document.getElementById('chat-attach-file-btn').addEventListener('click', () => { closeChatAttachSheet(); document.getElementById('chat-attach-file-input').click(); });
         document.getElementById('chat-attach-file-input').addEventListener('change', async (e) => {
             const file = e.target.files[0]; if (!file) return; e.target.value = '';
-            if (file.size > TELEGRAM_MAX_VIDEO_BYTES) { alert('Файл занадто великий (максимум ~19 МБ).'); return; }
+            if (file.size > TELEGRAM_MAX_VIDEO_BYTES) { alert('Файл занадто великий (максимум 100 МБ).'); return; }
             if (!telegramIsConfigured()) { alert(mediaUploadErrorMessage(new Error('telegram-not-configured'))); return; }
             showUploadOverlay('Завантаження файлу…');
             try {
@@ -3156,7 +3155,7 @@
             // Перевірку розміру робимо одразу, а не всередині loadedmetadata — раніше, якщо метадані
             // не приходили (типово для Safari/iOS, коли відео-елемент не в DOM), нічого не відбувалось.
             if (file.size > TELEGRAM_MAX_VIDEO_BYTES) {
-                alert('Файл занадто великий (максимум ~19 МБ). Оберіть коротше відео або нижчу якість зйомки.');
+                alert('Файл занадто великий (максимум 100 МБ). Оберіть коротше відео або нижчу якість зйомки.');
                 return;
             }
             if (!telegramIsConfigured()) {
@@ -3889,6 +3888,31 @@
         }
 
         // Пошук місця за адресою вручну (геокодування через Nominatim/OpenStreetMap, без ключа).
+        // Пошук адреси через Nominatim — з пріоритетом на найближчі до поточного вигляду карти
+        // результати. Без цього пошук міг закинути на інший континент (той самий "проспект Свободи"
+        // чи "вулиця Шевченка" є в десятках міст світу, а Nominatim за замовчуванням не знає,
+        // де саме шукає людина). Тепер: (1) звужуємо пошук до України, (2) підказуємо Nominatim
+        // орієнтовний район через viewbox навколо поточного центру карти (не жорстко — bounded=0,
+        // тож якщо адреси немає поруч, він все одно знайде її деінде), (3) з кількох варіантів
+        // самі обираємо найближчий до центру карти, а не просто перший з відповіді.
+        function nominatimSearchUrl(query, limit) {
+            const c = map.getCenter();
+            const d = 0.35; // ширина "підказаного" району в градусах (~35-40 км) навколо центру карти
+            const viewbox = `${c.lng - d},${c.lat + d},${c.lng + d},${c.lat - d}`;
+            return `https://nominatim.openstreetmap.org/search?format=json&limit=${limit || 5}&countrycodes=ua&viewbox=${viewbox}&bounded=0&q=${encodeURIComponent(query)}`;
+        }
+        function pickNearestResult(results) {
+            if (!results || !results.length) return null;
+            const c = map.getCenter();
+            let best = results[0], bestDist = Infinity;
+            for (const r of results) {
+                const dLat = parseFloat(r.lat) - c.lat, dLon = parseFloat(r.lon) - c.lng;
+                const dist = dLat * dLat + dLon * dLon;
+                if (dist < bestDist) { bestDist = dist; best = r; }
+            }
+            return best;
+        }
+
         async function geocodeAddressForPinPlacement() {
             const input = document.getElementById('pin-address-input');
             const query = input.value.trim();
@@ -3896,11 +3920,11 @@
             if (!query) return;
             hint.innerText = 'Шукаємо адресу…';
             try {
-                const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`;
-                const res = await fetch(url, { headers: { 'Accept-Language': 'uk' } });
+                const res = await fetch(nominatimSearchUrl(query), { headers: { 'Accept-Language': 'uk' } });
                 const data = await res.json();
-                if (data && data[0]) {
-                    map.setView([parseFloat(data[0].lat), parseFloat(data[0].lon)], Math.max(map.getZoom(), 16));
+                const best = pickNearestResult(data);
+                if (best) {
+                    map.setView([parseFloat(best.lat), parseFloat(best.lon)], Math.max(map.getZoom(), 16));
                     hint.innerText = 'Перемістіть карту, щоб уточнити точне місце';
                 } else {
                     hint.innerText = 'Адресу не знайдено — спробуйте інакше';
@@ -3937,11 +3961,11 @@
             const originalLabel = btn.innerText;
             btn.innerText = '…'; btn.disabled = true;
             try {
-                const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`;
-                const res = await fetch(url, { headers: { 'Accept-Language': 'uk' } });
+                const res = await fetch(nominatimSearchUrl(query), { headers: { 'Accept-Language': 'uk' } });
                 const data = await res.json();
-                if (data && data[0]) {
-                    const lat = parseFloat(data[0].lat), lon = parseFloat(data[0].lon);
+                const best = pickNearestResult(data);
+                if (best) {
+                    const lat = parseFloat(best.lat), lon = parseFloat(best.lon);
                     map.setView([lat, lon], 17, { animate: true });
                     showMapSearchHighlight(lat, lon);
                 } else {
