@@ -249,8 +249,43 @@
 
         #my-profile-btn { left: 20px; right: auto; }
         #map-layers-btn { right: 70px; }
+        #map-search-btn { right: 120px; }
         #map-layers-btn.active { background: rgba(69, 66, 244, 0.14); }
         #map-layers-btn.active .theme-svg { stroke: var(--accent-main); }
+
+        /* ---- Панель пошуку на карті ---- */
+        #map-search-bar {
+            position: absolute; left: 20px; right: 20px; top: calc(66px + env(safe-area-inset-top, 0px)); z-index: 2500;
+            display: none; align-items: center; gap: 8px; padding: 8px 8px 8px 14px; border-radius: 999px;
+            background: var(--card-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-minimal); box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+        }
+        #map-search-bar.open { display: flex; }
+        #map-search-input { flex: 1; border: none; background: transparent; outline: none; font-size: 14px; color: var(--text-color); min-width: 0; font-family: inherit; }
+        #map-search-find-btn {
+            flex-shrink: 0; border: none; background: var(--ultramarine-gradient); color: #fff; font-weight: 600;
+            font-size: 13px; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;
+        }
+        #map-search-close-btn {
+            flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; border: none; background: rgba(0,0,0,0.06);
+            color: var(--icon-color); font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+        body.dark-theme #map-search-close-btn { background: rgba(255,255,255,0.1); }
+
+        /* ---- Підсвітка знайденого на карті місця ---- */
+        .map-search-highlight { position: relative; width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+        .map-search-highlight .pulse-ring {
+            position: absolute; width: 46px; height: 46px; border-radius: 50%;
+            background: rgba(69, 66, 244, 0.35); animation: mapSearchPulse 1.6s ease-out infinite;
+        }
+        .map-search-highlight .pulse-dot {
+            width: 16px; height: 16px; border-radius: 50%; background: var(--accent-main);
+            border: 3px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.35); z-index: 1;
+        }
+        @keyframes mapSearchPulse {
+            0% { transform: scale(0.35); opacity: 0.9; }
+            100% { transform: scale(2.3); opacity: 0; }
+        }
 
         /* ---- Редагування власного профілю: вертикальна скляна панель кнопок у стилі Apple ---- */
         .prof-tools-col { position: absolute; top: 12px; right: 12px; z-index: 12; display: flex; flex-direction: column; gap: 8px; }
@@ -1170,6 +1205,11 @@
             </svg>
         </button>
 
+        <!-- Кнопка пошуку місця на карті -->
+        <button class="apple-blur-btn" id="map-search-btn" aria-label="Пошук на карті">
+            <svg class="theme-svg" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-3.8-3.8"></path></svg>
+        </button>
+
         <!-- Кнопка шарів карти: затисни (long-press), щоб показати перемикачі шарів зліва -->
         <button class="apple-blur-btn" id="map-layers-btn" aria-label="Шари карти">
             <svg class="theme-svg" viewBox="0 0 24 24">
@@ -1186,6 +1226,13 @@
                 <path d="M4 21c0-4 4-6 8-6s8 2 8 6"></path>
             </svg>
         </button>
+
+        <!-- Панель пошуку на карті: з'являється зверху по натисканню на лупу -->
+        <div id="map-search-bar">
+            <input type="text" id="map-search-input" placeholder="Пошук місця, вулиці, закладу…" autocomplete="off">
+            <button id="map-search-find-btn">Знайти</button>
+            <button id="map-search-close-btn" aria-label="Закрити пошук">✕</button>
+        </div>
 
         <!-- Верхня панель фільтрів карти: їжа, магазини, події, друзі, улюблене — той самий стиль, що на Головній -->
         <div class="map-filter-bar" id="map-filter-bar">
@@ -3865,6 +3912,64 @@
         document.getElementById('pin-gps-btn').addEventListener('click', () => locateMeForPinPlacement(true));
         document.getElementById('pin-address-search-btn').addEventListener('click', geocodeAddressForPinPlacement);
         document.getElementById('pin-address-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); geocodeAddressForPinPlacement(); } });
+
+        // ---- Пошук місця на карті (Головний екран карти, окремо від розміщення власної точки) ----
+        let mapSearchHighlightMarker = null;
+
+        function clearMapSearchHighlight() {
+            if (mapSearchHighlightMarker) { map.removeLayer(mapSearchHighlightMarker); mapSearchHighlightMarker = null; }
+        }
+
+        function showMapSearchHighlight(lat, lon) {
+            clearMapSearchHighlight();
+            const icon = L.divIcon({
+                className: '', html: '<div class="map-search-highlight"><div class="pulse-ring"></div><div class="pulse-dot"></div></div>',
+                iconSize: [46, 46], iconAnchor: [23, 23]
+            });
+            mapSearchHighlightMarker = L.marker([lat, lon], { icon, interactive: false, zIndexOffset: 1000 }).addTo(map);
+        }
+
+        async function performMapSearch() {
+            const input = document.getElementById('map-search-input');
+            const btn = document.getElementById('map-search-find-btn');
+            const query = input.value.trim();
+            if (!query) return;
+            const originalLabel = btn.innerText;
+            btn.innerText = '…'; btn.disabled = true;
+            try {
+                const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`;
+                const res = await fetch(url, { headers: { 'Accept-Language': 'uk' } });
+                const data = await res.json();
+                if (data && data[0]) {
+                    const lat = parseFloat(data[0].lat), lon = parseFloat(data[0].lon);
+                    map.setView([lat, lon], 17, { animate: true });
+                    showMapSearchHighlight(lat, lon);
+                } else {
+                    alert('Нічого не знайдено — спробуйте інший запит.');
+                }
+            } catch (err) {
+                alert('Не вдалося виконати пошук. Перевірте з’єднання.');
+            } finally {
+                btn.innerText = originalLabel; btn.disabled = false;
+            }
+        }
+
+        function openMapSearchBar() {
+            document.getElementById('map-search-bar').classList.add('open');
+            setTimeout(() => document.getElementById('map-search-input').focus(), 150);
+        }
+        function closeMapSearchBar() {
+            document.getElementById('map-search-bar').classList.remove('open');
+            document.getElementById('map-search-input').value = '';
+            clearMapSearchHighlight();
+        }
+        document.getElementById('map-search-btn').addEventListener('click', () => {
+            const bar = document.getElementById('map-search-bar');
+            if (bar.classList.contains('open')) closeMapSearchBar(); else openMapSearchBar();
+        });
+        document.getElementById('map-search-close-btn').addEventListener('click', closeMapSearchBar);
+        document.getElementById('map-search-find-btn').addEventListener('click', performMapSearch);
+        document.getElementById('map-search-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); performMapSearch(); } });
 
         function hidePinPlacement() {
             placingPin = false;
