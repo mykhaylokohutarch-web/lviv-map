@@ -848,6 +848,10 @@
         }
         #bottom-nav .apple-blur-btn:active { transform: scale(0.88); background: none; }
         #bottom-nav .apple-blur-btn .theme-svg { width: 21px; height: 21px; }
+        /* Місяць і шари навмисно менші за звичні іконки навігації (23px) — вони другорядні поруч з "Картою".
+           Правило нижче за загальне .apple-blur-btn, щоб точно його перебити. */
+        #bottom-nav .map-mini-btn { width: 18px; height: 18px; }
+        #bottom-nav .map-mini-btn .theme-svg { width: 16px; height: 16px; }
         #bottom-nav #map-layers-btn.active { background: none; }
         #bottom-nav #map-layers-btn.active .theme-svg { stroke: var(--accent-main); }
         .nav-btn {
@@ -1010,29 +1014,31 @@
            але їх більше не видно і по них не можна натиснути. */
         #bottom-bar, #my-profile-btn { display: none !important; }
 
-        /* ---- Нова верхня панель фільтрів на карті: той самий мінімалістичний стиль, що на Головній ----
-           Прихована за замовчуванням — з'являється лише при затисканні кнопки "шари" біля місяця. */
+        /* ---- Панель шарів на карті: вертикальна "таблетка", що виринає ПЕРПЕНДИКУЛЯРНО —
+           прямо над кнопкою "шари" в нижній навігації (а не збоку, як звичайна горизонтальна таблетка).
+           Позиція (left/bottom) виставляється в JS по фактичному розташуванню кнопки. Прихована
+           за замовчуванням — з'являється по простому тапу на кнопку "шари". ---- */
         .map-filter-bar {
-            position: absolute;
-            top: calc(20px + env(safe-area-inset-top, 0px));
-            left: 20px;
+            position: fixed;
             z-index: 2500;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 14px;
-            padding: 9px 16px;
+            gap: 10px;
+            padding: 10px 8px;
             border-radius: 999px;
             background: transparent;
             border: 1px solid transparent;
             box-sizing: border-box;
             opacity: 0;
-            transform: translate3d(-18px, 0, 0) scale(0.9);
+            transform-origin: bottom center;
+            transform: translate3d(-50%, 8px, 0) scale(0.85);
             pointer-events: none;
             transition: opacity 0.3s cubic-bezier(0.25, 1, 0.5, 1), transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), var(--theme-transition);
         }
         .map-filter-bar.revealed {
             opacity: 1;
-            transform: translate3d(0, 0, 0) scale(1);
+            transform: translate3d(-50%, 0, 0) scale(1);
             pointer-events: auto;
             background: var(--card-bg);
             backdrop-filter: blur(22px) saturate(180%);
@@ -1214,7 +1220,8 @@
         <!-- Пошук місця на карті тепер живе внизу, у тій самій смужці пошуку, що й на Головній
              (відкривається іконкою пошуку в нижній навігації) — окремої верхньої панелі більше нема. -->
 
-        <!-- Верхня панель фільтрів карти: їжа, магазини, події, друзі, улюблене — той самий стиль, що на Головній -->
+        <!-- Панель фільтрів карти: їжа, магазини, події, друзі, улюблене — той самий стиль, що на Головній.
+             Тепер вертикальна "таблетка", що виринає по тапу над кнопкою "шари" в нижній навігації. -->
         <div class="map-filter-bar" id="map-filter-bar">
             <button class="filter-tab active" data-layer="food" aria-label="Їжа">
                 <svg viewBox="0 0 24 24"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.86 3.77 3.97L6.25 22h3.5l-.52-8.03C11.34 12.86 13 11.12 13 9V2h-2v7zm8-7c-1.3 0-2.42.84-2.83 2.02l-3.34 9.47C12.5 14.4 13.06 15 14 15h1v7h2v-7h1a3 3 0 0 0 3-3V2h-2z"></path></svg>
@@ -1442,8 +1449,18 @@
 
     <!-- ==================== Глобальна нижня навігація ==================== -->
     <div id="bottom-nav">
-        <!-- Кнопка теми ("місяць") — з'являється лише на екрані Карти, розширюючи таблетку зліва -->
-        <button class="apple-blur-btn" id="theme-toggle" aria-label="Змінити тему">
+        <button class="nav-btn active" id="nav-home" aria-label="Люди">
+            <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"></path><path d="M5 10v10h14V10"></path></svg>
+            <span class="nav-dot"></span>
+        </button>
+        <button class="nav-btn" id="nav-map" aria-label="Карта">
+            <svg viewBox="0 0 24 24"><path d="M9 3 3 5v16l6-2 6 2 6-2V3l-6 2-6-2z"></path><path d="M9 3v16M15 5v16"></path></svg>
+            <span class="nav-dot"></span>
+        </button>
+        <!-- Кнопки теми ("місяць") і шарів карти ("шари") — одразу поруч з іконкою "Карта",
+             з'являються лише на екрані Карти (клас .map-context на #bottom-nav вмикає їх у JS
+             при перемиканні екранів), і навмисно менші за звичні іконки навігації. -->
+        <button class="apple-blur-btn map-mini-btn" id="theme-toggle" aria-label="Змінити тему">
             <!-- Іконка Сонця (Light Mode) -->
             <svg class="theme-svg icon-light" viewBox="0 0 24 24">
                 <circle cx="12" cy="12" r="4"></circle>
@@ -1454,13 +1471,13 @@
                 <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
             </svg>
         </button>
-        <button class="nav-btn active" id="nav-home" aria-label="Люди">
-            <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"></path><path d="M5 10v10h14V10"></path></svg>
-            <span class="nav-dot"></span>
-        </button>
-        <button class="nav-btn" id="nav-map" aria-label="Карта">
-            <svg viewBox="0 0 24 24"><path d="M9 3 3 5v16l6-2 6 2 6-2V3l-6 2-6-2z"></path><path d="M9 3v16M15 5v16"></path></svg>
-            <span class="nav-dot"></span>
+        <!-- Тап (не затиснення) відкриває вертикальну "таблетку" з перемикачами шарів прямо над кнопкою. -->
+        <button class="apple-blur-btn map-mini-btn" id="map-layers-btn" aria-label="Шари карти">
+            <svg class="theme-svg" viewBox="0 0 24 24">
+                <path d="M12 2 2 7l10 5 10-5-10-5z"></path>
+                <path d="M2 17l10 5 10-5"></path>
+                <path d="M2 12l10 5 10-5"></path>
+            </svg>
         </button>
         <button class="nav-btn" id="nav-messages" aria-label="Повідомлення">
             <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
@@ -1473,15 +1490,6 @@
         <button class="nav-btn" id="nav-search" aria-label="Пошук">
             <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-3.8-3.8"></path></svg>
             <span class="nav-dot"></span>
-        </button>
-        <!-- Кнопка шарів карти ("шари") — з'являється лише на екрані Карти, розширюючи таблетку справа.
-             Затисни (long-press), щоб показати перемикачі шарів зліва на карті. -->
-        <button class="apple-blur-btn" id="map-layers-btn" aria-label="Шари карти">
-            <svg class="theme-svg" viewBox="0 0 24 24">
-                <path d="M12 2 2 7l10 5 10-5-10-5z"></path>
-                <path d="M2 17l10 5 10-5"></path>
-                <path d="M2 12l10 5 10-5"></path>
-            </svg>
         </button>
     </div>
 
@@ -1971,42 +1979,26 @@
             });
         });
 
-        // ---- Кнопка "шари" біля місяця: затисни (long-press), щоб показати перемикачі шарів зліва ----
+        // ---- Кнопка "шари" поруч з "Картою": простий тап відкриває вертикальну таблетку перемикачів
+        // прямо над кнопкою (перпендикулярно горизонтальній нижній навігації) ----
         // Кожен шар вмикається/вимикається окремо (обробник вище), тож можна вибрати кілька одночасно;
         // активний шар підсвічується синім через .filter-tab.active.
         (function setupMapLayersReveal() {
             const btn = document.getElementById('map-layers-btn');
             const bar = document.getElementById('map-filter-bar');
-            const PRESS_DURATION = 420;
-            const MOVE_TOLERANCE = 12;
-            let timer = null, startX = 0, startY = 0;
 
-            function openBar() {
-                timer = null;
-                bar.classList.add('revealed');
-                btn.classList.add('active');
-                if (navigator.vibrate) navigator.vibrate(15);
+            function positionBar() {
+                const r = btn.getBoundingClientRect();
+                bar.style.left = (r.left + r.width / 2) + 'px';
+                bar.style.bottom = (window.innerHeight - r.top + 12) + 'px';
             }
-            function start(e) {
-                const t = e.touches ? e.touches[0] : e;
-                startX = t.clientX; startY = t.clientY;
-                clearTimeout(timer);
-                timer = setTimeout(openBar, PRESS_DURATION);
+            function toggleBar() {
+                const willOpen = !bar.classList.contains('revealed');
+                if (willOpen) { positionBar(); if (navigator.vibrate) navigator.vibrate(15); }
+                bar.classList.toggle('revealed', willOpen);
+                btn.classList.toggle('active', willOpen);
             }
-            function cancelPress() { clearTimeout(timer); timer = null; }
-            function moveCheck(e) {
-                if (timer === null) return;
-                const t = e.touches ? e.touches[0] : e;
-                const dx = t.clientX - startX, dy = t.clientY - startY;
-                if (Math.sqrt(dx * dx + dy * dy) > MOVE_TOLERANCE) cancelPress();
-            }
-            btn.addEventListener('touchstart', start, { passive: true });
-            btn.addEventListener('touchmove', moveCheck, { passive: true });
-            btn.addEventListener('touchend', cancelPress);
-            btn.addEventListener('touchcancel', cancelPress);
-            btn.addEventListener('mousedown', start);
-            btn.addEventListener('mouseup', cancelPress);
-            btn.addEventListener('mouseleave', cancelPress);
+            btn.addEventListener('click', toggleBar);
 
             // Дотик будь-де поза панеллю й поза самою кнопкою знову ховає перемикачі шарів
             document.addEventListener('touchstart', (e) => {
@@ -2015,6 +2007,7 @@
                 bar.classList.remove('revealed');
                 btn.classList.remove('active');
             }, { passive: true });
+            window.addEventListener('resize', () => { if (bar.classList.contains('revealed')) positionBar(); });
         })();
 
         // "Улюблене" зверху на карті — не окремий шар, а підсвітка: показує лише улюблені мітки,
