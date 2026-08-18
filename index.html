@@ -185,6 +185,8 @@
             background: var(--accent-main, #0a84ff); border: 2.5px solid #fff;
             box-shadow: 0 1px 5px rgba(0, 0, 0, 0.35);
         }
+        .poi-search-anchor-dot.loading { animation: poiAnchorPulse 1s ease-in-out infinite; }
+        @keyframes poiAnchorPulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(1.3); } }
 
         /* Ультра-мінімалістична прозора кнопка Apple */
         .apple-blur-btn {
@@ -2105,8 +2107,8 @@
         // спершу це центр карти при відкритті, а далі — будь-яке місце, де користувач зробить довгий затиск.
         // Так набагато менше запитів до Overpass (надійніше), і результати кешуються в localStorage —
         // повторний заїзд у те саме місце показує мітки миттєво, без нового запиту ("швидше грузяться").
-        const SEARCH_RADIUS_M = 1000;
-        const POI_LIMIT = 60;
+        const SEARCH_RADIUS_M = 600;
+        const POI_LIMIT = 25;
         const POI_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // добу кеш вважається свіжим
 
         function clearOsmPoiLayers() {
@@ -2153,8 +2155,9 @@
                     if (cached && (Date.now() - cached.ts) < POI_CACHE_TTL_MS) { renderOsmPois(cached.elements); return; }
                 } catch (e) { /* пошкоджений кеш — просто йдемо запитом далі */ }
             }
+            setPoiLoading(true);
             const around = `around:${SEARCH_RADIUS_M},${lat},${lng}`;
-            const query = `[out:json][timeout:15];(node["amenity"~"^(restaurant|cafe|bar|pub|fast_food|bakery|ice_cream|food_court|biergarten)$"](${around});node["shop"](${around});node["tourism"~"^(hotel|guest_house|hostel|apartment|museum|attraction|gallery|artwork)$"](${around}););out body ${POI_LIMIT};`;
+            const query = `[out:json][timeout:8];(node["amenity"~"^(restaurant|cafe|bar|pub|fast_food|bakery|ice_cream|food_court|biergarten)$"](${around});node["shop"](${around});node["tourism"~"^(hotel|guest_house|hostel|apartment|museum|attraction|gallery|artwork)$"](${around}););out body ${POI_LIMIT};`;
 
             if (osmPoiAbortController) osmPoiAbortController.abort();
             osmPoiAbortController = new AbortController();
@@ -2164,13 +2167,20 @@
                 .then(data => {
                     const elements = data.elements || [];
                     renderOsmPois(elements);
+                    setPoiLoading(false);
                     try { localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), elements })); } catch (e) { /* localStorage переповнений/недоступний — пропускаємо кеш */ }
                 })
                 .catch((err) => {
                     if (err && err.name === 'AbortError') return; // скасовано новим запитом — нормально, не помилка
-                    if (mirrorIndex < OVERPASS_MIRRORS.length - 1) { fetchOsmPoisAround(lat, lng, mirrorIndex + 1); }
+                    if (mirrorIndex < OVERPASS_MIRRORS.length - 1) { fetchOsmPoisAround(lat, lng, mirrorIndex + 1); return; }
+                    setPoiLoading(false);
                     // Якщо відповіли всі дзеркала — лишаємо попередні мітки на місці (не зникають у порожнечу).
                 });
+        }
+
+        function setPoiLoading(isLoading) {
+            const dot = document.querySelector('.poi-search-anchor-dot');
+            if (dot) dot.classList.toggle('loading', isLoading);
         }
 
         let searchAnchorMarker = null, searchAnchorCircle = null;
