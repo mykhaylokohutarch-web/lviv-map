@@ -127,6 +127,9 @@
         /* Поки тайли карти ще не підвантажились під час швидкого перетягування —
            у темній темі краще чорна підкладка (не білий "спалах"), у світлій лишаємо світлу. */
         body.dark-theme #map { background-color: #000000; }
+        #map.map-dark-mode .leaflet-tile-pane {
+            filter: invert(1) hue-rotate(180deg) brightness(0.94) contrast(0.92) saturate(0.85);
+        }
 
         /* Прибираємо напис-атрибуцію ("OpenStreetMap...") у кутку карти. */
         .leaflet-control-attribution { display: none !important; }
@@ -177,16 +180,6 @@
         .osm-poi-popup { display: flex; align-items: center; gap: 8px; }
         .osm-poi-popup-icon { font-size: 17px; }
         .osm-poi-popup-name { font-size: 14px; font-weight: 600; color: var(--text-color); white-space: nowrap; }
-
-        /* "Точка пошуку" закладів (центр карти або місце довгого затиску) і коло радіусом 1 км навколо неї */
-        .poi-search-radius-circle { stroke: var(--accent-main, #0a84ff); stroke-width: 1.5; stroke-opacity: 0.45; fill: var(--accent-main, #0a84ff); fill-opacity: 0.06; }
-        .poi-search-anchor-dot {
-            width: 14px; height: 14px; border-radius: 50%;
-            background: var(--accent-main, #0a84ff); border: 2.5px solid #fff;
-            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.35);
-        }
-        .poi-search-anchor-dot.loading { animation: poiAnchorPulse 1s ease-in-out infinite; }
-        @keyframes poiAnchorPulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(1.3); } }
 
         /* Ультра-мінімалістична прозора кнопка Apple */
         .apple-blur-btn {
@@ -1767,25 +1760,35 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // ==== Зберігання усіх медіа (фото, відео, будь-які файли) у Cloudinary ====
-        // Хмара й пресет для завантаження — саме ті, що налаштовані в Cloudinary Console
-        // (Settings → Upload → Upload Presets). Пресет "unsigned", тому ключі/секрети тут
-        // не потрібні — завантаження йде напряму з браузера.
-        const CLOUDINARY_CLOUD_NAME = 'wj6a90a1';
-        const CLOUDINARY_UPLOAD_PRESET = 'lviv_app_uploads';
-        // Клієнтський запобіжник на розмір файлу — 100 МБ (ліміт безкоштовного плану Cloudinary
-        // на один файл). Якщо перейдете на платний план з вищим лімітом, підніміть це число.
-        const TELEGRAM_MAX_VIDEO_BYTES = 100 * 1024 * 1024;
-
+        // ==== Зберігання усіх медіа (фото й відео) на сервері Telegram (замість Firebase) ====
+        // Як налаштувати (одноразово):
+        //   1) У Telegram напишіть @BotFather → /newbot → отримаєте токен виду "123456789:AA...".
+        //      (Якщо у вас вже є бот для цього застосунку — можна використати той самий токен,
+        //      новий бот не потрібен.) Вставте токен у TELEGRAM_BOT_TOKEN нижче.
+        //   2) Створіть приватний канал (наприклад "Мої медіа-архіви"), додайте туди бота
+        //      як адміністратора (права на публікацію повідомлень достатньо).
+        //   3) Дізнайтесь chat_id каналу: перешліть будь-яке повідомлення з каналу боту
+        //      @userinfobot, або відкрийте в браузері
+        //      https://api.telegram.org/bot<ВАШ_ТОКЕН>/getUpdates після того, як напишете щось
+        //      у каналі — у відповіді буде поле "chat":{"id": -100...}. Вставте це число (разом
+        //      зі знаком "-") у TELEGRAM_CHAT_ID нижче.
+        // Усі фото та відео вивантажуються напряму з браузера користувача на сервери Telegram і
+        // там і зберігаються назавжди (у Firebase лишається тільки посилання на файл, не сам файл).
+        const TELEGRAM_BOT_TOKEN = 'ВАШ_ТОКЕН_БОТА';
+        const TELEGRAM_CHAT_ID = 'ВАШ_CHAT_ID';
+        // Telegram дозволяє звантажувати назад (getFile) файли розміром не більше ~20 МБ —
+        // тож перевіряємо розмір ще до спроби завантаження, з невеликим запасом.
+        const TELEGRAM_MAX_VIDEO_BYTES = 19 * 1024 * 1024;
 
         function telegramIsConfigured() {
-            return true; // Cloudinary налаштований вище (cloud name + unsigned upload preset).
+            return TELEGRAM_BOT_TOKEN && !TELEGRAM_BOT_TOKEN.startsWith('ВАШ_') &&
+                   TELEGRAM_CHAT_ID && !TELEGRAM_CHAT_ID.startsWith('ВАШ_');
         }
 
         // Людяне повідомлення про помилку завантаження — однакове для фото й відео.
         function mediaUploadErrorMessage(err) {
-            if (err && err.message === 'file-too-large') {
-                return 'Файл завеликий. Спробуйте коротше відео або менше фото.';
+            if (err && err.message === 'telegram-not-configured') {
+                return 'Завантаження медіа ще не налаштоване: вкажіть TELEGRAM_BOT_TOKEN і TELEGRAM_CHAT_ID у коді застосунку.';
             }
             return 'Не вдалося завантажити файл на сервер. Перевірте з’єднання і спробуйте ще раз.';
         }
@@ -1821,60 +1824,60 @@
             if (el) el.style.display = 'none';
         }
 
-        // Утримує екран увімкненим на час завантаження файлу — інакше телефон гасне за тайм-аутом,
-        // а мобільний браузер у фоні обриває мережеве з'єднання (XHR), і завантаження зривається
-        // саме посередині. Підтримується не всюди (напр. старі iOS) — тоді просто тихо не спрацює,
-        // без помилок, і краще один раз попередити людину не блокувати екран вручну.
-        let uploadWakeLock = null;
-        async function acquireUploadWakeLock() {
-            try { if ('wakeLock' in navigator) uploadWakeLock = await navigator.wakeLock.request('screen'); }
-            catch (e) { uploadWakeLock = null; }
-        }
-        function releaseUploadWakeLock() {
-            if (uploadWakeLock) { uploadWakeLock.release().catch(() => {}); uploadWakeLock = null; }
-        }
-        // Якщо систем сама зняла wake lock (буває при згортанні застосунку), а завантаження ще
-        // триває — пробуємо перехопити його назад одразу, як тільки вкладка знову стає видимою.
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible' && document.getElementById('tg-upload-overlay')?.style.display === 'flex') {
-                acquireUploadWakeLock();
-            }
-        });
-
-        // Відео в Cloudinary зберігаємо в resource_type "video", файли-документи — в "raw",
-        // фото — у звичайному "image". Для відео Cloudinary сам повертає посилання з правильним
-        // розширенням, окремого хвостика "#v.mp4", як раніше з Telegram, більше не треба.
-        function resolveTelegramFileUrl(url, kind) {
-            return Promise.resolve(url);
+        // Дізнається пряме постійне посилання на файл за його file_id.
+        // kind === 'video' додає до URL хвостик "#v.mp4", щоб застосунок безпомилково впізнавав
+        // відео за розширенням у посиланні (фрагмент після # на сервер не надсилається і на
+        // завантаження файлу жодним чином не впливає).
+        function resolveTelegramFileUrl(fileId, kind) {
+            return fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getFile?file_id=${encodeURIComponent(fileId)}`)
+                .then(r => r.json())
+                .then(res => {
+                    if (!res.ok) throw new Error(res.description || 'getFile-failed');
+                    const path = res.result.file_path;
+                    const base = `https://api.telegram.org/file/bot${TELEGRAM_BOT_TOKEN}/${path}`;
+                    return kind === 'video' ? `${base}#v.mp4` : base;
+                });
         }
 
-        // Універсальне завантаження файлу (фото/відео/будь-який файл) у Cloudinary —
-        // повертає постійне посилання на нього. Прогрес завантаження оновлює оверлей,
-        // показаний викликачем заздалегідь.
+        // Універсальне завантаження файлу (фото чи відео) на сервер Telegram — повертає постійне
+        // посилання на нього. Прогрес завантаження оновлює оверлей, показаний викликачем заздалегідь.
         function uploadMediaToTelegram(blob, filename, kind) {
             return new Promise((resolve, reject) => {
-                if (blob && blob.size > TELEGRAM_MAX_VIDEO_BYTES) { reject(new Error('file-too-large')); return; }
-                acquireUploadWakeLock();
-                const resourceType = kind === 'video' ? 'video' : (kind === 'file' ? 'raw' : 'image');
-                const formData = new FormData();
-                formData.append('file', blob, filename || 'file');
-                formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+                if (!telegramIsConfigured()) {
+                    reject(new Error('telegram-not-configured'));
+                    return;
+                }
+                const method = kind === 'video' ? 'sendVideo' : (kind === 'file' ? 'sendDocument' : 'sendPhoto');
+                const field = kind === 'video' ? 'video' : (kind === 'file' ? 'document' : 'photo');
+                const form = new FormData();
+                form.append('chat_id', TELEGRAM_CHAT_ID);
+                form.append(field, blob, filename);
+                if (kind === 'video') form.append('supports_streaming', 'true');
                 const xhr = new XMLHttpRequest();
-                xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`);
-                xhr.upload.onprogress = (e) => { if (e.lengthComputable) updateUploadOverlayProgress(e.loaded / e.total); };
-                xhr.onload = () => {
-                    releaseUploadWakeLock();
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                        try {
-                            const data = JSON.parse(xhr.responseText);
-                            resolveTelegramFileUrl(data.secure_url, kind).then(resolve).catch(reject);
-                        } catch (err) { reject(err); }
-                    } else {
-                        reject(new Error('cloudinary-upload-failed-' + xhr.status));
-                    }
+                xhr.open('POST', `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/${method}`);
+                xhr.upload.onprogress = (e) => {
+                    if (e.lengthComputable) updateUploadOverlayProgress(e.loaded / e.total);
                 };
-                xhr.onerror = () => { releaseUploadWakeLock(); reject(new Error('network-error')); };
-                xhr.send(formData);
+                xhr.onload = () => {
+                    let res;
+                    try { res = JSON.parse(xhr.responseText); }
+                    catch (err) { reject(new Error('bad-response')); return; }
+                    if (!res.ok) { reject(new Error(res.description || 'telegram-error')); return; }
+                    let fileObj;
+                    if (kind === 'video') {
+                        fileObj = res.result.video || res.result.document;
+                    } else if (kind === 'file') {
+                        fileObj = res.result.document;
+                    } else {
+                        // Telegram повертає масив розмірів фото — останній елемент найбільший.
+                        const sizes = res.result.photo;
+                        fileObj = sizes && sizes.length ? sizes[sizes.length - 1] : null;
+                    }
+                    if (!fileObj || !fileObj.file_id) { reject(new Error('no-file-in-response')); return; }
+                    resolveTelegramFileUrl(fileObj.file_id, kind).then(resolve).catch(reject);
+                };
+                xhr.onerror = () => reject(new Error('network-error'));
+                xhr.send(form);
             });
         }
 
@@ -1912,7 +1915,7 @@
             zoomControl: false,
             doubleClickZoom: false,
             tap: false
-        }).setView([49.8415, 24.0315], 17);
+        }).setView([49.842074, 24.032137], 17);
 
         // Шари карти для кнопок-фільтрів: кожна категорія — свій layerGroup, який можна вмикати/вимикати окремо.
         // "people" тут немає навмисно — усі живі мітки (демо-люди + реальні профілі) лежать в "friends".
@@ -2056,34 +2059,19 @@
             syncBottomNavToScreen();
         }
 
-        // CARTO Positron / Dark Matter — оригінальний стильний мінімалістичний вигляд карти (як і був).
-        const lightTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '© OpenStreetMap contributors © CARTO', subdomains: 'abcd', maxZoom: 20
+        // Стандартний OpenStreetMap (як на openstreetmap.org) — офіційного темного варіанту в нього
+        // немає, тож темний режим робимо CSS-інверсією кольорів самого шару тайлів (лише карти,
+        // мітки та іконки це не чіпає — вони в іншому шарі Leaflet).
+        const osmTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors', subdomains: 'abc', maxZoom: 19
         });
-        const darkTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            attribution: '© OpenStreetMap contributors © CARTO', subdomains: 'abcd', maxZoom: 20
-        });
-        darkTiles.addTo(map);
-
-        // CARTO "Voyager" — готовий шар тайлів, де реальні заклади (кафе, магазини, готелі тощо)
-        // вже вмальовані прямо в саму карту як іконки й підписи. Кладемо його НАД базовою картою —
-        // швидко (ті самі сервери CARTO, що й основна карта) й надійно (без окремих запитів на кожну точку).
-        const poiLabelsTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', {
-            attribution: '© OpenStreetMap contributors © CARTO', subdomains: 'abcd', maxZoom: 20
-        });
-        poiLabelsTiles.addTo(map);
+        osmTiles.addTo(map);
+        map.getContainer().classList.toggle('map-dark-mode', document.body.classList.contains('dark-theme'));
 
         const themeBtn = document.getElementById('theme-toggle');
         themeBtn.addEventListener('click', () => {
             document.body.classList.toggle('dark-theme');
-            if (document.body.classList.contains('dark-theme')) {
-                map.removeLayer(lightTiles);
-                darkTiles.addTo(map);
-            } else {
-                map.removeLayer(darkTiles);
-                lightTiles.addTo(map);
-            }
-            poiLabelsTiles.bringToFront(); // базова карта додається заново й інакше перекриває підписи закладів
+            map.getContainer().classList.toggle('map-dark-mode', document.body.classList.contains('dark-theme'));
         });
 
         // ==================== Реальні заклади з OpenStreetMap (як у Bump/Apple Maps) ====================
@@ -2097,7 +2085,9 @@
         map.getPane('osmPoiPane').style.zIndex = 550; // між лінією маршруту (overlayPane 400) і власними аватарками (markerPane 600)
 
         const OSM_CAT_GROUPS = ['food', 'shopping', 'events', 'services'];
+        let osmPoiFetchTimer = null;
         let osmPoiAbortController = null;
+        const OSM_POI_MIN_ZOOM = 13; // з'являються раніше — помітні, як на Google Maps
         const OSM_POI_LABEL_MIN_ZOOM = 17; // підписи назв — тільки коли наблизились впритул, щоб не захаращувати
 
         function osmPoiCategory(tags) {
@@ -2112,13 +2102,18 @@
             return String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
         }
 
-        // Заклади тепер вантажаться не по всій видимій карті, а лише в радіусі 1 км від "точки пошуку":
-        // спершу це центр карти при відкритті, а далі — будь-яке місце, де користувач зробить довгий затиск.
-        // Так набагато менше запитів до Overpass (надійніше), і результати кешуються в localStorage —
-        // повторний заїзд у те саме місце показує мітки миттєво, без нового запиту ("швидше грузяться").
-        const SEARCH_RADIUS_M = 600;
-        const POI_LIMIT = 25;
-        const POI_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // добу кеш вважається свіжим
+        // Скільки крапок показувати залежно від наближення — менше здалеку, більше зблизька,
+        // саме як просив користувач. Це також тримає кількість DOM-міток під контролем,
+        // щоб карта не гальмувала.
+        function osmPoiLimitForZoom(zoom) {
+            if (zoom >= 19) return 200;
+            if (zoom >= 18) return 130;
+            if (zoom >= 17) return 75;
+            if (zoom >= 16) return 40;
+            if (zoom >= 15) return 25;
+            if (zoom >= 14) return 14;
+            return 8;
+        }
 
         function clearOsmPoiLayers() {
             OSM_CAT_GROUPS.forEach(cat => layerGroups[cat].clearLayers());
@@ -2132,123 +2127,63 @@
             'https://overpass.openstreetmap.ru/api/interpreter'
         ];
 
-        function poiCacheKey(lat, lng) { return `poi_cache_${lat.toFixed(3)}_${lng.toFixed(3)}`; }
-
-        function renderOsmPois(elements) {
-            clearOsmPoiLayers();
-            let shown = 0;
-            for (const el of elements) {
-                if (shown >= POI_LIMIT) break;
-                if (!el.tags || !el.tags.name) continue;
-                const { cat, emoji } = osmPoiCategory(el.tags);
-                const icon = L.divIcon({
-                    className: 'osm-poi-marker',
-                    html: `<div class="osm-poi-marker-wrap"><div class="osm-poi-dot cat-${cat}">${emoji}</div><div class="osm-poi-label">${escapeHtml(el.tags.name)}</div></div>`,
-                    iconSize: [20, 20], iconAnchor: [10, 10]
-                });
-                const marker = L.marker([el.lat, el.lon], { icon: icon, pane: 'osmPoiPane' }).addTo(layerGroups[cat]);
-                marker.bindPopup(
-                    `<div class="osm-poi-popup"><span class="osm-poi-popup-icon">${emoji}</span><span class="osm-poi-popup-name">${escapeHtml(el.tags.name)}</span></div>`,
-                    { closeButton: false, offset: [0, -10], className: 'osm-poi-popup-wrap' }
-                );
-                shown++;
-            }
-        }
-
-        function fetchOsmPoisAround(lat, lng, mirrorIndex) {
+        function fetchOsmPois(mirrorIndex) {
             mirrorIndex = mirrorIndex || 0;
-            const cacheKey = poiCacheKey(lat, lng);
-            if (mirrorIndex === 0) {
-                try {
-                    const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
-                    if (cached && (Date.now() - cached.ts) < POI_CACHE_TTL_MS) { renderOsmPois(cached.elements); return; }
-                } catch (e) { /* пошкоджений кеш — просто йдемо запитом далі */ }
-            }
-            setPoiLoading(true);
-            const around = `around:${SEARCH_RADIUS_M},${lat},${lng}`;
-            const query = `[out:json][timeout:8];(node["amenity"~"^(restaurant|cafe|bar|pub|fast_food|bakery|ice_cream|food_court|biergarten)$"](${around});node["shop"](${around});node["tourism"~"^(hotel|guest_house|hostel|apartment|museum|attraction|gallery|artwork)$"](${around}););out body ${POI_LIMIT};`;
+            const zoom = map.getZoom();
+            if (zoom < OSM_POI_MIN_ZOOM) { clearOsmPoiLayers(); return; }
+            const limit = osmPoiLimitForZoom(zoom);
+            const b = map.getBounds();
+            const bbox = `${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()}`;
+            const query = `[out:json][timeout:15];(node["amenity"~"^(restaurant|cafe|bar|pub|fast_food|bakery|ice_cream|food_court|biergarten)$"](${bbox});node["shop"](${bbox});node["tourism"~"^(hotel|guest_house|hostel|apartment|museum|attraction|gallery|artwork)$"](${bbox}););out body ${limit};`;
 
+            // Скасовуємо попередній ще не завершений запит — інакше застарілі відповіді
+            // накопичуються і "підвішують" карту при швидкому паруванні/зумі.
             if (osmPoiAbortController) osmPoiAbortController.abort();
             osmPoiAbortController = new AbortController();
+            const requestedZoom = zoom;
 
             fetch(OVERPASS_MIRRORS[mirrorIndex], { method: 'POST', body: query, signal: osmPoiAbortController.signal })
                 .then(r => { if (!r.ok) throw new Error('bad status'); return r.json(); })
                 .then(data => {
-                    const elements = data.elements || [];
-                    renderOsmPois(elements);
-                    setPoiLoading(false);
-                    try { localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), elements })); } catch (e) { /* localStorage переповнений/недоступний — пропускаємо кеш */ }
+                    if (map.getZoom() !== requestedZoom) return; // масштаб уже змінився — ця відповідь застаріла
+                    // Не накопичуємо мітки безкінечно — щоразу малюємо лише актуальний набір для поточного вигляду карти.
+                    clearOsmPoiLayers();
+                    let shown = 0;
+                    for (const el of (data.elements || [])) {
+                        if (shown >= limit) break;
+                        if (!el.tags || !el.tags.name) continue;
+                        const { cat, emoji } = osmPoiCategory(el.tags);
+                        const icon = L.divIcon({
+                            className: 'osm-poi-marker',
+                            html: `<div class="osm-poi-marker-wrap"><div class="osm-poi-dot cat-${cat}">${emoji}</div><div class="osm-poi-label">${escapeHtml(el.tags.name)}</div></div>`,
+                            iconSize: [20, 20], iconAnchor: [10, 10]
+                        });
+                        const marker = L.marker([el.lat, el.lon], { icon: icon, pane: 'osmPoiPane' }).addTo(layerGroups[cat]);
+                        marker.bindPopup(
+                            `<div class="osm-poi-popup"><span class="osm-poi-popup-icon">${emoji}</span><span class="osm-poi-popup-name">${escapeHtml(el.tags.name)}</span></div>`,
+                            { closeButton: false, offset: [0, -10], className: 'osm-poi-popup-wrap' }
+                        );
+                        shown++;
+                    }
                 })
                 .catch((err) => {
                     if (err && err.name === 'AbortError') return; // скасовано новим запитом — нормально, не помилка
-                    if (mirrorIndex < OVERPASS_MIRRORS.length - 1) { fetchOsmPoisAround(lat, lng, mirrorIndex + 1); return; }
-                    setPoiLoading(false);
+                    // Це дзеркало не відповіло — пробуємо наступне, поки не закінчаться варіанти.
+                    if (mirrorIndex < OVERPASS_MIRRORS.length - 1) { fetchOsmPois(mirrorIndex + 1); }
                     // Якщо відповіли всі дзеркала — лишаємо попередні мітки на місці (не зникають у порожнечу).
                 });
         }
 
-        function setPoiLoading(isLoading) {
-            const dot = document.querySelector('.poi-search-anchor-dot');
-            if (dot) dot.classList.toggle('loading', isLoading);
-        }
-
-        let searchAnchorMarker = null, searchAnchorCircle = null;
-        function setSearchAnchor(lat, lng) {
-            if (searchAnchorMarker) map.removeLayer(searchAnchorMarker);
-            if (searchAnchorCircle) map.removeLayer(searchAnchorCircle);
-            searchAnchorCircle = L.circle([lat, lng], { radius: SEARCH_RADIUS_M, className: 'poi-search-radius-circle', interactive: false }).addTo(map);
-            searchAnchorMarker = L.marker([lat, lng], {
-                icon: L.divIcon({ className: 'poi-search-anchor-marker', html: '<div class="poi-search-anchor-dot"></div>', iconSize: [16, 16], iconAnchor: [8, 8] }),
-                interactive: false
-            }).addTo(map);
-            fetchOsmPoisAround(lat, lng);
-        }
-
-        // Довгий затиск (без руху пальця) на порожньому місці карти — переносить "точку пошуку" туди.
-        (function setupMapLongPressSearch() {
-            const container = map.getContainer();
-            const PRESS_DURATION = 500;
-            const MOVE_TOLERANCE = 12;
-            let timer = null, startX = 0, startY = 0;
-
-            function clientToLatLng(clientX, clientY) {
-                const rect = container.getBoundingClientRect();
-                return map.containerPointToLatLng(L.point(clientX - rect.left, clientY - rect.top));
-            }
-            function start(clientX, clientY) {
-                startX = clientX; startY = clientY;
-                clearTimeout(timer);
-                timer = setTimeout(() => {
-                    timer = null;
-                    const ll = clientToLatLng(clientX, clientY);
-                    if (navigator.vibrate) navigator.vibrate(15);
-                    setSearchAnchor(ll.lat, ll.lng);
-                }, PRESS_DURATION);
-            }
-            function cancel() { clearTimeout(timer); timer = null; }
-            function move(clientX, clientY) {
-                if (timer === null) return;
-                const dx = clientX - startX, dy = clientY - startY;
-                if (Math.sqrt(dx * dx + dy * dy) > MOVE_TOLERANCE) cancel();
-            }
-            container.addEventListener('mousedown', (e) => { if (e.button === 0) start(e.clientX, e.clientY); });
-            container.addEventListener('mouseup', cancel);
-            container.addEventListener('mouseleave', cancel);
-            container.addEventListener('mousemove', (e) => move(e.clientX, e.clientY));
-            container.addEventListener('touchstart', (e) => { const t = e.touches[0]; if (t) start(t.clientX, t.clientY); }, { passive: true });
-            container.addEventListener('touchend', cancel);
-            container.addEventListener('touchcancel', cancel);
-            container.addEventListener('touchmove', (e) => { const t = e.touches[0]; if (t) move(t.clientX, t.clientY); }, { passive: true });
-        })();
-
         function updatePoiLabelsVisibility() {
             map.getContainer().classList.toggle('poi-labels-on', map.getZoom() >= OSM_POI_LABEL_MIN_ZOOM);
         }
-        map.on('moveend zoomend', updatePoiLabelsVisibility);
+        map.on('moveend zoomend', () => {
+            updatePoiLabelsVisibility();
+            clearTimeout(osmPoiFetchTimer);
+            osmPoiFetchTimer = setTimeout(fetchOsmPois, 500);
+        });
         updatePoiLabelsVisibility();
-
-        // Стартова точка пошуку — центр карти при відкритті; довгий затиск переносить її будь-куди.
-        { const c = map.getCenter(); setSearchAnchor(c.lat, c.lng); }
+        fetchOsmPois();
 
         // Весь інший JS-код (карта, логіка сайдбару, Firebase чат) залишається незмінним
         // zoomPhase 0-1: наближення (+1 кожен подвійний тап), zoomPhase 2-3: віддалення (-1), потім цикл повторюється
@@ -2842,10 +2777,11 @@
         document.getElementById('chat-attach-photo-btn').addEventListener('click', () => { closeChatAttachSheet(); document.getElementById('chat-attach-photo-input').click(); });
         document.getElementById('chat-attach-photo-input').addEventListener('change', async (e) => {
             const file = e.target.files[0]; if (!file) return; e.target.value = '';
-            try {
-                const url = await resizeImageFile(file, 1280, 0.75);
-                sendAttachmentMessage({ type: 'image', url }, '📷 Фото');
-            } catch (err) { alert(mediaUploadErrorMessage(err)); }
+            let url;
+            try { url = await openPhotoEditor(file); }
+            catch (err) { alert(mediaUploadErrorMessage(err)); return; }
+            if (!url) return; // користувач натиснув "Скасувати"
+            sendAttachmentMessage({ type: 'image', url }, '📷 Фото');
         });
 
         document.getElementById('chat-attach-video-btn').addEventListener('click', () => { closeChatAttachSheet(); document.getElementById('chat-attach-video-input').click(); });
@@ -2857,7 +2793,7 @@
         document.getElementById('chat-attach-file-btn').addEventListener('click', () => { closeChatAttachSheet(); document.getElementById('chat-attach-file-input').click(); });
         document.getElementById('chat-attach-file-input').addEventListener('change', async (e) => {
             const file = e.target.files[0]; if (!file) return; e.target.value = '';
-            if (file.size > TELEGRAM_MAX_VIDEO_BYTES) { alert('Файл занадто великий (максимум 100 МБ).'); return; }
+            if (file.size > TELEGRAM_MAX_VIDEO_BYTES) { alert('Файл занадто великий (максимум ~19 МБ).'); return; }
             if (!telegramIsConfigured()) { alert(mediaUploadErrorMessage(new Error('telegram-not-configured'))); return; }
             showUploadOverlay('Завантаження файлу…');
             try {
@@ -3173,7 +3109,7 @@
             // Перевірку розміру робимо одразу, а не всередині loadedmetadata — раніше, якщо метадані
             // не приходили (типово для Safari/iOS, коли відео-елемент не в DOM), нічого не відбувалось.
             if (file.size > TELEGRAM_MAX_VIDEO_BYTES) {
-                alert('Файл занадто великий (максимум 100 МБ). Оберіть коротше відео або нижчу якість зйомки.');
+                alert('Файл занадто великий (максимум ~19 МБ). Оберіть коротше відео або нижчу якість зйомки.');
                 return;
             }
             if (!telegramIsConfigured()) {
@@ -3307,9 +3243,12 @@
         document.getElementById('story-add-video-btn').addEventListener('click', () => { closeAddStoryChooser(); document.getElementById('story-add-video-input').click(); });
         document.getElementById('story-add-photo-input').addEventListener('change', async (e) => {
             const file = e.target.files[0]; if (!file) return;
-            try { const dataUrl = await resizeImageFile(file, 900, 0.65); await addStory('photo', dataUrl); }
-            catch (err) { alert(mediaUploadErrorMessage(err)); }
             e.target.value = '';
+            let dataUrl;
+            try { dataUrl = await openPhotoEditor(file); }
+            catch (err) { alert(mediaUploadErrorMessage(err)); return; }
+            if (!dataUrl) return; // користувач натиснув "Скасувати"
+            await addStory('photo', dataUrl);
         });
         document.getElementById('story-add-video-input').addEventListener('change', (e) => {
             const file = e.target.files[0]; if (!file) return;
@@ -4082,13 +4021,14 @@
         document.getElementById('ob-avatar-picker').addEventListener('click', () => document.getElementById('ob-photo-input').click());
         document.getElementById('ob-photo-input').addEventListener('change', async (e) => {
             const file = e.target.files[0]; if (!file) return;
-            try {
-                const dataUrl = await resizeImageFile(file, 800, 0.6);
-                obPhotoDataUrl = dataUrl;
-                document.getElementById('ob-avatar-preview').style.backgroundImage = `url('${dataUrl}')`;
-                document.getElementById('ob-avatar-plus').style.display = 'none';
-            } catch (err) { alert(mediaUploadErrorMessage(err)); }
             e.target.value = '';
+            let dataUrl;
+            try { dataUrl = await openPhotoEditor(file); }
+            catch (err) { alert(mediaUploadErrorMessage(err)); return; }
+            if (!dataUrl) return; // користувач натиснув "Скасувати"
+            obPhotoDataUrl = dataUrl;
+            document.getElementById('ob-avatar-preview').style.backgroundImage = `url('${dataUrl}')`;
+            document.getElementById('ob-avatar-plus').style.display = 'none';
         });
         document.getElementById('ob-photo-next').addEventListener('click', () => {
             if (obPhotoDataUrl) { myProfile.photos = myProfile.photos || []; myProfile.photos.push(obPhotoDataUrl); }
@@ -4107,13 +4047,14 @@
         document.getElementById('ob-story-video-btn').addEventListener('click', () => document.getElementById('ob-story-video-input').click());
         document.getElementById('ob-story-photo-input').addEventListener('change', async (e) => {
             const file = e.target.files[0]; if (!file) return;
-            try {
-                const dataUrl = await resizeImageFile(file, 900, 0.65);
-                obStoryData = { type: 'photo', url: dataUrl };
-                const prev = document.getElementById('ob-story-preview');
-                prev.innerHTML = ''; prev.style.backgroundImage = `url('${dataUrl}')`;
-            } catch (err) { alert(mediaUploadErrorMessage(err)); }
             e.target.value = '';
+            let dataUrl;
+            try { dataUrl = await openPhotoEditor(file); }
+            catch (err) { alert(mediaUploadErrorMessage(err)); return; }
+            if (!dataUrl) return; // користувач натиснув "Скасувати"
+            obStoryData = { type: 'photo', url: dataUrl };
+            const prev = document.getElementById('ob-story-preview');
+            prev.innerHTML = ''; prev.style.backgroundImage = `url('${dataUrl}')`;
         });
         document.getElementById('ob-story-video-input').addEventListener('change', (e) => {
             const file = e.target.files[0]; if (!file) return;
@@ -4227,8 +4168,7 @@
                 // перераховуємо розмір і перезапитуємо заклади для вже видимої області.
                 setTimeout(() => {
                     map.invalidateSize();
-                    const c = map.getCenter();
-                    if (!searchAnchorMarker) setSearchAnchor(c.lat, c.lng);
+                    if (typeof fetchOsmPois === 'function') fetchOsmPois();
                 }, 80);
             }
         }
