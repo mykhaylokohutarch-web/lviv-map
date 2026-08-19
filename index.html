@@ -51,6 +51,12 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Прогріваємо з'єднання з тайл-сервером карти заздалегідь (DNS/TLS), щоб перші тайли
+         почали вантажитись одразу, а не з нуля, коли користувач відкриє вкладку Карта. -->
+    <link rel="preconnect" href="https://a.tile.openstreetmap.org" crossorigin>
+    <link rel="preconnect" href="https://b.tile.openstreetmap.org" crossorigin>
+    <link rel="preconnect" href="https://c.tile.openstreetmap.org" crossorigin>
+    <link rel="dns-prefetch" href="https://unpkg.com">
     <!-- Заздалегідь відкриваємо з'єднання до тайлового сервера карти (DNS + TLS-хендшейк наперед) —
          сама карта після цього починає малюватись помітно швидше, бо перші тайли не чекають
          на встановлення з'єднання. -->
@@ -132,12 +138,12 @@
         #map {
             width: 100%;
             height: 100%;
-            background-color: #e5e5ea;
+            background-color: #f2efe9; /* тон "землі" стандартних тайлів OpenStreetMap — без тайлів майже не відрізнити */
             transition: filter 0.5s ease;
         }
-        /* Поки тайли карти ще не підвантажились під час швидкого перетягування —
-           у темній темі краще чорна підкладка (не білий "спалах"), у світлій лишаємо світлу. */
-        body.dark-theme #map { background-color: #000000; }
+        /* Той самий трюк для темної теми — тон CARTO Dark Matter, а не чистий чорний,
+           щоб не було видно "чорного спалаху" до підвантаження тайлів. */
+        body.dark-theme #map { background-color: #17171b; }
         #map.map-dark-mode .leaflet-tile-pane {
             filter: invert(1) hue-rotate(180deg) brightness(0.94) contrast(0.92) saturate(0.85);
         }
