@@ -2463,7 +2463,29 @@
 
         let myName = localStorage.getItem('chat_username') || "Гість";
 
-        const people = [];
+        const people = [
+            {
+                id: 'demo_p1', name: 'Марта', coords: [49.8419, 24.0297],
+                photos: ['https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=500', 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500'],
+                status: 'Роблю манікюр і покриття гель-лак 💅 Пишіть — запишу на зручний час',
+                about: 'Майстер манікюру, 5 років досвіду. Працюю у затишній студії в центрі, є всі матеріали й дизайни на вибір.',
+                interests: 'Манікюр · Педикюр · Нейл-дизайн'
+            },
+            {
+                id: 'demo_p2', name: 'Олег', coords: [49.8398, 24.0328],
+                photos: ['https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500'],
+                status: 'Фотографую портрети й прогулянки по Львову 📸 Перші 15 фото — безкоштовно',
+                about: 'Фотограф-фрілансер. Знімаю на вулицях старого міста, є готові локації та ідеї для образів.',
+                interests: 'Фотографія · Ретуш · Прогулянки містом'
+            },
+            {
+                id: 'demo_p3', name: 'Яна', coords: [49.8437, 24.0271],
+                photos: ['https://images.unsplash.com/photo-1544717305-2782549b5136?w=500', 'https://images.unsplash.com/photo-1554151228-14d9def656e4?w=500'],
+                status: 'Даю приватні уроки англійської 🇬🇧 Перше заняття — знайомче, безкоштовно',
+                about: 'Викладачка англійської, готую до IELTS та розмовної практики. Заняття онлайн або офлайн у кав\'ярні.',
+                interests: 'Англійська · IELTS · Розмовний клуб'
+            }
+        ];
 
         const svgIcons = {
             food: `<svg class="place-icon-svg" viewBox="0 0 24 24"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.86 3.77 3.97L6.25 22h3.5l-.52-8.03C11.34 12.86 13 11.12 13 9V2h-2v7zm8-7c-1.3 0-2.42.84-2.83 2.02l-3.34 9.47C12.5 14.4 13.06 15 14 15h1v7h2v-7h1a3 3 0 0 0 3-3V2h-2z"/></svg>`,
@@ -2477,8 +2499,27 @@
         const placeBadgeSvg = `<svg viewBox="0 0 24 24"><path d="M12 22s7-7.58 7-12.5A7 7 0 0 0 5 9.5C5 14.42 12 22 12 22z"></path><circle cx="12" cy="9.5" r="2.3"></circle></svg>`;
 
         // Масив "places" живить стрічку "Сьогодні" на Головній для карток закладів, у яких є власна
-        // сторінка (фото/опис/купон). Реальні точки на самій карті — окремо, у живому OSM-шарі нижче.
-        const places = [];
+        // сторінка (фото/опис/купон), і власні мітки на карті (див. places.forEach нижче).
+        const places = [
+            {
+                id: 'demo_pl1', name: 'Кава Хата', coords: [49.8407, 24.0312],
+                photos: ['https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=500', 'https://images.unsplash.com/photo-1447933601403-0c6688de566e?w=500'],
+                status: 'Затишна кавʼярня в центрі', text1: 'Смажимо каву самі, є veg-опції та домашня випічка щодня.',
+                text2: '🔥 Друга кава — половина ціни щодня до 12:00', svg: 'coffee', category: 'food'
+            },
+            {
+                id: 'demo_pl2', name: 'Вінтажний Дворик', coords: [49.8385, 24.0345],
+                photos: ['https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=500', 'https://images.unsplash.com/photo-1519567770579-c2fc5e73cf4d?w=500'],
+                status: 'Крамниця вінтажного одягу', text1: 'Речі з Європи, щотижневе оновлення асортименту, є примірочна.',
+                text2: '🔥 Знижка 20% на другу річ у чеку', svg: 'bag', category: 'shopping'
+            },
+            {
+                id: 'demo_pl3', name: 'Арт-Кіно "Лілея"', coords: [49.8446, 24.0338],
+                photos: ['https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=500', 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=500'],
+                status: 'Кінотеатр авторського кіно', text1: 'Покази українською й мовою оригіналу із субтитрами, затишна зала на 60 місць.',
+                text2: '🔥 Студентський квиток -30% щовівторка', svg: 'ticket', category: 'events'
+            }
+        ];
 
         let currentActiveItem = null; let currentChatRef = null; let heroPhotoIndex = 0; let chatTabOrigin = null;
 
@@ -2500,9 +2541,25 @@
             registerFavMarker(person.id, personMarker);
         });
 
-        // Заклади на карті більше не мають власних великих міток — вони показані маленькими
-        // приглушеними крапками реальних місць з OpenStreetMap (див. fetchOsmPois нижче).
-        // Масив `places` лишається — він і далі живить стрічку "Сьогодні" на Головній.
+        // Заклади з масиву `places` тепер мають власні мітки на карті (кольорове коло за категорією
+        // + іконка), клікабельні, як і люди — відкривають картку з описом і спецпропозицією.
+        // Живі точки з OSM (кав'ярні/магазини звідусіль) лишаються вимкненими окремо, це не заважає.
+        places.forEach(place => {
+            const placeIcon = L.divIcon({
+                className: 'custom-place-marker',
+                html: `<div class="place-ring cat-${place.category}">${svgIcons[place.svg] || placeBadgeSvg}</div>`,
+                iconSize: [38, 38], iconAnchor: [19, 19]
+            });
+            const group = layerGroups[place.category] || layerGroups.services;
+            const placeMarker = L.marker(place.coords, { icon: placeIcon }).addTo(group);
+            placeMarker.on('click', (e) => {
+                L.DomEvent.stopPropagation(e);
+                if (routeSelecting) { buildWalkingRoute(myCoords, place.coords, place.id); return; }
+                showSidebar(place);
+            });
+            registerMarker(place.id, placeMarker);
+            registerFavMarker(place.id, placeMarker);
+        });
 
         function isHeroVideoUrl(url) { return /\.(mp4|webm|mov|m4v)(\?|$)/i.test(url || ''); }
 
