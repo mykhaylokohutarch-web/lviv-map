@@ -49,6 +49,8 @@
         })();
     </script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <!-- Прогріваємо з'єднання з тайл-сервером карти заздалегідь (DNS/TLS), щоб перші тайли
@@ -734,6 +736,41 @@
         .place-ring.cat-events { background: linear-gradient(160deg, #e59bff 0%, #ab53f0 55%, #7c22c9 100%); }
         .place-ring.cat-services { background: linear-gradient(160deg, #4fe0b0 0%, #12b586 55%, #0a8f68 100%); }
         .place-icon-svg { width: 19px; height: 19px; fill: #ffffff; display: block; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.15)); }
+        /* Заклад тепер показує власне фото в кільці категорійного кольору (як мітки людей),
+           а не суцільну плашку з іконкою — іконка категорії лишається лише маленьким бейджем у кутику. */
+        .place-marker-wrap { position: relative; width: 38px; height: 38px; }
+        .place-photo-ring {
+            width: 100%; height: 100%; border-radius: 50%; padding: 2px; box-sizing: border-box;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.28);
+            transition: transform 0.15s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        .custom-place-marker:active .place-photo-ring { transform: scale(0.9); }
+        .place-photo-ring.cat-food { background: linear-gradient(160deg, #ffab6e 0%, #e8792f 55%, #c2591a 100%); }
+        .place-photo-ring.cat-shopping { background: linear-gradient(160deg, #67d0ff 0%, #2f93e8 55%, #1a6bc4 100%); }
+        .place-photo-ring.cat-events { background: linear-gradient(160deg, #e59bff 0%, #ab53f0 55%, #7c22c9 100%); }
+        .place-photo-ring.cat-services { background: linear-gradient(160deg, #4fe0b0 0%, #12b586 55%, #0a8f68 100%); }
+        .place-photo-ring-inner { width: 100%; height: 100%; border-radius: 50%; background-size: cover; background-position: center; box-shadow: inset 0 0 0 2px rgba(255,255,255,0.92); }
+        .place-cat-badge {
+            position: absolute; right: -3px; bottom: -3px; width: 17px; height: 17px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; border: 1.5px solid #fff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        .place-cat-badge svg { width: 9px; height: 9px; fill: #ffffff; }
+        .place-cat-badge.cat-food { background: #e8792f; }
+        .place-cat-badge.cat-shopping { background: #2f93e8; }
+        .place-cat-badge.cat-events { background: #ab53f0; }
+        .place-cat-badge.cat-services { background: #12b586; }
+
+        /* Бульбашка кластера: кілька міток поруч на віддаленій карті згортаються в одну таку кружечку
+           з числом — той самий ультрамариновий стиль, що й у кільцях людей, аби виглядало як частина
+           того самого дизайну, а не сторонній плагін. */
+        .app-cluster-icon { background: none !important; border: none !important; }
+        .app-cluster-bubble {
+            display: flex; align-items: center; justify-content: center; border-radius: 50%;
+            background: var(--ultramarine-gradient); color: #fff; font-weight: 700; font-size: 13px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.3), inset 0 0 0 2.2px rgba(255,255,255,0.85);
+            font-family: inherit;
+        }
 
         /* ---- Нижня панель: кнопка чату та фільтри шарів карти ---- */
         #bottom-bar {
@@ -1845,6 +1882,7 @@
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
     <script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -2024,12 +2062,32 @@
 
         // Шари карти для кнопок-фільтрів: кожна категорія — свій layerGroup, який можна вмикати/вимикати окремо.
         // "people" тут немає навмисно — усі живі мітки (демо-люди + реальні профілі) лежать в "friends".
+        // Кожен шар тепер — це markerClusterGroup: коли на карті багато міток близько одна до одної
+        // (особливо помітно при віддаленні), вони самі згортаються в одну кругленьку "бульбашку" з
+        // числом, щоб карта не перетворювалась на суцільну кашу з кружечків. Тап по бульбашці
+        // наближає карту й розкриває мітки під нею.
+        function makeClusterGroup() {
+            return L.markerClusterGroup({
+                maxClusterRadius: 60,
+                spiderfyOnMaxZoom: true,
+                showCoverageOnHover: false,
+                iconCreateFunction: function (cluster) {
+                    const count = cluster.getChildCount();
+                    const size = count < 10 ? 34 : (count < 30 ? 40 : 46);
+                    return L.divIcon({
+                        html: `<div class="app-cluster-bubble" style="width:${size}px;height:${size}px;">${count}</div>`,
+                        className: 'app-cluster-icon',
+                        iconSize: [size, size]
+                    });
+                }
+            }).addTo(map);
+        }
         const layerGroups = {
-            food: L.layerGroup().addTo(map),
-            events: L.layerGroup().addTo(map),
-            shopping: L.layerGroup().addTo(map),
-            services: L.layerGroup().addTo(map),
-            friends: L.layerGroup().addTo(map)
+            food: makeClusterGroup(),
+            events: makeClusterGroup(),
+            shopping: makeClusterGroup(),
+            services: makeClusterGroup(),
+            friends: makeClusterGroup()
         };
 
         document.querySelectorAll('.layer-btn, .map-filter-bar .filter-tab[data-layer]').forEach(btn => {
@@ -2742,9 +2800,15 @@
         // + іконка), клікабельні, як і люди — відкривають картку з описом і спецпропозицією.
         // Живі точки з OSM (кав'ярні/магазини звідусіль) лишаються вимкненими окремо, це не заважає.
         places.forEach(place => {
+            const photo = place.photos && place.photos[0];
             const placeIcon = L.divIcon({
                 className: 'custom-place-marker',
-                html: `<div class="place-ring cat-${place.category}">${svgIcons[place.svg] || placeBadgeSvg}</div>`,
+                html: photo
+                    ? `<div class="place-marker-wrap">
+                           <div class="place-photo-ring cat-${place.category}"><div class="place-photo-ring-inner" style="background-image: url('${photo}')"></div></div>
+                           <div class="place-cat-badge cat-${place.category}">${svgIcons[place.svg] || placeBadgeSvg}</div>
+                       </div>`
+                    : `<div class="place-ring cat-${place.category}">${svgIcons[place.svg] || placeBadgeSvg}</div>`,
                 iconSize: [38, 38], iconAnchor: [19, 19]
             });
             const group = layerGroups[place.category] || layerGroups.services;
