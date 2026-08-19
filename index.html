@@ -1882,8 +1882,8 @@
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
     <script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, push, onChildAdded, onValue, set, off, get, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
@@ -2067,20 +2067,32 @@
         // числом, щоб карта не перетворювалась на суцільну кашу з кружечків. Тап по бульбашці
         // наближає карту й розкриває мітки під нею.
         function makeClusterGroup() {
-            return L.markerClusterGroup({
-                maxClusterRadius: 60,
-                spiderfyOnMaxZoom: true,
-                showCoverageOnHover: false,
-                iconCreateFunction: function (cluster) {
-                    const count = cluster.getChildCount();
-                    const size = count < 10 ? 34 : (count < 30 ? 40 : 46);
-                    return L.divIcon({
-                        html: `<div class="app-cluster-bubble" style="width:${size}px;height:${size}px;">${count}</div>`,
-                        className: 'app-cluster-icon',
-                        iconSize: [size, size]
-                    });
-                }
-            }).addTo(map);
+            // Якщо плагін кластеризації з якоїсь причини не завантажився (повільна мережа,
+            // блокувальник реклами, проблема з CDN) — не валимо весь застосунок помилкою,
+            // а тихо повертаємось до звичайного layerGroup без групування міток.
+            if (typeof L.markerClusterGroup !== 'function') {
+                return L.layerGroup().addTo(map);
+            }
+            try {
+                return L.markerClusterGroup({
+                    maxClusterRadius: 60,
+                    spiderfyOnMaxZoom: true,
+                    showCoverageOnHover: false,
+                    iconCreateFunction: function (cluster) {
+                        const count = cluster.getChildCount();
+                        const size = count < 10 ? 34 : (count < 30 ? 40 : 46);
+                        return L.divIcon({
+                            html: `<div class="app-cluster-bubble" style="width:${size}px;height:${size}px;">${count}</div>`,
+                            className: 'app-cluster-icon',
+                            iconSize: [size, size]
+                        });
+                    }
+                }).addTo(map);
+            } catch (err) {
+                // Той самий запобіжник, якщо кластеризація не спрацьовує саме в цьому середовищі
+                // (наприклад, конфлікт з іншим плагіном карти) — застосунок все одно має працювати.
+                return L.layerGroup().addTo(map);
+            }
         }
         const layerGroups = {
             food: makeClusterGroup(),
