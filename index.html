@@ -266,6 +266,21 @@
 
         #my-profile-btn { left: 20px; right: auto; }
 
+        /* Маленька мінімалістична кнопка "північ" — компактніша й простіша за звичайні apple-blur-btn */
+        #map-compass-btn {
+            position: absolute; top: calc(20px + env(safe-area-inset-top, 0px)); right: 20px; z-index: 2500;
+            width: 30px; height: 30px; padding: 6px; box-sizing: border-box;
+            background: transparent; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-minimal); border-radius: 50%;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+            color: var(--icon-color); transition: var(--theme-transition), transform 0.15s ease;
+            touch-action: manipulation;
+        }
+        body.dark-theme #map-compass-btn { box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        #map-compass-btn:active { transform: scale(0.9); }
+        #map-compass-arrow { width: 100%; height: 100%; transition: transform 0.25s ease; }
+
         /* ---- Підсвітка знайденого на карті місця ---- */
         .map-search-highlight { position: relative; width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; pointer-events: none; }
         .map-search-highlight .pulse-ring {
@@ -1235,6 +1250,15 @@
             </svg>
         </button>
 
+        <!-- Маленька мінімалістична кнопка "північ": стрілка показує поточний поворот карти,
+             тап скидає обертання й повертає карту у стандартне (північ-угору) положення. -->
+        <button id="map-compass-btn" aria-label="Повернути карту на північ">
+            <svg viewBox="0 0 24 24" id="map-compass-arrow">
+                <path d="M12 2 L15 12 L12 10 L9 12 Z" fill="#ff453a"></path>
+                <path d="M12 22 L9 12 L12 14 L15 12 Z" fill="currentColor"></path>
+            </svg>
+        </button>
+
         <!-- Пошук місця на карті тепер живе внизу, у тій самій смужці пошуку, що й на Головній
              (відкривається іконкою пошуку в нижній навігації) — окремої верхньої панелі більше нема. -->
 
@@ -1821,6 +1845,7 @@
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, push, onChildAdded, onValue, set, off, get, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
@@ -1978,8 +2003,24 @@
             zoomControl: false,
             doubleClickZoom: false,
             tap: false,
-            preferCanvas: true // мітки малюються через <canvas> замість окремих DOM-елементів — суттєво швидше, коли їх багато
+            preferCanvas: true, // мітки малюються через <canvas> замість окремих DOM-елементів — суттєво швидше, коли їх багато
+            rotate: true,        // вмикає підтримку обертання карти (плагін leaflet-rotate)
+            touchRotate: true,   // обертання двома пальцями (жест pinch-rotate)
+            rotateControl: false, // власну мінімалістичну кнопку "північ" зробимо самі, вбудовану ховаємо
+            bearing: 0
         }).setView([49.842074, 24.032137], 17);
+
+        // ---- Компас: маленька стрілка вгорі показує поточний поворот карти, тап скидає на північ ----
+        const compassArrow = document.getElementById('map-compass-arrow');
+        function updateCompassArrow() {
+            const bearing = (typeof map.getBearing === 'function') ? map.getBearing() : 0;
+            compassArrow.style.transform = `rotate(${-bearing}deg)`;
+        }
+        map.on('rotate moveend zoomend', updateCompassArrow);
+        document.getElementById('map-compass-btn').addEventListener('click', () => {
+            if (typeof map.setBearing === 'function') map.setBearing(0);
+        });
+        updateCompassArrow();
 
         // Шари карти для кнопок-фільтрів: кожна категорія — свій layerGroup, який можна вмикати/вимикати окремо.
         // "people" тут немає навмисно — усі живі мітки (демо-люди + реальні профілі) лежать в "friends".
@@ -2113,11 +2154,53 @@
         // мітки та іконки це не чіпає — вони в іншому шарі Leaflet).
         const osmTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors', subdomains: 'abc', maxZoom: 19,
-            keepBuffer: 2,          // менше "запасних" тайлів навколо екрана — швидший перший показ
+            keepBuffer: 6,          // більше "запасних" тайлів навколо екрана — панорамування й зум відчуваються швидше
             updateWhenZooming: false // не довантажує нові тайли посеред анімації зуму, лише по завершенню
         });
         osmTiles.addTo(map);
         map.getContainer().classList.toggle('map-dark-mode', document.body.classList.contains('dark-theme'));
+
+        // ---- Прогрів тайлів наперед: сусідні рівні зуму й (за наявності дозволу) місце користувача ----
+        // Просто "прогріваємо" кеш браузера завантаженням картинок тайлів у фоні — на саму карту
+        // ці тайли не додаються, але коли користувач реально туди прогорне/наближить, вони вже
+        // будуть у кеші й з'являться миттєво замість чекання на мережу.
+        const tileWarmupCache = new Set();
+        function warmupTile(x, y, z) {
+            const key = `${z}/${x}/${y}`;
+            if (tileWarmupCache.has(key)) return;
+            tileWarmupCache.add(key);
+            const sub = 'abc'[Math.floor(Math.random() * 3)];
+            const img = new Image();
+            img.src = `https://${sub}.tile.openstreetmap.org/${z}/${x}/${y}.png`;
+        }
+        function warmupAroundLatLng(lat, lon, baseZoom) {
+            [baseZoom - 1, baseZoom, baseZoom + 1].forEach(z => {
+                if (z < 3 || z > 19) return;
+                const centerPoint = map.project([lat, lon], z).divideBy(256).floor();
+                for (let dx = -2; dx <= 2; dx++) {
+                    for (let dy = -2; dy <= 2; dy++) {
+                        warmupTile(centerPoint.x + dx, centerPoint.y + dy, z);
+                    }
+                }
+            });
+        }
+        // Прогріваємо те, що вже видно на екрані, одразу при завантаженні
+        warmupAroundLatLng(map.getCenter().lat, map.getCenter().lng, map.getZoom());
+        // Якщо дозвіл на геолокацію вже надано раніше — тихо прогріваємо і місце користувача,
+        // без нового запиту дозволу (щоб не смикати діалогом на кожному відкритті застосунку)
+        if (navigator.permissions && navigator.permissions.query) {
+            navigator.permissions.query({ name: 'geolocation' }).then(status => {
+                if (status.state === 'granted' && navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (pos) => warmupAroundLatLng(pos.coords.latitude, pos.coords.longitude, 16),
+                        () => {}, { maximumAge: 300000, timeout: 5000 }
+                    );
+                }
+            }).catch(() => {});
+        }
+        // Після кожного панорамування/зуму так само прогріваємо нову околицю наперед —
+        // тоді наступний рух картою чи наближення вже здебільшого бере тайли з кеша.
+        map.on('moveend', () => { warmupAroundLatLng(map.getCenter().lat, map.getCenter().lng, map.getZoom()); });
 
         const themeBtn = document.getElementById('theme-toggle');
         themeBtn.addEventListener('click', () => {
