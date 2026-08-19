@@ -837,11 +837,23 @@
             transition: var(--theme-transition);
         }
         body.dark-theme #bottom-nav { background: rgba(28, 28, 30, 0.18); box-shadow: 0 8px 24px rgba(0,0,0,0.35); }
-        /* Кнопки теми й шарів карти живуть у самій таблетці, але видно їх лише на екрані Карти
-           (клас .map-context на #bottom-nav вмикає JS при перемиканні екранів) — на інших екранах
-           таблетка звужується назад до звичних п'яти іконок. */
+        /* Кнопки теми й шарів карти живуть по обидва боки іконки "Карта" всередині .nav-map-cluster,
+           але видно їх лише на екрані Карти (клас .map-context на #bottom-nav вмикає JS при
+           перемиканні екранів) — на інших екранах капсула звужується назад до самої іконки Карти. */
         #bottom-nav #theme-toggle, #bottom-nav #map-layers-btn { display: none; }
         #bottom-nav.map-context #theme-toggle, #bottom-nav.map-context #map-layers-btn { display: flex; }
+        .nav-map-cluster {
+            display: flex; align-items: center; justify-content: center; gap: 14px;
+            border-radius: 999px; transition: var(--theme-transition), padding 0.2s ease, gap 0.2s ease;
+        }
+        /* Капсула ніби "вилазить" з-під іконки Карти — власний фон/обвід окремо від основної таблетки навігації,
+           тільки коли reально відкрита вкладка Карти. */
+        #bottom-nav.map-context .nav-map-cluster {
+            padding: 6px 12px;
+            background: rgba(120, 120, 128, 0.14);
+            box-shadow: inset 0 0 0 1px var(--border-minimal);
+        }
+        body.dark-theme #bottom-nav.map-context .nav-map-cluster { background: rgba(120, 120, 128, 0.22); }
         #bottom-nav .apple-blur-btn {
             position: static; width: 23px; height: 23px; background: transparent; border: none;
             box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none;
@@ -1453,32 +1465,35 @@
             <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"></path><path d="M5 10v10h14V10"></path></svg>
             <span class="nav-dot"></span>
         </button>
-        <button class="nav-btn" id="nav-map" aria-label="Карта">
-            <svg viewBox="0 0 24 24"><path d="M9 3 3 5v16l6-2 6 2 6-2V3l-6 2-6-2z"></path><path d="M9 3v16M15 5v16"></path></svg>
-            <span class="nav-dot"></span>
-        </button>
-        <!-- Кнопки теми ("місяць") і шарів карти ("шари") — одразу поруч з іконкою "Карта",
-             з'являються лише на екрані Карти (клас .map-context на #bottom-nav вмикає їх у JS
-             при перемиканні екранів), і навмисно менші за звичні іконки навігації. -->
-        <button class="apple-blur-btn map-mini-btn" id="theme-toggle" aria-label="Змінити тему">
-            <!-- Іконка Сонця (Light Mode) -->
-            <svg class="theme-svg icon-light" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="4"></circle>
-                <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
-            </svg>
-            <!-- Іконка Місяця (Dark Mode) -->
-            <svg class="theme-svg icon-dark" viewBox="0 0 24 24">
-                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
-            </svg>
-        </button>
-        <!-- Тап (не затиснення) відкриває вертикальну "таблетку" з перемикачами шарів прямо над кнопкою. -->
-        <button class="apple-blur-btn map-mini-btn" id="map-layers-btn" aria-label="Шари карти">
-            <svg class="theme-svg" viewBox="0 0 24 24">
-                <path d="M12 2 2 7l10 5 10-5-10-5z"></path>
-                <path d="M2 17l10 5 10-5"></path>
-                <path d="M2 12l10 5 10-5"></path>
-            </svg>
-        </button>
+        <!-- Кнопки теми ("місяць") і шарів карти ("шари") тепер по обидва боки від іконки "Карта" —
+             разом вони утворюють окрему "капсулу", яка ніби вилазить з-під самої іконки Карти.
+             Видно це обгортання лише на екрані Карти (клас .map-context на #bottom-nav вмикає його в JS
+             при перемиканні екранів) — на інших екранах капсула ховається і лишається сама іконка Карти. -->
+        <div class="nav-map-cluster">
+            <button class="apple-blur-btn map-mini-btn" id="theme-toggle" aria-label="Змінити тему">
+                <!-- Іконка Сонця (Light Mode) -->
+                <svg class="theme-svg icon-light" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="4"></circle>
+                    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
+                </svg>
+                <!-- Іконка Місяця (Dark Mode) -->
+                <svg class="theme-svg icon-dark" viewBox="0 0 24 24">
+                    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+                </svg>
+            </button>
+            <button class="nav-btn" id="nav-map" aria-label="Карта">
+                <svg viewBox="0 0 24 24"><path d="M9 3 3 5v16l6-2 6 2 6-2V3l-6 2-6-2z"></path><path d="M9 3v16M15 5v16"></path></svg>
+                <span class="nav-dot"></span>
+            </button>
+            <!-- Тап (не затиснення) відкриває вертикальну "таблетку" з перемикачами шарів прямо над кнопкою. -->
+            <button class="apple-blur-btn map-mini-btn" id="map-layers-btn" aria-label="Шари карти">
+                <svg class="theme-svg" viewBox="0 0 24 24">
+                    <path d="M12 2 2 7l10 5 10-5-10-5z"></path>
+                    <path d="M2 17l10 5 10-5"></path>
+                    <path d="M2 12l10 5 10-5"></path>
+                </svg>
+            </button>
+        </div>
         <button class="nav-btn" id="nav-messages" aria-label="Повідомлення">
             <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
             <span class="nav-dot"></span>
@@ -3845,6 +3860,14 @@
             const viewbox = `${c.lng - d},${c.lat + d},${c.lng + d},${c.lat - d}`;
             return `https://nominatim.openstreetmap.org/search?format=json&limit=${limit || 5}&countrycodes=ua&viewbox=${viewbox}&bounded=0&q=${encodeURIComponent(query)}`;
         }
+        // На відміну від nominatimSearchUrl вище (шукає широко, "десь у місті", для розміщення власної точки),
+        // ця версія бере РЕАЛЬНІ межі видимої зараз карти й bounded=1 — тобто повертає лише те,
+        // що справді влазить у поточний екран, як просив користувач.
+        function nominatimSearchUrlVisible(query, limit) {
+            const b = map.getBounds();
+            const viewbox = `${b.getWest()},${b.getNorth()},${b.getEast()},${b.getSouth()}`;
+            return `https://nominatim.openstreetmap.org/search?format=json&limit=${limit || 20}&countrycodes=ua&viewbox=${viewbox}&bounded=1&q=${encodeURIComponent(query)}`;
+        }
         function pickNearestResult(results) {
             if (!results || !results.length) return null;
             const c = map.getCenter();
@@ -3882,19 +3905,22 @@
         document.getElementById('pin-address-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); geocodeAddressForPinPlacement(); } });
 
         // ---- Пошук місця на карті (Головний екран карти, окремо від розміщення власної точки) ----
-        let mapSearchHighlightMarker = null;
+        let mapSearchHighlightMarkers = [];
 
         function clearMapSearchHighlight() {
-            if (mapSearchHighlightMarker) { map.removeLayer(mapSearchHighlightMarker); mapSearchHighlightMarker = null; }
+            mapSearchHighlightMarkers.forEach(m => map.removeLayer(m));
+            mapSearchHighlightMarkers = [];
         }
 
         function showMapSearchHighlight(lat, lon) {
-            clearMapSearchHighlight();
             const icon = L.divIcon({
                 className: '', html: '<div class="map-search-highlight"><div class="pulse-ring"></div><div class="pulse-dot"></div></div>',
                 iconSize: [46, 46], iconAnchor: [23, 23]
             });
-            mapSearchHighlightMarker = L.marker([lat, lon], { icon, interactive: false, zIndexOffset: 1000 }).addTo(map);
+            const marker = L.marker([lat, lon], { icon, interactive: true, zIndexOffset: 1000 }).addTo(map);
+            // Довгий затиск прямо на знайденій точці — одразу прокладає пішохідний маршрут від мене до неї.
+            attachLongPress(marker, () => { if (!routeSelecting) buildWalkingRoute(myCoords, [lat, lon], null); });
+            mapSearchHighlightMarkers.push(marker);
         }
 
         async function performMapSearch() {
@@ -3904,15 +3930,24 @@
             if (!query) return;
             const originalLabel = btn.innerText;
             btn.innerText = '…'; btn.disabled = true;
+            clearMapSearchHighlight();
             try {
-                const res = await fetch(nominatimSearchUrl(query), { headers: { 'Accept-Language': 'uk' } });
-                const data = await res.json();
-                const best = pickNearestResult(data);
-                if (best) {
-                    const lat = parseFloat(best.lat), lon = parseFloat(best.lon);
-                    map.setView([lat, lon], 17, { animate: true });
-                    showMapSearchHighlight(lat, lon);
-                    closeHomeSearchBar();
+                // Спершу шукаємо строго в межах того, що зараз видно на екрані.
+                let res = await fetch(nominatimSearchUrlVisible(query), { headers: { 'Accept-Language': 'uk' } });
+                let data = await res.json();
+                if (!data.length) {
+                    // Нічого немає у видимій області — пробуємо ширше (по всьому місту), і якщо щось
+                    // знайдеться, переносимо туди карту, щоб було видно.
+                    res = await fetch(nominatimSearchUrl(query, 20), { headers: { 'Accept-Language': 'uk' } });
+                    data = await res.json();
+                    if (data.length) {
+                        const best = pickNearestResult(data);
+                        map.setView([parseFloat(best.lat), parseFloat(best.lon)], 16, { animate: true });
+                    }
+                }
+                if (data.length) {
+                    data.forEach(r => showMapSearchHighlight(parseFloat(r.lat), parseFloat(r.lon)));
+                    closeHomeSearchBar(true);
                 } else {
                     alert('Нічого не знайдено — спробуйте інший запит.');
                 }
@@ -4181,6 +4216,10 @@
 
                 if (id === myId) {
                     attachLongPress(profileMarkers[id], () => enterRouteSelectionMode(p.coords, myId));
+                } else {
+                    // Довгий затиск одразу на чужій іконці — без проміжного кроку "спершу затисни свою" —
+                    // одразу прокладає маршрут від мене до неї.
+                    attachLongPress(profileMarkers[id], () => { if (!routeSelecting) buildWalkingRoute(myCoords, p.coords, id); });
                 }
 
                 if (id === myId) {
@@ -4597,14 +4636,14 @@
         // бо тут це запит до зовнішнього геокодера, не миттєвий фільтр). Режим визначається тим,
         // який екран активний у момент відкриття смужки.
         let homeSearchMode = 'people';
-        function closeHomeSearchBar() {
+        function closeHomeSearchBar(keepHighlight) {
             const bar = document.getElementById('home-search-bar');
             const input = document.getElementById('people-search-input');
             bar.classList.remove('open', 'map-mode');
             document.getElementById('nav-search').classList.remove('active');
             input.value = '';
             if (homeSearchMode === 'people') renderHomeGrid('');
-            clearMapSearchHighlight();
+            if (!keepHighlight) clearMapSearchHighlight();
             setTimeout(layoutHomeGrid, 300);
         }
         document.getElementById('nav-search').addEventListener('click', () => {
