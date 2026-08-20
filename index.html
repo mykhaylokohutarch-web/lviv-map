@@ -270,7 +270,7 @@
 
         /* Маленька мінімалістична кнопка "північ" — компактніша й простіша за звичайні apple-blur-btn */
         #map-compass-btn {
-            position: absolute; top: calc(20px + env(safe-area-inset-top, 0px)); right: 20px; z-index: 2500;
+            position: absolute; top: calc(20px + 1cm + env(safe-area-inset-top, 0px)); right: 20px; z-index: 2500;
             width: 30px; height: 30px; padding: 6px; box-sizing: border-box;
             background: transparent; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             border: 1px solid var(--border-minimal); border-radius: 50%;
@@ -1659,6 +1659,13 @@
                             Приватний акаунт
                         </span>
                         <span class="settings-toggle" id="settings-private-toggle"><span class="settings-toggle-knob"></span></span>
+                    </button>
+                    <button class="settings-row" id="settings-location-row">
+                        <span class="settings-row-label">
+                            <span class="settings-icon c-green"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg></span>
+                            Моє місце на карті
+                        </span>
+                        <svg class="settings-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"></path></svg>
                     </button>
                 </div>
             </div>
@@ -5356,6 +5363,10 @@
         document.getElementById('settings-logout-row').addEventListener('click', () => {
             closeSettingsModal();
             document.getElementById('prof-logout-btn').click();
+        });
+        document.getElementById('settings-location-row').addEventListener('click', () => {
+            closeSettingsModal();
+            document.getElementById('prof-move-btn').click();
         });
         document.getElementById('settings-edit-profile-row').addEventListener('click', () => {
             closeSettingsModal();
