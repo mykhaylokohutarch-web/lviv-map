@@ -1164,8 +1164,12 @@
         .home-search-bar.map-mode #home-search-find-btn { display: block; }
         /* ---- Головна: сітка кіл (люди + заклади) по 3 в ряд, як в надісланому прикладі ---- */
         #home-grid { flex-grow: 1; overflow-y: auto; overflow-x: hidden; padding: calc(114px + env(safe-area-inset-top, 0px)) 5px 110px; box-sizing: border-box; touch-action: pan-y; -webkit-overflow-scrolling: touch; overscroll-behavior-x: none; }
-        .home-grid-inner { display: grid; grid-template-columns: repeat(3, var(--circle-d, 100px)); justify-content: center; gap: 24px 8px; }
+        .home-grid-inner { display: grid; grid-template-columns: repeat(3, var(--circle-d, 100px)); justify-content: center; gap: 22px 4px; }
         .home-circle-item { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        /* Шаховий (honeycomb) порядок — середня колонка кожного ряду піднята вище за бокові,
+           завдяки чому візуально є більше "повітря" і кола можна зробити трохи більшими
+           (менший горизонтальний проміжок компенсується діагональним, а не прямим сусідством). */
+        .home-circle-item:nth-child(3n+2) { transform: translateY(-16px); }
         .home-circle-item:active .home-circle-avatar { transform: scale(0.93); }
         /* Хмаринка як у месенджері — з великим хвостиком, піднята до верхнього краю кола,
            вужча і вища (справжня діалогова бульбашка), один рядок тексту без анімації.
@@ -4764,7 +4768,7 @@
             const availW = container.clientWidth - padLeft - padRight;
             if (availW <= 0) return;
 
-            const colGap = 8;
+            const colGap = 4;
             const d = (availW - 2 * colGap) / 3;
 
             container.style.setProperty('--circle-d', d + 'px');
