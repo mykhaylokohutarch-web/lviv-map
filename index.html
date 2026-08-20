@@ -410,8 +410,8 @@
         .story-viewer-action-btn.liked svg { fill: #ff3b30; stroke: #ff3b30; }
         .story-viewer-action-btn.saved svg { fill: #fff; }
         .story-viewer-action-btn.pulse { transform: scale(1.25); }
-        .story-viewer-media { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        .story-viewer-media img, .story-viewer-media video { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .story-viewer-media { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #000; }
+        .story-viewer-media img, .story-viewer-media video { width: 100%; height: 100%; object-fit: cover; }
         .story-viewer-nav { position: absolute; inset: 0; display: flex; }
         .story-nav-zone { flex: 1; }
 
@@ -1062,6 +1062,9 @@
             position: relative; width: min(78vw, 340px); height: min(78vw, 340px); border-radius: 16px;
             overflow: hidden; background: #111; touch-action: none; box-shadow: 0 0 0 3000px rgba(0,0,0,0.55);
         }
+        /* Для сторі — рамка кадрування 9:16 (той самий формат, що й вертикальне відео),
+           а не квадрат, як для фото профілю — щоб фото й відео в сторі виглядали однаково. */
+        .pe-crop-frame.aspect-story { width: auto; height: min(62vh, 520px); aspect-ratio: 9 / 16; border-radius: 20px; }
         .pe-crop-frame img { position: absolute; top: 0; left: 0; transform-origin: top left; user-select: none; -webkit-user-drag: none; pointer-events: none; will-change: transform; }
         .pe-zoom-row { display: flex; align-items: center; gap: 10px; padding: 4px 24px 14px; flex-shrink: 0; }
         .pe-zoom-row svg { width: 16px; height: 16px; stroke: #fff; fill: none; stroke-width: 1.8; flex-shrink: 0; opacity: 0.7; }
@@ -3386,7 +3389,10 @@
             cool: 'saturate(1.1) hue-rotate(-8deg) contrast(1.04) brightness(1.02)',
             bw: 'grayscale(1) contrast(1.08)'
         };
-        function openPhotoEditor(file) {
+        function openPhotoEditor(file, opts) {
+            opts = opts || {};
+            const isStory = opts.aspect === 'story';
+            const outW = opts.outW || 640, outH = opts.outH || 640;
             return new Promise((resolve, reject) => {
                 const modal = document.getElementById('photo-editor-modal');
                 const frame = document.getElementById('pe-crop-frame');
@@ -3394,6 +3400,7 @@
                 const zoomRange = document.getElementById('pe-zoom-range');
                 const brightnessRange = document.getElementById('pe-brightness-range');
                 const filterBtns = document.querySelectorAll('#pe-filters .pe-filter-btn');
+                frame.classList.toggle('aspect-story', isStory);
                 modal.style.display = 'flex';
 
                 const reader = new FileReader();
@@ -3407,7 +3414,7 @@
                 };
                 reader.readAsDataURL(file);
 
-                let naturalW = 0, naturalH = 0, frameSize = 0, baseScale = 1, zoom = 1;
+                let naturalW = 0, naturalH = 0, frameW = 0, frameH = 0, baseScale = 1, zoom = 1;
                 let offX = 0, offY = 0, activeFilter = 'none', brightness = 0;
                 let dragging = false, startX = 0, startY = 0, startOffX = 0, startOffY = 0;
 
@@ -3420,8 +3427,8 @@
                 function clampOffsets() {
                     const scale = baseScale * zoom;
                     const dispW = naturalW * scale, dispH = naturalH * scale;
-                    offX = Math.min(0, Math.max(frameSize - dispW, offX));
-                    offY = Math.min(0, Math.max(frameSize - dispH, offY));
+                    offX = Math.min(0, Math.max(frameW - dispW, offX));
+                    offY = Math.min(0, Math.max(frameH - dispH, offY));
                 }
                 function currentCssFilter() {
                     const b = 1 + brightness / 100;
@@ -3430,11 +3437,12 @@
 
                 imgEl.onload = () => {
                     naturalW = imgEl.naturalWidth; naturalH = imgEl.naturalHeight;
-                    frameSize = frame.getBoundingClientRect().width;
-                    baseScale = frameSize / Math.min(naturalW, naturalH);
+                    const rect = frame.getBoundingClientRect();
+                    frameW = rect.width; frameH = rect.height;
+                    baseScale = Math.max(frameW / naturalW, frameH / naturalH); // "cover" — заповнює рамку будь-якої форми повністю
                     zoom = 1;
-                    offX = (frameSize - naturalW * baseScale) / 2;
-                    offY = (frameSize - naturalH * baseScale) / 2;
+                    offX = (frameW - naturalW * baseScale) / 2;
+                    offY = (frameH - naturalH * baseScale) / 2;
                     imgEl.style.filter = currentCssFilter();
                     clampOffsets();
                     applyTransform();
@@ -3474,6 +3482,7 @@
 
                 function cleanup() {
                     modal.style.display = 'none';
+                    frame.classList.remove('aspect-story');
                     frame.removeEventListener('pointerdown', onPointerDown);
                     frame.removeEventListener('pointermove', onPointerMove);
                     frame.removeEventListener('pointerup', onPointerUp);
@@ -3490,14 +3499,14 @@
 
                 document.getElementById('pe-cancel-btn').onclick = () => { cleanup(); resolve(null); };
                 document.getElementById('pe-done-btn').onclick = () => {
-                    const OUT = 640;
                     const scale = baseScale * zoom;
-                    const srcX = -offX / scale, srcY = -offY / scale, srcSize = frameSize / scale;
+                    const srcX = -offX / scale, srcY = -offY / scale;
+                    const srcW = frameW / scale, srcH = frameH / scale;
                     const canvas = document.createElement('canvas');
-                    canvas.width = OUT; canvas.height = OUT;
+                    canvas.width = outW; canvas.height = outH;
                     const ctx = canvas.getContext('2d');
                     ctx.filter = currentCssFilter();
-                    ctx.drawImage(imgEl, srcX, srcY, srcSize, srcSize, 0, 0, OUT, OUT);
+                    ctx.drawImage(imgEl, srcX, srcY, srcW, srcH, 0, 0, outW, outH);
                     cleanup();
                     // Кроп готовий локально — тепер вивантажуємо результат на сервер Telegram і
                     // повертаємо вже постійне посилання на нього (замість base64 у Firebase).
@@ -3507,7 +3516,7 @@
                         uploadPhotoToTelegram(blob, 'photo.jpg')
                             .then((url) => { hideUploadOverlay(); resolve(url); })
                             .catch((err) => { hideUploadOverlay(); reject(err); });
-                    }, 'image/jpeg', 0.85);
+                    }, 'image/jpeg', 0.92);
                 };
             });
         }
@@ -3669,7 +3678,7 @@
             const file = e.target.files[0]; if (!file) return;
             e.target.value = '';
             let dataUrl;
-            try { dataUrl = await openPhotoEditor(file); }
+            try { dataUrl = await openPhotoEditor(file, { aspect: 'story', outW: 1080, outH: 1920 }); }
             catch (err) { alert(mediaUploadErrorMessage(err)); return; }
             if (!dataUrl) return; // користувач натиснув "Скасувати"
             await addStory('photo', dataUrl);
@@ -4325,21 +4334,29 @@
 
         // ---- Пошук місця на карті (Головний екран карти, окремо від розміщення власної точки) ----
         let mapSearchHighlightMarkers = [];
+        let mapSearchHighlightIds = [];
 
         function clearMapSearchHighlight() {
             mapSearchHighlightMarkers.forEach(m => map.removeLayer(m));
+            mapSearchHighlightIds.forEach(id => delete markerRegistry[id]);
             mapSearchHighlightMarkers = [];
+            mapSearchHighlightIds = [];
         }
 
-        function showMapSearchHighlight(lat, lon) {
+        function showMapSearchHighlight(lat, lon, index) {
             const icon = L.divIcon({
                 className: '', html: '<div class="map-search-highlight"><div class="pulse-ring"></div><div class="pulse-dot"></div></div>',
                 iconSize: [46, 46], iconAnchor: [23, 23]
             });
             const marker = L.marker([lat, lon], { icon, interactive: true, zIndexOffset: 1000 }).addTo(map);
+            const searchId = `search_${index}`;
+            registerMarker(searchId, marker);
             // Довгий затиск прямо на знайденій точці — одразу прокладає пішохідний маршрут від мене до неї.
-            attachLongPress(marker, () => { if (!routeSelecting) buildWalkingRoute(myCoords, [lat, lon], null); });
+            // Якщо результатів декілька (напр. дублікати того самого закладу), решта одночасно бліднуть,
+            // щоб було видно, до якої саме точки будується маршрут.
+            attachLongPress(marker, () => { if (!routeSelecting) buildWalkingRoute(myCoords, [lat, lon], searchId); });
             mapSearchHighlightMarkers.push(marker);
+            mapSearchHighlightIds.push(searchId);
         }
 
         async function performMapSearch() {
@@ -4365,7 +4382,7 @@
                     }
                 }
                 if (data.length) {
-                    data.forEach(r => showMapSearchHighlight(parseFloat(r.lat), parseFloat(r.lon)));
+                    data.forEach((r, i) => showMapSearchHighlight(parseFloat(r.lat), parseFloat(r.lon), i));
                     closeHomeSearchBar(true);
                 } else {
                     alert('Нічого не знайдено — спробуйте інший запит.');
@@ -4561,7 +4578,7 @@
             const file = e.target.files[0]; if (!file) return;
             e.target.value = '';
             let dataUrl;
-            try { dataUrl = await openPhotoEditor(file); }
+            try { dataUrl = await openPhotoEditor(file, { aspect: 'story', outW: 1080, outH: 1920 }); }
             catch (err) { alert(mediaUploadErrorMessage(err)); return; }
             if (!dataUrl) return; // користувач натиснув "Скасувати"
             obStoryData = { type: 'photo', url: dataUrl };
