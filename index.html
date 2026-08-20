@@ -1163,8 +1163,8 @@
         #home-search-find-btn:active { opacity: 0.75; }
         .home-search-bar.map-mode #home-search-find-btn { display: block; }
         /* ---- Головна: сітка кіл (люди + заклади) по 3 в ряд, як в надісланому прикладі ---- */
-        #home-grid { flex-grow: 1; overflow-y: auto; overflow-x: hidden; padding: calc(114px + env(safe-area-inset-top, 0px)) 5px 110px; box-sizing: border-box; touch-action: pan-y; -webkit-overflow-scrolling: touch; overscroll-behavior-x: none; }
-        .home-grid-inner { display: grid; grid-template-columns: repeat(3, var(--circle-d, 100px)); justify-content: center; gap: 22px 4px; }
+        #home-grid { flex-grow: 1; overflow-y: auto; overflow-x: hidden; padding: calc(114px + env(safe-area-inset-top, 0px)) 2px 110px; box-sizing: border-box; touch-action: pan-y; -webkit-overflow-scrolling: touch; overscroll-behavior-x: none; }
+        .home-grid-inner { display: grid; grid-template-columns: repeat(3, var(--circle-d, 100px)); justify-content: center; gap: 6px 2px; }
         .home-circle-item { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
         /* Шаховий (honeycomb) порядок — середня колонка кожного ряду піднята вище за бокові,
            завдяки чому візуально є більше "повітря" і кола можна зробити трохи більшими
@@ -1172,7 +1172,7 @@
         /* Шаховий (honeycomb) порядок — середня колонка кожного ряду піднята рівно на половину
            кроку між рядками (висота кола + проміжок під іменем + вертикальний gap), тож вона
            опиняється точно по центру між боковими колами сусідніх рядків. */
-        .home-circle-item:nth-child(3n+2) { transform: translateY(calc((var(--circle-d, 100px) + 43px) / -2)); }
+        .home-circle-item:nth-child(3n+2) { transform: translateY(calc((var(--circle-d, 100px) + 27px) / -2)); }
         .home-circle-item:active .home-circle-avatar { transform: scale(0.93); }
         /* Хмаринка як у месенджері — з великим хвостиком, піднята до верхнього краю кола,
            вужча і вища (справжня діалогова бульбашка), один рядок тексту без анімації.
@@ -1221,7 +1221,7 @@
         /* Мінікоп'я аватарки зверху зліва — лишається на місці й не ховається під фото/відео сторі.
            Трохи більша, якщо у людини є активні сторі. */
         .home-circle-mini-avatar {
-            position: absolute; bottom: -3px; left: -3px; z-index: 5;
+            position: absolute; bottom: -3px; left: 2px; z-index: 5;
             width: 32%; height: 32%; min-width: 24px; min-height: 24px;
             border-radius: 50%; background-size: cover; background-position: center; background-color: #e5e5ea;
             border: 2px solid var(--bg-color); box-shadow: 0 1px 6px rgba(0,0,0,0.28); box-sizing: border-box;
@@ -4771,7 +4771,7 @@
             const availW = container.clientWidth - padLeft - padRight;
             if (availW <= 0) return;
 
-            const colGap = 4;
+            const colGap = 2;
             const d = (availW - 2 * colGap) / 3;
 
             container.style.setProperty('--circle-d', d + 'px');
