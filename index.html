@@ -376,7 +376,15 @@
         .admin-del-btn { flex-shrink: 0; background: rgba(255,59,48,0.15); color: #ff453a; border: none; padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; }
         .admin-empty { color: rgba(255,255,255,0.4); text-align: center; padding: 40px 0; font-size: 13px; }
 
-        #story-viewer { display: none; position: fixed; inset: 0; z-index: 5000; background: #000; flex-direction: column; }
+        #story-viewer { display: none; position: fixed; inset: 0; z-index: 5000; background: #000; }
+        /* Бари прогресу й шапка — прозорий оверлей ПОВЕРХ медіа (не займають окремий рядок),
+           із легким градієнтом для читабельності — так медіа під ним лишається справжнім
+           повноекранним шаром і центрується рівно відносно всього екрана. */
+        .story-viewer-top {
+            position: absolute; top: 0; left: 0; right: 0; z-index: 15;
+            background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0));
+            padding-bottom: 22px;
+        }
         .story-viewer-bars { display: flex; gap: 4px; padding: calc(10px + env(safe-area-inset-top, 0px)) 12px 0; flex-shrink: 0; }
         .story-bar { flex: 1; height: 2.5px; background: rgba(255,255,255,0.3); border-radius: 2px; overflow: hidden; }
         .story-bar-fill { height: 100%; width: 0%; background: #fff; }
@@ -410,9 +418,17 @@
         .story-viewer-action-btn.liked svg { fill: #ff3b30; stroke: #ff3b30; }
         .story-viewer-action-btn.saved svg { fill: #fff; }
         .story-viewer-action-btn.pulse { transform: scale(1.25); }
-        .story-viewer-media { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #000; }
-        .story-viewer-media img, .story-viewer-media video { width: 100%; height: 100%; object-fit: cover; }
-        .story-viewer-nav { position: absolute; inset: 0; display: flex; }
+        .story-viewer-media {
+            position: absolute; inset: 0; z-index: 1;
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden; background: #000;
+        }
+        /* "На весь екран" (за замовчуванням) — заповнює весь простір, без чорних смуг, з обрізкою країв. */
+        .story-viewer-media.fill img, .story-viewer-media.fill video { width: 100%; height: 100%; object-fit: cover; }
+        /* "Вміщати повністю" — показує весь кадр без обрізки; рівні відступи зверху й знизу,
+           бо медіа тепер справжній повноекранний шар (а не звужений шапкою рядок). */
+        .story-viewer-media.fit img, .story-viewer-media.fit video { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; }
+        .story-viewer-nav { position: absolute; inset: 0; z-index: 10; display: flex; }
         .story-nav-zone { flex: 1; }
 
 
@@ -1667,6 +1683,13 @@
                         </span>
                         <span class="settings-toggle" id="settings-autosave-toggle"><span class="settings-toggle-knob"></span></span>
                     </button>
+                    <button class="settings-row" id="settings-fullscreen-media-row">
+                        <span class="settings-row-label">
+                            <span class="settings-icon c-blue"><svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3"></path><path d="M16 3h3a2 2 0 0 1 2 2v3"></path><path d="M8 21H5a2 2 0 0 1-2-2v-3"></path><path d="M16 21h3a2 2 0 0 0 2-2v-3"></path></svg></span>
+                            Фото й відео на весь екран
+                        </span>
+                        <span class="settings-toggle" id="settings-fullscreen-media-toggle"><span class="settings-toggle-knob"></span></span>
+                    </button>
                 </div>
             </div>
 
@@ -1834,12 +1857,14 @@
 
     <!-- ---- Повноекранний перегляд сторіс ---- -->
     <div id="story-viewer">
-        <div class="story-viewer-bars" id="story-viewer-bars"></div>
-        <div class="story-viewer-header">
-            <div class="story-viewer-user"><span id="story-viewer-name"></span><span id="story-viewer-time"></span></div>
-            <button id="story-viewer-close" aria-label="Закрити">✕</button>
-        </div>
         <div class="story-viewer-media" id="story-viewer-media"></div>
+        <div class="story-viewer-top">
+            <div class="story-viewer-bars" id="story-viewer-bars"></div>
+            <div class="story-viewer-header">
+                <div class="story-viewer-user"><span id="story-viewer-name"></span><span id="story-viewer-time"></span></div>
+                <button id="story-viewer-close" aria-label="Закрити">✕</button>
+            </div>
+        </div>
         <div class="story-viewer-nav">
             <div class="story-nav-zone left" id="story-nav-prev"></div>
             <div class="story-nav-zone right" id="story-nav-next"></div>
@@ -3093,7 +3118,8 @@
                 li.appendChild(img);
             } else if (type === 'video') {
                 li.classList.add('msg-media');
-                const video = document.createElement('video'); video.src = msg.url; video.controls = true; video.playsInline = true;
+                const video = document.createElement('video'); video.src = msg.url; video.playsInline = true; video.muted = true;
+                video.addEventListener('click', () => openStoryViewer([{ type: 'video', url: msg.url, ts: msg.timestamp || Date.now() }], 0, 'Відео', { showTime: false, autoAdvance: false }));
                 li.appendChild(video);
             } else if (type === 'file') {
                 const card = document.createElement('div'); card.className = 'msg-file-card';
@@ -3703,6 +3729,8 @@
             document.getElementById('story-viewer-name').innerText = name;
             document.getElementById('story-viewer-time').style.display = storyViewerShowTime ? '' : 'none';
             document.getElementById('story-viewer').style.display = 'flex';
+            document.getElementById('story-viewer-media').classList.toggle('fill', isFullscreenMediaOn());
+            document.getElementById('story-viewer-media').classList.toggle('fit', !isFullscreenMediaOn());
             const likeBtn = document.getElementById('story-viewer-like-btn');
             const saveBtn = document.getElementById('story-viewer-save-btn');
             const locBtn = document.getElementById('story-viewer-location-btn');
@@ -5342,6 +5370,8 @@
         initSettingsToggle('settings-autosave-row', 'settings-autosave-toggle', 'settings_autosave_gallery', false);
         initSettingsToggle('settings-notif-row', 'settings-notif-toggle', 'settings_notifications', true);
         initSettingsToggle('settings-sound-row', 'settings-sound-toggle', 'settings_sound', true);
+        initSettingsToggle('settings-fullscreen-media-row', 'settings-fullscreen-media-toggle', 'settings_fullscreen_media', true);
+        function isFullscreenMediaOn() { return (localStorage.getItem('settings_fullscreen_media') ?? '1') === '1'; }
 
         const videoQualityOptions = ['Авто', 'Висока', 'Економія'];
         function initVideoQualityRow() {
