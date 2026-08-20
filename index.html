@@ -1172,8 +1172,8 @@
         /* Шаховий (honeycomb) порядок — середня колонка кожного ряду піднята рівно на половину
            кроку між рядками (висота кола + проміжок під іменем + вертикальний gap), тож вона
            опиняється точно по центру між боковими колами сусідніх рядків. */
-        .home-circle-item:nth-child(3n+2) { transform: translateY(calc((var(--circle-d, 100px) + 25px) / -2)); }
-        .home-circle-item:active .home-circle-avatar { transform: scale(1.0); }
+        .home-circle-item:nth-child(3n+2) { transform: translateY(calc((var(--circle-d, 100px) + 27px) / -2)); }
+        .home-circle-item:active .home-circle-avatar { transform: scale(0.93); }
         /* Хмаринка як у месенджері — з великим хвостиком, піднята до верхнього краю кола,
            вужча і вища (справжня діалогова бульбашка), один рядок тексту без анімації.
            Менш прозора — ближче до щільних бабблів Instagram DM. */
@@ -1192,7 +1192,7 @@
             background: var(--msg-solid-bg);
             clip-path: polygon(0 0, 100% 100%, 0 100%);
         }
-        .home-circle-avatar { position: relative; width: var(--circle-d, 100px); height: var(--circle-d, 100px); border-radius: 50%; background-size: cover; background-position: center; background-color: #e5e5ea; transform: scale(1.08); transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1); box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+        .home-circle-avatar { position: relative; width: var(--circle-d, 100px); height: var(--circle-d, 100px); border-radius: 50%; background-size: cover; background-position: center; background-color: #e5e5ea; transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1); box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
         /* Обгортка медіа кола — циклічно показує фото/відео як міні-сторі, по одному кадру 10с */
         .home-circle-media { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; overflow: hidden; background-color: #e5e5ea; }
         .home-circle-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center; opacity: 0; transition: opacity 1s ease; }
@@ -1241,7 +1241,7 @@
         /* Тимчасова мітка на карті — з'являється, коли натискають на "мітку" біля кола закладу на Головній */
         .place-focus-marker { width: 34px; height: 34px; border-radius: 50%; background: var(--ultramarine-gradient); border: 2px solid #fff; box-shadow: 0 3px 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
         .place-focus-marker svg { width: 58%; height: 58%; stroke: #fff; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-        .home-circle-name { font-size: 11px; line-height: 13px; height: 13px; font-weight: 400; letter-spacing: 0.1px; color: var(--text-secondary); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: calc(var(--circle-d, 100px) * 0.86); }
+        .home-circle-name { font-size: 12px; line-height: 15px; height: 15px; font-weight: 600; color: var(--text-color); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: var(--circle-d, 100px); }
 
 
         /* ---- Сторінка профілю: мінімалізм застосунку, свідомо не інстаграм-паттерн ----
@@ -2887,6 +2887,7 @@
                     video.src = src; video.autoplay = true; video.muted = true; video.loop = true; video.playsInline = true; video.setAttribute('webkit-playsinline', '');
                     slide.appendChild(video);
                     slide.classList.add('loaded');
+                    attemptCirclePlay(video); allCircleVideos.add(video);
                 } else {
                     // Фото підвантажується заздалегідь: показуємо його лише коли воно вже готове —
                     // так замість різкого чорного фону буде плавна поява (без "спалаху" чорного).
@@ -3777,8 +3778,10 @@
                     storyViewerTimer = setTimeout(() => storyAdvance(1), STORY_PHOTO_MS);
                 } else if (bars[idx]) { bars[idx].style.width = '100%'; }
             } else {
-                const v = document.createElement('video'); v.src = s.url; v.autoplay = true; v.playsInline = true; v.controls = false;
+                const v = document.createElement('video'); v.src = s.url; v.autoplay = true; v.muted = true; v.playsInline = true; v.controls = false;
+                v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
                 media.appendChild(v);
+                attemptCirclePlay(v); allCircleVideos.add(v);
                 v.onloadedmetadata = () => {
                     const dur = Math.min(v.duration * 1000, 60000);
                     requestAnimationFrame(() => { const b = bars[idx]; if (b) { b.style.transition = `width ${dur}ms linear`; b.style.width = '100%'; } });
@@ -4931,9 +4934,11 @@
                     startHomeCircleStory(mediaWrap, storyPhotoList);
                 }
                 // Тап по самому колу (фото) — відкриває сторі на весь екран.
+                // Важливо: беремо ПОВНИЙ e.photos (з відео), а не storyPhotoList — той список
+                // спеціально відфільтрований від відео лише для фонового кросфейду в самому колі.
                 avatar.addEventListener('click', (ev) => {
                     ev.stopPropagation();
-                    const list = (storyPhotoList.length ? storyPhotoList : (e.photos || [])).map(url => (
+                    const list = (e.photos || []).map(url => (
                         { type: isHeroVideoUrl(url) ? 'video' : 'photo', url, ts: Date.now() }
                     ));
                     if (!list.length) return;
