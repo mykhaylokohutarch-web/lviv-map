@@ -484,7 +484,7 @@
         #dm-back-name { font-size: 13px; font-weight: 600; color: var(--text-color); }
 
         /* ---- Режим "лише чати": кнопка Чат внизу відкриває одразу список бесід, без домашньої сторінки ---- */
-        #chats-header { display: none; grid-template-columns: 1fr auto 1fr; align-items: center; padding: calc(44px + env(safe-area-inset-top, 0px)) 4px 10px 6px; flex-shrink: 0; }
+        #chats-header { display: none; grid-template-columns: 1fr auto 1fr; align-items: center; padding: calc(16px + env(safe-area-inset-top, 0px)) 4px 10px 6px; flex-shrink: 0; }
         #chats-header span { grid-column: 2; justify-self: center; margin-top: -4px; font-size: 18px; font-weight: 700; letter-spacing: -0.3px; color: var(--text-color); }
         .chats-header-actions { grid-column: 3; justify-self: end; display: flex; align-items: center; gap: 8px; }
         #new-group-btn, #chats-close-btn {
@@ -1264,30 +1264,24 @@
         .ig-top-bar {
             position: absolute; top: 0; left: 0; right: 0; z-index: 20;
             display: flex; flex-direction: column;
-            /* Додатковий запас (44px) поверх системного safe-area — саме тут Telegram
-               малює власну плаваючу кнопку закриття/меню в розгорнутому режимі. */
-            padding: calc(44px + env(safe-area-inset-top, 0px)) 0 2px;
+            /* Запас під плаваючу кнопку Telegram лишається, але саме ім'я підняте на рядок вище
+               (menu-рядок із шестернею прибрано звідси — вона тепер над "Додати друга"). */
+            padding: calc(24px + env(safe-area-inset-top, 0px)) 0 6px;
         }
         /* Ім'я — окремим рядком, вище і по центру, під "островком". */
         .ig-top-bar-name-row { text-align: center; padding: 0 16px; }
-        .ig-top-bar-icons-row { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; padding: 0 12px 0 1cm; }
-        .ig-more-btn {
-            width: 34px; height: 34px; border-radius: 50%;
-            background: rgba(0,0,0,0.28); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-            border: none; display: flex; align-items: center; justify-content: center; cursor: pointer;
-            -webkit-tap-highlight-color: transparent; flex-shrink: 0;
-        }
-        .ig-more-btn svg { width: 18px; height: 18px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-        .ig-top-bar-spacer { width: 34px; height: 34px; flex-shrink: 0; }
         /* Ім'я по центру верхньої панелі, під "островком" — решта тексту (нік, біо, статистика)
            лишається на своєму місці поруч з аватаркою нижче. */
         .ig-top-bar-name { flex: none; min-width: 0; text-align: center; font-size: 16px; font-weight: 700; color: var(--text-color); letter-spacing: -0.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0; }
         #ig-content { flex-grow: 1; overflow-y: auto; touch-action: pan-y; -webkit-overflow-scrolling: touch; padding-bottom: 110px; box-sizing: border-box; }
 
-        .ig-hero { display: flex; align-items: center; gap: 12px; padding: calc(78px + env(safe-area-inset-top, 0px)) 16px 8px; background: var(--bg-color); }
+        .ig-hero { display: flex; align-items: center; gap: 12px; padding: calc(40px + env(safe-area-inset-top, 0px)) 16px 8px; background: var(--bg-color); }
         .ig-avatar { width: 88px; height: 88px; border-radius: 50%; background-size: cover; background-position: center; background-color: #2c2c2e; box-shadow: 0 4px 14px rgba(0,0,0,0.16); cursor: pointer; transition: transform 0.15s ease; flex-shrink: 0; }
         .ig-avatar:active { transform: scale(0.96); }
         .ig-hero-mid { flex: 1 1 auto; min-width: 0; text-align: left; }
+        /* Шестерня (налаштування) — тепер стоїть прямо над кнопкою "Додати друга",
+           замість окремого рядка під "островком" нагорі. */
+        .ig-hero-actions-col { display: flex; flex-direction: column; align-items: center; gap: 8px; flex-shrink: 0; }
         .ig-hero-action-btn {
             flex-shrink: 0; display: flex; align-items: center; justify-content: center;
             width: 44px; height: 44px; border-radius: 50%; border: none; cursor: pointer;
@@ -1412,6 +1406,7 @@
             <div class="prof-tools-col">
                 <button id="prof-edit-btn" aria-label="Редагувати"><svg viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg></button>
                 <button id="prof-add-photo-btn" aria-label="Додати фото"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg></button>
+                <button id="prof-delete-photo-btn" class="danger" aria-label="Видалити це фото/відео"><svg viewBox="0 0 24 24"><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path></svg></button>
                 <button id="prof-move-btn" aria-label="Змінити своє місце на карті"><svg viewBox="0 0 24 24"><path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg></button>
                 <button id="prof-logout-btn" class="danger" aria-label="Вийти з профілю"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="M16 17l5-5-5-5"></path><path d="M21 12H9"></path></svg></button>
             </div>
@@ -1545,10 +1540,6 @@
     <div id="screen-ig-profile" class="app-screen">
         <div class="ig-top-bar">
             <div class="ig-top-bar-name-row"><p class="ig-top-bar-name" id="ig-top-name"></p></div>
-            <div class="ig-top-bar-icons-row">
-                <button class="ig-more-btn" id="ig-settings-btn" aria-label="Налаштування"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82A1.65 1.65 0 0 0 3 9.09H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 4.6a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.11.35.35.66.68.85.28.16.6.24.92.24H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button>
-                <span class="ig-top-bar-spacer" aria-hidden="true"></span>
-            </div>
         </div>
         <div id="ig-content">
             <div class="ig-hero">
@@ -1558,7 +1549,10 @@
                     <p class="ig-bio-text" id="ig-bio-text"></p>
                     <p class="ig-meta-line"><span id="ig-stat-followers">0</span> підписників · <span id="ig-stat-following">0</span> підписок</p>
                 </div>
-                <div id="ig-hero-action-slot"></div>
+                <div class="ig-hero-actions-col">
+                    <button class="ig-hero-action-btn" id="ig-settings-btn" aria-label="Налаштування"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82A1.65 1.65 0 0 0 3 9.09H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 4.6a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.11.35.35.66.68.85.28.16.6.24.92.24H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button>
+                    <div id="ig-hero-action-slot"></div>
+                </div>
             </div>
             <div class="ig-body">
                 <div class="ig-gallery" id="ig-grid"></div>
@@ -2260,6 +2254,7 @@
             if (isEditingProfile) exitEditMode(false);
             document.getElementById('prof-edit-btn').style.display = 'none';
             document.getElementById('prof-add-photo-btn').style.display = 'none';
+            document.getElementById('prof-delete-photo-btn').style.display = 'none';
             document.getElementById('prof-move-btn').style.display = 'none';
             document.getElementById('prof-logout-btn').style.display = 'none';
             chatTabOrigin = 'chatsList';
@@ -2998,6 +2993,7 @@
             if (isEditingProfile) exitEditMode(false);
             document.getElementById('prof-edit-btn').style.display = 'none';
             document.getElementById('prof-add-photo-btn').style.display = 'none';
+            document.getElementById('prof-delete-photo-btn').style.display = 'none';
 
             if (item.type === 'person') {
                 statusEl.className = "profile-status status-people";
@@ -4007,6 +4003,7 @@
             ['prof-name', 'prof-status', 'prof-text1', 'prof-text2'].forEach(id => document.getElementById(id).contentEditable = 'true');
             document.getElementById('prof-edit-btn').innerText = '✓';
             document.getElementById('prof-add-photo-btn').style.display = 'flex';
+            document.getElementById('prof-delete-photo-btn').style.display = 'flex';
         }
 
         function saveEditMode() {
@@ -4029,6 +4026,7 @@
             ['prof-name', 'prof-status', 'prof-text1', 'prof-text2'].forEach(id => document.getElementById(id).contentEditable = 'false');
             document.getElementById('prof-edit-btn').innerText = '✏️';
             document.getElementById('prof-add-photo-btn').style.display = 'none';
+            document.getElementById('prof-delete-photo-btn').style.display = 'none';
             if (refreshDisplay && currentActiveItem && currentActiveItem.id === myId) {
                 document.getElementById('prof-name').innerText = myProfile.name;
                 document.getElementById('prof-status').innerText = `"${myProfile.status}"`;
@@ -4079,6 +4077,23 @@
             const file = e.target.files[0]; if (!file) return;
             checkVideoDurationAndLoad(file, async (fileUrl) => { await addProfileMedia(fileUrl); });
             e.target.value = '';
+        });
+
+        document.getElementById('prof-delete-photo-btn').addEventListener('click', async (e) => {
+            e.stopPropagation();
+            if (!myProfile.photos || !myProfile.photos.length) return;
+            if (myProfile.photos.length === 1) { alert('Це останнє фото/відео профілю — лишіть хоча б одне.'); return; }
+            if (!confirm('Видалити це фото/відео?')) return;
+            const idx = Math.min(heroPhotoIndex, myProfile.photos.length - 1);
+            myProfile.photos.splice(idx, 1);
+            localStorage.setItem('chat_profile_edited', '1');
+            if (currentActiveItem && currentActiveItem.id === myId) {
+                currentActiveItem.photos = myProfile.photos;
+                renderHeroMedia(myProfile.photos);
+                goToHeroSlide(Math.min(idx, myProfile.photos.length - 1));
+            }
+            try { await saveMyProfileToFirebase(); }
+            catch (err) { alert('Видалено локально, але не вдалося зберегти на сервер. Перевірте інтернет-з’єднання.'); }
         });
 
         // ---- Месенджер: список бесід ----
@@ -5573,7 +5588,7 @@
             const el = document.getElementById('screen-ig-profile');
             let sx = 0, sy = 0, st = 0, tracking = false;
             el.addEventListener('touchstart', (e) => {
-                if (e.target.closest('.ig-top-bar') || e.target.closest('.ig-gallery') || e.target.closest('.ig-avatar') || e.target.closest('#ig-hero-action-slot')) { tracking = false; return; }
+                if (e.target.closest('.ig-top-bar') || e.target.closest('.ig-gallery') || e.target.closest('.ig-avatar') || e.target.closest('.ig-hero-actions-col')) { tracking = false; return; }
                 sx = e.touches[0].clientX; sy = e.touches[0].clientY; st = Date.now(); tracking = true;
             }, { passive: true });
             el.addEventListener('touchend', (e) => {
