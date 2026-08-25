@@ -1099,6 +1099,17 @@
         .pe-adjust-row label { font-size: 13px; color: rgba(255,255,255,0.75); width: 84px; flex-shrink: 0; }
         .pe-adjust-row input[type="range"] { flex: 1; accent-color: var(--accent-main, #0a84ff); }
 
+        /* Кадрування відео — той самий каркас modal/frame, що й у фото-редактора,
+           тільки без фільтрів: просто перетягування й зум для точного позиціювання в 9:16. */
+        #video-framer-modal {
+            display: none; position: fixed; inset: 0; z-index: 3300; background: #000;
+            flex-direction: column; box-sizing: border-box;
+            padding: calc(44px + env(safe-area-inset-top, 0px)) 0 env(safe-area-inset-bottom, 0px);
+        }
+        #vf-crop-frame { touch-action: none; cursor: grab; }
+        #vf-crop-frame video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+        .vf-hint { text-align: center; color: rgba(255,255,255,0.55); font-size: 12px; margin: 4px 24px calc(16px + env(safe-area-inset-bottom,0px)); }
+
         /* Стара нижня панель шарів і кнопка "моя сторінка" (топ-ліво) на карті — прибрані з вигляду
            за проханням користувача; елементи лишаються в DOM, бо на них досі посилається інший код,
            але їх більше не видно і по них не можна натиснути. */
@@ -1785,6 +1796,27 @@
         </div>
     </div>
 
+    <!-- ---- Кадрування відео для сторі — щоб завантажене відео (будь-яких пропорцій) можна було
+         вручну підігнати під 9:16, і воно відтворювалось так само, як і зняте прямо у форматі сторі. ---- -->
+    <div id="video-framer-modal">
+        <div class="pe-header">
+            <button id="vf-cancel-btn">Скасувати</button>
+            <h3>Кадрування відео</h3>
+            <button id="vf-done-btn">Готово</button>
+        </div>
+        <div class="pe-crop-wrap">
+            <div class="pe-crop-frame aspect-story" id="vf-crop-frame">
+                <video id="vf-video" muted autoplay loop playsinline webkit-playsinline></video>
+            </div>
+        </div>
+        <div class="pe-zoom-row">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path><path d="M8 11h6"></path></svg>
+            <input type="range" id="vf-zoom-range" min="100" max="250" value="100">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path><path d="M11 8v6"></path><path d="M8 11h6"></path></svg>
+        </div>
+        <p class="vf-hint">Перетягніть відео пальцем, щоб вибрати потрібну частину кадру</p>
+    </div>
+
 
 
     <!-- ---- Реєстрація нового користувача: повноекранний мінімалістичний wizard ---- -->
@@ -2016,16 +2048,9 @@
             }
         });
 
-        // Cloudinary сам повертає посилання на завантажений файл. Для відео додатково вставляємо
-        // трансформацію "f_mp4,vc_h264" — вона примушує Cloudinary завжди віддавати відео в
-        // одному й тому самому універсальному форматі (MP4 + H.264), незалежно від того, у якому
-        // форматі/кодеку його реально завантажили (HEVC з iPhone, WebM, AVI тощо). Без цього
-        // завантажені "чужі" відео могли просто не програватись у частини браузерів, тоді як щойно
-        // зняте на цьому ж пристрої відео завжди у форматі, який сам пристрій точно підтримує.
+        // Cloudinary сам повертає посилання на завантажений файл — окремого кроку "дізнатись URL"
+        // (як раніше з Telegram getFile) більше не потрібно.
         function resolveTelegramFileUrl(url, kind) {
-            if (kind === 'video' && url) {
-                url = url.replace('/video/upload/', '/video/upload/f_mp4,vc_h264,q_auto/');
-            }
             return Promise.resolve(url);
         }
 
@@ -3572,6 +3597,86 @@
             });
         }
 
+        // ---- Кадрування відео для сторі: файл НЕ перекодовується (це важко зробити надійно
+        // прямо в браузері, особливо в Telegram WebView на iOS), натомість користувач вручну
+        // вибирає позицію/зум, і ці координати зберігаються разом зі сторі та застосовуються
+        // при кожному показі (object-position + transform) — так завантажене відео будь-яких
+        // пропорцій виглядає так само підігнаним під 9:16, як і зняте прямо у форматі сторі.
+        function openVideoFramer(file) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('video-framer-modal');
+                const frame = document.getElementById('vf-crop-frame');
+                const videoEl = document.getElementById('vf-video');
+                const zoomRange = document.getElementById('vf-zoom-range');
+                modal.style.display = 'flex';
+
+                const objUrl = URL.createObjectURL(file);
+                videoEl.src = objUrl;
+
+                let cx = 0.5, cy = 0.5, zoom = 1;
+                let dragging = false, startX = 0, startY = 0, startCx = 0.5, startCy = 0.5, frameW = 0, frameH = 0;
+
+                function apply() {
+                    videoEl.style.objectPosition = `${cx * 100}% ${cy * 100}%`;
+                    videoEl.style.transformOrigin = `${cx * 100}% ${cy * 100}%`;
+                    videoEl.style.transform = `scale(${zoom})`;
+                }
+                function onDown(e) {
+                    dragging = true; startX = e.clientX; startY = e.clientY; startCx = cx; startCy = cy;
+                    const r = frame.getBoundingClientRect(); frameW = r.width; frameH = r.height;
+                    frame.setPointerCapture && e.pointerId != null && frame.setPointerCapture(e.pointerId);
+                }
+                function onMove(e) {
+                    if (!dragging) return;
+                    const dx = e.clientX - startX, dy = e.clientY - startY;
+                    cx = Math.min(1, Math.max(0, startCx - dx / frameW));
+                    cy = Math.min(1, Math.max(0, startCy - dy / frameH));
+                    apply();
+                }
+                function onUp() { dragging = false; }
+                frame.addEventListener('pointerdown', onDown);
+                frame.addEventListener('pointermove', onMove);
+                frame.addEventListener('pointerup', onUp);
+                frame.addEventListener('pointercancel', onUp);
+                frame.addEventListener('pointerleave', onUp);
+
+                function onZoom() { zoom = Number(zoomRange.value) / 100; apply(); }
+                zoomRange.addEventListener('input', onZoom);
+                apply();
+
+                function cleanup() {
+                    modal.style.display = 'none';
+                    videoEl.pause(); videoEl.removeAttribute('src'); videoEl.load();
+                    URL.revokeObjectURL(objUrl);
+                    frame.removeEventListener('pointerdown', onDown);
+                    frame.removeEventListener('pointermove', onMove);
+                    frame.removeEventListener('pointerup', onUp);
+                    frame.removeEventListener('pointercancel', onUp);
+                    frame.removeEventListener('pointerleave', onUp);
+                    zoomRange.removeEventListener('input', onZoom);
+                    zoomRange.value = 100;
+                    document.getElementById('vf-cancel-btn').onclick = null;
+                    document.getElementById('vf-done-btn').onclick = null;
+                }
+
+                document.getElementById('vf-cancel-btn').onclick = () => { cleanup(); resolve(null); };
+                document.getElementById('vf-done-btn').onclick = () => {
+                    const frameData = (zoom === 1 && cx === 0.5 && cy === 0.5) ? null : { cx, cy, zoom };
+                    cleanup();
+                    resolve(frameData);
+                };
+            });
+        }
+
+        // Застосовує збережене кадрування (якщо є) до елемента <video> сторі — той самий
+        // object-position/transform, що й у редакторі вище, тож показ ідентичний до попереднього вибору.
+        function applyStoryVideoFrame(videoEl, frame) {
+            if (!frame) return;
+            videoEl.style.objectPosition = `${frame.cx * 100}% ${frame.cy * 100}%`;
+            videoEl.style.transformOrigin = `${frame.cx * 100}% ${frame.cy * 100}%`;
+            videoEl.style.transform = `scale(${frame.zoom})`;
+        }
+
         function saveMyProfileToFirebase() {
             return set(ref(db, `profiles/${myId}`), {
                 name: myProfile.name, status: myProfile.status, about: myProfile.about,
@@ -3656,9 +3761,11 @@
             v.load();
         }
 
-        async function addStory(type, url) {
+        async function addStory(type, url, frame) {
             myProfile.stories = myProfile.stories || [];
-            myProfile.stories.push({ type, url, ts: Date.now() });
+            const entry = { type, url, ts: Date.now() };
+            if (frame) entry.frame = frame;
+            myProfile.stories.push(entry);
             if (myProfile.stories.length > 10) myProfile.stories = myProfile.stories.slice(-10);
             if (currentActiveItem && currentActiveItem.id === myId) { currentActiveItem.stories = myProfile.stories; renderHeroStoriesRow(currentActiveItem); }
             // Одразу оновлюємо власне коло на Головній, щоб нова сторі почала програватись там же.
@@ -3698,6 +3805,7 @@
                     v.className = 'hero-story-thumb-video'; v.src = s.url;
                     v.muted = true; v.defaultMuted = true; v.loop = true; v.autoplay = true; v.playsInline = true;
                     v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
+                    applyStoryVideoFrame(v, s.frame);
                     inner.appendChild(v);
                     attemptCirclePlay(v); allCircleVideos.add(v);
                 }
@@ -3734,10 +3842,11 @@
             if (!dataUrl) return; // користувач натиснув "Скасувати"
             await addStory('photo', dataUrl);
         });
-        document.getElementById('story-add-video-input').addEventListener('change', (e) => {
+        document.getElementById('story-add-video-input').addEventListener('change', async (e) => {
             const file = e.target.files[0]; if (!file) return;
-            checkVideoDurationAndLoad(file, async (dataUrl) => { await addStory('video', dataUrl); });
             e.target.value = '';
+            const frame = await openVideoFramer(file);
+            checkVideoDurationAndLoad(file, async (dataUrl) => { await addStory('video', dataUrl, frame); });
         });
 
         // ---- Повноекранний перегляд сторіс ----
@@ -3797,6 +3906,7 @@
             } else {
                 const v = document.createElement('video'); v.src = s.url; v.autoplay = true; v.muted = true; v.playsInline = true; v.controls = false;
                 v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
+                applyStoryVideoFrame(v, s.frame);
                 media.appendChild(v);
                 attemptCirclePlay(v); allCircleVideos.add(v);
                 v.onloadedmetadata = () => {
@@ -4640,23 +4750,25 @@
             const prev = document.getElementById('ob-story-preview');
             prev.innerHTML = ''; prev.style.backgroundImage = `url('${dataUrl}')`;
         });
-        document.getElementById('ob-story-video-input').addEventListener('change', (e) => {
+        document.getElementById('ob-story-video-input').addEventListener('change', async (e) => {
             const file = e.target.files[0]; if (!file) return;
+            e.target.value = '';
+            const frame = await openVideoFramer(file);
             checkVideoDurationAndLoad(file, (dataUrl) => {
-                obStoryData = { type: 'video', url: dataUrl };
+                obStoryData = { type: 'video', url: dataUrl, frame };
                 const prev = document.getElementById('ob-story-preview');
                 prev.style.backgroundImage = 'none'; prev.innerHTML = '';
                 const v = document.createElement('video'); v.src = dataUrl; v.muted = true; v.autoplay = true; v.loop = true; v.playsInline = true;
+                applyStoryVideoFrame(v, frame);
                 prev.appendChild(v);
             });
-            e.target.value = '';
         });
 
         function obFinishWizard() {
             localStorage.setItem('chat_onboarded', '1');
             document.getElementById('onboarding-modal').style.display = 'none';
             showPinPlacement(true);
-            if (obStoryData) { addStory(obStoryData.type, obStoryData.url); }
+            if (obStoryData) { addStory(obStoryData.type, obStoryData.url, obStoryData.frame); }
         }
         document.getElementById('ob-story-next').addEventListener('click', obFinishWizard);
         document.getElementById('ob-story-skip').addEventListener('click', obFinishWizard);
