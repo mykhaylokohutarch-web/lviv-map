@@ -484,16 +484,8 @@
         #dm-back-name { font-size: 13px; font-weight: 600; color: var(--text-color); }
 
         /* ---- Режим "лише чати": кнопка Чат внизу відкриває одразу список бесід, без домашньої сторінки ---- */
-        #chats-header { display: none; grid-template-columns: 1fr auto 1fr; align-items: center; padding: calc(16px + env(safe-area-inset-top, 0px)) 4px 10px 6px; flex-shrink: 0; }
+        #chats-header { display: none; grid-template-columns: 1fr auto 1fr; align-items: center; padding: calc(4px + env(safe-area-inset-top, 0px)) 4px 10px 6px; flex-shrink: 0; }
         #chats-header span { grid-column: 2; justify-self: center; margin-top: -4px; font-size: 18px; font-weight: 700; letter-spacing: -0.3px; color: var(--text-color); }
-        .chats-header-actions { grid-column: 3; justify-self: end; display: flex; align-items: center; gap: 8px; }
-        #new-group-btn, #chats-close-btn {
-            width: 28px; height: 28px; border-radius: 50%; background: transparent;
-            border: 1px solid var(--border-minimal); color: var(--icon-color); font-size: 13px;
-            display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;
-            transition: var(--theme-transition);
-        }
-        #new-group-btn svg { width: 15px; height: 15px; stroke: var(--icon-color); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
         #profile-sidebar.chat-mode .profile-hero { display: none !important; }
         #profile-sidebar.chat-mode #chat-container { display: flex !important; }
 
@@ -504,9 +496,6 @@
         #profile-sidebar.chat-mode #dm-back-name,
         #profile-sidebar.chat-mode .dm-name { color: #ffffff; }
         #profile-sidebar.chat-mode .dm-preview { color: rgba(255,255,255,0.55); }
-        #profile-sidebar.chat-mode #new-group-btn,
-        #profile-sidebar.chat-mode #chats-close-btn { border-color: rgba(255,255,255,0.18); color: #ffffff; }
-        #profile-sidebar.chat-mode #new-group-btn svg { stroke: #ffffff; }
         #profile-sidebar.chat-mode #dm-back-row span.arrow { color: #ffffff; }
         #profile-sidebar.chat-mode .msg-other { background: rgba(255,255,255,0.12); color: #ffffff; }
         #profile-sidebar.chat-mode .msg-user-name { color: rgba(255,255,255,0.5); }
@@ -1453,10 +1442,6 @@
         <div id="chat-container">
             <div id="chats-header">
                 <span>Чати</span>
-                <div class="chats-header-actions">
-                    <button id="new-group-btn" aria-label="Нова група"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M19 8v6M22 11h-6"></path></svg></button>
-                    <button id="chats-close-btn" aria-label="Закрити">✕</button>
-                </div>
             </div>
             <div id="chat-folders-row"></div>
             <div id="dm-back-row"><span class="arrow">←</span><span id="dm-back-name"></span></div>
@@ -2229,7 +2214,6 @@
         });
 
         document.getElementById('chat-fab').addEventListener('click', toggleChatsList);
-        document.getElementById('chats-close-btn').addEventListener('click', () => window.closeProfile());
 
         // Відкриває/закриває поле з чатами (список бесід, як в Telegram) по натисканню на іконку повідомлення
         function toggleChatsList() {
@@ -4333,7 +4317,6 @@
             document.getElementById('ng-create-btn').disabled = !(name.length > 0 && ngSelectedIds.size > 0);
         }
         function closeNewGroupModal() { document.getElementById('new-group-modal').classList.remove('open'); }
-        document.getElementById('new-group-btn').addEventListener('click', openNewGroupModal);
         document.getElementById('ng-close-btn').addEventListener('click', closeNewGroupModal);
         document.getElementById('ng-name-input').addEventListener('input', syncNgCreateBtn);
         document.getElementById('ng-create-btn').addEventListener('click', () => {
