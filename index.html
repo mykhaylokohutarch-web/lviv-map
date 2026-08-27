@@ -380,11 +380,7 @@
         /* Бари прогресу й шапка — прозорий оверлей ПОВЕРХ медіа (не займають окремий рядок),
            із легким градієнтом для читабельності — так медіа під ним лишається справжнім
            повноекранним шаром і центрується рівно відносно всього екрана. */
-        .story-viewer-top {
-            position: absolute; top: 0; left: 0; right: 0; z-index: 15;
-            background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0));
-            padding-bottom: 22px;
-        }
+        .story-viewer-top { display: none; }
         .story-viewer-bars { display: flex; gap: 4px; padding: calc(44px + env(safe-area-inset-top, 0px)) 12px 0; flex-shrink: 0; }
         .story-bar { flex: 1; height: 2.5px; background: rgba(255,255,255,0.3); border-radius: 2px; overflow: hidden; }
         .story-bar-fill { height: 100%; width: 0%; background: #fff; }
@@ -415,6 +411,7 @@
             transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         .story-viewer-action-btn svg { width: 55%; height: 55%; stroke: #fff; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; transition: fill 0.15s ease, stroke 0.15s ease; }
+        #story-viewer-more-btn svg circle { fill: #fff; stroke: none; }
         .story-viewer-action-btn.liked svg { fill: #ff3b30; stroke: #ff3b30; }
         .story-viewer-action-btn.saved svg { fill: #fff; }
         .story-viewer-action-btn.pulse { transform: scale(1.25); }
@@ -1908,6 +1905,9 @@
                 <button class="story-viewer-action-btn" id="story-viewer-msg-btn" aria-label="Написати">
                     <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
                 </button>
+                <button class="story-viewer-action-btn" id="story-viewer-more-btn" aria-label="Редагувати">
+                    <svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="19" cy="12" r="1.6"></circle></svg>
+                </button>
             </div>
         </div>
     </div>
@@ -3092,7 +3092,7 @@
             if (heroDidSwipe) { heroDidSwipe = false; return; }
             if (e.target.closest('.hero-info-panel') || e.target.closest('.prof-tools-col')) return;
             if (!currentActiveItem) return;
-            openMediaGallery(currentActiveItem.photos, heroPhotoIndex, currentActiveItem.name);
+            openMediaGallery(currentActiveItem.photos, heroPhotoIndex, currentActiveItem.name, currentActiveItem);
         });
 
         const sidebar = document.getElementById('profile-sidebar');
@@ -3785,7 +3785,7 @@
                     attemptCirclePlay(v); allCircleVideos.add(v);
                 }
                 thumb.appendChild(inner);
-                thumb.addEventListener('click', (e) => { e.stopPropagation(); openStoryViewer(stories, i, item.name, null, item); });
+                thumb.addEventListener('click', (e) => { e.stopPropagation(); openStoryViewer(stories, i, item.name, null, item, 'story'); });
                 row.appendChild(thumb);
             });
         }
@@ -3826,15 +3826,16 @@
 
         // ---- Повноекранний перегляд сторіс ----
         let storyViewerList = [], storyViewerIdx = 0, storyViewerTimer = null;
-        let storyViewerShowTime = true, storyViewerAutoAdvance = true, storyViewerEntry = null;
+        let storyViewerShowTime = true, storyViewerAutoAdvance = true, storyViewerEntry = null, storyViewerSourceType = null;
         const STORY_PHOTO_MS = 5000;
 
-        function openStoryViewer(list, startIdx, name, opts, entry) {
+        function openStoryViewer(list, startIdx, name, opts, entry, sourceType) {
             opts = opts || {};
             storyViewerShowTime = opts.showTime !== false;
             storyViewerAutoAdvance = opts.autoAdvance !== false;
             storyViewerList = list; storyViewerIdx = startIdx;
             storyViewerEntry = entry || null;
+            storyViewerSourceType = sourceType || null;
             document.getElementById('story-viewer-name').innerText = name;
             document.getElementById('story-viewer-time').style.display = storyViewerShowTime ? '' : 'none';
             document.getElementById('story-viewer').style.display = 'flex';
@@ -3844,9 +3845,11 @@
             const saveBtn = document.getElementById('story-viewer-save-btn');
             const locBtn = document.getElementById('story-viewer-location-btn');
             const msgBtn = document.getElementById('story-viewer-msg-btn');
+            const moreBtn = document.getElementById('story-viewer-more-btn');
             const pillText = document.getElementById('story-viewer-pill-text');
             const hasEntry = !!(storyViewerEntry && storyViewerEntry.id);
             const canLike = hasEntry && storyViewerEntry.id !== myId;
+            const isOwnEditable = hasEntry && storyViewerEntry.id === myId && (storyViewerSourceType === 'story' || storyViewerSourceType === 'photo');
             likeBtn.style.display = canLike ? 'flex' : 'none';
             likeBtn.classList.toggle('liked', canLike && myFavorites.has(storyViewerEntry.id));
             saveBtn.style.display = canLike ? 'flex' : 'none';
@@ -3854,8 +3857,9 @@
             const canLocate = !!(storyViewerEntry && storyViewerEntry.coords);
             locBtn.style.display = canLocate ? 'flex' : 'none';
             msgBtn.style.display = canLike ? 'flex' : 'none';
+            moreBtn.style.display = isOwnEditable ? 'flex' : 'none';
             pillText.innerText = (storyViewerEntry && storyViewerEntry.status) ? storyViewerEntry.status : '';
-            document.getElementById('story-viewer-pill').style.display = hasEntry ? 'flex' : 'none';
+            document.getElementById('story-viewer-pill').style.display = (hasEntry && (canLike || canLocate || isOwnEditable || pillText.innerText)) ? 'flex' : 'none';
             const wrap = document.getElementById('story-viewer-bars'); wrap.innerHTML = '';
             storyViewerList.forEach(() => {
                 const bar = document.createElement('div'); bar.className = 'story-bar';
@@ -3945,6 +3949,33 @@
             const entry = storyViewerEntry;
             closeStoryViewer();
             openPersonChatTab(entry);
+        });
+
+        document.getElementById('story-viewer-more-btn').addEventListener('click', async (e) => {
+            e.stopPropagation();
+            if (!storyViewerEntry || storyViewerEntry.id !== myId) return;
+            const current = storyViewerList[storyViewerIdx];
+            if (!current) return;
+            const url = current.url;
+            const storyIdx = (myProfile.stories || []).findIndex(s => s.url === url);
+            const photoIdx = (myProfile.photos || []).findIndex(u => u === url);
+            if (storyIdx === -1 && photoIdx === -1) return; // не власний контент, який можна видалити звідси
+            if (photoIdx !== -1 && storyIdx === -1 && myProfile.photos.length <= 1) {
+                alert('Це останнє фото/відео профілю — лишіть хоча б одне.'); return;
+            }
+            if (!confirm('Видалити це фото/відео?')) return;
+            if (storyIdx !== -1) myProfile.stories.splice(storyIdx, 1);
+            if (photoIdx !== -1) { myProfile.photos.splice(photoIdx, 1); localStorage.setItem('chat_profile_edited', '1'); }
+            if (currentActiveItem && currentActiveItem.id === myId) {
+                currentActiveItem.stories = myProfile.stories;
+                currentActiveItem.photos = myProfile.photos;
+                renderHeroStoriesRow(currentActiveItem);
+                renderHeroMedia(myProfile.photos);
+                goToHeroSlide(Math.min(heroPhotoIndex, Math.max(0, myProfile.photos.length - 1)));
+            }
+            closeStoryViewer();
+            try { await saveMyProfileToFirebase(); }
+            catch (err) { alert('Видалено локально, але не вдалося зберегти на сервер. Перевірте інтернет-з’єднання.'); }
         });
 
         // Свайп по повноекранному переглядачу: вбоки — гортання фото/відео, вгору — закриття
@@ -5064,7 +5095,7 @@
                         { type: isHeroVideoUrl(url) ? 'video' : 'photo', url, ts: Date.now() }
                     ));
                     if (!list.length) return;
-                    openStoryViewer(list, 0, e.isMe ? 'Ви' : e.name, { showTime: false }, e);
+                    openStoryViewer(list, 0, e.isMe ? 'Ви' : e.name, { showTime: false }, e, 'photo');
                 });
                 // Міні-аватарка тепер знизу зліва поверх будь-якого фото/відео сторі —
                 // так завжди видно, чиє це коло, навіть коли крутиться нова сторі.
@@ -5316,7 +5347,7 @@
             const photos = [...storyUrls, ...basePhotos].filter(u => { if (seen.has(u)) return false; seen.add(u); return true; });
 
             document.getElementById('ig-avatar').style.backgroundImage = `url('${basePhotos[0]}')`;
-            document.getElementById('ig-avatar').onclick = () => openMediaGallery(photos, 0, item.name);
+            document.getElementById('ig-avatar').onclick = () => openMediaGallery(photos, 0, item.name, item);
             const handle = slugHandle(item.name);
             document.getElementById('ig-bio-handle').innerText = handle;
             document.getElementById('ig-top-name').innerText = item.name || 'Гість';
@@ -5360,16 +5391,16 @@
                 } else {
                     cell.style.backgroundImage = `url('${url}')`;
                 }
-                cell.addEventListener('click', () => openMediaGallery(photos, i, item.name));
+                cell.addEventListener('click', () => openMediaGallery(photos, i, item.name, item));
                 grid.appendChild(cell);
             });
 
             showScreen('igprofile');
         }
 
-        function openMediaGallery(photos, startIdx, name) {
+        function openMediaGallery(photos, startIdx, name, entry) {
             const list = photos.map(url => ({ type: isHeroVideoUrl(url) ? 'video' : 'photo', url, ts: Date.now() }));
-            openStoryViewer(list, startIdx, name, { showTime: false, autoAdvance: false });
+            openStoryViewer(list, startIdx, name, { showTime: false, autoAdvance: false }, entry, 'photo');
         }
 
         function goBackFromIgProfile() { showScreen('home'); layoutHomeGrid(); }
