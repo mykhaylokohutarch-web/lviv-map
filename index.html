@@ -282,6 +282,9 @@
         body.dark-theme #map-compass-btn { box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
         #map-compass-btn:active { transform: scale(0.9); }
         #map-compass-arrow { width: 100%; height: 100%; transition: transform 0.25s ease; }
+        /* Кнопка "північ" мала вищий z-index за бічну панель (діалоги/профіль), тож просвічувала
+           поверх екрана діалогів. Ховаємо її, поки будь-яка бічна панель (профіль, чат) відкрита. */
+        body:has(#profile-sidebar.active) #map-compass-btn { display: none; }
 
         /* ---- Підсвітка знайденого на карті місця ---- */
         .map-search-highlight { position: relative; width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; pointer-events: none; }
@@ -3191,22 +3194,20 @@
             });
         }
 
-        // Визначає шлях чату для конкретної картки: реальні профілі (id починається з 'tg_' —
-        // Telegram-акаунт) отримують приватні DM, NPC-картки (p*/c*) лишаються спільною
-        // "стіною" повідомлень, як і раніше
+        // Шлях чату для конкретної картки: раніше NPC-картки, магазини й будь-хто без 'tg_' у id
+        // отримували спільну "стіну" повідомлень (chats/{id}) і НЕ мали currentChatOtherId,
+        // через що переписка з ними ніколи не потрапляла в userConvos і не показувалась у діалогах.
+        // Тепер усі співрозмовники (реальні профілі, магазини, інші люди) отримують однаковий
+        // приватний DM-шлях — так само, як при відкритті чату зі списку діалогів (openDmThread) —
+        // і завжди реєструються в userConvos, тож переписка завжди зʼявляється в діалогах.
         function openChatForItem(item) {
             document.getElementById('dm-list').style.display = 'none';
             document.getElementById('chat-folders-row').classList.remove('visible');
             document.getElementById('chat-thread-wrap').style.display = 'flex';
             document.getElementById('dm-back-row').style.display = 'none';
-            if (item.id.startsWith('tg_') && item.id !== myId) {
-                const convId = [myId, item.id].sort().join('__');
-                currentChatPath = `dms/${convId}`;
-                currentChatOtherId = item.id; currentChatOtherName = item.name; currentChatOtherPhoto = item.photos && item.photos[0];
-            } else {
-                currentChatPath = `chats/${item.id}`;
-                currentChatOtherId = null; currentChatOtherName = null; currentChatOtherPhoto = null;
-            }
+            const convId = [myId, item.id].sort().join('__');
+            currentChatPath = `dms/${convId}`;
+            currentChatOtherId = item.id; currentChatOtherName = item.name; currentChatOtherPhoto = item.photos && item.photos[0];
             currentChatIsGroup = false; currentGroupId = null; currentGroupMembers = [];
             loadChat(currentChatPath);
         }
