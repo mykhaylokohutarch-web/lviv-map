@@ -962,7 +962,7 @@
         }
         .home-header h1 { margin: -1.5em 0 0 0; font-size: 27px; font-weight: 700; letter-spacing: -0.4px; color: var(--text-color); grid-column: 2; justify-self: center; }
         .app-wordmark { font-family: 'Yellowtail', 'Segoe Script', 'Bradley Hand', cursive; font-weight: 400; font-style: normal; font-size: 32px !important; letter-spacing: 0.4px; color: var(--text-color) !important; text-transform: none; line-height: 1; }
-        .home-filter-tabs { display: flex; align-items: center; justify-content: flex-start; gap: 4px; flex-shrink: 0; grid-column: 1; justify-self: start; }
+        .home-filter-tabs { position: relative; display: flex; align-items: center; justify-content: flex-start; flex-shrink: 0; grid-column: 1; justify-self: start; }
         .filter-tab {
             display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer;
             width: 30px; height: 30px; border-radius: 50%; border: none;
@@ -973,6 +973,32 @@
         .filter-tab:active { transform: scale(0.88); }
         .filter-tab svg { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
         .filter-tab.active { color: var(--accent-main); }
+        .home-filter-current-btn {
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer;
+            width: 30px; height: 30px; border-radius: 50%; border: none;
+            background: transparent;
+            color: var(--icon-color);
+            -webkit-tap-highlight-color: transparent; transition: transform 0.2s ease, color 0.2s ease;
+        }
+        .home-filter-current-btn:active { transform: scale(0.88); }
+        .home-filter-current-btn svg { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+        .home-filter-current-btn.filtered { color: var(--accent-main); }
+        .home-filter-menu {
+            display: none; position: absolute; top: calc(100% + 6px); left: 0; z-index: 60;
+            min-width: 168px; padding: 6px; border-radius: 16px;
+            background: var(--card-bg); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid var(--border-minimal); box-shadow: 0 8px 24px rgba(0,0,0,0.16);
+        }
+        .home-filter-menu.open { display: block; }
+        .home-filter-menu-item {
+            display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; border: none;
+            background: transparent; border-radius: 10px; cursor: pointer; -webkit-tap-highlight-color: transparent;
+            color: var(--text-color); font-size: 14px; font-family: inherit;
+        }
+        .home-filter-menu-item:active { background: rgba(120,120,128,0.14); }
+        .home-filter-menu-item svg.hf-icon { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+        .home-filter-menu-item span { flex: 1; text-align: left; }
+        .home-filter-menu-item.selected { background: rgba(69, 66, 244, 0.12); color: var(--accent-main); font-weight: 600; }
         .home-header-add-btn {
             display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer;
             width: 30px; height: 30px; border-radius: 50%; border: none;
@@ -1504,15 +1530,27 @@
         <div class="home-header">
             <h1 class="app-wordmark">moment</h1>
             <div class="home-filter-tabs" id="home-filter-tabs">
-                <button class="filter-tab" data-filter="fav" aria-label="Улюблені">
-                    <svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg>
+                <button class="home-filter-current-btn" id="home-filter-current-btn" aria-label="Фільтр">
+                    <svg id="home-filter-current-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg>
                 </button>
-                <button class="filter-tab" data-filter="friends" aria-label="Друзі">
-                    <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                </button>
-                <button class="filter-tab" data-filter="places" aria-label="Заклади">
-                    <svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
-                </button>
+                <div class="home-filter-menu" id="home-filter-menu">
+                    <button class="home-filter-menu-item selected" data-filter="">
+                        <svg class="hf-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg>
+                        <span>Всі</span>
+                    </button>
+                    <button class="home-filter-menu-item" data-filter="fav">
+                        <svg class="hf-icon" viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg>
+                        <span>Улюблені</span>
+                    </button>
+                    <button class="home-filter-menu-item" data-filter="friends">
+                        <svg class="hf-icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                        <span>Друзі</span>
+                    </button>
+                    <button class="home-filter-menu-item" data-filter="places">
+                        <svg class="hf-icon" viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                        <span>Заклади</span>
+                    </button>
+                </div>
             </div>
         </div>
         <div id="home-grid"><div class="home-grid-inner" id="home-grid-inner"></div></div>
@@ -5169,15 +5207,37 @@
 
         document.getElementById('people-search-input').addEventListener('input', (e) => { if (homeSearchMode === 'people') renderHomeGrid(e.target.value); });
 
-        document.querySelectorAll('.filter-tab').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const mode = btn.dataset.filter;
-                const isActive = btn.classList.contains('active');
-                document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
-                if (!isActive) btn.classList.add('active');
-                renderHomeGrid(document.getElementById('people-search-input').value, isActive ? null : mode);
+        // ---- Єдина кнопка-фільтр на Головній (замість трьох окремих іконок) з випадним меню ----
+        const HOME_FILTER_ICONS = {
+            '': '<rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect>',
+            'fav': '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z"></path>',
+            'friends': '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path>',
+            'places': '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path>'
+        };
+        function updateHomeFilterButton(mode) {
+            const key = mode || '';
+            document.getElementById('home-filter-current-icon').innerHTML = HOME_FILTER_ICONS[key];
+            document.getElementById('home-filter-current-btn').classList.toggle('filtered', !!mode);
+            document.querySelectorAll('#home-filter-menu .home-filter-menu-item').forEach(item => {
+                item.classList.toggle('selected', item.dataset.filter === key);
+            });
+        }
+        document.getElementById('home-filter-current-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.getElementById('home-filter-menu').classList.toggle('open');
+        });
+        document.querySelectorAll('#home-filter-menu .home-filter-menu-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const mode = item.dataset.filter || null;
+                document.getElementById('home-filter-menu').classList.remove('open');
+                updateHomeFilterButton(mode);
+                renderHomeGrid(document.getElementById('people-search-input').value, mode);
                 setTimeout(layoutHomeGrid, 0);
             });
+        });
+        document.addEventListener('click', (e) => {
+            const menu = document.getElementById('home-filter-menu');
+            if (menu.classList.contains('open') && !e.target.closest('.home-filter-tabs')) menu.classList.remove('open');
         });
 
         // ==== Свайп по колах на Головній: перемикає фільтри (Улюблені/Друзі/Заклади) і підсвічує іконку ====
@@ -5195,9 +5255,7 @@
             // Плавний перехід між фільтрами, як гортання сторінок на iPhone: поточний вміст
             // доїжджає й тане в бік свайпу, новий одразу з'являється з протилежного боку.
             function switchFilter(nextMode, dir) {
-                tabs.querySelectorAll('.filter-tab').forEach(b => {
-                    b.classList.toggle('active', b.dataset.filter === nextMode);
-                });
+                updateHomeFilterButton(nextMode);
                 const outX = dir < 0 ? -46 : 46;
                 setTransition(true);
                 inner.style.transform = `translateX(${outX}px)`;
