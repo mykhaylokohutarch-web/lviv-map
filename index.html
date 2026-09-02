@@ -362,7 +362,6 @@
             -webkit-tap-highlight-color: transparent;
         }
         #chat-attach-btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-        #profile-sidebar.chat-mode #chat-attach-btn { color: rgba(255,255,255,0.65); }
 
         /* ---- Прихована адмін-панель: тільки для розробника, видалення акаунтів ---- */
         #admin-panel { display: none; position: fixed; inset: 0; z-index: 6000; background: #000; flex-direction: column; }
@@ -479,12 +478,11 @@
         .dm-preview { font-size: 12px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .dm-empty { color: var(--text-secondary); font-size: 13px; text-align: center; margin-top: 24px; }
         #chat-thread-wrap { display: none; flex-direction: column; flex-grow: 1; overflow: hidden; }
-        /* Стрілку й імʼя зліва прибрано з вигляду (за проханням користувача) — рядок лишається
-           в розмітці й далі клікабельний (тап у верхній зоні повертає до списку діалогів),
-           просто без видимого тексту, і додає відступ згори понад системну "чолку"/статус-бар,
-           щоб перше повідомлення в чаті не ховалось під нею чи іншими елементами застосунку. */
-        #dm-back-row { display: none; align-items: center; gap: 8px; margin-bottom: 8px; cursor: pointer; flex-shrink: 0; padding-top: env(safe-area-inset-top, 0px); height: 22px; }
-        #dm-back-row span.arrow, #dm-back-name { visibility: hidden; }
+        /* Ім'я співрозмовника — по центру зверху (як заголовок екрана), без стрілки назад:
+           повернутись до списку діалогів можна свайпом вправо по переписці (або тапом сюди). */
+        #dm-back-row { display: none; align-items: center; justify-content: center; margin-bottom: 8px; cursor: pointer; flex-shrink: 0; padding-top: env(safe-area-inset-top, 0px); }
+        #dm-back-row span.arrow { display: none; }
+        #dm-back-name { font-size: 15px; font-weight: 700; color: var(--text-color); }
 
         /* ---- Режим "лише чати": кнопка Чат внизу відкриває одразу список бесід, без домашньої сторінки ---- */
         #chats-header { display: none; grid-template-columns: 1fr auto 1fr; align-items: center; padding: calc(4px + env(safe-area-inset-top, 0px)) 4px 10px 6px; flex-shrink: 0; }
@@ -492,40 +490,41 @@
         #profile-sidebar.chat-mode .profile-hero { display: none !important; }
         #profile-sidebar.chat-mode #chat-container { display: flex !important; }
 
-        /* ==== Режим чатів: суцільний чорний фон, незалежний від світлої/темної теми застосунку ==== */
-        #profile-sidebar.chat-mode { background-color: #000000 !important; }
+        /* ==== Режим чатів: тепер стежить за загальною темою застосунку (світла/темна),
+           а не завжди чорний фон, як було раніше ==== */
+        #profile-sidebar.chat-mode { background-color: #ffffff; }
+        body.dark-theme #profile-sidebar.chat-mode { background-color: #000000; }
         #profile-sidebar.chat-mode #chat-container { background-color: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; }
-        #profile-sidebar.chat-mode #chats-header span,
-        #profile-sidebar.chat-mode #dm-back-name,
-        #profile-sidebar.chat-mode .dm-name { color: #ffffff; }
-        #profile-sidebar.chat-mode .dm-preview { color: rgba(255,255,255,0.55); }
-        #profile-sidebar.chat-mode #dm-back-row span.arrow { color: #ffffff; }
-        #profile-sidebar.chat-mode .msg-other { background: rgba(255,255,255,0.12); color: #ffffff; }
-        #profile-sidebar.chat-mode .msg-user-name { color: rgba(255,255,255,0.5); }
-        #profile-sidebar.chat-mode .chat-input-row { background: rgba(255,255,255,0.09); }
-        #profile-sidebar.chat-mode .chat-input-row input { color: #ffffff; }
-        #profile-sidebar.chat-mode .chat-input-row input::placeholder { color: rgba(255,255,255,0.4); }
 
         /* ==== Чати з людьми як напівпрозорі кольорові "таблетки" ==== */
-        #dm-list { padding: 2px 2px 12px; }
+        /* Таблетки розтягнуті майже на всю ширину екрана: компенсуємо бічні відступи
+           батьківського #chat-container (12px) від'ємним margin і лишаємо лише невеликий
+           запас (6px), замість попереднього подвійного відступу. Самі рядки також трохи
+           більші — вищі, з крупнішим аватаром і шрифтом. Кольори тепер стежать за темою
+           застосунку (світла/темна), а не завжди розраховані на чорне тло. */
+        #dm-list { padding: 2px 6px 12px; margin: 0 -12px; }
         .dm-row {
             display: flex; align-items: center; gap: 10px; cursor: pointer; -webkit-tap-highlight-color: transparent;
-            padding: 9px 12px; margin: 0 0 8px; border-radius: 999px;
-            background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.10);
+            padding: 12px 16px; margin: 0 0 10px; border-radius: 999px;
+            background: rgba(0,0,0,0.05); border: 1px solid var(--border-minimal);
             transition: transform 0.15s ease, background-color 0.3s ease, border-color 0.3s ease;
         }
+        body.dark-theme .dm-row { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.10); }
         .dm-row:active { transform: scale(0.98); }
-        .dm-row-saved { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.10); }
-        .dm-avatar { width: 40px; height: 40px; border-radius: 50%; background-size: cover; background-position: center; flex-shrink: 0; background-color: #2c2c2e; border: 1px solid rgba(255,255,255,0.12); box-sizing: border-box; }
-        .dm-avatar-group { display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: #fff; background: var(--ultramarine-gradient); }
+        .dm-row-saved { background: rgba(0,0,0,0.04); border: 1px solid var(--border-minimal); }
+        body.dark-theme .dm-row-saved { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.10); }
+        .dm-avatar { width: 46px; height: 46px; border-radius: 50%; background-size: cover; background-position: center; flex-shrink: 0; background-color: #e5e5ea; border: 1px solid var(--border-minimal); box-sizing: border-box; }
+        body.dark-theme .dm-avatar { background-color: #2c2c2e; border-color: rgba(255,255,255,0.12); }
+        .dm-avatar-group { display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; color: #fff; background: var(--ultramarine-gradient); }
         .dm-avatar-saved { background: var(--ultramarine-gradient); border: none; display: flex; align-items: center; justify-content: center; }
-        .dm-avatar-saved svg { width: 19px; height: 19px; fill: #fff; }
+        .dm-avatar-saved svg { width: 21px; height: 21px; fill: #fff; }
         .dm-row-saved { margin-bottom: 10px; }
-        .dm-text-wrap { display: flex; flex-direction: column; overflow: hidden; flex-grow: 1; gap: 1px; min-width: 0; }
-        .dm-name { font-size: 14px; font-weight: 600; }
-        .dm-preview { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .dm-empty { color: rgba(255,255,255,0.5); font-size: 13px; text-align: center; margin-top: 24px; }
-        .dm-color-dot { width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0; border: 2px solid rgba(255,255,255,0.5); box-sizing: border-box; cursor: pointer; }
+        .dm-text-wrap { display: flex; flex-direction: column; overflow: hidden; flex-grow: 1; gap: 2px; min-width: 0; }
+        .dm-name { font-size: 15px; font-weight: 600; color: var(--text-color); }
+        .dm-preview { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-secondary); }
+        .dm-empty { color: var(--text-secondary); font-size: 13px; text-align: center; margin-top: 24px; }
+        .dm-color-dot { width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0; border: 2px solid rgba(0,0,0,0.15); box-sizing: border-box; cursor: pointer; }
+        body.dark-theme .dm-color-dot { border-color: rgba(255,255,255,0.5); }
 
         /* Попап палітри кольорів для "таблетки" чату */
         #chat-color-popover {
@@ -3132,7 +3131,10 @@
             const dy = t.clientY - msgSwipeStartY;
             const dt = Date.now() - msgSwipeStartTime;
             // швидкий, переважно вертикальний рух вгору — не чіпляється до звичайного повільного гортання списку
-            if (dy < -70 && Math.abs(dx) < 90 && dt < 400) { window.closeProfile(); }
+            if (dy < -70 && Math.abs(dx) < 90 && dt < 400) { window.closeProfile(); return; }
+            // Свайп вправо всередині відкритої переписки — повертає до списку діалогів
+            // (те саме, що тап по назві зверху), як у звичних месенджерах.
+            if (document.getElementById('chat-thread-wrap').style.display !== 'none' && dx > 70 && Math.abs(dy) < 90 && dt < 400) { goBackFromChatThread(); }
         }, { passive: true });
 
 
@@ -3260,13 +3262,16 @@
         document.getElementById('chat-attach-sheet').addEventListener('click', (e) => { if (e.target.id === 'chat-attach-sheet') closeChatAttachSheet(); });
 
         document.getElementById('chat-attach-photo-btn').addEventListener('click', () => { closeChatAttachSheet(); document.getElementById('chat-attach-photo-input').click(); });
+        // Фото в чат надсилається напряму, без редактора кадрування/фільтрів —
+        // він лишається тільки для публікацій на сторінку профілю та в сторіс.
         document.getElementById('chat-attach-photo-input').addEventListener('change', async (e) => {
             const file = e.target.files[0]; if (!file) return; e.target.value = '';
-            let url;
-            try { url = await openPhotoEditor(file); }
-            catch (err) { alert(mediaUploadErrorMessage(err)); return; }
-            if (!url) return; // користувач натиснув "Скасувати"
-            sendAttachmentMessage({ type: 'image', url }, '📷 Фото');
+            showUploadOverlay('Завантаження фото…');
+            try {
+                const url = await uploadPhotoToTelegram(file, file.name || 'photo.jpg');
+                hideUploadOverlay();
+                sendAttachmentMessage({ type: 'image', url }, '📷 Фото');
+            } catch (err) { hideUploadOverlay(); alert(mediaUploadErrorMessage(err)); }
         });
 
         document.getElementById('chat-attach-video-btn').addEventListener('click', () => { closeChatAttachSheet(); document.getElementById('chat-attach-video-input').click(); });
@@ -4307,10 +4312,11 @@
             openGroupThread(groupId, name);
         }
 
-        document.getElementById('dm-back-row').addEventListener('click', () => {
+        document.getElementById('dm-back-row').addEventListener('click', goBackFromChatThread);
+        function goBackFromChatThread() {
             if (chatTabOrigin === 'profile') { closeChatTabBackToProfile(); }
             else if (currentActiveItem && currentActiveItem.id === myId) { showDmList(); }
-        });
+        }
 
         onValue(ref(db, `userConvos/${myId}`), (snap) => { myConvos = snap.val() || {}; renderDmList(); });
 
