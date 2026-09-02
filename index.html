@@ -3943,6 +3943,18 @@
                     requestAnimationFrame(() => { const b = bars[idx]; if (b) { b.style.transition = `width ${dur}ms linear`; b.style.width = '100%'; } });
                 };
                 v.onended = () => storyAdvance(1);
+                // Стара посилання на відео (завантажене ще до переходу на поточне сховище медіа)
+                // могло "протухнути" — замість мовчазного чорного екрана показуємо зрозуміле
+                // повідомлення й за пару секунд самі гортаємо далі, щоб не залишати людину в глухому куті.
+                v.onerror = () => {
+                    if (media.contains(v)) v.remove();
+                    const errBox = document.createElement('div');
+                    errBox.style.cssText = 'color:#fff; text-align:center; padding:0 32px; font-size:14px; line-height:1.5; opacity:0.85;';
+                    errBox.innerText = 'Це відео недоступне — посилання застаріло. Видаліть його через "…" і завантажте знову.';
+                    media.appendChild(errBox);
+                    const b = bars[idx]; if (b) { b.style.transition = 'none'; b.style.width = '100%'; }
+                    if (storyViewerAutoAdvance !== false) { storyViewerTimer = setTimeout(() => storyAdvance(1), 2600); }
+                };
             }
         }
 
@@ -4966,6 +4978,13 @@
             return '@' + (cleaned.replace(/\s+/g, '.') || 'user');
         }
 
+        // Підпис під колом на Головній — не більше 16 символів (довші імена/назви обрізаються з "…").
+        function truncateCircleName(name, maxLen) {
+            maxLen = maxLen || 16;
+            const s = String(name || '');
+            return s.length > maxLen ? s.slice(0, maxLen - 1).trimEnd() + '…' : s;
+        }
+
         // Розраховує розмір кола так, щоб рівно 3 кола вміщались у ширину — максимально великі,
         // наскільки дозволяє ширина екрана. Кількість колонок і порядок кіл лишаються незмінними,
         // гортання лише вертикальне (overflow-x вимкнено окремо в CSS).
@@ -5166,7 +5185,7 @@
                     addBadge.addEventListener('click', (ev) => { ev.stopPropagation(); openAddStoryChooser(); });
                     avatar.appendChild(addBadge);
                 }
-                const nameSpan = document.createElement('span'); nameSpan.className = 'home-circle-name'; nameSpan.innerText = e.isMe ? 'Ви' : e.name;
+                const nameSpan = document.createElement('span'); nameSpan.className = 'home-circle-name'; nameSpan.innerText = e.isMe ? 'Ви' : truncateCircleName(e.name);
                 nameSpan.addEventListener('click', (ev) => {
                     ev.stopPropagation();
                     if (e.type === 'place') { showSidebar(e); } else { openIgProfile(e, false); }
