@@ -2319,7 +2319,7 @@
         // мітки та іконки це не чіпає — вони в іншому шарі Leaflet).
         const osmTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors', subdomains: 'abc', maxZoom: 19,
-            keepBuffer: 6,          // більше "запасних" тайлів навколо екрана — панорамування й зум відчуваються швидше
+            keepBuffer: 2,          // менше "зайвих" тайлів у DOM/пам'яті навколо екрана — панорамування легше для пристрою
             updateWhenZooming: false // не довантажує нові тайли посеред анімації зуму, лише по завершенню
         });
         osmTiles.addTo(map);
@@ -2329,6 +2329,11 @@
         // Просто "прогріваємо" кеш браузера завантаженням картинок тайлів у фоні — на саму карту
         // ці тайли не додаються, але коли користувач реально туди прогорне/наближить, вони вже
         // будуть у кеші й з'являться миттєво замість чекання на мережу.
+        // ОПТИМІЗАЦІЯ: раніше це запускало 75 паралельних запитів (5×5 тайлів × 3 рівні зуму)
+        // на КОЖЕН рух карти без жодної затримки — суттєво навантажувало мережу й CPU та
+        // сповільнювало саме панорамування, яке мало пришвидшувати. Тепер: менший радіус (3×3),
+        // лише 2 рівні зуму, і запуск відкладено через requestIdleCallback з дебаунсом, щоб не
+        // заважати активному руху картою.
         const tileWarmupCache = new Set();
         function warmupTile(x, y, z) {
             const key = `${z}/${x}/${y}`;
@@ -2339,15 +2344,19 @@
             img.src = `https://${sub}.tile.openstreetmap.org/${z}/${x}/${y}.png`;
         }
         function warmupAroundLatLng(lat, lon, baseZoom) {
-            [baseZoom - 1, baseZoom, baseZoom + 1].forEach(z => {
-                if (z < 3 || z > 19) return;
-                const centerPoint = map.project([lat, lon], z).divideBy(256).floor();
-                for (let dx = -2; dx <= 2; dx++) {
-                    for (let dy = -2; dy <= 2; dy++) {
-                        warmupTile(centerPoint.x + dx, centerPoint.y + dy, z);
+            const run = () => {
+                [baseZoom, baseZoom + 1].forEach(z => {
+                    if (z < 3 || z > 19) return;
+                    const centerPoint = map.project([lat, lon], z).divideBy(256).floor();
+                    for (let dx = -1; dx <= 1; dx++) {
+                        for (let dy = -1; dy <= 1; dy++) {
+                            warmupTile(centerPoint.x + dx, centerPoint.y + dy, z);
+                        }
                     }
-                }
-            });
+                });
+            };
+            if ('requestIdleCallback' in window) requestIdleCallback(run, { timeout: 1500 });
+            else setTimeout(run, 200);
         }
         // Прогріваємо те, що вже видно на екрані, одразу при завантаженні
         warmupAroundLatLng(map.getCenter().lat, map.getCenter().lng, map.getZoom());
@@ -2363,9 +2372,14 @@
                 }
             }).catch(() => {});
         }
-        // Після кожного панорамування/зуму так само прогріваємо нову околицю наперед —
-        // тоді наступний рух картою чи наближення вже здебільшого бере тайли з кеша.
-        map.on('moveend', () => { warmupAroundLatLng(map.getCenter().lat, map.getCenter().lng, map.getZoom()); });
+        // Після панорамування/зуму так само прогріваємо нову околицю наперед, але з дебаунсом
+        // (чекаємо, поки рух картою справді закінчиться, а не смикаємо на кожен проміжний moveend
+        // під час обертання/зуму), щоб не змагатися за мережу й CPU з самим рухом карти.
+        let tileWarmupTimer = null;
+        map.on('moveend', () => {
+            clearTimeout(tileWarmupTimer);
+            tileWarmupTimer = setTimeout(() => warmupAroundLatLng(map.getCenter().lat, map.getCenter().lng, map.getZoom()), 600);
+        });
 
         const themeBtn = document.getElementById('theme-toggle');
         themeBtn.addEventListener('click', () => {
@@ -5002,7 +5016,10 @@
 
             container.style.setProperty('--circle-d', d + 'px');
         }
-        window.addEventListener('resize', layoutHomeGrid);
+        // Дебаунс на resize: обчислення розмірів сітки на кожен проміжний кадр зайве й вантажить CPU,
+        // а на мобільних resize майже не трапляється — досить порахувати вже після того, як усе стихло.
+        let homeGridResizeTimer = null;
+        window.addEventListener('resize', () => { clearTimeout(homeGridResizeTimer); homeGridResizeTimer = setTimeout(layoutHomeGrid, 100); });
         window.addEventListener('orientationchange', () => setTimeout(layoutHomeGrid, 60));
 
         function buildDirectoryEntries() {
