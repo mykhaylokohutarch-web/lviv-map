@@ -2314,10 +2314,101 @@
             syncBottomNavToScreen();
         }
 
+        // ==================== Постійний кеш тайлів карти на диску телефону (IndexedDB) ====================
+        // Звичайний HTTP-кеш браузера — тимчасовий: систему може почистити його будь-коли під
+        // тиском вільного місця, і термін дії тайлів з часом спливає. IndexedDB — це власне сховище
+        // застосунку на диску пристрою: тайли, завантажені хоч раз, лишаються там і між сеансами
+        // (закрив застосунок, відкрив за тиждень — карта, яку вже бачили, з'являється миттєво,
+        // без мережі взагалі).
+        const TILE_DB_NAME = 'mapTileCacheDB';
+        const TILE_STORE = 'tiles';
+        const MAX_CACHED_TILES = 4000; // приблизна стеля, щоб не роздувати сховище пристрою безмежно
+        let tileDbPromise = null;
+        function openTileDb() {
+            if (tileDbPromise) return tileDbPromise;
+            tileDbPromise = new Promise((resolve, reject) => {
+                if (!('indexedDB' in window)) { reject(new Error('no indexeddb')); return; }
+                const req = indexedDB.open(TILE_DB_NAME, 1);
+                req.onupgradeneeded = () => { req.result.createObjectStore(TILE_STORE); };
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+            return tileDbPromise;
+        }
+        function idbGetTile(key) {
+            return openTileDb().then(db => new Promise((resolve) => {
+                const tx = db.transaction(TILE_STORE, 'readonly');
+                const req = tx.objectStore(TILE_STORE).get(key);
+                req.onsuccess = () => resolve(req.result || null);
+                req.onerror = () => resolve(null);
+            })).catch(() => null);
+        }
+        let idbTilePutCount = 0;
+        function idbPutTile(key, blob) {
+            openTileDb().then(db => {
+                const tx = db.transaction(TILE_STORE, 'readwrite');
+                tx.objectStore(TILE_STORE).put({ blob, ts: Date.now() }, key);
+            }).then(() => {
+                idbTilePutCount++;
+                if (idbTilePutCount % 200 === 0) cleanupTileDb();
+            }).catch(() => {});
+        }
+        // Раз на кожні ~200 нових тайлів прибираємо найстаріші записи понад стелю MAX_CACHED_TILES,
+        // щоб сховище не росло нескінченно на пристрої користувача.
+        function cleanupTileDb() {
+            openTileDb().then(db => {
+                const store = db.transaction(TILE_STORE, 'readonly').objectStore(TILE_STORE);
+                store.count().onsuccess = (e) => {
+                    const total = e.target.result;
+                    if (total <= MAX_CACHED_TILES) return;
+                    const toRemove = total - MAX_CACHED_TILES;
+                    const items = [];
+                    store.openCursor().onsuccess = (ev) => {
+                        const cursor = ev.target.result;
+                        if (cursor) { items.push({ key: cursor.primaryKey, ts: (cursor.value && cursor.value.ts) || 0 }); cursor.continue(); }
+                        else {
+                            items.sort((a, b) => a.ts - b.ts);
+                            const removeTx = db.transaction(TILE_STORE, 'readwrite').objectStore(TILE_STORE);
+                            items.slice(0, toRemove).forEach(i => removeTx.delete(i.key));
+                        }
+                    };
+                };
+            }).catch(() => {});
+        }
+        // Просимо браузер не чистити наше сховище автоматично під тиском вільного місця
+        // (працює не скрізь, але коштує спробувати — жодного шкоди, якщо недоступно)
+        if (navigator.storage && navigator.storage.persist) { navigator.storage.persist().catch(() => {}); }
+
+        // Свій шар тайлів: спочатку питає тайл із IndexedDB (диск телефону), і лише якщо його
+        // там ще нема — тягне з мережі та заразом зберігає на майбутнє. Якщо IndexedDB чи
+        // fetch(CORS) з якоїсь причини недоступні в середовищі — тихо повертається до звичайного
+        // прямого завантаження картинкою, як було раніше (карта в будь-якому разі не ламається).
+        const CachedTileLayer = L.TileLayer.extend({
+            createTile: function (coords, done) {
+                const tile = document.createElement('img');
+                tile.alt = ''; tile.setAttribute('role', 'presentation');
+                L.DomEvent.on(tile, 'load', L.Util.bind(this._tileOnLoad, this, done, tile));
+                L.DomEvent.on(tile, 'error', L.Util.bind(this._tileOnError, this, done, tile));
+                const url = this.getTileUrl(coords);
+                const key = `${coords.z}/${coords.x}/${coords.y}`;
+                const setSrc = (src, revoke) => {
+                    tile.src = src;
+                    if (revoke) tile.addEventListener('load', () => URL.revokeObjectURL(src), { once: true });
+                };
+                idbGetTile(key).then(rec => {
+                    if (rec && rec.blob) { setSrc(URL.createObjectURL(rec.blob), true); return; }
+                    fetch(url, { mode: 'cors' }).then(r => { if (!r.ok) throw 0; return r.blob(); })
+                        .then(blob => { setSrc(URL.createObjectURL(blob), true); idbPutTile(key, blob); })
+                        .catch(() => { setSrc(url, false); }); // CORS/мережа підвела — звичайне завантаження без кешування
+                });
+                return tile;
+            }
+        });
+
         // Стандартний OpenStreetMap (як на openstreetmap.org) — офіційного темного варіанту в нього
         // немає, тож темний режим робимо CSS-інверсією кольорів самого шару тайлів (лише карти,
         // мітки та іконки це не чіпає — вони в іншому шарі Leaflet).
-        const osmTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        const osmTiles = new CachedTileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors', subdomains: 'abc', maxZoom: 19,
             keepBuffer: 2,          // менше "зайвих" тайлів у DOM/пам'яті навколо екрана — панорамування легше для пристрою
             updateWhenZooming: false // не довантажує нові тайли посеред анімації зуму, лише по завершенню
@@ -2339,9 +2430,17 @@
             const key = `${z}/${x}/${y}`;
             if (tileWarmupCache.has(key)) return;
             tileWarmupCache.add(key);
-            const sub = 'abc'[Math.floor(Math.random() * 3)];
-            const img = new Image();
-            img.src = `https://${sub}.tile.openstreetmap.org/${z}/${x}/${y}.png`;
+            // Спершу перевіряємо, чи тайл уже лежить на диску (IndexedDB) — якщо так, прогрівати
+            // нема чого. Якщо ні — тягнемо і одразу зберігаємо на диск телефону на майбутнє,
+            // а не лише в тимчасовий HTTP-кеш браузера, як було раніше.
+            idbGetTile(key).then(rec => {
+                if (rec && rec.blob) return;
+                const sub = 'abc'[Math.floor(Math.random() * 3)];
+                const url = `https://${sub}.tile.openstreetmap.org/${z}/${x}/${y}.png`;
+                fetch(url, { mode: 'cors' }).then(r => { if (!r.ok) throw 0; return r.blob(); })
+                    .then(blob => idbPutTile(key, blob))
+                    .catch(() => { const img = new Image(); img.src = url; }); // фолбек — хоч у звичайний HTTP-кеш
+            });
         }
         function warmupAroundLatLng(lat, lon, baseZoom) {
             const run = () => {
