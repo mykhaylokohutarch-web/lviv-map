@@ -2381,6 +2381,47 @@
             tileWarmupTimer = setTimeout(() => warmupAroundLatLng(map.getCenter().lat, map.getCenter().lng, map.getZoom()), 600);
         });
 
+        // ---- Фоновий прогрів усього міста наперед ----
+        // На прохання користувача: щоб карта "не підвантажувалась" під час звичайного гортання,
+        // а більша частина міста вже лежала прогрітою в кеші браузера ще ДО того, як користувач
+        // туди доскролить. Робимо це у фоні маленькими пачками через requestIdleCallback, щоб не
+        // заважати активному користуванню картою (і не влаштовувати той самий "шторм запитів",
+        // який ми щойно виправили для звичайного прогріву навколо позиції).
+        // Найдетальніші рівні зуму (17+) свідомо НЕ прогріваються для всього міста одразу —
+        // на весь Львів це були б десятки тисяч тайлів і зайве навантаження на безкоштовний
+        // публічний тайл-сервер OSM; для них і далі працює прогрів "навколо поточної позиції"
+        // (warmupAroundLatLng вище), який вмикається під час реального пересування картою.
+        const LVIV_CITY_BOUNDS = { south: 49.79, north: 49.895, west: 23.95, east: 24.12 };
+        const CITY_PREFETCH_ZOOMS = [12, 13, 14, 15, 16];
+        function buildCityTileQueue() {
+            const queue = [];
+            CITY_PREFETCH_ZOOMS.forEach(z => {
+                const nw = map.project([LVIV_CITY_BOUNDS.north, LVIV_CITY_BOUNDS.west], z).divideBy(256).floor();
+                const se = map.project([LVIV_CITY_BOUNDS.south, LVIV_CITY_BOUNDS.east], z).divideBy(256).floor();
+                for (let x = nw.x; x <= se.x; x++) {
+                    for (let y = nw.y; y <= se.y; y++) queue.push({ x, y, z });
+                }
+            });
+            return queue;
+        }
+        function prefetchCityTiles() {
+            const queue = buildCityTileQueue();
+            let i = 0;
+            const BATCH = 6; // невеликими пачками — щоб не змагатись за мережу з активним переглядом карти
+            function nextBatch() {
+                if (i >= queue.length) return;
+                for (let n = 0; n < BATCH && i < queue.length; n++, i++) {
+                    const t = queue[i];
+                    warmupTile(t.x, t.y, t.z);
+                }
+                if ('requestIdleCallback' in window) requestIdleCallback(nextBatch, { timeout: 2000 });
+                else setTimeout(nextBatch, 250);
+            }
+            nextBatch();
+        }
+        // Стартуємо із затримкою після першого показу карти, щоб не заважати початковому завантаженню
+        setTimeout(prefetchCityTiles, 2000);
+
         const themeBtn = document.getElementById('theme-toggle');
         themeBtn.addEventListener('click', () => {
             document.body.classList.toggle('dark-theme');
