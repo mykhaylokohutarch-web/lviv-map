@@ -1192,8 +1192,14 @@
         #home-search-find-btn:active { opacity: 0.75; }
         .home-search-bar.map-mode #home-search-find-btn { display: block; }
         /* ---- Головна: сітка кіл (люди + заклади) по 3 в ряд, як в надісланому прикладі ---- */
-        #home-grid { flex-grow: 1; overflow-y: auto; overflow-x: hidden; padding: calc(114px + env(safe-area-inset-top, 0px)) 2px 110px; box-sizing: border-box; touch-action: pan-y; -webkit-overflow-scrolling: touch; overscroll-behavior-x: none; }
+        #home-grid { position: relative; flex-grow: 1; overflow-y: auto; overflow-x: hidden; padding: calc(114px + env(safe-area-inset-top, 0px)) 2px 110px; box-sizing: border-box; touch-action: pan-y; -webkit-overflow-scrolling: touch; overscroll-behavior-x: none; }
         .home-grid-inner { display: grid; grid-template-columns: repeat(3, var(--circle-d, 100px)); justify-content: center; gap: 6px 2px; }
+        /* Свайп вниз з утриманням на головній — оновлення сторінки, як в Instagram: тягнеш —
+           з'являється й обертається індикатор, відпускаєш після порогу — сторінка перемальовується. */
+        #ptr-indicator { position: absolute; top: calc(76px + env(safe-area-inset-top, 0px)); left: 0; right: 0; display: flex; align-items: center; justify-content: center; height: 30px; pointer-events: none; z-index: 5; opacity: 0; }
+        #ptr-spinner { width: 22px; height: 22px; border-radius: 50%; border: 2.5px solid var(--border-minimal); border-top-color: var(--accent-main); box-sizing: border-box; }
+        #ptr-spinner.spinning { animation: ptr-spin 0.7s linear infinite; }
+        @keyframes ptr-spin { to { transform: rotate(360deg); } }
         .home-circle-item { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
         /* Шаховий (honeycomb) порядок — середня колонка кожного ряду піднята вище за бокові,
            завдяки чому візуально є більше "повітря" і кола можна зробити трохи більшими
@@ -1982,6 +1988,17 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, push, onChildAdded, onValue, set, off, get, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        // Нейтральна заглушка-аватар (сірий силует), поки людина ще не додала власне фото.
+        // Раніше тут стояло стокове фото конкретної випадкової людини (xsgames.co) — це виглядало
+        // так, ніби на сторінці "чуже" фото, хоча насправді це просто заглушка за відсутності фото.
+        const DEFAULT_AVATAR = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">' +
+            '<rect width="100" height="100" fill="#c7c7cc"/>' +
+            '<circle cx="50" cy="40" r="18" fill="#ffffff" opacity="0.9"/>' +
+            '<path d="M50 62c-22 0-34 12-34 26v12h68V88c0-14-12-26-34-26z" fill="#ffffff" opacity="0.9"/>' +
+            '</svg>'
+        );
 
         const firebaseConfig = {
             apiKey: "AIzaSyBELuWP-2ElBYWH5R_jb-hmfnYk02a_JfY",
@@ -3094,7 +3111,7 @@
             track.innerHTML = ''; dotsBox.innerHTML = '';
             track.style.transition = 'none';
             track.style.transform = 'translate3d(0, 0, 0)';
-            const list = (photos && photos.length) ? photos : ["https://xsgames.co/randomusers/assets/avatars/male/11.jpg"];
+            const list = (photos && photos.length) ? photos : [DEFAULT_AVATAR];
             list.forEach(src => {
                 const slide = document.createElement('div'); slide.className = 'hero-slide';
                 if (isHeroVideoUrl(src)) {
@@ -3865,7 +3882,7 @@
         }
 
         function getMyProfileItem() {
-            const photos = (myProfile.photos && myProfile.photos.length) ? myProfile.photos : ["https://xsgames.co/randomusers/assets/avatars/male/11.jpg"];
+            const photos = (myProfile.photos && myProfile.photos.length) ? myProfile.photos : [DEFAULT_AVATAR];
             return { id: myId, type: 'person', name: myProfile.name || myName, coords: myCoords, photos: photos,
                       status: myProfile.status || "Ще не заповнено", about: myProfile.about || "Розкажіть про себе — натисніть ✏️",
                       interests: myProfile.interests || "Додайте свої інтереси", stories: myProfile.stories || [] };
@@ -4411,7 +4428,7 @@
                     avatar.innerText = (c.name || 'Г').trim().charAt(0).toUpperCase();
                 } else {
                     avatar.className = 'dm-avatar';
-                    avatar.style.backgroundImage = `url('${c.photo || "https://xsgames.co/randomusers/assets/avatars/male/11.jpg"}')`;
+                    avatar.style.backgroundImage = `url('${c.photo || DEFAULT_AVATAR}')`;
                 }
                 const textWrap = document.createElement('div'); textWrap.className = 'dm-text-wrap';
                 const nameSpan = document.createElement('span'); nameSpan.className = 'dm-name'; nameSpan.innerText = (c.isGroup ? '👥 ' : '') + (c.name || 'Гість');
@@ -4542,7 +4559,7 @@
                 const photos = p.photos || [];
                 const row = document.createElement('div'); row.className = 'ng-person-row';
                 const avatar = document.createElement('div'); avatar.className = 'dm-avatar';
-                avatar.style.backgroundImage = `url('${photos[0] || "https://xsgames.co/randomusers/assets/avatars/male/11.jpg"}')`;
+                avatar.style.backgroundImage = `url('${photos[0] || DEFAULT_AVATAR}')`;
                 const nameSpan = document.createElement('span'); nameSpan.className = 'ng-person-name'; nameSpan.innerText = p.name || 'Гість';
                 const check = document.createElement('div'); check.className = 'ng-check';
                 row.appendChild(avatar); row.appendChild(nameSpan); row.appendChild(check);
@@ -4585,7 +4602,7 @@
                 const row = document.createElement('div'); row.className = 'ng-person-row';
                 const avatar = document.createElement('div');
                 if (c.isGroup) { avatar.className = 'dm-avatar dm-avatar-group'; avatar.innerText = (c.name || 'Г').trim().charAt(0).toUpperCase(); }
-                else { avatar.className = 'dm-avatar'; avatar.style.backgroundImage = `url('${c.photo || "https://xsgames.co/randomusers/assets/avatars/male/11.jpg"}')`; }
+                else { avatar.className = 'dm-avatar'; avatar.style.backgroundImage = `url('${c.photo || DEFAULT_AVATAR}')`; }
                 const nameSpan = document.createElement('span'); nameSpan.className = 'ng-person-name'; nameSpan.innerText = c.name || 'Гість';
                 const check = document.createElement('div'); check.className = 'ng-check';
                 row.appendChild(avatar); row.appendChild(nameSpan); row.appendChild(check);
@@ -4620,7 +4637,7 @@
         // Власна мітка одразу на карті (локально), не чекаючи, поки профіль уперше збережеться у Firebase —
         // інакше на новому пристрої/сесії просто немає власної іконки, на якій можна затиснути палець для маршруту.
         (function ensureMyMarkerLocally() {
-            const initialPhotos = (myProfile.photos && myProfile.photos.length) ? myProfile.photos : ["https://xsgames.co/randomusers/assets/avatars/male/11.jpg"];
+            const initialPhotos = (myProfile.photos && myProfile.photos.length) ? myProfile.photos : [DEFAULT_AVATAR];
             const customIcon = L.divIcon({
                 className: 'custom-avatar-marker',
                 html: `<div class="avatar-ring"><div class="avatar-ring-inner" style="background-image: url('${initialPhotos[0]}')"></div></div>`,
@@ -4870,7 +4887,7 @@
             if (!ids.length) { list.innerHTML = '<p class="admin-empty">Акаунтів поки немає</p>'; return; }
             ids.forEach(id => {
                 const p = firebaseProfilesCache[id] || {};
-                const photo = (p.photos && p.photos[0]) || 'https://xsgames.co/randomusers/assets/avatars/male/11.jpg';
+                const photo = (p.photos && p.photos[0]) || DEFAULT_AVATAR;
                 const row = document.createElement('div'); row.className = 'admin-row';
                 const isYou = id === myId;
                 row.innerHTML = `
@@ -5041,7 +5058,7 @@
             Object.keys(data).forEach(id => {
                 const p = data[id];
                 if (!p || !p.coords) return;
-                const photos = (p.photos && p.photos.length) ? p.photos : ["https://xsgames.co/randomusers/assets/avatars/male/11.jpg"];
+                const photos = (p.photos && p.photos.length) ? p.photos : [DEFAULT_AVATAR];
                 const personObj = { id: id, type: 'person', name: p.name || 'Гість', coords: p.coords, photos: photos, status: p.status || '', about: p.about || '', interests: p.interests || '', stories: p.stories || [] };
 
                 if (profileMarkers[id]) { layerGroups.friends.removeLayer(profileMarkers[id]); }
@@ -5171,7 +5188,7 @@
                 if (!p) return;
                 entries.push({
                     id, type: 'person', name: p.name || 'Гість', status: p.status || '',
-                    photos: (p.photos && p.photos.length) ? p.photos : ["https://xsgames.co/randomusers/assets/avatars/male/11.jpg"],
+                    photos: (p.photos && p.photos.length) ? p.photos : [DEFAULT_AVATAR],
                     video: p.video, about: p.about || '', interests: p.interests || ''
                 });
             });
@@ -5382,6 +5399,79 @@
         layoutHomeGrid();
         setTimeout(layoutHomeGrid, 150);
 
+        // ---- Свайп вниз з утриманням на головній — оновлення сторінки (pull-to-refresh), як в Instagram ----
+        (function setupPullToRefresh() {
+            const grid = document.getElementById('home-grid');
+            const inner = document.getElementById('home-grid-inner');
+            if (!grid || !inner) return;
+            const indicator = document.createElement('div');
+            indicator.id = 'ptr-indicator';
+            indicator.innerHTML = '<div id="ptr-spinner"></div>';
+            grid.insertBefore(indicator, inner);
+            const spinner = indicator.querySelector('#ptr-spinner');
+
+            const PTR_THRESHOLD = 64; // скільки треба протягнути, щоб відпускання спричинило оновлення
+            const PTR_MAX = 110;      // стеля тягнення — далі йде "пружний" опір, як в Instagram
+            let startY = 0, tracking = false, pulling = false, refreshing = false, pullDist = 0;
+
+            function applyPull(dist) {
+                pullDist = dist;
+                inner.style.transform = `translateY(${dist}px)`;
+                indicator.style.opacity = Math.min(1, dist / PTR_THRESHOLD);
+                indicator.style.transform = `translateY(${dist * 0.6}px)`;
+                spinner.style.transform = `rotate(${dist * 3}deg)`;
+            }
+            function resetPull() {
+                pulling = false; pullDist = 0;
+                inner.style.transition = 'transform 0.25s ease';
+                indicator.style.transition = 'opacity 0.2s ease, transform 0.25s ease';
+                inner.style.transform = 'translateY(0)';
+                indicator.style.opacity = '0';
+                indicator.style.transform = 'translateY(0)';
+                setTimeout(() => { inner.style.transition = ''; indicator.style.transition = ''; }, 260);
+            }
+            function doRefresh() {
+                refreshing = true;
+                inner.style.transition = 'transform 0.2s ease';
+                indicator.style.transition = 'opacity 0.2s ease';
+                inner.style.transform = `translateY(${PTR_THRESHOLD}px)`;
+                indicator.style.opacity = '1';
+                spinner.classList.add('spinning');
+                setTimeout(() => {
+                    const searchInput = document.getElementById('people-search-input');
+                    renderHomeGrid(searchInput ? searchInput.value : '');
+                    layoutHomeGrid();
+                    setTimeout(() => { spinner.classList.remove('spinning'); refreshing = false; resetPull(); }, 350);
+                }, 350);
+            }
+
+            grid.addEventListener('touchstart', (e) => {
+                if (refreshing) { tracking = false; return; }
+                tracking = grid.scrollTop <= 0;
+                startY = e.touches[0].clientY;
+                pulling = false;
+            }, { passive: true });
+
+            grid.addEventListener('touchmove', (e) => {
+                if (!tracking || refreshing) return;
+                if (grid.scrollTop > 0) { tracking = false; if (pulling) resetPull(); return; }
+                const dy = e.touches[0].clientY - startY;
+                if (dy <= 0) { if (pulling) resetPull(); return; }
+                pulling = true;
+                e.preventDefault();
+                // Пружний опір: що глибше тягнеш, то повільніше рухається — як в Instagram
+                const dist = Math.min(PTR_MAX, dy / 1.8);
+                applyPull(dist);
+            }, { passive: false });
+
+            grid.addEventListener('touchend', () => {
+                if (!tracking) return;
+                tracking = false;
+                if (!pulling) return;
+                if (pullDist >= PTR_THRESHOLD) doRefresh(); else resetPull();
+            }, { passive: true });
+        })();
+
         document.getElementById('people-search-input').addEventListener('input', (e) => { if (homeSearchMode === 'people') renderHomeGrid(e.target.value); });
 
         // ---- Єдина кнопка-фільтр на Головній (замість трьох окремих іконок) з випадним меню ----
@@ -5590,7 +5680,7 @@
             const storyUrls = (item.stories && item.stories.length)
                 ? [...item.stories].sort((a, b) => (b.ts || 0) - (a.ts || 0)).map(s => s.url)
                 : [];
-            const basePhotos = (item.photos && item.photos.length) ? item.photos : ["https://xsgames.co/randomusers/assets/avatars/male/11.jpg"];
+            const basePhotos = (item.photos && item.photos.length) ? item.photos : [DEFAULT_AVATAR];
             const seen = new Set();
             const photos = [...storyUrls, ...basePhotos].filter(u => { if (seen.has(u)) return false; seen.add(u); return true; });
 
