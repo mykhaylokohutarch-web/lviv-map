@@ -2168,7 +2168,11 @@
             rotate: true,        // вмикає підтримку обертання карти (плагін leaflet-rotate)
             touchRotate: true,   // обертання двома пальцями (жест pinch-rotate)
             rotateControl: false, // власну мінімалістичну кнопку "північ" зробимо самі, вбудовану ховаємо
-            bearing: 0
+            bearing: 0,
+            markerZoomAnimation: false, // мітки не перераховують позицію під час анімації зуму — сам зум відчувається різкіше й швидше
+            maxBounds: L.latLngBounds([49.72, 23.86], [49.96, 24.21]), // не дає відлетіти далеко за межі Львова — там однаково нема прогрітих тайлів і сенсу
+            maxBoundsViscosity: 0.75, // м'який "відскок" на межі, а не жорстка стіна
+            minZoom: 11
         }).setView([49.842074, 24.032137], 17);
 
         // ---- Компас: маленька стрілка вгорі показує поточний поворот карти, тап скидає на північ ----
@@ -2201,6 +2205,7 @@
                     maxClusterRadius: 60,
                     spiderfyOnMaxZoom: true,
                     showCoverageOnHover: false,
+                    chunkedLoading: true, // додає мітки пачками через requestAnimationFrame, не блокуючи головний потік при великій кількості міток
                     iconCreateFunction: function (cluster) {
                         const count = cluster.getChildCount();
                         const size = count < 10 ? 34 : (count < 30 ? 40 : 46);
