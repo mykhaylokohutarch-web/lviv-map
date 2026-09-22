@@ -1224,19 +1224,23 @@
            опиняється точно по центру між боковими колами сусідніх рядків. */
         .home-circle-item:nth-child(3n+2) { transform: translateY(calc((var(--circle-d, 100px) + 27px) / -2)); }
         .home-circle-item:active .home-circle-avatar { transform: scale(0.93); }
-        /* Хмаринка як у месенджері — з великим хвостиком, піднята до верхнього краю кола,
-           вужча і вища (справжня діалогова бульбашка), один рядок тексту без анімації.
-           Менш прозора — ближче до щільних бабблів Instagram DM. */
+        /* Хмаринка як у месенджері — з хвостиком, піднята до верхнього краю кола, ніби аватарка
+           щось "каже". З'являється й зникає періодично (клас .visible), а не висить постійно —
+           плавний фейд+спливання, як спливаюче повідомлення. Текст завжди готова ціла фраза
+           (див. shortVibeText/HOME_VIBE_PHRASES в JS), тож обрізаних на півслові уривків нема. */
         .home-circle-msg {
-            position: absolute; top: -6px; left: 34%; z-index: 3;
-            max-width: 58%;
+            position: absolute; top: -8px; left: 34%; z-index: 3;
+            max-width: 132px;
             background: var(--msg-solid-bg); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
             color: var(--text-color); font-size: 10.5px; font-weight: 700; line-height: 1.3;
             padding: 8px 10px; border-radius: 15px; border-bottom-left-radius: 4px;
             box-shadow: 0 3px 10px rgba(0,0,0,0.24);
             white-space: nowrap; overflow: hidden; text-overflow: clip;
-            opacity: 0.86;
+            opacity: 0; transform: translateY(4px) scale(0.88); transform-origin: bottom left;
+            pointer-events: none;
+            transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
+        .home-circle-msg.visible { opacity: 1; transform: translateY(0) scale(1); }
         .home-circle-msg::after {
             content: ""; position: absolute; left: -1px; bottom: -1px; width: 15px; height: 15px;
             background: var(--msg-solid-bg);
@@ -1291,17 +1295,14 @@
         /* Тимчасова мітка на карті — з'являється, коли натискають на "мітку" біля кола закладу на Головній */
         .place-focus-marker { width: 34px; height: 34px; border-radius: 50%; background: var(--ultramarine-gradient); border: 2px solid #fff; box-shadow: 0 3px 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
         .place-focus-marker svg { width: 58%; height: 58%; stroke: #fff; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-        /* Підпис під колом тепер один рядок, що чергується: ім'я ↔ коротка фраза (замість
-           окремого статичного імені) — білий текст, з плавною анімацією зміни (фейд+зсув).
-           Фрази підбираються короткими, щоб ніколи не різались у "…". */
+        /* Підпис під колом — завжди ім'я (статичне, більше не підмінюється фразою). "Вайб"
+           людини/закладу тепер живе окремо, як хмарка діалогу над аватаркою (.home-circle-msg). */
         .home-circle-name {
             display: inline-block; font-size: 12px; line-height: 15px; height: 15px; font-weight: 600;
             color: #ffffff; text-shadow: 0 1px 3px rgba(0,0,0,0.35);
             text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
             max-width: var(--circle-d, 100px);
-            transition: opacity 0.35s ease, transform 0.35s ease;
         }
-        .home-circle-name.name-swap { opacity: 0; transform: translateY(5px); }
 
 
         /* ---- Сторінка профілю: мінімалізм застосунку, свідомо не інстаграм-паттерн ----
@@ -5215,21 +5216,19 @@
             return (lastSpace > 4 ? cut.slice(0, lastSpace) : cut).trim();
         }
 
-        // Короткий "вайб"-рядок під іменем на Головній: перша фраза — уривок зі статусу людини/закладу,
-        // друга — одна із загальних коротких фраз, стабільно обрана за id (щоб не мінялась щоразу).
+        // Текст для хмарки діалогу над аватаркою на Головній: перше речення статусу людини/закладу —
+        // і ЛИШЕ якщо воно вже саме по собі достатньо коротке. Раніше задовгу фразу обрізали по межі
+        // слова, і в бульбашці лишався урваний на півдумці уривок ("Шукаю цікаву…"); тепер такий
+        // випадок узагалі не обрізаємо — просто не використовуємо його, а в такому разі викликач бере
+        // одну з готових ЦІЛИХ фраз (HOME_VIBE_PHRASES), тож у бульбашці завжди повне речення.
         function shortVibeText(status) {
             if (!status) return '';
-            let t = String(status).split(/[.!?]|—|·/)[0].trim();
-            if (t.length <= 16) return t;
-            // Не обрізаємо крапками "…" (щоб підпис завжди виглядав завершеним) — якщо перша фраза
-            // задовга, пробуємо вкоротити по межі слова; якщо й так не влазить — краще взяти
-            // одну із запасних коротких фраз (HOME_VIBE_PHRASES), ніж показувати обрізаний текст.
-            const cut = t.slice(0, 16);
-            const lastSpace = cut.lastIndexOf(' ');
-            if (lastSpace > 6) return cut.slice(0, lastSpace).trim();
-            return '';
+            const t = String(status).split(/[.!?]|—|·/)[0].trim();
+            return (t && t.length <= 18) ? t : '';
         }
-        const HOME_VIBE_PHRASES = ['Онлайн зараз', 'На звʼязку', 'Поруч', 'Новий тут', 'У мережі', 'Активний зараз']; // запасна фраза, коли в статусі порожньо
+        // Запасні фрази, коли в статусі порожньо або перше речення задовге для бульбашки —
+        // усі свідомо короткі й самодостатні, щоб ніколи не виглядали урваними.
+        const HOME_VIBE_PHRASES = ['Онлайн зараз', 'На звʼязку', 'Поруч', 'Новий тут', 'У мережі', 'Активний зараз', 'Радий знайомству', 'Вільний вечір', 'Шукаю компанію', 'Тут проїздом'];
 
         // Розраховує розмір кола так, щоб рівно 3 кола вміщались у ширину — максимально великі,
         // наскільки дозволяє ширина екрана. Кількість колонок і порядок кіл лишаються незмінними,
@@ -5427,27 +5426,26 @@
                 if (e.isMe) {
                     nameSpan.innerText = 'Ви';
                 } else {
-                    // Підпис чергує ім'я й коротку фразу зі статусу — обидва варіанти свідомо
-                    // короткі (truncateCircleName/shortVibeText), тож "…" не з'являється ніколи.
-                    const displayName = truncateCircleName(e.name);
+                    // Ім'я під колом тепер завжди на місці й нікуди не зникає.
+                    nameSpan.innerText = truncateCircleName(e.name);
+                    // "Вайб" людини/закладу — не підпис, а справжня хмарка діалогу над аватаркою:
+                    // періодично зʼявляється й ховається, ніби аватарка щось каже. Фраза завжди ціла
+                    // (shortVibeText/HOME_VIBE_PHRASES — жодних обрізаних на півслові уривків).
                     const vibe = shortVibeText(e.status) || HOME_VIBE_PHRASES[pseudoStat(e.id, 'vibe', 0, HOME_VIBE_PHRASES.length - 1)];
-                    const phrases = [displayName, vibe];
-                    nameSpan.innerText = phrases[0];
-                    let nIdx = 0;
-                    const tick = () => {
-                        nameSpan.classList.add('name-swap');
+                    const bubble = document.createElement('div'); bubble.className = 'home-circle-msg'; bubble.innerText = vibe;
+                    avatar.appendChild(bubble);
+                    const showBubble = () => {
+                        bubble.classList.add('visible');
                         const t1 = setTimeout(() => {
-                            nIdx = (nIdx + 1) % phrases.length;
-                            nameSpan.innerText = phrases[nIdx];
-                            nameSpan.classList.remove('name-swap');
-                            const t2 = setTimeout(tick, 3200);
+                            bubble.classList.remove('visible');
+                            const t2 = setTimeout(showBubble, 4200 + pseudoStat(e.id, 'vibe-gap', 0, 1600));
                             homeCircleTimers.add(t2);
-                        }, 380);
+                        }, 2600);
                         homeCircleTimers.add(t1);
                     };
-                    // Стагерований старт за id — щоб підписи різних кіл не мигтіли всі одночасно.
+                    // Стагерований старт за id — щоб бульбашки різних кіл не спливали всі одночасно.
                     const startDelay = 2200 + pseudoStat(e.id, 'vibe-delay', 0, 1800);
-                    const startT = setTimeout(tick, startDelay);
+                    const startT = setTimeout(showBubble, startDelay);
                     homeCircleTimers.add(startT);
                 }
                 box.appendChild(item);
