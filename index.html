@@ -633,14 +633,21 @@
         #profile-sidebar.chat-mode.active { transform: translate3d(0, 0, 0); }
         #profile-sidebar.chat-mode #chat-container { padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
         .profile-hero { position: absolute; inset: 0; width: 100%; height: 100%; background-color: #1c1c1e; touch-action: none; overflow: hidden; }
-        .hero-track { display: flex; width: 100%; height: 100%; will-change: transform; }
+        /* Фото профілю тепер круглі, за тим самим принципом, що й кружечки на Головній —
+           не на весь екран, а велике коло вгорі, з тим самим градієнтним кільцем-рамкою. */
+        .hero-circle-wrap {
+            position: absolute; top: calc(78px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%);
+            width: min(62vw, 260px); height: min(62vw, 260px); border-radius: 50%; overflow: hidden;
+            background: var(--ultramarine-gradient); padding: 3px; box-sizing: border-box;
+            box-shadow: 0 10px 28px rgba(0,0,0,0.35); touch-action: none;
+        }
+        .hero-track { display: flex; width: 100%; height: 100%; border-radius: 50%; overflow: hidden; will-change: transform; }
         .hero-slide { flex: 0 0 100%; width: 100%; height: 100%; background-size: cover; background-position: center; background-color: #1c1c1e; opacity: 0; transition: opacity 0.25s ease; }
         .hero-slide.loaded { opacity: 1; }
         .hero-slide video { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
-        .hero-bottom-fade { position: absolute; left: 0; right: 0; bottom: 0; height: 46%; pointer-events: none; background: linear-gradient(to top, rgba(0,0,0,0.45), rgba(0,0,0,0)); z-index: 4; }
-        .hero-dots { position: absolute; top: 14px; left: 50%; transform: translate3d(-50%, 0, 0); display: flex; gap: 5px; z-index: 8; }
-        .hero-dots .dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.4); transition: background 0.3s ease; }
-        .hero-dots .dot.active { background: #ffffff; }
+        .hero-dots { position: absolute; top: calc(78px + min(62vw, 260px) + env(safe-area-inset-top, 0px) + 12px); left: 50%; transform: translate3d(-50%, 0, 0); display: flex; gap: 5px; z-index: 8; }
+        .hero-dots .dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.3); transition: background 0.3s ease; }
+        .hero-dots .dot.active { background: var(--accent-main); }
 
         /* ---- Напівпрозора інформаційна панель поверх фото (Apple-style glass) ---- */
         .hero-info-panel {
@@ -1427,8 +1434,9 @@
     <!-- Картка профілю/чату — глобальний оверлей, працює поверх будь-якого екрана (карта, список людей, IG-сторінка) -->
     <div id="profile-sidebar">
         <div class="profile-hero" id="prof-hero">
-            <div class="hero-track" id="hero-track"></div>
-            <div class="hero-bottom-fade"></div>
+            <div class="hero-circle-wrap" id="hero-circle-wrap">
+                <div class="hero-track" id="hero-track"></div>
+            </div>
             <div class="hero-dots" id="hero-dots"></div>
             <div class="prof-tools-col">
                 <button id="prof-edit-btn" aria-label="Редагувати"><svg viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg></button>
@@ -2168,11 +2176,7 @@
             rotate: true,        // вмикає підтримку обертання карти (плагін leaflet-rotate)
             touchRotate: true,   // обертання двома пальцями (жест pinch-rotate)
             rotateControl: false, // власну мінімалістичну кнопку "північ" зробимо самі, вбудовану ховаємо
-            bearing: 0,
-            markerZoomAnimation: false, // мітки не перераховують позицію під час анімації зуму — сам зум відчувається різкіше й швидше
-            maxBounds: L.latLngBounds([49.72, 23.86], [49.96, 24.21]), // не дає відлетіти далеко за межі Львова — там однаково нема прогрітих тайлів і сенсу
-            maxBoundsViscosity: 0.75, // м'який "відскок" на межі, а не жорстка стіна
-            minZoom: 11
+            bearing: 0
         }).setView([49.842074, 24.032137], 17);
 
         // ---- Компас: маленька стрілка вгорі показує поточний поворот карти, тап скидає на північ ----
@@ -2205,7 +2209,6 @@
                     maxClusterRadius: 60,
                     spiderfyOnMaxZoom: true,
                     showCoverageOnHover: false,
-                    chunkedLoading: true, // додає мітки пачками через requestAnimationFrame, не блокуючи головний потік при великій кількості міток
                     iconCreateFunction: function (cluster) {
                         const count = cluster.getChildCount();
                         const size = count < 10 ? 34 : (count < 30 ? 40 : 46);
@@ -3157,11 +3160,14 @@
                 } else {
                     // Фото підвантажується заздалегідь: показуємо його лише коли воно вже готове —
                     // так замість різкого чорного фону буде плавна поява (без "спалаху" чорного).
+                    // Фото тепер показується в невеликому колі (не на весь екран), тож тягнемо
+                    // одразу зменшену версію — швидше і без зайвих мегабайтів.
+                    const thumb = thumbUrl(src, 320);
                     const preload = new Image();
-                    preload.onload = () => { slide.style.backgroundImage = `url('${src}')`; slide.classList.add('loaded'); };
+                    preload.onload = () => { slide.style.backgroundImage = `url('${thumb}')`; slide.classList.add('loaded'); };
                     preload.onerror = () => { slide.classList.add('loaded'); };
-                    preload.src = src;
-                    if (preload.complete) { slide.style.backgroundImage = `url('${src}')`; slide.classList.add('loaded'); }
+                    preload.src = thumb;
+                    if (preload.complete) { slide.style.backgroundImage = `url('${thumb}')`; slide.classList.add('loaded'); }
                 }
                 track.appendChild(slide);
             });
@@ -3318,7 +3324,7 @@
                 heroLock = Math.abs(heroDx) > Math.abs(heroDy) ? 'x' : 'y';
             }
             if (heroLock === 'x') {
-                const base = -heroPhotoIndex * heroEl.clientWidth;
+                const base = -heroPhotoIndex * document.getElementById('hero-circle-wrap').clientWidth;
                 heroTrackEl.style.transform = `translate3d(${base + heroDx}px, 0, 0)`;
             } else {
                 document.getElementById('profile-sidebar').style.transform = `translate3d(-50%, calc(-50% + ${heroDy}px), 0)`;
