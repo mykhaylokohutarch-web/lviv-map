@@ -1291,16 +1291,17 @@
         /* Тимчасова мітка на карті — з'являється, коли натискають на "мітку" біля кола закладу на Головній */
         .place-focus-marker { width: 34px; height: 34px; border-radius: 50%; background: var(--ultramarine-gradient); border: 2px solid #fff; box-shadow: 0 3px 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
         .place-focus-marker svg { width: 58%; height: 58%; stroke: #fff; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-        .home-circle-name { font-size: 12px; line-height: 15px; height: 15px; font-weight: 600; color: var(--text-color); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: var(--circle-d, 100px); }
-        /* Короткий "вайб"-рядок під іменем — лише в частини кіл (не всюди, щоб не було занадто
-           строкато), і чергується між 2 короткими фразами з плавним фейдом-зсувом. */
-        .home-circle-vibe {
-            display: inline-block; font-size: 10.5px; line-height: 13px; height: 13px; font-weight: 600;
-            color: var(--accent-main); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-            max-width: var(--circle-d, 100px); margin-top: -3px;
+        /* Підпис під колом тепер один рядок, що чергується: ім'я ↔ коротка фраза (замість
+           окремого статичного імені) — білий текст, з плавною анімацією зміни (фейд+зсув).
+           Фрази підбираються короткими, щоб ніколи не різались у "…". */
+        .home-circle-name {
+            display: inline-block; font-size: 12px; line-height: 15px; height: 15px; font-weight: 600;
+            color: #ffffff; text-shadow: 0 1px 3px rgba(0,0,0,0.35);
+            text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            max-width: var(--circle-d, 100px);
             transition: opacity 0.35s ease, transform 0.35s ease;
         }
-        .home-circle-vibe.vibe-swap { opacity: 0; transform: translateY(5px); }
+        .home-circle-name.name-swap { opacity: 0; transform: translateY(5px); }
 
 
         /* ---- Сторінка профілю: мінімалізм застосунку, свідомо не інстаграм-паттерн ----
@@ -5203,11 +5204,15 @@
             return '@' + (cleaned.replace(/\s+/g, '.') || 'user');
         }
 
-        // Підпис під колом на Головній — не більше 16 символів (довші імена/назви обрізаються з "…").
+        // Підпис під колом на Головній — не більше 16 символів. Раніше довші імена обрізались
+        // з "…", тепер натомість акуратно вкорочуються по межі слова, без трьох крапок.
         function truncateCircleName(name, maxLen) {
             maxLen = maxLen || 16;
             const s = String(name || '');
-            return s.length > maxLen ? s.slice(0, maxLen - 1).trimEnd() + '…' : s;
+            if (s.length <= maxLen) return s;
+            const cut = s.slice(0, maxLen);
+            const lastSpace = cut.lastIndexOf(' ');
+            return (lastSpace > 4 ? cut.slice(0, lastSpace) : cut).trim();
         }
 
         // Короткий "вайб"-рядок під іменем на Головній: перша фраза — уривок зі статусу людини/закладу,
@@ -5215,10 +5220,16 @@
         function shortVibeText(status) {
             if (!status) return '';
             let t = String(status).split(/[.!?]|—|·/)[0].trim();
-            if (t.length > 20) t = t.slice(0, 18).trim() + '…';
-            return t;
+            if (t.length <= 16) return t;
+            // Не обрізаємо крапками "…" (щоб підпис завжди виглядав завершеним) — якщо перша фраза
+            // задовга, пробуємо вкоротити по межі слова; якщо й так не влазить — краще взяти
+            // одну із запасних коротких фраз (HOME_VIBE_PHRASES), ніж показувати обрізаний текст.
+            const cut = t.slice(0, 16);
+            const lastSpace = cut.lastIndexOf(' ');
+            if (lastSpace > 6) return cut.slice(0, lastSpace).trim();
+            return '';
         }
-        const HOME_VIBE_PHRASES = ['Онлайн зараз', 'На звʼязку', 'Поруч', 'Новий тут', 'У мережі', 'Активний зараз'];
+        const HOME_VIBE_PHRASES = ['Онлайн зараз', 'На звʼязку', 'Поруч', 'Новий тут', 'У мережі', 'Активний зараз']; // запасна фраза, коли в статусі порожньо
 
         // Розраховує розмір кола так, щоб рівно 3 кола вміщались у ширину — максимально великі,
         // наскільки дозволяє ширина екрана. Кількість колонок і порядок кіл лишаються незмінними,
@@ -5407,40 +5418,37 @@
                     addBadge.addEventListener('click', (ev) => { ev.stopPropagation(); openAddStoryChooser(); });
                     avatar.appendChild(addBadge);
                 }
-                const nameSpan = document.createElement('span'); nameSpan.className = 'home-circle-name'; nameSpan.innerText = e.isMe ? 'Ви' : truncateCircleName(e.name);
+                const nameSpan = document.createElement('span'); nameSpan.className = 'home-circle-name';
                 nameSpan.addEventListener('click', (ev) => {
                     ev.stopPropagation();
                     if (e.type === 'place') { showSidebar(e); } else { openIgProfile(e, false); }
                 });
                 item.appendChild(avatar); item.appendChild(nameSpan);
-                // Лише частина кіл отримує "вайб"-рядок (e.showMsg — стабільний, не випадковий щоразу
-                // жереб ~40% за id), щоб сітка не була занадто строкатою суцільним текстом.
-                if (e.showMsg && !e.isMe) {
-                    const primary = shortVibeText(e.status);
-                    const secondary = HOME_VIBE_PHRASES[pseudoStat(e.id, 'vibe', 0, HOME_VIBE_PHRASES.length - 1)];
-                    const phrases = primary ? [primary, secondary] : [secondary];
-                    const vibeSpan = document.createElement('span'); vibeSpan.className = 'home-circle-vibe';
-                    vibeSpan.innerText = phrases[0];
-                    item.appendChild(vibeSpan);
-                    if (phrases.length > 1) {
-                        let vIdx = 0;
-                        const tick = () => {
-                            vibeSpan.classList.add('vibe-swap');
-                            const t1 = setTimeout(() => {
-                                vIdx = (vIdx + 1) % phrases.length;
-                                vibeSpan.innerText = phrases[vIdx];
-                                vibeSpan.classList.remove('vibe-swap');
-                                const t2 = setTimeout(tick, 3200);
-                                homeCircleTimers.add(t2);
-                            }, 380);
-                            homeCircleTimers.add(t1);
-                        };
-                        // Стагерований старт за id (не випадковий щоразу) — щоб рядки різних кіл
-                        // не мигтіли всі одночасно, а виглядало живіше.
-                        const startDelay = 2200 + pseudoStat(e.id, 'vibe-delay', 0, 1800);
-                        const startT = setTimeout(tick, startDelay);
-                        homeCircleTimers.add(startT);
-                    }
+                if (e.isMe) {
+                    nameSpan.innerText = 'Ви';
+                } else {
+                    // Підпис чергує ім'я й коротку фразу зі статусу — обидва варіанти свідомо
+                    // короткі (truncateCircleName/shortVibeText), тож "…" не з'являється ніколи.
+                    const displayName = truncateCircleName(e.name);
+                    const vibe = shortVibeText(e.status) || HOME_VIBE_PHRASES[pseudoStat(e.id, 'vibe', 0, HOME_VIBE_PHRASES.length - 1)];
+                    const phrases = [displayName, vibe];
+                    nameSpan.innerText = phrases[0];
+                    let nIdx = 0;
+                    const tick = () => {
+                        nameSpan.classList.add('name-swap');
+                        const t1 = setTimeout(() => {
+                            nIdx = (nIdx + 1) % phrases.length;
+                            nameSpan.innerText = phrases[nIdx];
+                            nameSpan.classList.remove('name-swap');
+                            const t2 = setTimeout(tick, 3200);
+                            homeCircleTimers.add(t2);
+                        }, 380);
+                        homeCircleTimers.add(t1);
+                    };
+                    // Стагерований старт за id — щоб підписи різних кіл не мигтіли всі одночасно.
+                    const startDelay = 2200 + pseudoStat(e.id, 'vibe-delay', 0, 1800);
+                    const startT = setTimeout(tick, startDelay);
+                    homeCircleTimers.add(startT);
                 }
                 box.appendChild(item);
             });
