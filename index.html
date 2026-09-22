@@ -5379,15 +5379,18 @@
                         ? e.stories.filter(s => s.type === 'photo').map(s => s.url)
                         : [];
                     storyPhotoList = myPhotoStories.length ? myPhotoStories : [myAvatarUrl];
-                    startHomeCircleStory(mediaWrap, storyPhotoList);
                 } else {
                     // Усі кола на Головній — лише фото-кросфейд, навіть якщо в людини є відео-профіль:
                     // справжній <video> тег на автозапуску іноді "застряє" на паузі з іконкою play,
                     // поки браузер не дозволить автовідтворення — фото такої проблеми не має.
                     const circlePhotos = (e.photos && e.photos.length) ? e.photos.filter(u => !isHeroVideoUrl(u)) : [];
                     storyPhotoList = circlePhotos.length ? circlePhotos : (e.photos || []);
-                    startHomeCircleStory(mediaWrap, storyPhotoList);
                 }
+                // Велике коло (сторі) і маленька аватарка мають показувати РІЗНІ фото, а не те саме
+                // перше зображення двічі. Міні-аватарка нижче візьме photos[0], тож для великого
+                // кола, якщо світлин більше однієї, зсуваємо список на одну позицію вперед.
+                const bigCirclePhotoList = storyPhotoList.length > 1 ? storyPhotoList.slice(1) : storyPhotoList;
+                startHomeCircleStory(mediaWrap, bigCirclePhotoList);
                 // Тап по самому колу (фото) — відкриває сторі на весь екран.
                 // Важливо: беремо ПОВНИЙ e.photos (з відео), а не storyPhotoList — той список
                 // спеціально відфільтрований від відео лише для фонового кросфейду в самому колі.
@@ -5433,7 +5436,7 @@
                     // HOME_VIBE_PHRASES — жодних обрізаних на півслові уривків).
                     const vibe = shortVibeText(e.status) || HOME_VIBE_PHRASES[pseudoStat(e.id, 'vibe', 0, HOME_VIBE_PHRASES.length - 1)];
                     const bubble = document.createElement('div'); bubble.className = 'home-circle-msg'; bubble.innerText = vibe;
-                    avatar.appendChild(bubble);
+                    mini.appendChild(bubble);
                 }
                 box.appendChild(item);
             });
