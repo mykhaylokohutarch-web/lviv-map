@@ -54,20 +54,18 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <!-- Прогріваємо з'єднання з тайл-сервером карти заздалегідь (DNS/TLS), щоб перші тайли
-         почали вантажитись одразу, а не з нуля, коли користувач відкриє вкладку Карта. -->
-    <link rel="preconnect" href="https://a.tile.openstreetmap.org" crossorigin>
-    <link rel="preconnect" href="https://b.tile.openstreetmap.org" crossorigin>
-    <link rel="preconnect" href="https://c.tile.openstreetmap.org" crossorigin>
+         почали вантажитись одразу, а не з нуля, коли користувач відкриє вкладку Карта.
+         CARTO Basemaps (basemaps.cartocdn.com) — CDN-тайли OpenStreetMap, швидші за
+         волонтерський tile.openstreetmap.org, з якого перейшли. -->
+    <link rel="preconnect" href="https://a.basemaps.cartocdn.com" crossorigin>
+    <link rel="preconnect" href="https://b.basemaps.cartocdn.com" crossorigin>
+    <link rel="preconnect" href="https://c.basemaps.cartocdn.com" crossorigin>
+    <link rel="preconnect" href="https://d.basemaps.cartocdn.com" crossorigin>
     <link rel="dns-prefetch" href="https://unpkg.com">
-    <!-- Заздалегідь відкриваємо з'єднання до тайлового сервера карти (DNS + TLS-хендшейк наперед) —
-         сама карта після цього починає малюватись помітно швидше, бо перші тайли не чекають
-         на встановлення з'єднання. -->
-    <link rel="preconnect" href="https://a.tile.openstreetmap.org">
-    <link rel="preconnect" href="https://b.tile.openstreetmap.org">
-    <link rel="preconnect" href="https://c.tile.openstreetmap.org">
-    <link rel="dns-prefetch" href="https://a.tile.openstreetmap.org">
-    <link rel="dns-prefetch" href="https://b.tile.openstreetmap.org">
-    <link rel="dns-prefetch" href="https://c.tile.openstreetmap.org">
+    <link rel="dns-prefetch" href="https://a.basemaps.cartocdn.com">
+    <link rel="dns-prefetch" href="https://b.basemaps.cartocdn.com">
+    <link rel="dns-prefetch" href="https://c.basemaps.cartocdn.com">
+    <link rel="dns-prefetch" href="https://d.basemaps.cartocdn.com">
     <link rel="preconnect" href="https://api.cloudinary.com">
     <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Yellowtail&display=swap" rel="stylesheet">
@@ -146,17 +144,9 @@
         /* Той самий трюк для темної теми — тон CARTO Dark Matter, а не чистий чорний,
            щоб не було видно "чорного спалаху" до підвантаження тайлів. */
         body.dark-theme #map { background-color: #17171b; }
-        #map.map-dark-mode .leaflet-tile-pane {
-            filter: invert(1) hue-rotate(180deg) brightness(0.94) contrast(0.92) saturate(0.85);
-        }
 
         /* Прибираємо напис-атрибуцію ("OpenStreetMap...") у кутку карти. */
         .leaflet-control-attribution { display: none !important; }
-
-        /* Світліші дороги та будинки на чорній карті — для кращої читабельності */
-        body.dark-theme .leaflet-tile-pane {
-            filter: brightness(1.55) contrast(1.05) saturate(1.05);
-        }
 
         /* Мітки реальних закладів з OpenStreetMap — маленькі, приглушені, без постійного тексту.
            Стиль — яскравий, з кольором за категорією і підписом назви, помітний на карті,
@@ -2431,6 +2421,18 @@
         // там ще нема — тягне з мережі та заразом зберігає на майбутнє. Якщо IndexedDB чи
         // fetch(CORS) з якоїсь причини недоступні в середовищі — тихо повертається до звичайного
         // прямого завантаження картинкою, як було раніше (карта в будь-якому разі не ламається).
+        // Тайли карти — CARTO (Positron/Dark Matter) замість тайлів tile.openstreetmap.org:
+        // OSM-тайли роздає волонтерська безкоштовна інфраструктура без CDN і з жорсткими лімітами
+        // на навантаження, тому під реальним трафіком вона й відчувається повільною. CARTO Basemaps
+        // роздають ті самі дані OpenStreetMap, але через свій CDN (і безкоштовно, без ключа) — суттєво
+        // швидша віддача тайлів, особливо з різних регіонів. Бонус: у CARTO є ГОТОВИЙ темний стиль
+        // (Dark Matter), тож замість CSS-інверсії кольорів тепер справжні темні тайли для темної теми.
+        const MAP_TILE_LIGHT = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png';
+        const MAP_TILE_DARK = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png';
+        const MAP_TILE_ATTRIBUTION = '© OpenStreetMap contributors © CARTO';
+        function currentMapTileUrl() { return document.body.classList.contains('dark-theme') ? MAP_TILE_DARK : MAP_TILE_LIGHT; }
+        function currentMapStyleTag() { return document.body.classList.contains('dark-theme') ? 'dark' : 'light'; }
+
         const CachedTileLayer = L.TileLayer.extend({
             createTile: function (coords, done) {
                 const tile = document.createElement('img');
@@ -2438,7 +2440,11 @@
                 L.DomEvent.on(tile, 'load', L.Util.bind(this._tileOnLoad, this, done, tile));
                 L.DomEvent.on(tile, 'error', L.Util.bind(this._tileOnError, this, done, tile));
                 const url = this.getTileUrl(coords);
-                const key = `${coords.z}/${coords.x}/${coords.y}`;
+                // Світлий і темний стиль — це різні картинки для тих самих z/x/y, тому в кеш-ключ
+                // додаємо тег стилю (light/dark), інакше перемикання теми показувало б тайли не того
+                // стилю зі старого кешу.
+                const styleTag = this._url.includes('dark_all') ? 'dark' : 'light';
+                const key = `${styleTag}/${coords.z}/${coords.x}/${coords.y}`;
                 const setSrc = (src, revoke) => {
                     tile.src = src;
                     if (revoke) tile.addEventListener('load', () => URL.revokeObjectURL(src), { once: true });
@@ -2453,11 +2459,8 @@
             }
         });
 
-        // Стандартний OpenStreetMap (як на openstreetmap.org) — офіційного темного варіанту в нього
-        // немає, тож темний режим робимо CSS-інверсією кольорів самого шару тайлів (лише карти,
-        // мітки та іконки це не чіпає — вони в іншому шарі Leaflet).
-        const osmTiles = new CachedTileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors', subdomains: 'abc', maxZoom: 19,
+        const osmTiles = new CachedTileLayer(currentMapTileUrl(), {
+            attribution: MAP_TILE_ATTRIBUTION, subdomains: 'abcd', maxZoom: 19,
             keepBuffer: 2,          // менше "зайвих" тайлів у DOM/пам'яті навколо екрана — панорамування легше для пристрою
             updateWhenZooming: false // не довантажує нові тайли посеред анімації зуму, лише по завершенню
         });
@@ -2475,7 +2478,8 @@
         // заважати активному руху картою.
         const tileWarmupCache = new Set();
         function warmupTile(x, y, z) {
-            const key = `${z}/${x}/${y}`;
+            const styleTag = currentMapStyleTag();
+            const key = `${styleTag}/${z}/${x}/${y}`;
             if (tileWarmupCache.has(key)) return;
             tileWarmupCache.add(key);
             // Спершу перевіряємо, чи тайл уже лежить на диску (IndexedDB) — якщо так, прогрівати
@@ -2483,8 +2487,8 @@
             // а не лише в тимчасовий HTTP-кеш браузера, як було раніше.
             idbGetTile(key).then(rec => {
                 if (rec && rec.blob) return;
-                const sub = 'abc'[Math.floor(Math.random() * 3)];
-                const url = `https://${sub}.tile.openstreetmap.org/${z}/${x}/${y}.png`;
+                const sub = 'abcd'[Math.floor(Math.random() * 4)];
+                const url = currentMapTileUrl().replace('{s}', sub).replace('{z}', z).replace('{x}', x).replace('{y}', y);
                 fetch(url, { mode: 'cors' }).then(r => { if (!r.ok) throw 0; return r.blob(); })
                     .then(blob => idbPutTile(key, blob))
                     .catch(() => { const img = new Image(); img.src = url; }); // фолбек — хоч у звичайний HTTP-кеш
@@ -2573,6 +2577,11 @@
         themeBtn.addEventListener('click', () => {
             document.body.classList.toggle('dark-theme');
             map.getContainer().classList.toggle('map-dark-mode', document.body.classList.contains('dark-theme'));
+            // Світлий і темний стиль CARTO — окремі тайли, тож при зміні теми підміняємо URL шару
+            // карти (Leaflet сам перемалює видимі тайли) і одразу прогріваємо поточну ділянку
+            // для нового стилю, щоб не чекати мережу там, де щойно все було швидко.
+            osmTiles.setUrl(currentMapTileUrl());
+            warmupAroundLatLng(map.getCenter().lat, map.getCenter().lng, map.getZoom());
         });
 
         // ==================== Реальні заклади з OpenStreetMap (як у Bump/Apple Maps) ====================
