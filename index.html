@@ -54,18 +54,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <!-- Прогріваємо з'єднання з тайл-сервером карти заздалегідь (DNS/TLS), щоб перші тайли
-         почали вантажитись одразу, а не з нуля, коли користувач відкриє вкладку Карта.
-         CARTO Basemaps (basemaps.cartocdn.com) — CDN-тайли OpenStreetMap, швидші за
-         волонтерський tile.openstreetmap.org, з якого перейшли. -->
-    <link rel="preconnect" href="https://a.basemaps.cartocdn.com" crossorigin>
-    <link rel="preconnect" href="https://b.basemaps.cartocdn.com" crossorigin>
-    <link rel="preconnect" href="https://c.basemaps.cartocdn.com" crossorigin>
-    <link rel="preconnect" href="https://d.basemaps.cartocdn.com" crossorigin>
+         почали вантажитись одразу, а не з нуля, коли користувач відкриє вкладку Карта. -->
+    <link rel="preconnect" href="https://tile.openstreetmap.org" crossorigin>
     <link rel="dns-prefetch" href="https://unpkg.com">
-    <link rel="dns-prefetch" href="https://a.basemaps.cartocdn.com">
-    <link rel="dns-prefetch" href="https://b.basemaps.cartocdn.com">
-    <link rel="dns-prefetch" href="https://c.basemaps.cartocdn.com">
-    <link rel="dns-prefetch" href="https://d.basemaps.cartocdn.com">
     <link rel="preconnect" href="https://api.cloudinary.com">
     <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Yellowtail&display=swap" rel="stylesheet">
@@ -144,9 +135,17 @@
         /* Той самий трюк для темної теми — тон CARTO Dark Matter, а не чистий чорний,
            щоб не було видно "чорного спалаху" до підвантаження тайлів. */
         body.dark-theme #map { background-color: #17171b; }
+        #map.map-dark-mode .leaflet-tile-pane {
+            filter: invert(1) hue-rotate(180deg) brightness(0.94) contrast(0.92) saturate(0.85);
+        }
 
         /* Прибираємо напис-атрибуцію ("OpenStreetMap...") у кутку карти. */
         .leaflet-control-attribution { display: none !important; }
+
+        /* Світліші дороги та будинки на чорній карті — для кращої читабельності */
+        body.dark-theme .leaflet-tile-pane {
+            filter: brightness(1.55) contrast(1.05) saturate(1.05);
+        }
 
         /* Мітки реальних закладів з OpenStreetMap — маленькі, приглушені, без постійного тексту.
            Стиль — яскравий, з кольором за категорією і підписом назви, помітний на карті,
@@ -2177,7 +2176,8 @@
             rotate: true,        // вмикає підтримку обертання карти (плагін leaflet-rotate)
             touchRotate: true,   // обертання двома пальцями (жест pinch-rotate)
             rotateControl: false, // власну мінімалістичну кнопку "північ" зробимо самі, вбудовану ховаємо
-            bearing: 0
+            bearing: 0,
+            fadeAnimation: false // тайли з'являються миттєво, без 200мс вицвітання
         }).setView([49.842074, 24.032137], 17);
 
         // ---- Компас: маленька стрілка вгорі показує поточний поворот карти, тап скидає на північ ----
@@ -2210,6 +2210,10 @@
                     maxClusterRadius: 60,
                     spiderfyOnMaxZoom: true,
                     showCoverageOnHover: false,
+                    chunkedLoading: true,
+                    animate: false,
+                    animateAddingMarkers: false,
+                    removeOutsideVisibleBounds: true,
                     iconCreateFunction: function (cluster) {
                         const count = cluster.getChildCount();
                         const size = count < 10 ? 34 : (count < 30 ? 40 : 46);
@@ -2360,55 +2364,84 @@
         // без мережі взагалі).
         const TILE_DB_NAME = 'mapTileCacheDB';
         const TILE_STORE = 'tiles';
-        const MAX_CACHED_TILES = 4000; // приблизна стеля, щоб не роздувати сховище пристрою безмежно
+        const MAX_CACHED_TILES = 8000;                 // ≈ 100–150 МБ максимум на пристрої
+        const TILE_MAX_AGE_MS = 14 * 24 * 3600 * 1000; // старші за 14 днів — показуємо з кешу й тихо оновлюємо у фоні
         let tileDbPromise = null;
         function openTileDb() {
             if (tileDbPromise) return tileDbPromise;
             tileDbPromise = new Promise((resolve, reject) => {
                 if (!('indexedDB' in window)) { reject(new Error('no indexeddb')); return; }
-                const req = indexedDB.open(TILE_DB_NAME, 1);
-                req.onupgradeneeded = () => { req.result.createObjectStore(TILE_STORE); };
+                const req = indexedDB.open(TILE_DB_NAME, 2);
+                req.onupgradeneeded = () => {
+                    const db = req.result;
+                    const store = db.objectStoreNames.contains(TILE_STORE)
+                        ? req.transaction.objectStore(TILE_STORE)
+                        : db.createObjectStore(TILE_STORE);
+                    // індекс за часом — щоб чистити найстаріші тайли БЕЗ читання самих картинок
+                    if (!store.indexNames.contains('ts')) store.createIndex('ts', 'ts');
+                };
                 req.onsuccess = () => resolve(req.result);
                 req.onerror = () => reject(req.error);
             });
             return tileDbPromise;
         }
+        openTileDb().catch(() => {}); // відкриваємо базу одразу, а не на першому тайлі
+
+        // Кеш в оперативній пам'яті (останні ~300 тайлів): повернення на щойно переглянуте місце — без звернення до диска
+        const tileMem = new Map();
+        const TILE_MEM_MAX = 300;
+        function memGet(key) {
+            const r = tileMem.get(key);
+            if (r) { tileMem.delete(key); tileMem.set(key, r); }
+            return r || null;
+        }
+        function memPut(key, rec) {
+            tileMem.delete(key); tileMem.set(key, rec);
+            if (tileMem.size > TILE_MEM_MAX) tileMem.delete(tileMem.keys().next().value);
+        }
         function idbGetTile(key) {
+            const m = memGet(key);
+            if (m) return Promise.resolve(m);
             return openTileDb().then(db => new Promise((resolve) => {
-                const tx = db.transaction(TILE_STORE, 'readonly');
-                const req = tx.objectStore(TILE_STORE).get(key);
-                req.onsuccess = () => resolve(req.result || null);
+                const req = db.transaction(TILE_STORE, 'readonly').objectStore(TILE_STORE).get(key);
+                req.onsuccess = () => { const r = req.result || null; if (r && r.blob) memPut(key, r); resolve(r); };
                 req.onerror = () => resolve(null);
             })).catch(() => null);
         }
+        // Перевірка "чи є тайл" без читання самої картинки — для прогріву (раніше вантажило blob'и заради перевірки)
+        function idbHasTile(key) {
+            if (tileMem.has(key)) return Promise.resolve(true);
+            return openTileDb().then(db => new Promise((resolve) => {
+                const req = db.transaction(TILE_STORE, 'readonly').objectStore(TILE_STORE).count(key);
+                req.onsuccess = () => resolve(req.result > 0);
+                req.onerror = () => resolve(false);
+            })).catch(() => false);
+        }
         let idbTilePutCount = 0;
         function idbPutTile(key, blob) {
+            const rec = { blob, ts: Date.now() };
+            memPut(key, rec);
             openTileDb().then(db => {
-                const tx = db.transaction(TILE_STORE, 'readwrite');
-                tx.objectStore(TILE_STORE).put({ blob, ts: Date.now() }, key);
+                db.transaction(TILE_STORE, 'readwrite').objectStore(TILE_STORE).put(rec, key);
             }).then(() => {
                 idbTilePutCount++;
                 if (idbTilePutCount % 200 === 0) cleanupTileDb();
             }).catch(() => {});
         }
-        // Раз на кожні ~200 нових тайлів прибираємо найстаріші записи понад стелю MAX_CACHED_TILES,
-        // щоб сховище не росло нескінченно на пристрої користувача.
+        // Прибираємо найстаріші тайли понад стелю. Йдемо курсором по індексу часу лише за ключами —
+        // жодного читання картинок (раніше курсор тягнув у пам'ять усі blob'и).
         function cleanupTileDb() {
             openTileDb().then(db => {
-                const store = db.transaction(TILE_STORE, 'readonly').objectStore(TILE_STORE);
+                const store = db.transaction(TILE_STORE, 'readwrite').objectStore(TILE_STORE);
                 store.count().onsuccess = (e) => {
-                    const total = e.target.result;
-                    if (total <= MAX_CACHED_TILES) return;
-                    const toRemove = total - MAX_CACHED_TILES;
-                    const items = [];
-                    store.openCursor().onsuccess = (ev) => {
+                    let toRemove = e.target.result - MAX_CACHED_TILES;
+                    if (toRemove <= 0) return;
+                    store.index('ts').openKeyCursor().onsuccess = (ev) => {
                         const cursor = ev.target.result;
-                        if (cursor) { items.push({ key: cursor.primaryKey, ts: (cursor.value && cursor.value.ts) || 0 }); cursor.continue(); }
-                        else {
-                            items.sort((a, b) => a.ts - b.ts);
-                            const removeTx = db.transaction(TILE_STORE, 'readwrite').objectStore(TILE_STORE);
-                            items.slice(0, toRemove).forEach(i => removeTx.delete(i.key));
-                        }
+                        if (!cursor || toRemove <= 0) return;
+                        store.delete(cursor.primaryKey);
+                        toRemove--;
+                        cursor.continue();
                     };
                 };
             }).catch(() => {});
@@ -2421,36 +2454,35 @@
         // там ще нема — тягне з мережі та заразом зберігає на майбутнє. Якщо IndexedDB чи
         // fetch(CORS) з якоїсь причини недоступні в середовищі — тихо повертається до звичайного
         // прямого завантаження картинкою, як було раніше (карта в будь-якому разі не ламається).
-        // Тайли карти — CARTO (Positron/Dark Matter) замість тайлів tile.openstreetmap.org:
-        // OSM-тайли роздає волонтерська безкоштовна інфраструктура без CDN і з жорсткими лімітами
-        // на навантаження, тому під реальним трафіком вона й відчувається повільною. CARTO Basemaps
-        // роздають ті самі дані OpenStreetMap, але через свій CDN (і безкоштовно, без ключа) — суттєво
-        // швидша віддача тайлів, особливо з різних регіонів. Бонус: у CARTO є ГОТОВИЙ темний стиль
-        // (Dark Matter), тож замість CSS-інверсії кольорів тепер справжні темні тайли для темної теми.
-        const MAP_TILE_LIGHT = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png';
-        const MAP_TILE_DARK = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png';
-        const MAP_TILE_ATTRIBUTION = '© OpenStreetMap contributors © CARTO';
-        function currentMapTileUrl() { return document.body.classList.contains('dark-theme') ? MAP_TILE_DARK : MAP_TILE_LIGHT; }
-        function currentMapStyleTag() { return document.body.classList.contains('dark-theme') ? 'dark' : 'light'; }
-
+        const TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'; // єдиний HTTP/2-хост (a/b/c-піддомени OSM більше не рекомендує)
+        const tileRefreshing = new Set();
+        function refreshTileInBackground(key, url) {
+            if (tileRefreshing.has(key)) return;
+            tileRefreshing.add(key);
+            fetch(url, { mode: 'cors' }).then(r => { if (!r.ok) throw 0; return r.blob(); })
+                .then(blob => idbPutTile(key, blob)).catch(() => {})
+                .finally(() => tileRefreshing.delete(key));
+        }
         const CachedTileLayer = L.TileLayer.extend({
             createTile: function (coords, done) {
                 const tile = document.createElement('img');
-                tile.alt = ''; tile.setAttribute('role', 'presentation');
+                tile.alt = ''; tile.setAttribute('role', 'presentation'); tile.decoding = 'async';
                 L.DomEvent.on(tile, 'load', L.Util.bind(this._tileOnLoad, this, done, tile));
                 L.DomEvent.on(tile, 'error', L.Util.bind(this._tileOnError, this, done, tile));
                 const url = this.getTileUrl(coords);
-                // Світлий і темний стиль — це різні картинки для тих самих z/x/y, тому в кеш-ключ
-                // додаємо тег стилю (light/dark), інакше перемикання теми показувало б тайли не того
-                // стилю зі старого кешу.
-                const styleTag = this._url.includes('dark_all') ? 'dark' : 'light';
-                const key = `${styleTag}/${coords.z}/${coords.x}/${coords.y}`;
+                const key = `${coords.z}/${coords.x}/${coords.y}`;
                 const setSrc = (src, revoke) => {
                     tile.src = src;
                     if (revoke) tile.addEventListener('load', () => URL.revokeObjectURL(src), { once: true });
                 };
                 idbGetTile(key).then(rec => {
-                    if (rec && rec.blob) { setSrc(URL.createObjectURL(rec.blob), true); return; }
+                    if (rec && rec.blob) {
+                        setSrc(URL.createObjectURL(rec.blob), true);
+                        if (Date.now() - (rec.ts || 0) > TILE_MAX_AGE_MS) refreshTileInBackground(key, url);
+                        return;
+                    }
+                    // Тайл уже прибрано з екрана (швидке панорамування) — не витрачаємо мережу на нього
+                    if (tile.isConnected === false) return;
                     fetch(url, { mode: 'cors' }).then(r => { if (!r.ok) throw 0; return r.blob(); })
                         .then(blob => { setSrc(URL.createObjectURL(blob), true); idbPutTile(key, blob); })
                         .catch(() => { setSrc(url, false); }); // CORS/мережа підвела — звичайне завантаження без кешування
@@ -2459,9 +2491,14 @@
             }
         });
 
-        const osmTiles = new CachedTileLayer(currentMapTileUrl(), {
-            attribution: MAP_TILE_ATTRIBUTION, subdomains: 'abcd', maxZoom: 19,
-            keepBuffer: 2,          // менше "зайвих" тайлів у DOM/пам'яті навколо екрана — панорамування легше для пристрою
+        // Стандартний OpenStreetMap (як на openstreetmap.org) — офіційного темного варіанту в нього
+        // немає, тож темний режим робимо CSS-інверсією кольорів самого шару тайлів (лише карти,
+        // мітки та іконки це не чіпає — вони в іншому шарі Leaflet).
+        const osmTiles = new CachedTileLayer(TILE_URL, {
+            attribution: '© OpenStreetMap contributors', maxZoom: 19,
+            updateWhenIdle: false,  // тайли підвантажуються ПІД ЧАС панорамування, а не після його кінця
+            updateInterval: 100,
+            keepBuffer: 3,          // менше "зайвих" тайлів у DOM/пам'яті навколо екрана — панорамування легше для пристрою
             updateWhenZooming: false // не довантажує нові тайли посеред анімації зуму, лише по завершенню
         });
         osmTiles.addTo(map);
@@ -2477,21 +2514,29 @@
         // лише 2 рівні зуму, і запуск відкладено через requestIdleCallback з дебаунсом, щоб не
         // заважати активному руху картою.
         const tileWarmupCache = new Set();
-        function warmupTile(x, y, z) {
-            const styleTag = currentMapStyleTag();
-            const key = `${styleTag}/${z}/${x}/${y}`;
+        // Черга з лімітом 4 паралельні запити: прогрів ніколи не душить мережу й не заважає видимим тайлам.
+        // Тайли навколо користувача (high) стають у чергу попереду фонового прогріву міста (low).
+        let warmActive = 0;
+        const warmQueue = [];
+        function pumpWarm() {
+            while (warmActive < 4 && warmQueue.length) {
+                const job = warmQueue.shift();
+                warmActive++;
+                job().catch(() => {}).then(() => { warmActive--; pumpWarm(); });
+            }
+        }
+        function warmupTile(x, y, z, low) {
+            const key = `${z}/${x}/${y}`;
             if (tileWarmupCache.has(key)) return;
             tileWarmupCache.add(key);
-            // Спершу перевіряємо, чи тайл уже лежить на диску (IndexedDB) — якщо так, прогрівати
-            // нема чого. Якщо ні — тягнемо і одразу зберігаємо на диск телефону на майбутнє,
-            // а не лише в тимчасовий HTTP-кеш браузера, як було раніше.
-            idbGetTile(key).then(rec => {
-                if (rec && rec.blob) return;
-                const sub = 'abcd'[Math.floor(Math.random() * 4)];
-                const url = currentMapTileUrl().replace('{s}', sub).replace('{z}', z).replace('{x}', x).replace('{y}', y);
-                fetch(url, { mode: 'cors' }).then(r => { if (!r.ok) throw 0; return r.blob(); })
+            idbHasTile(key).then(has => {
+                if (has) return;
+                const url = `https://tile.openstreetmap.org/${z}/${x}/${y}.png`;
+                const job = () => fetch(url, { mode: 'cors' }).then(r => { if (!r.ok) throw 0; return r.blob(); })
                     .then(blob => idbPutTile(key, blob))
                     .catch(() => { const img = new Image(); img.src = url; }); // фолбек — хоч у звичайний HTTP-кеш
+                if (low) warmQueue.push(job); else warmQueue.unshift(job);
+                pumpWarm();
             });
         }
         function warmupAroundLatLng(lat, lon, baseZoom) {
@@ -2555,15 +2600,32 @@
             });
             return queue;
         }
+        const CITY_PREFETCH_KEY = 'cityTilePrefetchDoneV2';
         function prefetchCityTiles() {
+            try {
+                const last = +localStorage.getItem(CITY_PREFETCH_KEY) || 0;
+                if (Date.now() - last < TILE_MAX_AGE_MS) return; // місто вже прогріте — не повторюємо на кожному запуску
+            } catch (e) {}
+            const conn = navigator.connection;
+            if (conn && (conn.saveData || /(^|-)2g$/.test(conn.effectiveType || ''))) return; // економія трафіку / повільна мережа
             const queue = buildCityTileQueue();
             let i = 0;
-            const BATCH = 6; // невеликими пачками — щоб не змагатись за мережу з активним переглядом карти
+            const BATCH = 6;
+            function markDoneWhenIdle() {
+                const t = setInterval(() => {
+                    if (warmActive === 0 && warmQueue.length === 0) {
+                        clearInterval(t);
+                        try { localStorage.setItem(CITY_PREFETCH_KEY, String(Date.now())); } catch (e) {}
+                    }
+                }, 3000);
+            }
             function nextBatch() {
-                if (i >= queue.length) return;
+                if (i >= queue.length) { markDoneWhenIdle(); return; }
+                // Не накопичуємо чергу: якщо мережа ще не встигає — трохи чекаємо
+                if (document.hidden || warmQueue.length > 40) { setTimeout(nextBatch, 800); return; }
                 for (let n = 0; n < BATCH && i < queue.length; n++, i++) {
                     const t = queue[i];
-                    warmupTile(t.x, t.y, t.z);
+                    warmupTile(t.x, t.y, t.z, true);
                 }
                 if ('requestIdleCallback' in window) requestIdleCallback(nextBatch, { timeout: 2000 });
                 else setTimeout(nextBatch, 250);
@@ -2577,11 +2639,6 @@
         themeBtn.addEventListener('click', () => {
             document.body.classList.toggle('dark-theme');
             map.getContainer().classList.toggle('map-dark-mode', document.body.classList.contains('dark-theme'));
-            // Світлий і темний стиль CARTO — окремі тайли, тож при зміні теми підміняємо URL шару
-            // карти (Leaflet сам перемалює видимі тайли) і одразу прогріваємо поточну ділянку
-            // для нового стилю, щоб не чекати мережу там, де щойно все було швидко.
-            osmTiles.setUrl(currentMapTileUrl());
-            warmupAroundLatLng(map.getCenter().lat, map.getCenter().lng, map.getZoom());
         });
 
         // ==================== Реальні заклади з OpenStreetMap (як у Bump/Apple Maps) ====================
