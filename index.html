@@ -302,7 +302,13 @@
         .prof-tools-col button:active { transform: scale(0.88); background: rgba(255,255,255,0.28); }
         .prof-tools-col button svg { width: 16px; height: 16px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
         .prof-tools-col button.danger:active { background: rgba(255,69,58,0.35); }
-        #prof-edit-btn, #prof-add-photo-btn, #prof-move-btn, #prof-logout-btn { display: none; }
+        #prof-edit-btn, #prof-add-photo-btn, #prof-move-btn, #prof-logout-btn, #prof-menu-btn { display: none; }
+        /* Три кнопки (редагувати / змінити місце / вийти) об'єднані в одну "⋯" — вона відкриває меню налаштувань,
+           де ці пункти вже є. Самі кнопки лишаються в DOM (на них спирається решта коду), але не показуються.
+           Виняток — режим редагування: там потрібна "✓" для збереження, а меню на цей час ховається. */
+        #prof-move-btn, #prof-logout-btn { display: none !important; }
+        #profile-sidebar:not(.is-editing) #prof-edit-btn { display: none !important; }
+        #profile-sidebar.is-editing #prof-menu-btn { display: none !important; }
         .profile-editable[contenteditable="true"] { outline: 1px dashed var(--accent-main); border-radius: 8px; padding: 2px 4px; }
 
         /* ---- Реєстрація нового користувача: повноекранний мінімалістичний wizard ---- */
@@ -1304,7 +1310,7 @@
             display: flex; flex-direction: column;
             /* Запас під плаваючу кнопку Telegram лишається, але саме ім'я підняте на рядок вище
                (menu-рядок із шестернею прибрано звідси — вона тепер над "Додати друга"). */
-            padding: calc(24px + env(safe-area-inset-top, 0px)) 0 6px;
+            padding: calc(4px + env(safe-area-inset-top, 0px)) 0 6px; /* ім'я піднято на рядок (−20px) */
         }
         /* Ім'я — окремим рядком, вище і по центру, під "островком". */
         .ig-top-bar-name-row { text-align: center; padding: 0 16px; }
@@ -1444,6 +1450,7 @@
             </div>
             <div class="hero-dots" id="hero-dots"></div>
             <div class="prof-tools-col">
+                <button id="prof-menu-btn" aria-label="Меню профілю"><svg viewBox="0 0 24 24" style="fill:#fff;stroke:none"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg></button>
                 <button id="prof-edit-btn" aria-label="Редагувати"><svg viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg></button>
                 <button id="prof-add-photo-btn" aria-label="Додати фото"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg></button>
                 <button id="prof-delete-photo-btn" class="danger" aria-label="Видалити це фото/відео"><svg viewBox="0 0 24 24"><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path></svg></button>
@@ -2323,6 +2330,7 @@
             if (currentChatRef) { off(currentChatRef); document.getElementById('chat-messages').innerHTML = ''; }
             if (isEditingProfile) exitEditMode(false);
             document.getElementById('prof-edit-btn').style.display = 'none';
+            document.getElementById('prof-menu-btn').style.display = 'none';
             document.getElementById('prof-add-photo-btn').style.display = 'none';
             document.getElementById('prof-delete-photo-btn').style.display = 'none';
             document.getElementById('prof-move-btn').style.display = 'none';
@@ -3310,6 +3318,7 @@
 
             if (isEditingProfile) exitEditMode(false);
             document.getElementById('prof-edit-btn').style.display = 'none';
+            document.getElementById('prof-menu-btn').style.display = 'none';
             document.getElementById('prof-add-photo-btn').style.display = 'none';
             document.getElementById('prof-delete-photo-btn').style.display = 'none';
 
@@ -3322,6 +3331,7 @@
                 btn.style.display = 'none';
                 const isMine = item.id === myId;
                 document.getElementById('prof-edit-btn').style.display = isMine ? 'flex' : 'none';
+                document.getElementById('prof-menu-btn').style.display = isMine ? 'flex' : 'none';
                 // "+" для додавання фото/сторі тепер видно одразу на сторінці, а не лише після
                 // входу в режим редагування — так простіше додати нове фото чи сторі з ходу.
                 document.getElementById('prof-add-photo-btn').style.display = isMine ? 'flex' : 'none';
@@ -4367,6 +4377,7 @@
 
         function enterEditMode() {
             isEditingProfile = true;
+            document.getElementById('profile-sidebar').classList.add('is-editing');
             const statusEl = document.getElementById('prof-status');
             statusEl.innerText = myProfile.status === "Ще не заповнено" ? '' : (myProfile.status || '');
             ['prof-name', 'prof-status', 'prof-text1', 'prof-text2'].forEach(id => document.getElementById(id).contentEditable = 'true');
@@ -4392,6 +4403,7 @@
 
         function exitEditMode(refreshDisplay) {
             isEditingProfile = false;
+            document.getElementById('profile-sidebar').classList.remove('is-editing');
             ['prof-name', 'prof-status', 'prof-text1', 'prof-text2'].forEach(id => document.getElementById(id).contentEditable = 'false');
             document.getElementById('prof-edit-btn').innerText = '✏️';
             // "+" лишається видимим і після виходу з режиму редагування — воно більше не
@@ -5992,6 +6004,7 @@
             document.getElementById('settings-modal').style.display = 'none';
         }
         document.getElementById('ig-settings-btn').addEventListener('click', openSettingsModal);
+        document.getElementById('prof-menu-btn').addEventListener('click', (e) => { e.stopPropagation(); openSettingsModal(); });
         document.getElementById('settings-close-btn').addEventListener('click', closeSettingsModal);
         document.getElementById('settings-theme-toggle').addEventListener('click', () => {
             document.getElementById('theme-toggle').click();
