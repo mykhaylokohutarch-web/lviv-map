@@ -341,10 +341,10 @@
         .hero-story-thumb-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; pointer-events: none; }
 
         /* ---- Меню вибору типу сторіс (фото/відео), а також фото/відео на сторінку профілю ---- */
-        #story-add-sheet, #prof-media-add-sheet, #chat-attach-sheet { display: none; position: fixed; inset: 0; z-index: 4500; background: rgba(0,0,0,0.5); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); align-items: flex-end; justify-content: center; }
+        #story-add-sheet, #prof-media-add-sheet, #ig-add-choice-sheet, #chat-attach-sheet { display: none; position: fixed; inset: 0; z-index: 4500; background: rgba(0,0,0,0.5); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); align-items: flex-end; justify-content: center; }
         .story-add-card, .chat-attach-card { width: 100%; max-width: 420px; background: rgba(28,28,30,0.92); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-radius: 22px 22px 0 0; padding: 10px 16px calc(20px + env(safe-area-inset-bottom, 0px)); box-sizing: border-box; display: flex; flex-direction: column; gap: 8px; }
         .story-add-card button, .chat-attach-card button { background: rgba(255,255,255,0.07); border: none; color: #fff; font-size: 15px; font-weight: 600; padding: 15px; border-radius: 14px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-        .story-add-card #story-add-cancel-btn, .chat-attach-card #chat-attach-cancel-btn { background: none; color: rgba(255,255,255,0.5); font-weight: 500; margin-top: 4px; }
+        .story-add-card #story-add-cancel-btn, .story-add-card #ig-add-choice-cancel-btn, .chat-attach-card #chat-attach-cancel-btn { background: none; color: rgba(255,255,255,0.5); font-weight: 500; margin-top: 4px; }
         #chat-attach-btn {
             flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; border: none; background: transparent;
             color: var(--icon-color); display: flex; align-items: center; justify-content: center; cursor: pointer;
@@ -1314,8 +1314,19 @@
         #ig-content { flex-grow: 1; overflow-y: auto; touch-action: pan-y; -webkit-overflow-scrolling: touch; padding-bottom: 110px; box-sizing: border-box; }
 
         .ig-hero { display: flex; align-items: center; gap: 12px; padding: calc(54px + env(safe-area-inset-top, 0px)) 16px 8px; background: var(--bg-color); }
-        .ig-avatar { width: 88px; height: 88px; border-radius: 50%; background-size: cover; background-position: center; background-color: #2c2c2e; box-shadow: 0 4px 14px rgba(0,0,0,0.16); cursor: pointer; transition: transform 0.15s ease; flex-shrink: 0; border: 2.5px solid var(--accent-main); box-sizing: border-box; }
+        .ig-avatar { position: relative; width: 88px; height: 88px; border-radius: 50%; background-size: cover; background-position: center; background-color: #2c2c2e; box-shadow: 0 4px 14px rgba(0,0,0,0.16); cursor: pointer; transition: transform 0.15s ease; flex-shrink: 0; border: 2.5px solid var(--accent-main); box-sizing: border-box; }
         .ig-avatar:active { transform: scale(0.96); }
+        /* Кнопка "+" на аватарці профілю (лише у власному профілі) — додати нову сторі,
+           не виходячи зі сторінки. Той самий стиль, що й на власному колі на Головній. */
+        .ig-avatar-add-badge {
+            position: absolute; right: -2px; bottom: -2px; z-index: 6;
+            width: 26px; height: 26px;
+            border-radius: 50%; background: var(--accent-main); border: 2.5px solid var(--bg-color);
+            display: flex; align-items: center; justify-content: center; box-sizing: border-box;
+            cursor: pointer; -webkit-tap-highlight-color: transparent;
+        }
+        .ig-avatar-add-badge:active { transform: scale(0.9); }
+        .ig-avatar-add-badge svg { width: 58%; height: 58%; stroke: #fff; fill: none; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
         .ig-hero-mid { flex: 1 1 auto; min-width: 0; text-align: left; }
         /* Шестерня (налаштування) — тепер стоїть прямо над кнопкою "Додати друга",
            замість окремого рядка під "островком" нагорі. */
@@ -1340,7 +1351,7 @@
            щоб сусідні кільця-сторіс не злипались одне з одним. Трішки відступу зверху, щоб сітка
            не тулилась впритул до тексту біо над нею. */
         /* Проста сітка 3 в ряд без шахівки; кола максимально великі: без бокових полів, проміжок лише 2px. */
-        .ig-gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; padding: 0; margin-top: 16px; }
+        .ig-gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; padding: 0 4px; margin-top: 16px; }
         .ig-grid-item:active { filter: brightness(0.92); }
         .ig-grid-item { width: 100%; aspect-ratio: 1 / 1; border-radius: 50%; background-size: cover; background-position: center; background-color: #e5e5ea; box-shadow: 0 2px 10px rgba(0,0,0,0.12); cursor: pointer; position: relative; }
         .ig-grid-item-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; pointer-events: none; }
@@ -1928,6 +1939,15 @@
                 <button class="ob-btn-primary" id="ob-story-next">Готово</button>
                 <button class="ob-btn-text" id="ob-story-skip">Пропустити</button>
             </section>
+        </div>
+    </div>
+
+    <!-- ---- Меню "+" на аватарці профілю: що саме додати — сторі чи фото/відео в профіль ---- -->
+    <div id="ig-add-choice-sheet">
+        <div class="story-add-card">
+            <button id="ig-add-choice-story-btn">⭕ Додати в сторі</button>
+            <button id="ig-add-choice-photo-btn">🖼 Додати фото чи відео в профіль</button>
+            <button id="ig-add-choice-cancel-btn">Скасувати</button>
         </div>
     </div>
 
@@ -4106,6 +4126,7 @@
                 const searchInput = document.getElementById('people-search-input');
                 renderHomeGrid(searchInput ? searchInput.value : '');
             }
+            refreshIgProfileIfOpen();
             try { await saveMyProfileToFirebase(); } catch (e) { alert('Не вдалося зберегти сторі. Перевірте з’єднання.'); }
         }
 
@@ -4146,6 +4167,19 @@
                 thumb.addEventListener('click', (e) => { e.stopPropagation(); openStoryViewer(stories, i, item.name, null, item, 'story'); });
                 row.appendChild(thumb);
             });
+        }
+
+        // "+" на аватарці профілю: спочатку вибір — сторі чи фото/відео в профіль.
+        function openIgAddChoice() { document.getElementById('ig-add-choice-sheet').style.display = 'flex'; }
+        function closeIgAddChoice() { document.getElementById('ig-add-choice-sheet').style.display = 'none'; }
+        document.getElementById('ig-add-choice-cancel-btn').addEventListener('click', closeIgAddChoice);
+        document.getElementById('ig-add-choice-sheet').addEventListener('click', (e) => { if (e.target.id === 'ig-add-choice-sheet') closeIgAddChoice(); });
+        document.getElementById('ig-add-choice-story-btn').addEventListener('click', () => { closeIgAddChoice(); openAddStoryChooser(); });
+        document.getElementById('ig-add-choice-photo-btn').addEventListener('click', () => { closeIgAddChoice(); document.getElementById('prof-media-add-sheet').style.display = 'flex'; });
+        // Після додавання перемальовуємо сторінку профілю, якщо вона зараз відкрита.
+        function refreshIgProfileIfOpen() {
+            const scr = document.getElementById('screen-ig-profile');
+            if (scr && scr.classList.contains('active-screen') && igCurrentIsMine) openIgProfile(getMyProfileItem(), true);
         }
 
         function openAddStoryChooser() { document.getElementById('story-add-sheet').style.display = 'flex'; }
@@ -4422,6 +4456,7 @@
             myProfile.photos.push(url);
             localStorage.setItem('chat_profile_edited', '1');
             if (currentActiveItem && currentActiveItem.id === myId) { currentActiveItem.photos = myProfile.photos; renderHeroMedia(myProfile.photos); goToHeroSlide(myProfile.photos.length - 1); }
+            refreshIgProfileIfOpen();
             try { await saveMyProfileToFirebase(); }
             catch (err) { alert('Додано, але не вдалося зберегти на сервер. Перевірте інтернет-з’єднання і спробуйте ще раз.'); }
         }
@@ -5850,6 +5885,21 @@
 
             document.getElementById('ig-avatar').style.backgroundImage = `url('${basePhotos[0]}')`;
             document.getElementById('ig-avatar').onclick = () => openMediaGallery(photos, 0, item.name, item);
+            // Кнопка "+" на аватарці — тільки у власному профілі, дозволяє одразу додати сторі.
+            let igAvatarAddBadge = document.getElementById('ig-avatar-add-badge');
+            if (isMine) {
+                if (!igAvatarAddBadge) {
+                    igAvatarAddBadge = document.createElement('div');
+                    igAvatarAddBadge.id = 'ig-avatar-add-badge';
+                    igAvatarAddBadge.className = 'ig-avatar-add-badge';
+                    igAvatarAddBadge.setAttribute('aria-label', 'Додати фото чи сторі');
+                    igAvatarAddBadge.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>';
+                    igAvatarAddBadge.addEventListener('click', (ev) => { ev.stopPropagation(); openIgAddChoice(); });
+                    document.getElementById('ig-avatar').appendChild(igAvatarAddBadge);
+                }
+            } else if (igAvatarAddBadge) {
+                igAvatarAddBadge.remove();
+            }
             const handle = slugHandle(item.name);
             document.getElementById('ig-bio-handle').innerText = handle;
             document.getElementById('ig-top-name').innerText = item.name || 'Гість';
