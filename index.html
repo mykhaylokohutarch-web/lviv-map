@@ -709,7 +709,10 @@
         #chat-messages li { max-width: 80%; padding: 10px 14px; border-radius: 18px; font-size: 14px; line-height: 1.4; transition: var(--theme-transition); }
         .msg-other { background: rgba(0,0,0,0.05); color: var(--text-color); align-self: flex-start; }
         body.dark-theme .msg-other { background: rgba(255, 255, 255, 0.1); }
-        .msg-me { background: var(--accent-main); color: white; align-self: flex-end; }
+        /* Без кольорової заливки — власні повідомлення тепер відрізняються лише вирівнюванням
+           праворуч і трохи темнішим нейтральним тоном, без суцільного акцентного кольору. */
+        .msg-me { background: rgba(0,0,0,0.09); color: var(--text-color); align-self: flex-end; }
+        body.dark-theme .msg-me { background: rgba(255, 255, 255, 0.16); }
         .msg-user-name { display: block; font-weight: 600; font-size: 10px; color: var(--text-secondary); margin-bottom: 2px; }
         li.msg-media { padding: 4px !important; overflow: hidden; }
         li.msg-media img, li.msg-media video { display: block; width: 100%; max-width: 220px; border-radius: 14px; cursor: pointer; }
@@ -1222,21 +1225,30 @@
            Текст завжди готова ціла фраза (shortVibeText/HOME_VIBE_PHRASES в JS), тож обрізаних
            на півслові уривків нема. */
         .home-circle-msg {
-            position: absolute; bottom: 100%; margin-bottom: 5px; left: 50%; z-index: 4;
+            position: absolute; bottom: 100%; margin-bottom: -10px; left: 50%; z-index: 4;
             width: 56px; box-sizing: border-box;
             background: var(--msg-solid-bg); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
             color: var(--text-secondary); font-size: 9px; font-weight: 300; line-height: 1.2;
             padding: 5px 7px; border-radius: 11px; text-align: center;
             box-shadow: 0 3px 10px rgba(0,0,0,0.24);
-            white-space: normal; word-break: break-word; overflow: hidden;
+            white-space: normal;
+            /* overflow: hidden тут навмисно прибраний — інакше він обрізає хвостик (::after) нижче,
+               бо той стирчить за межі рамки бульбашки. Переповнення тексту тепер і не загрожує:
+               висота не фіксована, бульбашка сама росте під текст. */
+            /* Правильні переноси слів: спершу звичайний перенос по пробілу (word-break: normal),
+               і лише якщо саме слово довше за ширину бульбашки — переноситься по складах через
+               дефіс (hyphens: auto), а не розривається в довільному місці (як робив break-word). */
+            word-break: normal; overflow-wrap: break-word; hyphens: auto; -webkit-hyphens: auto;
             transform: translateX(-50%);
             pointer-events: none;
         }
+        /* Хвостик — трикутник, що "вказує" вниз на аватарку, ніби саме вона це каже. */
         .home-circle-msg::after {
-            content: ""; position: absolute; left: 50%; bottom: -4px; margin-left: -3px;
+            content: ""; position: absolute; left: 50%; bottom: -5px; margin-left: -4px; z-index: 1;
             width: 0; height: 0;
-            border-left: 3px solid transparent; border-right: 3px solid transparent;
-            border-top: 4px solid var(--msg-solid-bg);
+            border-left: 4px solid transparent; border-right: 4px solid transparent;
+            border-top: 5px solid var(--msg-solid-bg);
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.18));
         }
         .home-circle-avatar { position: relative; width: var(--circle-d, 100px); height: var(--circle-d, 100px); border-radius: 50%; background-size: cover; background-position: center; background-color: #e5e5ea; transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1); box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
         /* Обгортка медіа кола — циклічно показує фото/відео як міні-сторі, по одному кадру 10с */
