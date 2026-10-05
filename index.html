@@ -458,7 +458,7 @@
         .dm-row { display: flex; align-items: center; gap: 12px; padding: 10px 4px; cursor: pointer; border-bottom: 1px solid var(--border-minimal); transition: background-color 0.2s ease; }
         .dm-row:active { background-color: rgba(0,0,0,0.03); }
         body.dark-theme .dm-row:active { background-color: rgba(255,255,255,0.04); }
-        .dm-avatar { width: 46px; height: 46px; border-radius: 50%; background-size: cover; background-position: center; flex-shrink: 0; background-color: #e5e5ea; border: 1px solid var(--border-minimal); box-sizing: border-box; }
+        .dm-avatar { width: 46px; height: 46px; border-radius: 50%; background-size: cover; background-position: center; flex-shrink: 0; background-color: #e5e5ea; border: none; box-sizing: border-box; }
         .dm-avatar-saved { background: var(--ultramarine-gradient); border: none; display: flex; align-items: center; justify-content: center; }
         .dm-avatar-saved svg { width: 21px; height: 21px; fill: #fff; }
         .dm-row-saved { margin-bottom: 4px; }
@@ -502,8 +502,8 @@
         .dm-row:active { transform: scale(0.98); }
         .dm-row-saved { background: rgba(0,0,0,0.04); border: none; }
         body.dark-theme .dm-row-saved { background: rgba(255,255,255,0.06); }
-        .dm-avatar { width: 46px; height: 46px; border-radius: 50%; background-size: cover; background-position: center; flex-shrink: 0; background-color: #e5e5ea; border: 1px solid var(--border-minimal); box-sizing: border-box; }
-        body.dark-theme .dm-avatar { background-color: #2c2c2e; border-color: rgba(255,255,255,0.12); }
+        .dm-avatar { width: 46px; height: 46px; border-radius: 50%; background-size: cover; background-position: center; flex-shrink: 0; background-color: #e5e5ea; border: none; box-sizing: border-box; }
+        body.dark-theme .dm-avatar { background-color: #2c2c2e; }
         .dm-avatar-group { display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; color: #fff; background: var(--ultramarine-gradient); }
         .dm-avatar-saved { background: var(--ultramarine-gradient); border: none; display: flex; align-items: center; justify-content: center; }
         .dm-avatar-saved svg { width: 21px; height: 21px; fill: #fff; }
@@ -512,8 +512,7 @@
         .dm-name { font-size: 15px; font-weight: 600; color: var(--text-color); }
         .dm-preview { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-secondary); }
         .dm-empty { color: var(--text-secondary); font-size: 13px; text-align: center; margin-top: 24px; }
-        .dm-color-dot { width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0; border: 2px solid rgba(0,0,0,0.15); box-sizing: border-box; cursor: pointer; }
-        body.dark-theme .dm-color-dot { border-color: rgba(255,255,255,0.5); }
+        .dm-color-dot { width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0; border: none; box-sizing: border-box; cursor: pointer; }
 
         /* Попап палітри кольорів для "таблетки" чату */
         #chat-color-popover {
