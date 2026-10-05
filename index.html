@@ -1225,7 +1225,7 @@
            Текст завжди готова ціла фраза (shortVibeText/HOME_VIBE_PHRASES в JS), тож обрізаних
            на півслові уривків нема. */
         .home-circle-msg {
-            position: absolute; bottom: 100%; margin-bottom: -10px; left: 50%; z-index: 4;
+            position: absolute; bottom: 100%; margin-bottom: -4px; left: 50%; z-index: 4;
             width: 56px; box-sizing: border-box;
             background: var(--msg-solid-bg); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
             color: var(--text-secondary); font-size: 9px; font-weight: 300; line-height: 1.2;
@@ -1244,7 +1244,7 @@
         }
         /* Хвостик — трикутник, що "вказує" вниз на аватарку, ніби саме вона це каже. */
         .home-circle-msg::after {
-            content: ""; position: absolute; left: 50%; bottom: -5px; margin-left: -4px; z-index: 1;
+            content: ""; position: absolute; left: 35%; bottom: -5px; margin-left: -4px; z-index: 1;
             width: 0; height: 0;
             border-left: 4px solid transparent; border-right: 4px solid transparent;
             border-top: 5px solid var(--msg-solid-bg);
