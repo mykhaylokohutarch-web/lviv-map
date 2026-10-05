@@ -138,6 +138,13 @@
         #map.map-dark-mode .leaflet-tile-pane {
             filter: invert(1) hue-rotate(180deg) brightness(0.94) contrast(0.92) saturate(0.85);
         }
+        /* Напівпрозорий темний шар ПЕРЕД картою (над тайлами, але під маршрутом і мітками) —
+           приглушує інвертовані тайли на чорному фоні теми, щоб карта не "світила" кольором. */
+        #map-dark-dim {
+            position: absolute; inset: 0; z-index: 250; pointer-events: none;
+            background: rgba(0, 0, 0, 0); transition: background 0.5s ease;
+        }
+        #map.map-dark-mode #map-dark-dim { background: rgba(0, 0, 0, 0.32); }
 
         /* Прибираємо напис-атрибуцію ("OpenStreetMap...") у кутку карти. */
         .leaflet-control-attribution { display: none !important; }
@@ -2554,6 +2561,11 @@
         });
         osmTiles.addTo(map);
         map.getContainer().classList.toggle('map-dark-mode', document.body.classList.contains('dark-theme'));
+        // Сам шар-"приглушувач": звичайний div поверх карти (не Leaflet-пейн), тож не рухається й не
+        // масштабується разом із тайлами при панорамуванні/зумі — просто статична тонована плівка.
+        const mapDarkDim = document.createElement('div');
+        mapDarkDim.id = 'map-dark-dim';
+        map.getContainer().appendChild(mapDarkDim);
 
         // ---- Прогрів тайлів наперед: сусідні рівні зуму й (за наявності дозволу) місце користувача ----
         // Просто "прогріваємо" кеш браузера завантаженням картинок тайлів у фоні — на саму карту
