@@ -491,10 +491,10 @@
            запас (6px), замість попереднього подвійного відступу. Самі рядки також трохи
            більші — вищі, з крупнішим аватаром і шрифтом. Кольори тепер стежать за темою
            застосунку (світла/темна), а не завжди розраховані на чорне тло. */
-        #dm-list { padding: 2px 6px 12px; margin: 0 -12px; }
+        #dm-list { padding: 2px 4px 12px; margin: 0 -12px; }
         .dm-row {
             display: flex; align-items: center; gap: 10px; cursor: pointer; -webkit-tap-highlight-color: transparent;
-            padding: 12px 16px; margin: 0 0 10px; border-radius: 999px;
+            padding: 12px 16px; margin: 0 0 12px; border-radius: 999px; flex-shrink: 0; box-sizing: border-box; width: 100%;
             background: rgba(0,0,0,0.05); border: 1px solid var(--border-minimal);
             transition: transform 0.15s ease, background-color 0.3s ease, border-color 0.3s ease;
         }
@@ -507,7 +507,7 @@
         .dm-avatar-group { display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; color: #fff; background: var(--ultramarine-gradient); }
         .dm-avatar-saved { background: var(--ultramarine-gradient); border: none; display: flex; align-items: center; justify-content: center; }
         .dm-avatar-saved svg { width: 21px; height: 21px; fill: #fff; }
-        .dm-row-saved { margin-bottom: 10px; }
+        .dm-row-saved { margin-bottom: 12px; }
         .dm-text-wrap { display: flex; flex-direction: column; overflow: hidden; flex-grow: 1; gap: 2px; min-width: 0; }
         .dm-name { font-size: 15px; font-weight: 600; color: var(--text-color); }
         .dm-preview { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-secondary); }
@@ -3352,7 +3352,7 @@
                 document.getElementById('prof-text2').innerText = item.interests;
                 btn.style.display = 'none';
                 const isMine = item.id === myId;
-                document.getElementById('prof-edit-btn').style.display = isMine ? 'flex' : 'none';
+                document.getElementById('prof-edit-btn').style.display = 'none'; // олівець прибрано; редагування — через Налаштування
                 // "+" для додавання фото/сторі тепер видно одразу на сторінці, а не лише після
                 // входу в режим редагування — так простіше додати нове фото чи сторі з ходу.
                 document.getElementById('prof-add-photo-btn').style.display = isMine ? 'flex' : 'none';
@@ -3772,6 +3772,7 @@
         let myFriends = new Set();
         onValue(ref(db, `friends/${myId}`), (snap) => {
             myFriends = new Set(Object.keys(snap.val() || {}));
+            try { if (igCurrentIsMine) setIgStats(myFriends.size); } catch (e) {}
             if (document.getElementById('people-search-input')) {
                 renderHomeGrid(document.getElementById('people-search-input').value);
             }
@@ -4040,7 +4041,7 @@
         function getMyProfileItem() {
             const photos = (myProfile.photos && myProfile.photos.length) ? myProfile.photos : [DEFAULT_AVATAR];
             return { id: myId, type: 'person', name: myProfile.name || myName, coords: myCoords, photos: photos,
-                      status: myProfile.status || "Ще не заповнено", about: myProfile.about || "Розкажіть про себе — натисніть ✏️",
+                      status: myProfile.status || "Ще не заповнено", about: myProfile.about || "Розкажіть про себе — у Налаштуваннях → Редагувати профіль",
                       interests: myProfile.interests || "Додайте свої інтереси", stories: myProfile.stories || [] };
         }
 
@@ -4416,6 +4417,7 @@
             statusEl.innerText = myProfile.status === "Ще не заповнено" ? '' : (myProfile.status || '');
             ['prof-name', 'prof-status', 'prof-text1', 'prof-text2'].forEach(id => document.getElementById(id).contentEditable = 'true');
             document.getElementById('prof-edit-btn').innerText = '✓';
+            document.getElementById('prof-edit-btn').style.display = 'flex'; // «галочка» збереження — лише під час редагування
             document.getElementById('prof-add-photo-btn').style.display = 'flex';
             document.getElementById('prof-delete-photo-btn').style.display = 'flex';
         }
@@ -4439,6 +4441,7 @@
             isEditingProfile = false;
             ['prof-name', 'prof-status', 'prof-text1', 'prof-text2'].forEach(id => document.getElementById(id).contentEditable = 'false');
             document.getElementById('prof-edit-btn').innerText = '✏️';
+            document.getElementById('prof-edit-btn').style.display = 'none';
             // "+" лишається видимим і після виходу з режиму редагування — воно більше не
             // прив'язане до режиму редагування (за проханням користувача), на відміну від "видалити фото".
             document.getElementById('prof-delete-photo-btn').style.display = 'none';
@@ -5872,6 +5875,10 @@
 
         // Відкриває сторінку людини у стилі прикладу (аватар, статистика, біо, сітка фото)
         let igCurrentItem = null; let igCurrentIsMine = false;
+        function setIgStats(n) {
+            document.getElementById('ig-stat-followers').innerText = n;
+            document.getElementById('ig-stat-following').innerText = n;
+        }
         function openIgProfile(item, isMine) {
             igCurrentItem = item; igCurrentIsMine = isMine;
             // Сторі, додані на Головній (кнопкою "+" на власному колі), одразу зʼявляються тут же,
@@ -5904,8 +5911,13 @@
             document.getElementById('ig-bio-handle').innerText = handle;
             document.getElementById('ig-top-name').innerText = item.name || 'Гість';
             document.getElementById('ig-bio-text').innerText = item.about || item.status || '';
-            document.getElementById('ig-stat-following').innerText = pseudoStat(item.id, 'following', 20, 480);
-            document.getElementById('ig-stat-followers').innerText = pseudoStat(item.id, 'followers', 50, 3200);
+            // Реальні числа: дружба в застосунку взаємна, тож підписники = підписки = кількість друзів у базі.
+            setIgStats(isMine ? myFriends.size : 0);
+            if (!isMine) {
+                get(ref(db, `friends/${item.id}`)).then(snap => {
+                    if (igCurrentItem && igCurrentItem.id === item.id) setIgStats(Object.keys(snap.val() || {}).length);
+                }).catch(() => {});
+            }
 
             const heroSlot = document.getElementById('ig-hero-action-slot');
             heroSlot.innerHTML = '';
