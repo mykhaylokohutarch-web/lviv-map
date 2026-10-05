@@ -495,13 +495,13 @@
         .dm-row {
             display: flex; align-items: center; gap: 10px; cursor: pointer; -webkit-tap-highlight-color: transparent;
             padding: 12px 16px; margin: 0; border-radius: 999px; flex-shrink: 0; box-sizing: border-box; width: 100%;
-            background: rgba(0,0,0,0.05); border: 1px solid var(--border-minimal);
-            transition: transform 0.15s ease, background-color 0.3s ease, border-color 0.3s ease;
+            background: rgba(0,0,0,0.05); border: none;
+            transition: transform 0.15s ease, background-color 0.3s ease;
         }
-        body.dark-theme .dm-row { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.10); }
+        body.dark-theme .dm-row { background: rgba(255,255,255,0.08); }
         .dm-row:active { transform: scale(0.98); }
-        .dm-row-saved { background: rgba(0,0,0,0.04); border: 1px solid var(--border-minimal); }
-        body.dark-theme .dm-row-saved { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.10); }
+        .dm-row-saved { background: rgba(0,0,0,0.04); border: none; }
+        body.dark-theme .dm-row-saved { background: rgba(255,255,255,0.06); }
         .dm-avatar { width: 46px; height: 46px; border-radius: 50%; background-size: cover; background-position: center; flex-shrink: 0; background-color: #e5e5ea; border: 1px solid var(--border-minimal); box-sizing: border-box; }
         body.dark-theme .dm-avatar { background-color: #2c2c2e; border-color: rgba(255,255,255,0.12); }
         .dm-avatar-group { display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; color: #fff; background: var(--ultramarine-gradient); }
@@ -4595,7 +4595,6 @@
                 const color = getChatColor(c.id);
                 const row = document.createElement('div'); row.className = 'dm-row';
                 row.style.background = hexToRgba(color, 0.20);
-                row.style.borderColor = hexToRgba(color, 0.45);
 
                 const avatar = document.createElement('div');
                 if (c.isGroup) {
