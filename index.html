@@ -491,10 +491,10 @@
            запас (6px), замість попереднього подвійного відступу. Самі рядки також трохи
            більші — вищі, з крупнішим аватаром і шрифтом. Кольори тепер стежать за темою
            застосунку (світла/темна), а не завжди розраховані на чорне тло. */
-        #dm-list { padding: 2px 4px 12px; margin: 0 -12px; }
+        #dm-list { padding: 2px 6px 12px; margin: 0 -12px; }
         .dm-row {
             display: flex; align-items: center; gap: 10px; cursor: pointer; -webkit-tap-highlight-color: transparent;
-            padding: 12px 16px; margin: 0 0 12px; border-radius: 999px; flex-shrink: 0; box-sizing: border-box; width: 100%;
+            padding: 12px 16px; margin: 0; border-radius: 999px; flex-shrink: 0; box-sizing: border-box; width: 100%;
             background: rgba(0,0,0,0.05); border: 1px solid var(--border-minimal);
             transition: transform 0.15s ease, background-color 0.3s ease, border-color 0.3s ease;
         }
@@ -507,7 +507,7 @@
         .dm-avatar-group { display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; color: #fff; background: var(--ultramarine-gradient); }
         .dm-avatar-saved { background: var(--ultramarine-gradient); border: none; display: flex; align-items: center; justify-content: center; }
         .dm-avatar-saved svg { width: 21px; height: 21px; fill: #fff; }
-        .dm-row-saved { margin-bottom: 12px; }
+        .dm-row-saved { margin-bottom: 0; }
         .dm-text-wrap { display: flex; flex-direction: column; overflow: hidden; flex-grow: 1; gap: 2px; min-width: 0; }
         .dm-name { font-size: 15px; font-weight: 600; color: var(--text-color); }
         .dm-preview { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-secondary); }
