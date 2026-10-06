@@ -404,6 +404,22 @@
             overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
         }
         .story-viewer-pill-text:empty { display: none; }
+        /* Знизу лишилась лише кнопка «···»: усі дії (улюблене, зберегти, локація, написати, видалити…) — у її меню */
+        .story-viewer-pill { left: auto; background: none; border: none; box-shadow: none; padding: 0; backdrop-filter: none; -webkit-backdrop-filter: none; }
+        .story-viewer-pill-text { display: none !important; }
+        .story-viewer-pill-actions > .story-viewer-action-btn:not(#story-viewer-menu-btn) { display: none !important; }
+        #story-viewer-menu-btn { width: 42px; height: 42px; background: rgba(28,28,30,0.55); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 6px 20px rgba(0,0,0,0.3); display: flex !important; }
+        #story-viewer-menu-btn svg { width: 60%; height: 60%; fill: #fff; stroke: none; }
+        #story-viewer-menu { display: none; position: absolute; inset: 0; z-index: 40; background: rgba(0,0,0,0.38); align-items: flex-end; justify-content: center; flex-direction: column; padding: 0 10px calc(10px + env(safe-area-inset-bottom, 0px)); box-sizing: border-box; animation: sheetBackdropIn 0.25s ease backwards; }
+        .sv-menu-card { width: 100%; max-width: 480px; margin: 0 auto 8px; background: rgba(38,38,40,0.94); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-radius: 16px; overflow: hidden; animation: sheetCardIn 0.42s cubic-bezier(0.32, 0.72, 0, 1) backwards; }
+        .sv-menu-caption { padding: 12px 16px; font-size: 13px; line-height: 1.4; color: rgba(255,255,255,0.7); border-bottom: 1px solid rgba(255,255,255,0.1); max-height: 22vh; overflow-y: auto; word-break: break-word; }
+        .sv-menu-row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px 16px; background: none; border: none; color: #fff; font-family: inherit; font-size: 16px; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        .sv-menu-row + .sv-menu-row { border-top: 1px solid rgba(255,255,255,0.1); }
+        .sv-menu-row:active { background: rgba(255,255,255,0.1); }
+        .sv-menu-row svg { width: 20px; height: 20px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+        .sv-menu-row.danger { color: #ff453a; } .sv-menu-row.danger svg { stroke: #ff453a; }
+        .sv-menu-row.on svg { fill: currentColor; }
+        .sv-menu-cancel { justify-content: center; font-weight: 600; border-radius: 16px; background: rgba(38,38,40,0.94); max-width: 480px; margin: 0 auto; }
         .story-viewer-pill-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
         .story-viewer-action-btn {
             width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,0.12);
@@ -1140,16 +1156,34 @@
         }
         .pe-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; flex-shrink: 0; }
         .pe-header button { background: none; border: none; font-size: 15px; font-weight: 600; color: #fff; cursor: pointer; padding: 6px; -webkit-tap-highlight-color: transparent; }
-        .pe-header #pe-done-btn { color: var(--accent-main, #0a84ff); }
+        /* «Готово» — підсвічена заповнена кнопка, щоб головна дія одразу впадала в очі */
+        .pe-header #pe-done-btn {
+            color: #fff; background: var(--accent-main, #0a84ff); padding: 8px 20px; border-radius: 999px;
+            box-shadow: 0 0 0 3px rgba(10,132,255,0.28), 0 6px 18px rgba(10,132,255,0.45);
+            transition: transform 0.15s ease, box-shadow 0.2s ease;
+        }
+        .pe-header #pe-done-btn:active { transform: scale(0.95); box-shadow: 0 0 0 2px rgba(10,132,255,0.3), 0 3px 10px rgba(10,132,255,0.4); }
+        /* Панелі керування лежать ВИЩЕ затемнення, яке створює рамка кадру (box-shadow), тож не тьмяніють */
+        .pe-header, .pe-preview-row, .pe-zoom-row, .pe-panel { position: relative; z-index: 3; }
+        .pe-panel { flex-shrink: 0; max-height: 38vh; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)); }
+        .pe-vignette { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+        .pe-adjust-title { display: flex; align-items: center; justify-content: space-between; padding: 8px 24px 2px; font-size: 12px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; color: rgba(255,255,255,0.55); }
+        #pe-reset-btn { background: none; border: none; color: var(--accent-main, #0a84ff); font-size: 13px; font-weight: 600; text-transform: none; letter-spacing: 0; cursor: pointer; padding: 4px 0; font-family: inherit; }
+        .pe-caption-row { padding: 6px 24px 8px; }
+        .pe-caption-row label { display: block; font-size: 12px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; color: rgba(255,255,255,0.55); margin-bottom: 6px; }
+        #pe-caption-input { width: 100%; box-sizing: border-box; resize: none; padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.08); color: #fff; font-family: inherit; font-size: 15px; line-height: 1.35; outline: none; }
+        #pe-caption-input:focus { border-color: var(--accent-main, #0a84ff); }
+        #pe-caption-input::placeholder { color: rgba(255,255,255,0.4); }
+        .pe-caption-count { text-align: right; font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 3px; }
         .pe-header h3 { margin: 0; font-size: 15px; font-weight: 700; color: #fff; }
         .pe-crop-wrap { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0; padding: 8px 16px; }
         .pe-crop-frame {
-            position: relative; width: min(78vw, 340px); height: min(78vw, 340px); border-radius: 16px;
+            position: relative; width: min(78vw, 340px, 33vh); height: min(78vw, 340px, 33vh); border-radius: 16px;
             overflow: hidden; background: #111; touch-action: none; box-shadow: 0 0 0 3000px rgba(0,0,0,0.55);
         }
         /* Для сторі — рамка кадрування 9:16 (той самий формат, що й вертикальне відео),
            а не квадрат, як для фото профілю — щоб фото й відео в сторі виглядали однаково. */
-        .pe-crop-frame.aspect-story { width: auto; height: min(62vh, 520px); aspect-ratio: 9 / 16; border-radius: 20px; }
+        .pe-crop-frame.aspect-story { width: auto; height: min(44vh, 520px); aspect-ratio: 9 / 16; border-radius: 20px; }
         .pe-crop-frame img { position: absolute; top: 0; left: 0; transform-origin: top left; user-select: none; -webkit-user-drag: none; pointer-events: none; will-change: transform; }
         /* Кругла «підказка» поверх фото профілю: поза колом — затемнено, саме так фото обріжеться в аватарці. */
         .pe-circle-guide { position: absolute; inset: 0; pointer-events: none; z-index: 2;
@@ -1172,7 +1206,7 @@
         .pe-filter-btn.active .pe-filter-thumb { border-color: var(--accent-main, #0a84ff); }
         .pe-filter-btn span { font-size: 11px; color: rgba(255,255,255,0.75); }
         .pe-filter-btn.active span { color: #fff; font-weight: 600; }
-        .pe-adjust-row { display: flex; align-items: center; gap: 10px; padding: 4px 24px calc(16px + env(safe-area-inset-bottom,0px)); flex-shrink: 0; }
+        .pe-adjust-row { display: flex; align-items: center; gap: 10px; padding: 4px 24px; flex-shrink: 0; }
         .pe-adjust-row label { font-size: 13px; color: rgba(255,255,255,0.75); width: 84px; flex-shrink: 0; }
         .pe-adjust-row input[type="range"] { flex: 1; accent-color: var(--accent-main, #0a84ff); }
 
@@ -1986,6 +2020,7 @@
         <div class="pe-crop-wrap">
             <div class="pe-crop-frame" id="pe-crop-frame">
                 <img id="pe-image" draggable="false" alt="">
+                <div class="pe-vignette" id="pe-vignette"></div>
                 <div class="pe-circle-guide" id="pe-circle-guide"></div>
             </div>
         </div>
@@ -1998,16 +2033,19 @@
             <input type="range" id="pe-zoom-range" min="100" max="400" value="100">
             <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path><path d="M11 8v6"></path><path d="M8 11h6"></path></svg>
         </div>
-        <div class="pe-filters" id="pe-filters">
-            <button class="pe-filter-btn active" data-filter="none"><span class="pe-filter-thumb" id="pe-thumb-none"></span><span>Оригінал</span></button>
-            <button class="pe-filter-btn" data-filter="vivid"><span class="pe-filter-thumb" id="pe-thumb-vivid"></span><span>Яскраво</span></button>
-            <button class="pe-filter-btn" data-filter="warm"><span class="pe-filter-thumb" id="pe-thumb-warm"></span><span>Тепло</span></button>
-            <button class="pe-filter-btn" data-filter="cool"><span class="pe-filter-thumb" id="pe-thumb-cool"></span><span>Прохолода</span></button>
-            <button class="pe-filter-btn" data-filter="bw"><span class="pe-filter-thumb" id="pe-thumb-bw"></span><span>Ч/Б</span></button>
-        </div>
-        <div class="pe-adjust-row">
-            <label>Яскравість</label>
-            <input type="range" id="pe-brightness-range" min="-40" max="40" value="0">
+        <div class="pe-panel">
+            <div class="pe-filters" id="pe-filters"></div>
+            <div class="pe-adjust-title"><span>Налаштування</span><button id="pe-reset-btn">Скинути</button></div>
+            <div class="pe-adjust-row"><label>Яскравість</label><input type="range" id="pe-brightness-range" min="-40" max="40" value="0"></div>
+            <div class="pe-adjust-row"><label>Контраст</label><input type="range" id="pe-contrast-range" min="-40" max="40" value="0"></div>
+            <div class="pe-adjust-row"><label>Насиченість</label><input type="range" id="pe-saturation-range" min="-60" max="60" value="0"></div>
+            <div class="pe-adjust-row"><label>Тепло</label><input type="range" id="pe-warmth-range" min="-40" max="40" value="0"></div>
+            <div class="pe-adjust-row"><label>Віньєтка</label><input type="range" id="pe-vignette-range" min="0" max="100" value="0"></div>
+            <div class="pe-caption-row" id="pe-caption-row">
+                <label for="pe-caption-input">Опис</label>
+                <textarea id="pe-caption-input" rows="2" maxlength="200" placeholder="Додайте опис до фото…"></textarea>
+                <div class="pe-caption-count"><span id="pe-caption-count">0</span>/200</div>
+            </div>
         </div>
     </div>
 
@@ -2158,11 +2196,15 @@
                 <button class="story-viewer-action-btn" id="story-viewer-msg-btn" aria-label="Написати">
                     <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
                 </button>
+                <button class="story-viewer-action-btn" id="story-viewer-menu-btn" aria-label="Меню">
+                    <svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.9"></circle><circle cx="12" cy="12" r="1.9"></circle><circle cx="19" cy="12" r="1.9"></circle></svg>
+                </button>
                 <button class="story-viewer-action-btn" id="story-viewer-more-btn" aria-label="Редагувати">
                     <svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="19" cy="12" r="1.6"></circle></svg>
                 </button>
             </div>
         </div>
+        <div id="story-viewer-menu"></div>
     </div>
 
     <!-- ---- Розміщення власної точки на карті: перехрестя в центрі екрана + карта рухається під ним ---- -->
@@ -4014,8 +4056,42 @@
             vivid: 'saturate(1.35) contrast(1.08)',
             warm: 'sepia(0.28) saturate(1.15) contrast(1.03)',
             cool: 'saturate(1.1) hue-rotate(-8deg) contrast(1.04) brightness(1.02)',
-            bw: 'grayscale(1) contrast(1.08)'
+            bw: 'grayscale(1) contrast(1.08)',
+            crisp: 'contrast(1.18) saturate(1.15) brightness(1.02)',
+            dramatic: 'contrast(1.28) saturate(0.88) brightness(0.96)',
+            cinema: 'contrast(1.15) saturate(1.1) hue-rotate(-6deg) brightness(0.95)',
+            sunrise: 'sepia(0.22) saturate(1.4) hue-rotate(-12deg) brightness(1.05) contrast(1.02)',
+            vintage: 'sepia(0.45) contrast(0.95) saturate(1.15) brightness(1.03)',
+            fade: 'contrast(0.88) brightness(1.08) saturate(0.82) sepia(0.08)',
+            pastel: 'saturate(0.8) brightness(1.12) contrast(0.92)',
+            rose: 'sepia(0.15) hue-rotate(-25deg) saturate(1.3) brightness(1.02)',
+            emerald: 'hue-rotate(18deg) saturate(1.2) contrast(1.03)',
+            noir: 'grayscale(1) contrast(1.4) brightness(0.92)',
+            sepia: 'sepia(0.9) contrast(1.02)'
         };
+        const PE_FILTER_LABELS = {
+            none: 'Оригінал', vivid: 'Яскраво', warm: 'Тепло', cool: 'Прохолода', bw: 'Ч/Б', crisp: 'Чітко', dramatic: 'Драма',
+            cinema: 'Кіно', sunrise: 'Світанок', vintage: 'Вінтаж', fade: 'Блякло', pastel: 'Пастель', rose: 'Рожевий',
+            emerald: 'Смарагд', noir: 'Нуар', sepia: 'Сепія'
+        };
+        (function buildPeFilterButtons() {
+            const box = document.getElementById('pe-filters');
+            Object.keys(PE_FILTERS).forEach((key, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'pe-filter-btn' + (i === 0 ? ' active' : '');
+                btn.setAttribute('data-filter', key);
+                btn.innerHTML = `<span class="pe-filter-thumb" id="pe-thumb-${key}"></span><span>${PE_FILTER_LABELS[key] || key}</span>`;
+                box.appendChild(btn);
+            });
+        })();
+        // Опис, який користувач ввів у редакторі; викликач читає його одразу після await openPhotoEditor(...).
+        let peLastCaption = '';
+        function capKey(url) { let h = 5381; url = String(url || ''); for (let i = 0; i < url.length; i++) h = ((h << 5) + h + url.charCodeAt(i)) | 0; return 'c' + (h >>> 0).toString(36); }
+        function captionFor(entry, url) {
+            if (!entry || !entry.id) return '';
+            const caps = entry.id === myId ? (myProfile.photoCaptions || {}) : ((firebaseProfilesCache[entry.id] || {}).photoCaptions || {});
+            return caps[capKey(url)] || '';
+        }
         function openPhotoEditor(file, opts) {
             opts = opts || {};
             const isStory = opts.aspect === 'story';
@@ -4027,6 +4103,16 @@
                 const zoomRange = document.getElementById('pe-zoom-range');
                 const brightnessRange = document.getElementById('pe-brightness-range');
                 const filterBtns = document.querySelectorAll('#pe-filters .pe-filter-btn');
+                const contrastRange = document.getElementById('pe-contrast-range');
+                const saturationRange = document.getElementById('pe-saturation-range');
+                const warmthRange = document.getElementById('pe-warmth-range');
+                const vignetteRange = document.getElementById('pe-vignette-range');
+                const vignetteEl = document.getElementById('pe-vignette');
+                const captionInput = document.getElementById('pe-caption-input');
+                const captionCount = document.getElementById('pe-caption-count');
+                const resetBtn = document.getElementById('pe-reset-btn');
+                document.getElementById('pe-caption-row').style.display = opts.noCaption ? 'none' : 'block';
+                captionInput.value = ''; captionCount.innerText = '0'; peLastCaption = '';
                 frame.classList.toggle('aspect-story', isStory);
                 const guideEl = document.getElementById('pe-circle-guide');
                 const previewRow = document.getElementById('pe-preview-row');
@@ -4048,7 +4134,7 @@
                 reader.readAsDataURL(file);
 
                 let naturalW = 0, naturalH = 0, frameW = 0, frameH = 0, baseScale = 1, zoom = 1;
-                let offX = 0, offY = 0, activeFilter = 'none', brightness = 0;
+                let offX = 0, offY = 0, activeFilter = 'none', brightness = 0, contrast = 0, saturation = 0, warmth = 0, vignette = 0;
                 let dragging = false, startX = 0, startY = 0, startOffX = 0, startOffY = 0;
 
                 function applyTransform() {
@@ -4071,8 +4157,23 @@
                     offY = Math.min(0, Math.max(frameH - dispH, offY));
                 }
                 function currentCssFilter() {
-                    const b = 1 + brightness / 100;
-                    return [PE_FILTERS[activeFilter], `brightness(${b})`].filter(Boolean).join(' ');
+                    const parts = [PE_FILTERS[activeFilter]];
+                    if (brightness) parts.push(`brightness(${1 + brightness / 100})`);
+                    if (contrast) parts.push(`contrast(${1 + contrast / 100})`);
+                    if (saturation) parts.push(`saturate(${1 + saturation / 100})`);
+                    if (warmth > 0) parts.push(`sepia(${(warmth / 40) * 0.35}) saturate(${1 + (warmth / 40) * 0.15})`);
+                    else if (warmth < 0) parts.push(`hue-rotate(${(warmth / 40) * 18}deg)`);
+                    return parts.filter(Boolean).join(' ');
+                }
+                // Віньєтка: радіальне затемнення країв. Однаковий розрахунок для прев'ю та для підсумкового зображення.
+                function vignetteStartPct(w, h) { return (0.22 * Math.min(w, h)) / (Math.hypot(w, h) / 2) * 100; }
+                function refreshLook() {
+                    imgEl.style.filter = currentCssFilter();
+                    const a = (vignette / 100) * 0.85;
+                    vignetteEl.style.background = a > 0
+                        ? `radial-gradient(circle farthest-corner at 50% 50%, rgba(0,0,0,0) ${vignetteStartPct(frameW || 1, frameH || 1)}%, rgba(0,0,0,${a}) 100%)`
+                        : 'none';
+                    applyTransform();
                 }
 
                 imgEl.onload = () => {
@@ -4083,9 +4184,8 @@
                     zoom = 1;
                     offX = (frameW - naturalW * baseScale) / 2;
                     offY = (frameH - naturalH * baseScale) / 2;
-                    imgEl.style.filter = currentCssFilter();
                     clampOffsets();
-                    applyTransform();
+                    refreshLook();
                 };
 
                 // Один палець/миша — перетягування; два пальці — масштабування (pinch) навколо центру пальців; колесо миші — зум.
@@ -4144,14 +4244,26 @@
                 function onZoomInput() { setZoom(Number(zoomRange.value) / 100, frameW / 2, frameH / 2); }
                 zoomRange.addEventListener('input', onZoomInput);
 
-                function onBrightnessInput() { brightness = Number(brightnessRange.value); imgEl.style.filter = currentCssFilter(); applyTransform(); }
-                brightnessRange.addEventListener('input', onBrightnessInput);
+                const adjustInputs = [
+                    [brightnessRange, (v) => { brightness = v; }], [contrastRange, (v) => { contrast = v; }],
+                    [saturationRange, (v) => { saturation = v; }], [warmthRange, (v) => { warmth = v; }],
+                    [vignetteRange, (v) => { vignette = v; }]
+                ].map(([el, set]) => { const fn = () => { set(Number(el.value)); refreshLook(); }; el.addEventListener('input', fn); return [el, fn]; });
+                function onCaptionInput() { captionCount.innerText = String(captionInput.value.length); }
+                captionInput.addEventListener('input', onCaptionInput);
+                function onResetClick() {
+                    brightness = contrast = saturation = warmth = vignette = 0; activeFilter = 'none';
+                    [brightnessRange, contrastRange, saturationRange, warmthRange, vignetteRange].forEach(el => el.value = 0);
+                    filterBtns.forEach(b => b.classList.toggle('active', b.getAttribute('data-filter') === 'none'));
+                    refreshLook();
+                }
+                resetBtn.addEventListener('click', onResetClick);
 
                 function onFilterClick(e) {
                     const btn = e.currentTarget;
                     activeFilter = btn.getAttribute('data-filter');
                     filterBtns.forEach(b => b.classList.toggle('active', b === btn));
-                    imgEl.style.filter = currentCssFilter(); applyTransform();
+                    refreshLook();
                 }
                 filterBtns.forEach(btn => btn.addEventListener('click', onFilterClick));
 
@@ -4165,15 +4277,18 @@
                     frame.removeEventListener('wheel', onWheel);
                     pointers.clear();
                     zoomRange.removeEventListener('input', onZoomInput);
-                    brightnessRange.removeEventListener('input', onBrightnessInput);
+                    adjustInputs.forEach(([el, fn]) => { el.removeEventListener('input', fn); el.value = 0; });
+                    captionInput.removeEventListener('input', onCaptionInput);
+                    resetBtn.removeEventListener('click', onResetClick);
+                    vignetteEl.style.background = 'none';
                     filterBtns.forEach(btn => btn.removeEventListener('click', onFilterClick));
-                    zoomRange.value = 100; brightnessRange.value = 0;
+                    zoomRange.value = 100;
                     filterBtns.forEach(b => b.classList.toggle('active', b.getAttribute('data-filter') === 'none'));
                     document.getElementById('pe-cancel-btn').onclick = null;
                     document.getElementById('pe-done-btn').onclick = null;
                 }
 
-                document.getElementById('pe-cancel-btn').onclick = () => { cleanup(); resolve(null); };
+                document.getElementById('pe-cancel-btn').onclick = () => { peLastCaption = ''; cleanup(); captionInput.value = ''; resolve(null); };
                 document.getElementById('pe-done-btn').onclick = () => {
                     const scale = baseScale * zoom;
                     const srcX = -offX / scale, srcY = -offY / scale;
@@ -4194,6 +4309,13 @@
                     ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
                     ctx.filter = currentCssFilter();
                     ctx.drawImage(imgEl, srcX, srcY, srcW, srcH, 0, 0, cw, ch);
+                    if (vignette > 0) {
+                        ctx.filter = 'none';
+                        const g = ctx.createRadialGradient(cw / 2, ch / 2, Math.min(cw, ch) * 0.22, cw / 2, ch / 2, Math.hypot(cw, ch) / 2);
+                        g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, `rgba(0,0,0,${(vignette / 100) * 0.85})`);
+                        ctx.fillStyle = g; ctx.fillRect(0, 0, cw, ch);
+                    }
+                    peLastCaption = opts.noCaption ? '' : captionInput.value.trim();
                     cleanup();
                     // Кроп готовий локально — тепер вивантажуємо результат на сервер Telegram і
                     // повертаємо вже постійне посилання на нього (замість base64 у Firebase).
@@ -4296,7 +4418,8 @@
         function saveMyProfileToFirebase() {
             return set(ref(db, `profiles/${myId}`), {
                 name: myProfile.name, status: myProfile.status, about: myProfile.about,
-                interests: myProfile.interests, photos: myProfile.photos || [], stories: myProfile.stories || [], coords: myCoords
+                interests: myProfile.interests, photos: myProfile.photos || [], stories: myProfile.stories || [], coords: myCoords,
+                photoCaptions: myProfile.photoCaptions || {}
             });
         }
 
@@ -4377,8 +4500,9 @@
             v.load();
         }
 
-        async function addStory(type, url, frame) {
+        async function addStory(type, url, frame, caption) {
             myProfile.stories = myProfile.stories || [];
+            if (caption) { myProfile.photoCaptions = myProfile.photoCaptions || {}; myProfile.photoCaptions[capKey(url)] = caption; }
             const entry = { type, url, ts: Date.now() };
             if (frame) entry.frame = frame;
             myProfile.stories.push(entry);
@@ -4470,7 +4594,7 @@
             try { dataUrl = await openPhotoEditor(file, { aspect: 'story', outW: 1080, outH: 1920 }); }
             catch (err) { alert(mediaUploadErrorMessage(err)); return; }
             if (!dataUrl) return; // користувач натиснув "Скасувати"
-            await addStory('photo', dataUrl);
+            await addStory('photo', dataUrl, undefined, peLastCaption);
         });
         document.getElementById('story-add-video-input').addEventListener('change', async (e) => {
             const file = e.target.files[0]; if (!file) return;
@@ -4514,7 +4638,8 @@
             msgBtn.style.display = canLike ? 'flex' : 'none';
             moreBtn.style.display = isOwnEditable ? 'flex' : 'none';
             pillText.innerText = (storyViewerEntry && storyViewerEntry.status) ? storyViewerEntry.status : '';
-            document.getElementById('story-viewer-pill').style.display = (hasEntry && (canLike || canLocate || isOwnEditable || pillText.innerText)) ? 'flex' : 'none';
+            document.getElementById('story-viewer-pill').style.display = 'flex'; // знизу завжди лише кнопка «···»
+            closeStoryMenu(true);
             const wrap = document.getElementById('story-viewer-bars'); wrap.innerHTML = '';
             storyViewerList.forEach(() => {
                 const bar = document.createElement('div'); bar.className = 'story-bar';
@@ -4572,6 +4697,7 @@
 
         function closeStoryViewer() {
             clearTimeout(storyViewerTimer);
+            const svMenu = document.getElementById('story-viewer-menu'); svMenu.style.display = 'none'; svMenu.innerHTML = '';
             document.getElementById('story-viewer-media').innerHTML = '';
             document.getElementById('story-viewer').style.display = 'none';
             storyViewerEntry = null;
@@ -4618,6 +4744,70 @@
             openPersonChatTab(entry);
         });
 
+        // ---- Меню «···» під фото/відео: усі доступні дії в одному списку ----
+        const SV_ICONS = {
+            heart: '<svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg>',
+            bookmark: '<svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>',
+            pin: '<svg viewBox="0 0 24 24"><path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>',
+            chat: '<svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>',
+            download: '<svg viewBox="0 0 24 24"><path d="M12 3v12"></path><path d="M7 11l5 5 5-5"></path><path d="M4 21h16"></path></svg>',
+            share: '<svg viewBox="0 0 24 24"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"></path><path d="M16 6l-4-4-4 4"></path><path d="M12 2v14"></path></svg>',
+            trash: '<svg viewBox="0 0 24 24"><path d="M3 6h18"></path><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"></path><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path></svg>'
+        };
+        async function saveMediaToDevice(url) {
+            const tg = window.Telegram && window.Telegram.WebApp;
+            const name = 'lviv-' + Date.now() + (isHeroVideoUrl(url) ? '.mp4' : '.jpg');
+            if (tg && typeof tg.downloadFile === 'function' && tg.isVersionAtLeast && tg.isVersionAtLeast('8.0')) {
+                try { tg.downloadFile({ url, file_name: name }); return; } catch (_) {}
+            }
+            try {
+                const r = await fetch(url); const blob = await r.blob();
+                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+                document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+            } catch (_) { window.open(url, '_blank'); }
+        }
+        async function shareMediaLink(url) {
+            try { if (navigator.share) { await navigator.share({ url }); return; } } catch (_) { return; }
+            try { await navigator.clipboard.writeText(url); alert('Посилання скопійовано'); } catch (_) { window.open(url, '_blank'); }
+        }
+        function closeStoryMenu(silent) {
+            const menu = document.getElementById('story-viewer-menu');
+            if (menu.style.display === 'none' || !menu.style.display) { menu.innerHTML = ''; return; }
+            menu.style.display = 'none'; menu.innerHTML = '';
+            if (!silent && storyViewerAutoAdvance && storyViewerList[storyViewerIdx]) playStoryAt(storyViewerIdx); // продовжуємо сторі після меню
+        }
+        function openStoryMenu() {
+            const cur = storyViewerList[storyViewerIdx]; if (!cur) return;
+            clearTimeout(storyViewerTimer); // поки меню відкрите — сторі не перемикається саме
+            const menu = document.getElementById('story-viewer-menu');
+            const vis = (id) => document.getElementById(id).style.display !== 'none';
+            const likeBtn = document.getElementById('story-viewer-like-btn'), saveBtn = document.getElementById('story-viewer-save-btn');
+            const cap = captionFor(storyViewerEntry, cur.url) || ((storyViewerEntry && storyViewerEntry.status) || '');
+            const rows = [];
+            if (vis('story-viewer-like-btn')) { const on = likeBtn.classList.contains('liked'); rows.push({ icon: SV_ICONS.heart, label: on ? 'Прибрати з улюблених' : 'Додати в улюблені', on, fn: () => likeBtn.click() }); }
+            if (vis('story-viewer-save-btn')) { const on = saveBtn.classList.contains('saved'); rows.push({ icon: SV_ICONS.bookmark, label: on ? 'Прибрати зі збережених' : 'Зберегти', on, fn: () => saveBtn.click() }); }
+            if (vis('story-viewer-location-btn')) rows.push({ icon: SV_ICONS.pin, label: 'Показати на карті', fn: () => document.getElementById('story-viewer-location-btn').click() });
+            if (vis('story-viewer-msg-btn')) rows.push({ icon: SV_ICONS.chat, label: 'Написати', fn: () => document.getElementById('story-viewer-msg-btn').click() });
+            rows.push({ icon: SV_ICONS.download, label: cur.type === 'video' ? 'Зберегти відео на пристрій' : 'Зберегти фото на пристрій', fn: () => saveMediaToDevice(cur.url) });
+            rows.push({ icon: SV_ICONS.share, label: 'Поділитись', fn: () => shareMediaLink(cur.url) });
+            if (vis('story-viewer-more-btn')) rows.push({ icon: SV_ICONS.trash, label: 'Видалити', danger: true, fn: () => document.getElementById('story-viewer-more-btn').click() });
+            menu.innerHTML = '';
+            const card = document.createElement('div'); card.className = 'sv-menu-card';
+            if (cap) { const c = document.createElement('div'); c.className = 'sv-menu-caption'; c.innerText = cap; card.appendChild(c); }
+            rows.forEach(r => {
+                const b = document.createElement('button'); b.className = 'sv-menu-row' + (r.danger ? ' danger' : '') + (r.on ? ' on' : '');
+                b.innerHTML = r.icon + '<span></span>'; b.lastChild.innerText = r.label;
+                b.addEventListener('click', (e) => { e.stopPropagation(); closeStoryMenu(true); r.fn(); });
+                card.appendChild(b);
+            });
+            const cancel = document.createElement('button'); cancel.className = 'sv-menu-row sv-menu-cancel'; cancel.innerText = 'Скасувати';
+            cancel.addEventListener('click', (e) => { e.stopPropagation(); closeStoryMenu(false); });
+            menu.appendChild(card); menu.appendChild(cancel);
+            menu.onclick = (e) => { if (e.target === menu) closeStoryMenu(false); };
+            menu.style.display = 'flex';
+        }
+        document.getElementById('story-viewer-menu-btn').addEventListener('click', (e) => { e.stopPropagation(); openStoryMenu(); });
+
         document.getElementById('story-viewer-more-btn').addEventListener('click', async (e) => {
             e.stopPropagation();
             if (!storyViewerEntry || storyViewerEntry.id !== myId) return;
@@ -4632,6 +4822,7 @@
             }
             if (!confirm('Видалити це фото/відео?')) return;
             if (storyIdx !== -1) myProfile.stories.splice(storyIdx, 1);
+            if (myProfile.photoCaptions) delete myProfile.photoCaptions[capKey(url)];
             if (photoIdx !== -1) { myProfile.photos.splice(photoIdx, 1); localStorage.setItem('chat_profile_edited', '1'); }
             if (currentActiveItem && currentActiveItem.id === myId) {
                 currentActiveItem.stories = myProfile.stories;
@@ -4651,7 +4842,7 @@
             let sx = 0, sy = 0, dx = 0, dy = 0, lock = null, active = false, samples = [], closing = false;
             const resetViewerStyles = () => { el.style.transition = ''; el.style.transform = ''; el.style.opacity = ''; el.style.borderRadius = ''; el.style.overflow = ''; };
             el.addEventListener('touchstart', (e) => {
-                if (closing || e.target.closest('#story-viewer-close') || e.target.closest('#story-viewer-pill')) { active = false; return; }
+                if (closing || e.target.closest('#story-viewer-close') || e.target.closest('#story-viewer-pill') || e.target.closest('#story-viewer-menu')) { active = false; return; }
                 sx = e.touches[0].clientX; sy = e.touches[0].clientY; dx = 0; dy = 0; lock = null; active = true;
                 samples = [{ t: Date.now(), v: sy }];
             }, { passive: true });
@@ -4740,9 +4931,10 @@
         }
 
         // Спільна логіка додавання нового фото/відео у список фото профілю (photos[]).
-        async function addProfileMedia(url) {
+        async function addProfileMedia(url, caption) {
             myProfile.photos = myProfile.photos || [];
             myProfile.photos.push(url);
+            if (caption) { myProfile.photoCaptions = myProfile.photoCaptions || {}; myProfile.photoCaptions[capKey(url)] = caption; }
             localStorage.setItem('chat_profile_edited', '1');
             if (currentActiveItem && currentActiveItem.id === myId) { currentActiveItem.photos = myProfile.photos; renderHeroMedia(myProfile.photos); goToHeroSlide(myProfile.photos.length - 1); }
             refreshIgProfileIfOpen();
@@ -4776,7 +4968,7 @@
             catch (err) { alert(mediaUploadErrorMessage(err)); e.target.value = ''; return; }
             e.target.value = '';
             if (!dataUrl) return; // користувач натиснув "Скасувати"
-            await addProfileMedia(dataUrl);
+            await addProfileMedia(dataUrl, peLastCaption);
         });
         document.getElementById('prof-video-input').addEventListener('change', (e) => {
             const file = e.target.files[0]; if (!file) return;
@@ -4790,6 +4982,7 @@
             if (myProfile.photos.length === 1) { alert('Це останнє фото/відео профілю — лишіть хоча б одне.'); return; }
             if (!confirm('Видалити це фото/відео?')) return;
             const idx = Math.min(heroPhotoIndex, myProfile.photos.length - 1);
+            if (myProfile.photoCaptions) delete myProfile.photoCaptions[capKey(myProfile.photos[idx])];
             myProfile.photos.splice(idx, 1);
             localStorage.setItem('chat_profile_edited', '1');
             if (currentActiveItem && currentActiveItem.id === myId) {
@@ -5436,7 +5629,7 @@
             const file = e.target.files[0]; if (!file) return;
             e.target.value = '';
             let dataUrl;
-            try { dataUrl = await openPhotoEditor(file); }
+            try { dataUrl = await openPhotoEditor(file, { noCaption: true }); }
             catch (err) { alert(mediaUploadErrorMessage(err)); return; }
             if (!dataUrl) return; // користувач натиснув "Скасувати"
             obPhotoDataUrl = dataUrl;
@@ -5462,7 +5655,7 @@
             const file = e.target.files[0]; if (!file) return;
             e.target.value = '';
             let dataUrl;
-            try { dataUrl = await openPhotoEditor(file, { aspect: 'story', outW: 1080, outH: 1920 }); }
+            try { dataUrl = await openPhotoEditor(file, { aspect: 'story', outW: 1080, outH: 1920, noCaption: true }); }
             catch (err) { alert(mediaUploadErrorMessage(err)); return; }
             if (!dataUrl) return; // користувач натиснув "Скасувати"
             obStoryData = { type: 'photo', url: dataUrl };
@@ -5554,7 +5747,8 @@
                         name: hasManualProfileEdit ? p.name : (myName || p.name),
                         status: p.status, about: p.about, interests: p.interests,
                         photos: hasManualProfileEdit ? (p.photos || []) : [tgPhotoUrl || (p.photos && p.photos[0]) || null, ...restPhotos].filter(Boolean),
-                        stories: p.stories || []
+                        stories: p.stories || [],
+                        photoCaptions: p.photoCaptions || {}
                     };
                 }
             });
