@@ -1422,7 +1422,7 @@
         .ig-top-bar-name { flex: none; min-width: 0; text-align: center; font-size: 16px; font-weight: 700; color: var(--text-color); letter-spacing: -0.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0; }
         #ig-content { flex-grow: 1; overflow-y: auto; touch-action: pan-y; -webkit-overflow-scrolling: touch; padding-bottom: 110px; box-sizing: border-box; }
 
-        .ig-hero { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: calc(54px + env(safe-area-inset-top, 0px)) 16px 8px; background: var(--bg-color); }
+        .ig-hero { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: calc(92px + env(safe-area-inset-top, 0px)) 16px 8px; background: var(--bg-color); }
         .ig-avatar { position: relative; width: 112px; height: 112px; border-radius: 50%; background-size: cover; background-position: center; background-color: #2c2c2e; box-shadow: 0 4px 14px rgba(0,0,0,0.16); cursor: pointer; transition: transform 0.15s ease; flex-shrink: 0; border: 2.5px solid var(--accent-main); box-sizing: border-box; }
         .ig-avatar:active { transform: scale(0.96); }
         /* Кнопка "+" на аватарці профілю (лише у власному профілі) — додати нову сторі,
@@ -1439,16 +1439,20 @@
         .ig-hero-mid { flex: 0 0 auto; width: 100%; min-width: 0; text-align: center; }
         /* Шестерня (налаштування) — тепер стоїть прямо над кнопкою "Додати друга",
            замість окремого рядка під "островком" нагорі. */
-        .ig-hero-actions-col { display: flex; flex-direction: column; align-items: center; gap: 8px; flex-shrink: 0; align-self: center; }
+        /* Три сталеві іконки-дії праворуч від аватарки, по висоті збігаються з нею (112px). */
+        .ig-hero-actions-col { position: absolute; right: 20px; top: calc(92px + env(safe-area-inset-top, 0px)); height: 112px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; }
+        body { --steel: #5f6b7a; --steel-bg: linear-gradient(145deg, rgba(255,255,255,0.9), rgba(196,203,213,0.55)); --steel-border: rgba(120,132,148,0.35); }
+        body.dark-theme { --steel: #b7c0cc; --steel-bg: linear-gradient(145deg, rgba(190,198,210,0.20), rgba(110,120,134,0.10)); --steel-border: rgba(190,198,210,0.28); }
         .ig-hero-action-btn {
             flex-shrink: 0; display: flex; align-items: center; justify-content: center;
-            width: 44px; height: 44px; border-radius: 50%; border: none; cursor: pointer;
-            font-family: inherit; background: rgba(0,0,0,0.06); color: var(--text-color);
-            transition: var(--theme-transition);
+            width: 34px; height: 34px; padding: 0; border-radius: 50%; cursor: pointer;
+            font-family: inherit; color: var(--steel); background: var(--steel-bg);
+            border: 1px solid var(--steel-border); -webkit-tap-highlight-color: transparent;
+            transition: transform 0.15s ease, color 0.2s ease, border-color 0.2s ease;
         }
-        body.dark-theme .ig-hero-action-btn { background: rgba(255,255,255,0.1); }
-        .ig-hero-action-btn.primary { background: var(--ultramarine-gradient); color: #fff; }
-        .ig-hero-action-btn svg { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+        .ig-hero-action-btn:active { transform: scale(0.92); }
+        .ig-hero-action-btn.active { color: var(--accent-main); border-color: var(--accent-main); }
+        .ig-hero-action-btn svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
 
         .ig-body { padding: 0 0 4px; text-align: left; }
         .ig-bio-handle { color: var(--text-secondary); font-size: 12px; margin: 0; text-align: center; letter-spacing: 0.1px; }
@@ -1719,7 +1723,9 @@
                     <p class="ig-meta-line"><span id="ig-stat-followers">0</span> підписників · <span id="ig-stat-following">0</span> підписок</p>
                 </div>
                 <div class="ig-hero-actions-col">
-                    <div id="ig-hero-action-slot"></div>
+                    <button class="ig-hero-action-btn" id="ig-act-write" aria-label="Написати"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></button>
+                    <button class="ig-hero-action-btn" id="ig-act-follow" aria-label="Підписатись"></button>
+                    <button class="ig-hero-action-btn" id="ig-act-share" aria-label="Поділитись"><svg viewBox="0 0 24 24"><path d="M12 3v12M8 7l4-4 4 4M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"></path></svg></button>
                 </div>
             </div>
             <div class="ig-body">
@@ -4022,6 +4028,7 @@
         onValue(ref(db, `friends/${myId}`), (snap) => {
             myFriends = new Set(Object.keys(snap.val() || {}));
             try { if (igCurrentIsMine) setIgStats(myFriends.size); } catch (e) {}
+            try { updateIgFollowBtn(); } catch (e) {}
             if (document.getElementById('people-search-input')) {
                 renderHomeGrid(document.getElementById('people-search-input').value);
             }
@@ -6424,17 +6431,8 @@
                 }).catch(() => {});
             }
 
-            const heroSlot = document.getElementById('ig-hero-action-slot');
-            heroSlot.innerHTML = '';
-            if (isMine) {
-                // "Додати друга" і "Поділитись" тепер у меню шестерні (вікно налаштувань) — праворуч лишається одна кнопка
-            } else {
-                const msgBtn = document.createElement('button');
-                msgBtn.className = 'ig-hero-action-btn primary'; msgBtn.setAttribute('aria-label', 'Написати');
-                msgBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>';
-                msgBtn.addEventListener('click', () => { showSidebar(item); openPersonChatTab(item); });
-                heroSlot.appendChild(msgBtn);
-            }
+            document.getElementById('ig-act-write').style.display = isMine ? 'none' : 'flex';
+            updateIgFollowBtn();
 
             const grid = document.getElementById('ig-grid');
             grid.innerHTML = '';
@@ -6456,6 +6454,32 @@
 
             showScreen('igprofile');
         }
+
+        const IG_ICON_FOLLOW = '<svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M19 8v6M22 11h-6"></path></svg>';
+        const IG_ICON_FOLLOWING = '<svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M16 11l2 2 4-4"></path></svg>';
+        function updateIgFollowBtn() {
+            const btn = document.getElementById('ig-act-follow');
+            if (!btn) return;
+            const following = !igCurrentIsMine && igCurrentItem && myFriends.has(igCurrentItem.id);
+            btn.innerHTML = following ? IG_ICON_FOLLOWING : IG_ICON_FOLLOW;
+            btn.classList.toggle('active', !!following);
+            btn.setAttribute('aria-label', following ? 'Ви підписані' : 'Підписатись');
+        }
+        document.getElementById('ig-act-write').addEventListener('click', () => {
+            if (igCurrentItem && !igCurrentIsMine) { showSidebar(igCurrentItem); openPersonChatTab(igCurrentItem); }
+        });
+        document.getElementById('ig-act-follow').addEventListener('click', async () => {
+            if (igCurrentIsMine) { openAddFriendModal(); return; }
+            if (!igCurrentItem) return;
+            const id = igCurrentItem.id;
+            if (myFriends.has(id)) {
+                await remove(ref(db, `friends/${myId}/${id}`));
+                await remove(ref(db, `friends/${id}/${myId}`));
+            } else {
+                addMutualFriend(id);
+            }
+        });
+        document.getElementById('ig-act-share').addEventListener('click', () => shareReferralLink());
 
         function openMediaGallery(photos, startIdx, name, entry) {
             const list = photos.map(url => ({ type: isHeroVideoUrl(url) ? 'video' : 'photo', url, ts: Date.now() }));
