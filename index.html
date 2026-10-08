@@ -2393,7 +2393,7 @@
                     if (xhr.status >= 200 && xhr.status < 300) {
                         try {
                             const data = JSON.parse(xhr.responseText);
-                            resolveTelegramFileUrl(data.secure_url, kind).then(resolve).catch(reject);
+                            resolveTelegramFileUrl(kind === 'video' ? playableVideoUrl(data.secure_url) : data.secure_url, kind).then(resolve).catch(reject);
                         } catch (err) { reject(err); }
                     } else {
                         reject(new Error('cloudinary-upload-failed-' + xhr.status));
@@ -3487,7 +3487,19 @@
             registerFavMarker(place.id, placeMarker);
         });
 
-        function isHeroVideoUrl(url) { return /\.(mp4|webm|mov|m4v)(\?|$)/i.test(url || ''); }
+        function isHeroVideoUrl(url) { return /\.(mp4|webm|mov|m4v)(\?|$)/i.test(url || '') || /res\.cloudinary\.com\/[^/]+\/video\/upload\//i.test(url || ''); }
+        // Відео з iPhone (.mov / HEVC) та деякі інші формати не грають у веб-в'ювері Telegram/Android.
+        // Cloudinary вміє віддати те саме відео як H.264 MP4 «на льоту» — просимо саме його.
+        function playableVideoUrl(url) {
+            if (!url || typeof url !== 'string') return url;
+            const m = url.match(/^(https:\/\/res\.cloudinary\.com\/[^/]+\/video\/upload\/)(.*)$/i);
+            if (!m) return url;
+            let rest = m[2];
+            if (/^f_mp4/.test(rest)) return url;                 // вже перетворено
+            if (!/^v\d+\//.test(rest)) return url;              // є власні трансформації — не чіпаємо
+            rest = rest.replace(/\.[a-z0-9]+(\?.*)?$/i, '.mp4$1');
+            return m[1] + 'f_mp4,vc_h264,ac_aac,q_auto/' + rest;
+        }
 
         // Будує повноекранну стрічку фото/відео картки, яку можна гортати вбоки (як в Instagram/Apple)
         function renderHeroMedia(photos) {
@@ -3502,7 +3514,7 @@
                 const slide = document.createElement('div'); slide.className = 'hero-slide';
                 if (isHeroVideoUrl(src)) {
                     const video = document.createElement('video');
-                    video.src = src; video.autoplay = true; video.muted = true; video.loop = true; video.playsInline = true; video.setAttribute('webkit-playsinline', '');
+                    video.src = playableVideoUrl(src); video.autoplay = true; video.muted = true; video.loop = true; video.playsInline = true; video.setAttribute('webkit-playsinline', '');
                     slide.appendChild(video);
                     slide.classList.add('loaded');
                     attemptCirclePlay(video); allCircleVideos.add(video);
@@ -3820,7 +3832,7 @@
                 li.appendChild(img);
             } else if (type === 'video') {
                 li.classList.add('msg-media');
-                const video = document.createElement('video'); video.src = msg.url; video.playsInline = true; video.muted = true;
+                const video = document.createElement('video'); video.src = playableVideoUrl(msg.url); video.playsInline = true; video.muted = true;
                 video.addEventListener('click', () => openStoryViewer([{ type: 'video', url: msg.url, ts: msg.timestamp || Date.now() }], 0, 'Відео', { showTime: false, autoAdvance: false }));
                 li.appendChild(video);
             } else if (type === 'file') {
@@ -4605,7 +4617,7 @@
                 if (s.type === 'photo') { inner.style.backgroundImage = `url('${s.url}')`; }
                 else {
                     const v = document.createElement('video');
-                    v.className = 'hero-story-thumb-video'; v.src = s.url;
+                    v.className = 'hero-story-thumb-video'; v.src = playableVideoUrl(s.url);
                     v.muted = true; v.defaultMuted = true; v.loop = true; v.autoplay = true; v.playsInline = true;
                     v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
                     applyStoryVideoFrame(v, s.frame);
@@ -4725,7 +4737,7 @@
                     storyViewerTimer = setTimeout(() => storyAdvance(1), STORY_PHOTO_MS);
                 } else if (bars[idx]) { bars[idx].style.width = '100%'; }
             } else {
-                const v = document.createElement('video'); v.src = s.url; v.autoplay = true; v.muted = true; v.playsInline = true; v.controls = false;
+                const v = document.createElement('video'); v.src = playableVideoUrl(s.url); v.autoplay = true; v.muted = true; v.playsInline = true; v.controls = false;
                 v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
                 applyStoryVideoFrame(v, s.frame);
                 media.appendChild(v);
@@ -6490,7 +6502,7 @@
                 const cell = document.createElement('div'); cell.className = 'ig-grid-item';
                 if (isHeroVideoUrl(url)) {
                     const v = document.createElement('video');
-                    v.className = 'ig-grid-item-video'; v.src = url;
+                    v.className = 'ig-grid-item-video'; v.src = playableVideoUrl(url);
                     v.muted = true; v.defaultMuted = true; v.loop = true; v.autoplay = true; v.playsInline = true;
                     v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
                     cell.appendChild(v);
