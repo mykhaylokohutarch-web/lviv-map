@@ -1448,6 +1448,8 @@
         #ig-act-write { right: calc(50% - 112px); }
         #ig-act-share { right: 60px; }
 
+        .ig-coupon-btn { margin: 10px auto 0; padding: 8px 18px; border-radius: 999px; border: 1px solid var(--accent-main); background: transparent; color: var(--accent-main); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        .ig-coupon-btn:active { transform: scale(0.96); }
         .ig-body { padding: 0 0 4px; text-align: left; }
         .ig-bio-handle { color: var(--text-secondary); font-size: 12px; margin: 0; text-align: center; letter-spacing: 0.1px; }
         .ig-bio-text { font-size: 13px; color: var(--text-color); margin: 6px 0 6px; line-height: 1.4; text-align: center; }
@@ -1717,7 +1719,9 @@
                 <div class="ig-hero-mid">
                     <p class="ig-bio-handle" id="ig-bio-handle"></p>
                     <p class="ig-bio-text" id="ig-bio-text"></p>
-                    <p class="ig-meta-line"><span id="ig-stat-followers">0</span> підписників · <span id="ig-stat-following">0</span> підписок</p>
+                    <p class="ig-meta-line" id="ig-meta-people"><span id="ig-stat-followers">0</span> підписників · <span id="ig-stat-following">0</span> підписок</p>
+                    <p class="ig-meta-line" id="ig-meta-place" style="display:none"></p>
+                    <button class="ig-coupon-btn" id="ig-place-coupon" style="display:none">Отримати купон</button>
                 </div>
             </div>
             <div class="ig-body">
@@ -6033,7 +6037,7 @@
                 mini.style.backgroundImage = `url('${thumbUrl((e.photos && e.photos[0]) || '', 100)}')`;
                 mini.addEventListener('click', (ev) => {
                     ev.stopPropagation();
-                    if (e.type === 'place') { showSidebar(e); } else { openIgProfile(e, false); }
+                    openIgProfile(e, false);
                 });
                 avatar.appendChild(mini);
                 if (e.isMe) {
@@ -6047,7 +6051,7 @@
                 const nameSpan = document.createElement('span'); nameSpan.className = 'home-circle-name';
                 nameSpan.addEventListener('click', (ev) => {
                     ev.stopPropagation();
-                    if (e.type === 'place') { showSidebar(e); } else { openIgProfile(e, false); }
+                    openIgProfile(e, false);
                 });
                 item.appendChild(avatar); item.appendChild(nameSpan);
                 if (e.isMe) {
@@ -6414,10 +6418,17 @@
             const handle = slugHandle(item.name);
             document.getElementById('ig-bio-handle').innerText = handle;
             document.getElementById('ig-top-name').innerText = item.name || 'Гість';
-            document.getElementById('ig-bio-text').innerText = item.about || item.status || '';
+            const isPlace = item.type === 'place';
+            document.getElementById('ig-bio-text').innerText = isPlace ? (item.text1 || item.status || '') : (item.about || item.status || '');
+            if (isPlace) document.getElementById('ig-bio-handle').innerText = item.status || handle;
+            document.getElementById('ig-meta-people').style.display = isPlace ? 'none' : '';
+            const placeMeta = document.getElementById('ig-meta-place');
+            placeMeta.style.display = isPlace ? '' : 'none';
+            placeMeta.innerText = isPlace ? (item.text2 || '') : '';
+            document.getElementById('ig-place-coupon').style.display = isPlace ? '' : 'none';
             // Реальні числа: дружба в застосунку взаємна, тож підписники = підписки = кількість друзів у базі.
             setIgStats(isMine ? myFriends.size : 0);
-            if (!isMine) {
+            if (!isMine && !isPlace) {
                 get(ref(db, `friends/${item.id}`)).then(snap => {
                     if (igCurrentItem && igCurrentItem.id === item.id) setIgStats(Object.keys(snap.val() || {}).length);
                 }).catch(() => {});
@@ -6461,6 +6472,10 @@
         function updateIgFollowBtn() {
             const btn = document.getElementById('ig-act-follow');
             if (!btn) return;
+            if (igCurrentItem && igCurrentItem.type === 'place') {
+                btn.innerHTML = IG_ICON_LOCATION; btn.classList.remove('active'); btn.setAttribute('aria-label', 'Локація');
+                return;
+            }
             const following = !igCurrentIsMine && igCurrentItem && myFriends.has(igCurrentItem.id);
             btn.innerHTML = following ? IG_ICON_FOLLOWING : IG_ICON_FOLLOW;
             btn.classList.toggle('active', !!following);
@@ -6468,11 +6483,22 @@
         }
         document.getElementById('ig-act-write').addEventListener('click', () => {
             if (igCurrentIsMine) { closeMessagesWindowIfOpen(); showScreen('map'); return; }
-            if (igCurrentItem) { showSidebar(igCurrentItem); openPersonChatTab(igCurrentItem); }
+            if (igCurrentItem) {
+                // Перекидає у вкладку «Діалоги» і одразу відкриває там переписку з цією людиною.
+                const it = igCurrentItem;
+                openChatsList();
+                openDmThread(it.id, it.name, it.photos && it.photos[0]);
+            }
         });
         document.getElementById('ig-act-follow').addEventListener('click', async () => {
             if (igCurrentIsMine) { openAddFriendModal(); return; }
             if (!igCurrentItem) return;
+            if (igCurrentItem.type === 'place') {
+                const pl = places.find(x => x.id === igCurrentItem.id);
+                closeMessagesWindowIfOpen(); showScreen('map');
+                if (pl && pl.coords) map.panTo(pl.coords);
+                return;
+            }
             const id = igCurrentItem.id;
             if (myFriends.has(id)) {
                 await remove(ref(db, `friends/${myId}/${id}`));
@@ -6482,6 +6508,11 @@
             }
         });
         document.getElementById('ig-act-share').addEventListener('click', () => shareReferralLink());
+        document.getElementById('ig-place-coupon').addEventListener('click', () => {
+            if (!igCurrentItem || igCurrentItem.type !== 'place') return;
+            currentActiveItem = igCurrentItem;
+            document.getElementById('prof-btn').click();
+        });
 
         function openMediaGallery(photos, startIdx, name, entry) {
             const list = photos.map(url => ({ type: isHeroVideoUrl(url) ? 'video' : 'photo', url, ts: Date.now() }));
