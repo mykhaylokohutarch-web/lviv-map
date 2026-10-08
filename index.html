@@ -1409,7 +1409,8 @@
         .ig-top-bar-name-row { text-align: center; padding: 0 16px; }
         /* Три лінії (меню/налаштування) — зверху праворуч на сторінці профілю, замість шестерні. */
         .ig-menu-btn {
-            position: absolute; top: calc(6px + env(safe-area-inset-top, 0px)); right: 12px;
+            /* Опущено нижче за плаваючі кнопки Telegram (закрити / «···»), щоб не перекривались. */
+            position: absolute; top: calc(52px + env(safe-area-inset-top, 0px)); right: 20px;
             width: 36px; height: 36px; border: none; background: transparent; border-radius: 50%;
             display: flex; align-items: center; justify-content: center; cursor: pointer;
             color: var(--text-color); -webkit-tap-highlight-color: transparent;
@@ -1438,7 +1439,7 @@
         .ig-hero-mid { flex: 1 1 auto; min-width: 0; text-align: left; }
         /* Шестерня (налаштування) — тепер стоїть прямо над кнопкою "Додати друга",
            замість окремого рядка під "островком" нагорі. */
-        .ig-hero-actions-col { display: flex; flex-direction: column; align-items: center; gap: 8px; flex-shrink: 0; }
+        .ig-hero-actions-col { display: flex; flex-direction: column; align-items: center; gap: 8px; flex-shrink: 0; align-self: flex-end; /* кнопка «Написати» під меню, не під ним */ }
         .ig-hero-action-btn {
             flex-shrink: 0; display: flex; align-items: center; justify-content: center;
             width: 44px; height: 44px; border-radius: 50%; border: none; cursor: pointer;
