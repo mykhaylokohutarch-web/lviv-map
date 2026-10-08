@@ -1422,7 +1422,7 @@
         .ig-top-bar-name { flex: none; min-width: 0; text-align: center; font-size: 16px; font-weight: 700; color: var(--text-color); letter-spacing: -0.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0; }
         #ig-content { flex-grow: 1; overflow-y: auto; touch-action: pan-y; -webkit-overflow-scrolling: touch; padding-bottom: 110px; box-sizing: border-box; }
 
-        .ig-hero { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: calc(92px + env(safe-area-inset-top, 0px)) 16px 8px; background: var(--bg-color); }
+        .ig-hero { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: calc(66px + env(safe-area-inset-top, 0px)) 16px 8px; background: var(--bg-color); }
         .ig-avatar { position: relative; width: 112px; height: 112px; border-radius: 50%; background-size: cover; background-position: center; background-color: #2c2c2e; box-shadow: 0 4px 14px rgba(0,0,0,0.16); cursor: pointer; transition: transform 0.15s ease; flex-shrink: 0; border: 2.5px solid var(--accent-main); box-sizing: border-box; }
         .ig-avatar:active { transform: scale(0.96); }
         /* Кнопка "+" на аватарці профілю (лише у власному профілі) — додати нову сторі,
@@ -1439,20 +1439,14 @@
         .ig-hero-mid { flex: 0 0 auto; width: 100%; min-width: 0; text-align: center; }
         /* Шестерня (налаштування) — тепер стоїть прямо над кнопкою "Додати друга",
            замість окремого рядка під "островком" нагорі. */
-        /* Три сталеві іконки-дії праворуч від аватарки, по висоті збігаються з нею (112px). */
-        .ig-hero-actions-col { position: absolute; right: 20px; top: calc(92px + env(safe-area-inset-top, 0px)); height: 112px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; }
-        body { --steel: #5f6b7a; --steel-bg: linear-gradient(145deg, rgba(255,255,255,0.9), rgba(196,203,213,0.55)); --steel-border: rgba(120,132,148,0.35); }
-        body.dark-theme { --steel: #b7c0cc; --steel-bg: linear-gradient(145deg, rgba(190,198,210,0.20), rgba(110,120,134,0.10)); --steel-border: rgba(190,198,210,0.28); }
-        .ig-hero-action-btn {
-            flex-shrink: 0; display: flex; align-items: center; justify-content: center;
-            width: 34px; height: 34px; padding: 0; border-radius: 50%; cursor: pointer;
-            font-family: inherit; color: var(--steel); background: var(--steel-bg);
-            border: 1px solid var(--steel-border); -webkit-tap-highlight-color: transparent;
-            transition: transform 0.15s ease, color 0.2s ease, border-color 0.2s ease;
-        }
-        .ig-hero-action-btn:active { transform: scale(0.92); }
-        .ig-hero-action-btn.active { color: var(--accent-main); border-color: var(--accent-main); }
-        .ig-hero-action-btn svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+        /* Іконки в тому ж мінімалістичному стилі, що й три лінії:
+           «Написати» ліворуч від аватарки, «Підписатись» праворуч, «Поділитись» поруч із трьома лініями. */
+        .ig-menu-btn svg { stroke-linejoin: round; }
+        .ig-menu-btn.active { color: var(--accent-main); }
+        .ig-side-btn { top: calc(66px + 56px - 18px + env(safe-area-inset-top, 0px)); }
+        #ig-act-write { left: calc(50% - 112px); right: auto; }
+        #ig-act-follow { right: calc(50% - 112px); }
+        #ig-act-share { right: 60px; }
 
         .ig-body { padding: 0 0 4px; text-align: left; }
         .ig-bio-handle { color: var(--text-secondary); font-size: 12px; margin: 0; text-align: center; letter-spacing: 0.1px; }
@@ -1712,20 +1706,18 @@
     <div id="screen-ig-profile" class="app-screen">
         <div class="ig-top-bar">
             <div class="ig-top-bar-name-row"><p class="ig-top-bar-name" id="ig-top-name"></p></div>
+            <button class="ig-menu-btn" id="ig-act-share" aria-label="Поділитись"><svg viewBox="0 0 24 24"><path d="M12 3v12M8 7l4-4 4 4M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"></path></svg></button>
             <button class="ig-menu-btn" id="ig-settings-btn" aria-label="Налаштування"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
         </div>
         <div id="ig-content">
             <div class="ig-hero">
+                <button class="ig-menu-btn ig-side-btn" id="ig-act-write" aria-label="Написати"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></button>
                 <div class="ig-avatar" id="ig-avatar"></div>
+                <button class="ig-menu-btn ig-side-btn" id="ig-act-follow" aria-label="Підписатись"></button>
                 <div class="ig-hero-mid">
                     <p class="ig-bio-handle" id="ig-bio-handle"></p>
                     <p class="ig-bio-text" id="ig-bio-text"></p>
                     <p class="ig-meta-line"><span id="ig-stat-followers">0</span> підписників · <span id="ig-stat-following">0</span> підписок</p>
-                </div>
-                <div class="ig-hero-actions-col">
-                    <button class="ig-hero-action-btn" id="ig-act-write" aria-label="Написати"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></button>
-                    <button class="ig-hero-action-btn" id="ig-act-follow" aria-label="Підписатись"></button>
-                    <button class="ig-hero-action-btn" id="ig-act-share" aria-label="Поділитись"><svg viewBox="0 0 24 24"><path d="M12 3v12M8 7l4-4 4 4M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"></path></svg></button>
                 </div>
             </div>
             <div class="ig-body">
@@ -6709,7 +6701,7 @@
             }
             el.addEventListener('touchstart', (e) => {
                 if (busy) { tracking = false; return; }
-                excluded = !!(e.target.closest('.ig-top-bar') || e.target.closest('.ig-gallery') || e.target.closest('.ig-avatar') || e.target.closest('.ig-hero-actions-col'));
+                excluded = !!(e.target.closest('.ig-top-bar') || e.target.closest('.ig-gallery') || e.target.closest('.ig-avatar') || e.target.closest('.ig-side-btn'));
                 sx = e.touches[0].clientX; sy = e.touches[0].clientY; st = Date.now(); tracking = true; lock = null;
                 samples = [{ t: Date.now(), v: sx }];
             }, { passive: true });
