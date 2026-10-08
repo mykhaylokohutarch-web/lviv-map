@@ -1407,10 +1407,12 @@
            людини/закладу тепер живе окремо, як хмарка діалогу над аватаркою (.home-circle-msg). */
         .home-circle-name {
             display: inline-block; font-size: 12px; line-height: 15px; height: 15px; font-weight: 600;
-            color: #ffffff; text-shadow: 0 1px 3px rgba(0,0,0,0.35);
+            color: #000000; text-shadow: none;
             text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
             max-width: var(--circle-d, 100px);
         }
+        /* Світла тема — чорні підписи; темна — білі. */
+        body.dark-theme .home-circle-name { color: #ffffff; text-shadow: 0 1px 3px rgba(0,0,0,0.35); }
 
 
         /* ---- Сторінка профілю: мінімалізм застосунку, свідомо не інстаграм-паттерн ----
@@ -6102,15 +6104,12 @@
                     openIgProfile(e, false);
                 });
                 item.appendChild(avatar); item.appendChild(nameSpan);
-                if (e.isMe) {
-                    nameSpan.innerText = 'Ви';
-                } else {
-                    // Ім'я під колом тепер завжди на місці й нікуди не зникає.
-                    nameSpan.innerText = truncateCircleName(e.name);
-                    // "Вайб" людини/закладу — маленька статична таблетка над аватаркою (завжди
-                    // видна, без анімації появи/зникнення). Фраза завжди ціла (shortVibeText/
-                    // HOME_VIBE_PHRASES — жодних обрізаних на півслові уривків).
-                    const vibe = shortVibeText(e.status) || HOME_VIBE_PHRASES[pseudoStat(e.id, 'vibe', 0, HOME_VIBE_PHRASES.length - 1)];
+                // Ім'я під колом завжди на місці й нікуди не зникає.
+                nameSpan.innerText = e.isMe ? 'Ви' : truncateCircleName(e.name);
+                // "Вайб" — маленька статична хмарка над аватаркою у КОЖНОГО кола (теж у власного).
+                // Фраза завжди ціла (shortVibeText/HOME_VIBE_PHRASES — жодних обрізаних уривків).
+                {
+                    const vibe = shortVibeText(e.status) || HOME_VIBE_PHRASES[pseudoStat(e.id || 'me', 'vibe', 0, HOME_VIBE_PHRASES.length - 1)];
                     const bubble = document.createElement('div'); bubble.className = 'home-circle-msg'; bubble.innerText = vibe;
                     mini.appendChild(bubble);
                 }
