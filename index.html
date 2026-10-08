@@ -1440,12 +1440,12 @@
         /* Шестерня (налаштування) — тепер стоїть прямо над кнопкою "Додати друга",
            замість окремого рядка під "островком" нагорі. */
         /* Іконки в тому ж мінімалістичному стилі, що й три лінії:
-           «Написати» ліворуч від аватарки, «Підписатись» праворуч, «Поділитись» поруч із трьома лініями. */
+           «Підписатись» ліворуч від аватарки, «Написати» праворуч, «Поділитись» поруч із трьома лініями. */
         .ig-menu-btn svg { stroke-linejoin: round; }
         .ig-menu-btn.active { color: var(--accent-main); }
-        .ig-side-btn { top: calc(66px + 56px - 18px + env(safe-area-inset-top, 0px)); }
-        #ig-act-write { left: calc(50% - 112px); right: auto; }
-        #ig-act-follow { right: calc(50% - 112px); }
+        .ig-side-btn { top: calc(66px + 112px - 36px + env(safe-area-inset-top, 0px)); } /* нижні краї кнопок = нижній край аватарки */
+        #ig-act-follow { left: calc(50% - 112px); right: auto; }
+        #ig-act-write { right: calc(50% - 112px); }
         #ig-act-share { right: 60px; }
 
         .ig-body { padding: 0 0 4px; text-align: left; }
@@ -6423,7 +6423,7 @@
                 }).catch(() => {});
             }
 
-            document.getElementById('ig-act-write').style.display = isMine ? 'none' : 'flex';
+            updateIgWriteBtn();
             updateIgFollowBtn();
 
             const grid = document.getElementById('ig-grid');
@@ -6449,6 +6449,15 @@
 
         const IG_ICON_FOLLOW = '<svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M19 8v6M22 11h-6"></path></svg>';
         const IG_ICON_FOLLOWING = '<svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M16 11l2 2 4-4"></path></svg>';
+        const IG_ICON_WRITE = '<svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>';
+        const IG_ICON_LOCATION = '<svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>';
+        // У власному профілі замість «Написати» — «Локація» (веде на карту).
+        function updateIgWriteBtn() {
+            const btn = document.getElementById('ig-act-write');
+            if (!btn) return;
+            btn.innerHTML = igCurrentIsMine ? IG_ICON_LOCATION : IG_ICON_WRITE;
+            btn.setAttribute('aria-label', igCurrentIsMine ? 'Локація' : 'Написати');
+        }
         function updateIgFollowBtn() {
             const btn = document.getElementById('ig-act-follow');
             if (!btn) return;
@@ -6458,7 +6467,8 @@
             btn.setAttribute('aria-label', following ? 'Ви підписані' : 'Підписатись');
         }
         document.getElementById('ig-act-write').addEventListener('click', () => {
-            if (igCurrentItem && !igCurrentIsMine) { showSidebar(igCurrentItem); openPersonChatTab(igCurrentItem); }
+            if (igCurrentIsMine) { closeMessagesWindowIfOpen(); showScreen('map'); return; }
+            if (igCurrentItem) { showSidebar(igCurrentItem); openPersonChatTab(igCurrentItem); }
         });
         document.getElementById('ig-act-follow').addEventListener('click', async () => {
             if (igCurrentIsMine) { openAddFriendModal(); return; }
