@@ -1445,7 +1445,8 @@
         #ig-content { flex-grow: 1; overflow-y: auto; touch-action: pan-y; -webkit-overflow-scrolling: touch; padding-bottom: 110px; box-sizing: border-box; }
 
         .ig-hero { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: calc(66px + env(safe-area-inset-top, 0px)) 16px 8px; background: var(--bg-color); }
-        .ig-avatar { position: relative; width: 112px; height: 112px; border-radius: 50%; background-size: cover; background-position: center; background-color: #2c2c2e; box-shadow: 0 4px 14px rgba(0,0,0,0.16); cursor: pointer; transition: transform 0.15s ease; flex-shrink: 0; border: 2.5px solid var(--accent-main); box-sizing: border-box; }
+        .ig-avatar { position: relative; width: 112px; height: 112px; border-radius: 50%; background-size: cover; background-position: center; background-color: #2c2c2e; box-shadow: 0 4px 14px rgba(0,0,0,0.16); cursor: pointer; transition: transform 0.15s ease; flex-shrink: 0; border: 2.5px solid transparent; box-sizing: border-box; }
+        .ig-avatar.has-story { border-color: var(--accent-main); } /* синє кільце — лише коли є сторі */
         .ig-avatar:active { transform: scale(0.96); }
         /* Кнопка "+" на аватарці профілю (лише у власному профілі) — додати нову сторі,
            не виходячи зі сторінки. Той самий стиль, що й на власному колі на Головній. */
@@ -2393,7 +2394,7 @@
                     if (xhr.status >= 200 && xhr.status < 300) {
                         try {
                             const data = JSON.parse(xhr.responseText);
-                            resolveTelegramFileUrl(kind === 'video' ? playableVideoUrl(data.secure_url) : data.secure_url, kind).then(resolve).catch(reject);
+                            resolveTelegramFileUrl(data.secure_url, kind).then(resolve).catch(reject);
                         } catch (err) { reject(err); }
                     } else {
                         reject(new Error('cloudinary-upload-failed-' + xhr.status));
@@ -3498,7 +3499,32 @@
             if (/^f_mp4/.test(rest)) return url;                 // вже перетворено
             if (!/^v\d+\//.test(rest)) return url;              // є власні трансформації — не чіпаємо
             rest = rest.replace(/\.[a-z0-9]+(\?.*)?$/i, '.mp4$1');
-            return m[1] + 'f_mp4,vc_h264,ac_aac,q_auto/' + rest;
+            return m[1] + 'f_mp4,vc_h264,ac_aac,c_limit,w_720,q_auto/' + rest;
+        }
+        // Спершу вантажимо ОРИГІНАЛ (швидко, без перекодування). Лише якщо формат не підтримується
+        // (помилка або відео без картинки — типово для HEVC .mov) — перемикаємось на H.264 MP4.
+        // Перший кадр відео як мініатюра (Cloudinary віддає її миттєво) — щоб не чекати на порожньому екрані.
+        function videoPosterUrl(url) {
+            const m = (url || '').match(/^(https:\/\/res\.cloudinary\.com\/[^/]+\/video\/upload\/)(v\d+\/.*)$/i);
+            if (!m) return '';
+            return m[1] + 'so_0,w_600,c_limit,f_jpg,q_auto/' + m[2].replace(/\.[a-z0-9]+(\?.*)?$/i, '.jpg');
+        }
+        function setVideoSrc(v, url) {
+            v.preload = 'auto';
+            const poster = videoPosterUrl(url);
+            if (poster) v.poster = poster;
+            v.src = url;
+            const alt = playableVideoUrl(url);
+            if (!alt || alt === url) return;
+            let switched = false;
+            const fallback = (fromError) => {
+                if (switched) return; switched = true;
+                if (fromError) v._fallbackPending = true; // щоб екран помилки не спрацював на першу, «очікувану» помилку
+                v.src = alt; v.load();
+                const pr = v.play(); if (pr && pr.catch) pr.catch(() => {});
+            };
+            v.addEventListener('error', () => fallback(true), { once: true });
+            v.addEventListener('loadedmetadata', () => { if (v.videoWidth === 0) fallback(false); }, { once: true });
         }
 
         // Будує повноекранну стрічку фото/відео картки, яку можна гортати вбоки (як в Instagram/Apple)
@@ -3514,7 +3540,7 @@
                 const slide = document.createElement('div'); slide.className = 'hero-slide';
                 if (isHeroVideoUrl(src)) {
                     const video = document.createElement('video');
-                    video.src = playableVideoUrl(src); video.autoplay = true; video.muted = true; video.loop = true; video.playsInline = true; video.setAttribute('webkit-playsinline', '');
+                    setVideoSrc(video, src); video.autoplay = true; video.muted = true; video.loop = true; video.playsInline = true; video.setAttribute('webkit-playsinline', '');
                     slide.appendChild(video);
                     slide.classList.add('loaded');
                     attemptCirclePlay(video); allCircleVideos.add(video);
@@ -3832,7 +3858,7 @@
                 li.appendChild(img);
             } else if (type === 'video') {
                 li.classList.add('msg-media');
-                const video = document.createElement('video'); video.src = playableVideoUrl(msg.url); video.playsInline = true; video.muted = true;
+                const video = document.createElement('video'); setVideoSrc(video, msg.url); video.playsInline = true; video.muted = true;
                 video.addEventListener('click', () => openStoryViewer([{ type: 'video', url: msg.url, ts: msg.timestamp || Date.now() }], 0, 'Відео', { showTime: false, autoAdvance: false }));
                 li.appendChild(video);
             } else if (type === 'file') {
@@ -4082,14 +4108,33 @@
 
         // ---- Друзі: справжній, двосторонній список у Firebase (не випадкова заглушка) ----
         let myFriends = new Set();
-        onValue(ref(db, `friends/${myId}`), (snap) => {
-            myFriends = new Set(Object.keys(snap.val() || {}));
-            try { if (igCurrentIsMine) setIgStats(myFriends.size); } catch (e) {}
+        // Підписки — односторонні: following/{я}/{хтось} (я підписаний) і followers/{хтось}/{я} (на нього підписані).
+        // Друзі (QR/NFC) — взаємні, тому рахуються і як підписники, і як підписки.
+        let myFollowing = new Set(); let myFollowers = new Set();
+        function refreshMyIgStats() {
+            try {
+                if (igCurrentIsMine) setIgStats(new Set([...myFriends, ...myFollowers]).size, new Set([...myFriends, ...myFollowing]).size);
+            } catch (e) {}
+        }
+        function refreshHomeAfterRelations() {
             try { updateIgFollowBtn(); } catch (e) {}
             if (document.getElementById('people-search-input')) {
                 renderHomeGrid(document.getElementById('people-search-input').value);
             }
+        }
+        onValue(ref(db, `friends/${myId}`), (snap) => {
+            myFriends = new Set(Object.keys(snap.val() || {}));
+            refreshMyIgStats(); refreshHomeAfterRelations();
         });
+        onValue(ref(db, `following/${myId}`), (snap) => {
+            myFollowing = new Set(Object.keys(snap.val() || {}));
+            refreshMyIgStats(); refreshHomeAfterRelations();
+        });
+        onValue(ref(db, `followers/${myId}`), (snap) => {
+            myFollowers = new Set(Object.keys(snap.val() || {}));
+            refreshMyIgStats();
+        });
+        function isFollowingId(id) { return myFriends.has(id) || myFollowing.has(id); }
         function addMutualFriend(otherId) {
             if (!otherId || otherId === myId) return;
             set(ref(db, `friends/${myId}/${otherId}`), true);
@@ -4617,7 +4662,7 @@
                 if (s.type === 'photo') { inner.style.backgroundImage = `url('${s.url}')`; }
                 else {
                     const v = document.createElement('video');
-                    v.className = 'hero-story-thumb-video'; v.src = playableVideoUrl(s.url);
+                    v.className = 'hero-story-thumb-video'; setVideoSrc(v, s.url);
                     v.muted = true; v.defaultMuted = true; v.loop = true; v.autoplay = true; v.playsInline = true;
                     v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
                     applyStoryVideoFrame(v, s.frame);
@@ -4737,7 +4782,7 @@
                     storyViewerTimer = setTimeout(() => storyAdvance(1), STORY_PHOTO_MS);
                 } else if (bars[idx]) { bars[idx].style.width = '100%'; }
             } else {
-                const v = document.createElement('video'); v.src = playableVideoUrl(s.url); v.autoplay = true; v.muted = true; v.playsInline = true; v.controls = false;
+                const v = document.createElement('video'); setVideoSrc(v, s.url); v.autoplay = true; v.muted = true; v.playsInline = true; v.controls = false;
                 v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
                 applyStoryVideoFrame(v, s.frame);
                 media.appendChild(v);
@@ -4750,7 +4795,8 @@
                 // Стара посилання на відео (завантажене ще до переходу на поточне сховище медіа)
                 // могло "протухнути" — замість мовчазного чорного екрана показуємо зрозуміле
                 // повідомлення й за пару секунд самі гортаємо далі, щоб не залишати людину в глухому куті.
-                v.onerror = () => {
+                v.addEventListener('error', () => {
+                    if (v._fallbackPending) { v._fallbackPending = false; return; }
                     if (media.contains(v)) v.remove();
                     const errBox = document.createElement('div');
                     errBox.style.cssText = 'color:#fff; text-align:center; padding:0 32px; font-size:14px; line-height:1.5; opacity:0.85;';
@@ -4758,7 +4804,7 @@
                     media.appendChild(errBox);
                     const b = bars[idx]; if (b) { b.style.transition = 'none'; b.style.width = '100%'; }
                     if (storyViewerAutoAdvance !== false) { storyViewerTimer = setTimeout(() => storyAdvance(1), 2600); }
-                };
+                });
             }
         }
 
@@ -5967,7 +6013,7 @@
             const combined = peopleEntries.concat(placeEntries);
             combined.forEach(e => {
                 e.isFav = myFavorites.has(e.id);
-                e.isFriend = e.type === 'person' && myFriends.has(e.id);
+                e.isFriend = e.type === 'person' && isFollowingId(e.id);
                 e.showMsg = pseudoStat(e.id, 'show-msg', 0, 99) < 40;
             });
             // Стабільний "рейтинг дня" для порядку кіл — детермінований, без реального лічильника переглядів.
@@ -6442,9 +6488,9 @@
 
         // Відкриває сторінку людини у стилі прикладу (аватар, статистика, біо, сітка фото)
         let igCurrentItem = null; let igCurrentIsMine = false;
-        function setIgStats(n) {
-            document.getElementById('ig-stat-followers').innerText = n;
-            document.getElementById('ig-stat-following').innerText = n;
+        function setIgStats(followers, following) {
+            document.getElementById('ig-stat-followers').innerText = followers;
+            document.getElementById('ig-stat-following').innerText = (following === undefined ? followers : following);
         }
         function openIgProfile(item, isMine) {
             igCurrentItem = item; igCurrentIsMine = isMine;
@@ -6458,6 +6504,7 @@
             const photos = [...storyUrls, ...basePhotos].filter(u => { if (seen.has(u)) return false; seen.add(u); return true; });
 
             document.getElementById('ig-avatar').style.backgroundImage = `url('${basePhotos[0]}')`;
+            document.getElementById('ig-avatar').classList.toggle('has-story', storyUrls.length > 0);
             document.getElementById('ig-avatar').onclick = () => openMediaGallery(photos, 0, item.name, item);
             // Кнопка "+" на аватарці — тільки у власному профілі, дозволяє одразу додати сторі.
             let igAvatarAddBadge = document.getElementById('ig-avatar-add-badge');
@@ -6485,11 +6532,18 @@
             placeMeta.style.display = isPlace ? '' : 'none';
             placeMeta.innerText = isPlace ? (item.text2 || '') : '';
             document.getElementById('ig-place-coupon').style.display = isPlace ? '' : 'none';
-            // Реальні числа: дружба в застосунку взаємна, тож підписники = підписки = кількість друзів у базі.
-            setIgStats(isMine ? myFriends.size : 0);
-            if (!isMine && !isPlace) {
-                get(ref(db, `friends/${item.id}`)).then(snap => {
-                    if (igCurrentItem && igCurrentItem.id === item.id) setIgStats(Object.keys(snap.val() || {}).length);
+            // Реальні числа: підписники (хто підписаний на людину) і підписки (на кого підписана вона) —
+            // окремі списки; друзі (взаємні) входять в обидва.
+            setIgStats(0, 0);
+            if (isMine) refreshMyIgStats();
+            else if (!isPlace) {
+                const idKey = item.id;
+                Promise.all([get(ref(db, `friends/${idKey}`)), get(ref(db, `followers/${idKey}`)), get(ref(db, `following/${idKey}`))]).then(([fr, fo, fg]) => {
+                    if (!igCurrentItem || igCurrentItem.id !== idKey) return;
+                    const friends = Object.keys(fr.val() || {});
+                    const followers = new Set([...friends, ...Object.keys(fo.val() || {})]);
+                    const following = new Set([...friends, ...Object.keys(fg.val() || {})]);
+                    setIgStats(followers.size, following.size);
                 }).catch(() => {});
             }
 
@@ -6502,7 +6556,7 @@
                 const cell = document.createElement('div'); cell.className = 'ig-grid-item';
                 if (isHeroVideoUrl(url)) {
                     const v = document.createElement('video');
-                    v.className = 'ig-grid-item-video'; v.src = playableVideoUrl(url);
+                    v.className = 'ig-grid-item-video'; setVideoSrc(v, url);
                     v.muted = true; v.defaultMuted = true; v.loop = true; v.autoplay = true; v.playsInline = true;
                     v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
                     cell.appendChild(v);
@@ -6535,7 +6589,7 @@
                 btn.innerHTML = IG_ICON_LOCATION; btn.classList.remove('active'); btn.setAttribute('aria-label', 'Локація');
                 return;
             }
-            const following = !igCurrentIsMine && igCurrentItem && myFriends.has(igCurrentItem.id);
+            const following = !igCurrentIsMine && igCurrentItem && isFollowingId(igCurrentItem.id);
             btn.innerHTML = following ? IG_ICON_FOLLOWING : IG_ICON_FOLLOW;
             btn.classList.toggle('active', !!following);
             btn.setAttribute('aria-label', following ? 'Ви підписані' : 'Підписатись');
@@ -6559,12 +6613,21 @@
                 return;
             }
             const id = igCurrentItem.id;
-            if (myFriends.has(id)) {
-                await remove(ref(db, `friends/${myId}/${id}`));
-                await remove(ref(db, `friends/${id}/${myId}`));
+            if (isFollowingId(id)) {
+                // Відписатись: прибираємо і підписку, і (якщо була) взаємну дружбу.
+                await remove(ref(db, `following/${myId}/${id}`));
+                await remove(ref(db, `followers/${id}/${myId}`));
+                if (myFriends.has(id)) {
+                    await remove(ref(db, `friends/${myId}/${id}`));
+                    await remove(ref(db, `friends/${id}/${myId}`));
+                }
             } else {
-                addMutualFriend(id);
+                // Підписка одностороння: я підписаний на нього, він на мене — ні.
+                await set(ref(db, `following/${myId}/${id}`), true);
+                await set(ref(db, `followers/${id}/${myId}`), true);
             }
+            // Оновлюємо лічильник на його сторінці одразу.
+            try { openIgProfile(igCurrentItem, false); } catch (e) {}
         });
         document.getElementById('ig-act-share').addEventListener('click', () => shareReferralLink());
         document.getElementById('ig-place-coupon').addEventListener('click', () => {
