@@ -1407,6 +1407,15 @@
         }
         /* Ім'я — окремим рядком, вище і по центру, під "островком". */
         .ig-top-bar-name-row { text-align: center; padding: 0 16px; }
+        /* Три лінії (меню/налаштування) — зверху праворуч на сторінці профілю, замість шестерні. */
+        .ig-menu-btn {
+            position: absolute; top: calc(6px + env(safe-area-inset-top, 0px)); right: 12px;
+            width: 36px; height: 36px; border: none; background: transparent; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+            color: var(--text-color); -webkit-tap-highlight-color: transparent;
+        }
+        .ig-menu-btn:active { background: rgba(120,120,128,0.18); }
+        .ig-menu-btn svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; }
         /* Ім'я по центру верхньої панелі, під "островком" — решта тексту (нік, біо, статистика)
            лишається на своєму місці поруч з аватаркою нижче. */
         .ig-top-bar-name { flex: none; min-width: 0; text-align: center; font-size: 16px; font-weight: 700; color: var(--text-color); letter-spacing: -0.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0; }
@@ -1698,6 +1707,7 @@
     <div id="screen-ig-profile" class="app-screen">
         <div class="ig-top-bar">
             <div class="ig-top-bar-name-row"><p class="ig-top-bar-name" id="ig-top-name"></p></div>
+            <button class="ig-menu-btn" id="ig-settings-btn" aria-label="Налаштування"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
         </div>
         <div id="ig-content">
             <div class="ig-hero">
@@ -1708,7 +1718,6 @@
                     <p class="ig-meta-line"><span id="ig-stat-followers">0</span> підписників · <span id="ig-stat-following">0</span> підписок</p>
                 </div>
                 <div class="ig-hero-actions-col">
-                    <button class="ig-hero-action-btn" id="ig-settings-btn" aria-label="Налаштування"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82A1.65 1.65 0 0 0 3 9.09H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 4.6a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.11.35.35.66.68.85.28.16.6.24.92.24H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button>
                     <div id="ig-hero-action-slot"></div>
                 </div>
             </div>
