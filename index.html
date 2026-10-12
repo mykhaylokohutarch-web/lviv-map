@@ -327,6 +327,10 @@
         .ob-sub { font-size: 13px; color: rgba(255,255,255,0.5); margin: 0 0 26px; max-width: 260px; line-height: 1.5; }
         .ob-input, .ob-textarea { width: 100%; max-width: 280px; box-sizing: border-box; padding: 14px 16px; border-radius: 16px; border: none; background: rgba(255,255,255,0.08); font-size: 15px; margin-bottom: 20px; outline: none; color: #fff; text-align: center; font-family: inherit; }
         .ob-textarea { text-align: left; resize: none; height: 88px; line-height: 1.4; }
+        .story-dur-label { color: rgba(255,255,255,0.55); font-size: 12px; font-weight: 600; text-align: center; padding: 6px 0 0; }
+        .story-dur-row { display: flex; gap: 8px; justify-content: center; padding: 2px 0 6px; }
+        .story-add-card .story-dur-row button, .story-dur-row .story-dur-chip { flex: 1; max-width: 76px; padding: 10px 0; border-radius: 12px; font-size: 14px; font-weight: 600; border: 1.5px solid transparent; background: rgba(255,255,255,0.07); color: #fff; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        .story-dur-row .story-dur-chip.active { background: var(--ultramarine-gradient); border-color: rgba(255,255,255,0.25); }
         .ob-btn-primary { background: var(--ultramarine-gradient); border: none; padding: 14px 20px; border-radius: 16px; cursor: pointer; font-weight: 600; width: 100%; max-width: 280px; color: #ffffff; font-size: 15px; -webkit-tap-highlight-color: transparent; }
         .ob-btn-text { margin-top: 12px; background: none; border: none; color: rgba(255,255,255,0.5); font-size: 13px; cursor: pointer; padding: 6px; -webkit-tap-highlight-color: transparent; }
         .ob-avatar-picker { margin-bottom: 26px; cursor: pointer; }
@@ -399,6 +403,9 @@
             border: 1px solid rgba(255,255,255,0.1); border-radius: 30px;
             padding: 8px 8px 8px 16px; box-sizing: border-box; box-shadow: 0 6px 20px rgba(0,0,0,0.3);
         }
+        /* Аватарка знизу зліва — перехід у профіль людини/закладу, чия це сторі */
+        #story-viewer-profile-btn { display: none; position: absolute; left: 14px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 21; width: 42px; height: 42px; border-radius: 50%; background-size: cover; background-position: center; background-color: #2c2c2e; border: 2px solid #fff; box-shadow: 0 6px 20px rgba(0,0,0,0.35); box-sizing: border-box; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        #story-viewer-profile-btn:active { transform: scale(0.92); }
         .story-viewer-pill-text {
             flex: 1; min-width: 0; color: #fff; font-size: 12.5px; font-weight: 600; line-height: 1.3;
             overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
@@ -653,9 +660,11 @@
         .hero-circle-wrap {
             position: absolute; top: calc(78px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%);
             width: min(62vw, 260px); height: min(62vw, 260px); border-radius: 50%; overflow: hidden;
-            background: var(--ultramarine-gradient); padding: 3px; box-sizing: border-box;
+            background: transparent; padding: 0; box-sizing: border-box;
             box-shadow: 0 10px 28px rgba(0,0,0,0.35); touch-action: none;
         }
+        /* синій ободок — лише коли є сторі */
+        .hero-circle-wrap.has-story { background: var(--ultramarine-gradient); padding: 3px; }
         .hero-track { display: flex; width: 100%; height: 100%; border-radius: 50%; overflow: hidden; will-change: transform; }
         .hero-slide { flex: 0 0 100%; width: 100%; height: 100%; background-size: cover; background-position: center; background-color: #1c1c1e; opacity: 0; transition: opacity 0.25s ease; }
         .hero-slide.loaded { opacity: 1; }
@@ -2161,6 +2170,13 @@
                         <button class="ob-chip-btn" id="ob-story-video-btn">Відео</button>
                     </div>
                 </div>
+                <div class="story-dur-label" style="margin-bottom:6px;">Скільки триватиме сторі</div>
+                <div class="story-dur-row" style="margin-bottom:18px;">
+                    <button type="button" class="story-dur-chip" data-h="1">1 год</button>
+                    <button type="button" class="story-dur-chip" data-h="3">3 год</button>
+                    <button type="button" class="story-dur-chip" data-h="5">5 год</button>
+                    <button type="button" class="story-dur-chip" data-h="12">12 год</button>
+                </div>
                 <input type="file" id="ob-story-photo-input" accept="image/*" style="display:none;">
                 <input type="file" id="ob-story-video-input" accept="video/*" style="display:none;">
                 <button class="ob-btn-primary" id="ob-story-next">Готово</button>
@@ -2181,6 +2197,13 @@
     <!-- ---- Меню вибору типу сторіс (додається будь-коли з профілю) ---- -->
     <div id="story-add-sheet">
         <div class="story-add-card">
+            <div class="story-dur-label">Скільки триватиме сторі</div>
+            <div class="story-dur-row">
+                <button type="button" class="story-dur-chip" data-h="1">1 год</button>
+                <button type="button" class="story-dur-chip" data-h="3">3 год</button>
+                <button type="button" class="story-dur-chip" data-h="5">5 год</button>
+                <button type="button" class="story-dur-chip" data-h="12">12 год</button>
+            </div>
             <button id="story-add-photo-btn">📷 Фото</button>
             <button id="story-add-video-btn">🎥 Відео (до 1 хв)</button>
             <button id="story-add-cancel-btn">Скасувати</button>
@@ -2210,6 +2233,7 @@
     <!-- ---- Повноекранний перегляд сторіс ---- -->
     <div id="story-viewer">
         <div class="story-viewer-media" id="story-viewer-media"></div>
+        <div id="story-viewer-profile-btn" role="button" aria-label="Відкрити профіль"></div>
         <div class="story-viewer-top">
             <div class="story-viewer-bars" id="story-viewer-bars"></div>
             <div class="story-viewer-header">
@@ -3656,6 +3680,7 @@
                 renderHeroStoriesRow(item);
             } else {
                 statusEl.className = "profile-status status-place";
+                { const hw = document.getElementById('hero-circle-wrap'); if (hw) hw.classList.remove('has-story'); }
                 label1.innerText = "Про локацію"; label2.innerText = "🔥 Спеціальна пропозиція";
                 text1Box.className = ""; text2Box.className = "promo-box";
                 document.getElementById('prof-text1').innerText = item.text1;
@@ -4537,7 +4562,7 @@
         function saveMyProfileToFirebase() {
             return set(ref(db, `profiles/${myId}`), {
                 name: myProfile.name, status: myProfile.status, about: myProfile.about,
-                interests: myProfile.interests, photos: myProfile.photos || [], stories: myProfile.stories || [], coords: myCoords,
+                interests: myProfile.interests, photos: myProfile.photos || [], stories: liveStories(myProfile.stories), coords: myCoords,
                 photoCaptions: myProfile.photoCaptions || {}
             });
         }
@@ -4546,7 +4571,7 @@
             const photos = (myProfile.photos && myProfile.photos.length) ? myProfile.photos : [DEFAULT_AVATAR];
             return { id: myId, type: 'person', name: myProfile.name || myName, coords: myCoords, photos: photos,
                       status: myProfile.status || "Ще не заповнено", about: myProfile.about || "Розкажіть про себе — у Налаштуваннях → Редагувати профіль",
-                      interests: myProfile.interests || "Додайте свої інтереси", stories: myProfile.stories || [] };
+                      interests: myProfile.interests || "Додайте свої інтереси", stories: liveStories(myProfile.stories) };
         }
 
         // ---- Сторіс і фото/відео профілю: додавання, збереження, рендер мініатюр ----
@@ -4619,11 +4644,47 @@
             v.load();
         }
 
+        // ---- Тривалість сторі (1 / 3 / 5 / 12 год) ----
+        const STORY_DURATIONS = [1, 3, 5, 12];
+        let storyDurationH = parseInt(localStorage.getItem('story_duration_h'), 10);
+        if (!STORY_DURATIONS.includes(storyDurationH)) storyDurationH = 12;
+        function syncStoryDurChips() {
+            document.querySelectorAll('.story-dur-chip').forEach(c => c.classList.toggle('active', parseInt(c.dataset.h, 10) === storyDurationH));
+        }
+        document.querySelectorAll('.story-dur-chip').forEach(c => c.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            storyDurationH = parseInt(c.dataset.h, 10);
+            localStorage.setItem('story_duration_h', String(storyDurationH));
+            syncStoryDurChips();
+        }));
+        syncStoryDurChips();
+        function liveStories(list) { const now = Date.now(); return (list || []).filter(s => !s.exp || s.exp > now); }
+
+        // Раз на хвилину прибираємо прострочені сторі й оновлюємо екрани.
+        setInterval(() => {
+            try {
+                const before = (myProfile && myProfile.stories) ? myProfile.stories.length : 0;
+                if (before) {
+                    const live = liveStories(myProfile.stories);
+                    if (live.length !== before) {
+                        myProfile.stories = live;
+                        if (currentActiveItem && currentActiveItem.id === myId) { currentActiveItem.stories = live; renderHeroStoriesRow(currentActiveItem); }
+                        if (typeof renderHomeGrid === 'function' && document.getElementById('home-grid-inner')) {
+                            const si = document.getElementById('people-search-input'); renderHomeGrid(si ? si.value : '');
+                        }
+                        refreshIgProfileIfOpen();
+                        saveMyProfileToFirebase().catch(() => {});
+                    }
+                }
+            } catch (e) {}
+        }, 60000);
+
         async function addStory(type, url, frame, caption) {
             myProfile.stories = myProfile.stories || [];
             if (caption) { myProfile.photoCaptions = myProfile.photoCaptions || {}; myProfile.photoCaptions[capKey(url)] = caption; }
-            const entry = { type, url, ts: Date.now() };
+            const entry = { type, url, ts: Date.now(), exp: Date.now() + storyDurationH * 3600000 };
             if (frame) entry.frame = frame;
+            myProfile.stories = liveStories(myProfile.stories);
             myProfile.stories.push(entry);
             if (myProfile.stories.length > 10) myProfile.stories = myProfile.stories.slice(-10);
             if (currentActiveItem && currentActiveItem.id === myId) { currentActiveItem.stories = myProfile.stories; renderHeroStoriesRow(currentActiveItem); }
@@ -4645,8 +4706,10 @@
 
         function renderHeroStoriesRow(item) {
             const row = document.getElementById('hero-stories-row');
-            const stories = item.stories || [];
+            const stories = liveStories(item.stories);
             const isMine = item.id === myId;
+            const heroWrap = document.getElementById('hero-circle-wrap');
+            if (heroWrap) heroWrap.classList.toggle('has-story', stories.length > 0);
             row.innerHTML = '';
             if (!stories.length && !isMine) { row.style.display = 'none'; return; }
             row.style.display = 'flex';
@@ -4727,6 +4790,28 @@
         let storyViewerShowTime = true, storyViewerAutoAdvance = true, storyViewerEntry = null, storyViewerSourceType = null;
         const STORY_PHOTO_MS = 5000;
 
+        let storyViewerPeople = null;
+        function buildHomeStoryList(e) {
+            return (e.photos || []).map(url => ({ type: isHeroVideoUrl(url) ? 'video' : 'photo', url, ts: Date.now() }));
+        }
+        // Перемикає на сторі іншої людини зі списку Головної (dir: 1 — наступна, -1 — попередня), по колу.
+        function switchStoryPerson(dir) {
+            const people = storyViewerPeople;
+            if (!people || people.length < 2 || !storyViewerEntry) return false;
+            const n = people.length;
+            let i = people.findIndex(p => p.id === storyViewerEntry.id);
+            if (i < 0) i = 0;
+            for (let step = 1; step <= n; step++) {
+                const cand = people[(i + dir * step + n * n) % n];
+                if (cand.id === storyViewerEntry.id) break;
+                const list = buildHomeStoryList(cand);
+                if (!list.length) continue;
+                clearTimeout(storyViewerTimer);
+                openStoryViewer(list, 0, cand.isMe ? 'Ви' : cand.name, { showTime: false, people }, cand, 'photo');
+                return true;
+            }
+            return false;
+        }
         function openStoryViewer(list, startIdx, name, opts, entry, sourceType) {
             opts = opts || {};
             storyViewerShowTime = opts.showTime !== false;
@@ -4734,6 +4819,8 @@
             storyViewerList = list; storyViewerIdx = startIdx;
             storyViewerEntry = entry || null;
             storyViewerSourceType = sourceType || null;
+            // Список людей з Головної — свайп вгору перемикає на сторі наступної людини (по колу, безкінечно).
+            storyViewerPeople = (opts.people && opts.people.length) ? opts.people : null;
             document.getElementById('story-viewer-name').innerText = name;
             document.getElementById('story-viewer-time').style.display = storyViewerShowTime ? '' : 'none';
             document.getElementById('story-viewer').style.display = 'flex';
@@ -4758,6 +4845,15 @@
             moreBtn.style.display = isOwnEditable ? 'flex' : 'none';
             pillText.innerText = (storyViewerEntry && storyViewerEntry.status) ? storyViewerEntry.status : '';
             document.getElementById('story-viewer-pill').style.display = 'flex'; // знизу завжди лише кнопка «···»
+            // Аватарка знизу зліва → перехід у профіль (не показуємо, якщо цей профіль уже відкритий під сторі)
+            const profBtn = document.getElementById('story-viewer-profile-btn');
+            const igScr = document.getElementById('screen-ig-profile');
+            const profAlreadyOpen = !!(igScr && igScr.classList.contains('active-screen') && igCurrentItem && storyViewerEntry && igCurrentItem.id === storyViewerEntry.id);
+            if (hasEntry && !profAlreadyOpen) {
+                const ph = (storyViewerEntry.photos && storyViewerEntry.photos[0]) || DEFAULT_AVATAR;
+                profBtn.style.backgroundImage = `url('${thumbUrl(ph, 100)}')`;
+                profBtn.style.display = 'block';
+            } else { profBtn.style.display = 'none'; }
             closeStoryMenu(true);
             const wrap = document.getElementById('story-viewer-bars'); wrap.innerHTML = '';
             storyViewerList.forEach(() => {
@@ -4815,6 +4911,13 @@
             storyViewerIdx = next; playStoryAt(next);
         }
 
+        document.getElementById('story-viewer-profile-btn').addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            const ent = storyViewerEntry;
+            if (!ent || !ent.id) return;
+            closeStoryViewer();
+            openIgProfile(ent.id === myId ? getMyProfileItem() : ent, ent.id === myId);
+        });
         function closeStoryViewer() {
             clearTimeout(storyViewerTimer);
             const svMenu = document.getElementById('story-viewer-menu'); svMenu.style.display = 'none'; svMenu.innerHTML = '';
@@ -4986,8 +5089,28 @@
                 else if (lock === 'y') {
                     const vy = swipeVelocity(samples);
                     if (Math.abs(dy) > 110 || (Math.abs(vy) > 0.6 && Math.abs(dy) > 25)) {
+                        const swipeDir = (dy !== 0 ? dy : vy) < 0 ? -1 : 1;
+                        // Свайп вгору на Головній → сторі наступної людини (безкінечно по колу)
+                        if (swipeDir === -1 && storyViewerPeople && storyViewerPeople.length > 1) {
+                            closing = true;
+                            el.style.transition = 'transform 0.22s ' + IOS_EASE + ', opacity 0.22s ease';
+                            el.style.transform = 'translate3d(0, -40%, 0) scale(0.92)'; el.style.opacity = '0';
+                            setTimeout(() => {
+                                const ok = switchStoryPerson(1);
+                                if (ok) {
+                                    el.style.transition = 'none'; el.style.borderRadius = '0px';
+                                    el.style.transform = 'translate3d(0, 40%, 0) scale(0.92)'; el.style.opacity = '0';
+                                    void el.offsetHeight;
+                                    el.style.transition = 'transform 0.3s ' + IOS_EASE + ', opacity 0.25s ease';
+                                    el.style.transform = 'translate3d(0, 0, 0) scale(1)'; el.style.opacity = '1';
+                                    setTimeout(() => { resetViewerStyles(); closing = false; }, 320);
+                                } else { resetViewerStyles(); closing = false; }
+                            }, 220);
+                            lock = null; dx = 0; dy = 0;
+                            return;
+                        }
                         closing = true;
-                        const dir = (dy !== 0 ? dy : vy) < 0 ? -1 : 1;
+                        const dir = swipeDir;
                         el.style.transition = 'transform 0.35s ' + IOS_EASE + ', opacity 0.35s ease, border-radius 0.35s ease';
                         el.style.transform = `translate3d(0, ${dir * 105}%, 0) scale(0.86)`; el.style.opacity = '0';
                         setTimeout(() => { closeStoryViewer(); resetViewerStyles(); closing = false; }, 350);
@@ -5832,7 +5955,7 @@
                 const p = data[id];
                 if (!p || !p.coords) return;
                 const photos = (p.photos && p.photos.length) ? p.photos : [DEFAULT_AVATAR];
-                const personObj = { id: id, type: 'person', name: p.name || 'Гість', coords: p.coords, photos: photos, status: p.status || '', about: p.about || '', interests: p.interests || '', stories: p.stories || [] };
+                const personObj = { id: id, type: 'person', name: p.name || 'Гість', coords: p.coords, photos: photos, status: p.status || '', about: p.about || '', interests: p.interests || '', stories: liveStories(p.stories) };
 
                 if (profileMarkers[id]) { layerGroups.friends.removeLayer(profileMarkers[id]); }
                 const customIcon = L.divIcon({
@@ -5867,7 +5990,7 @@
                         name: hasManualProfileEdit ? p.name : (myName || p.name),
                         status: p.status, about: p.about, interests: p.interests,
                         photos: hasManualProfileEdit ? (p.photos || []) : [tgPhotoUrl || (p.photos && p.photos[0]) || null, ...restPhotos].filter(Boolean),
-                        stories: p.stories || [],
+                        stories: liveStories(p.stories),
                         photoCaptions: p.photoCaptions || {}
                     };
                 }
@@ -6076,6 +6199,7 @@
             wrap.appendChild(layerA);
         }
 
+        let homeViewerEntries = [];
         function renderHomeGrid(filterText, filterMode) {
             const box = document.getElementById('home-grid-inner');
             if (!box) return;
@@ -6102,6 +6226,7 @@
                 return;
             }
             window.homeSearchNoResults = false;
+            homeViewerEntries = entries.filter(e => e.photos && e.photos.length);
             entries.forEach(e => {
                 const item = document.createElement('div'); item.className = 'home-circle-item';
                 const avatar = document.createElement('div'); avatar.className = 'home-circle-avatar' + (e.isMe ? ' is-me' : '');
@@ -6111,8 +6236,8 @@
                 if (e.isMe) {
                     // Власне коло: фото-кросфейд (без відео — щоб при відкритті застосунку не блимала кнопка play).
                     const myAvatarUrl = (e.photos && e.photos[0]) || '';
-                    const myPhotoStories = (e.stories && e.stories.length)
-                        ? e.stories.filter(s => s.type === 'photo').map(s => s.url)
+                    const myPhotoStories = (liveStories(e.stories).length)
+                        ? liveStories(e.stories).filter(s => s.type === 'photo').map(s => s.url)
                         : [];
                     storyPhotoList = myPhotoStories.length ? myPhotoStories : [myAvatarUrl];
                 } else {
@@ -6132,16 +6257,14 @@
                 // спеціально відфільтрований від відео лише для фонового кросфейду в самому колі.
                 avatar.addEventListener('click', (ev) => {
                     ev.stopPropagation();
-                    const list = (e.photos || []).map(url => (
-                        { type: isHeroVideoUrl(url) ? 'video' : 'photo', url, ts: Date.now() }
-                    ));
+                    const list = buildHomeStoryList(e);
                     if (!list.length) return;
-                    openStoryViewer(list, 0, e.isMe ? 'Ви' : e.name, { showTime: false }, e, 'photo');
+                    openStoryViewer(list, 0, e.isMe ? 'Ви' : e.name, { showTime: false, people: homeViewerEntries }, e, 'photo');
                 });
                 // Міні-аватарка тепер знизу зліва поверх будь-якого фото/відео сторі —
                 // так завжди видно, чиє це коло, навіть коли крутиться нова сторі.
                 // Тап саме по ній — окремо від кола — веде на сторінку профілю/закладу.
-                const mini = document.createElement('div'); mini.className = 'home-circle-mini-avatar' + ((e.stories && e.stories.length) ? ' has-story' : '');
+                const mini = document.createElement('div'); mini.className = 'home-circle-mini-avatar' + ((liveStories(e.stories).length) ? ' has-story' : '');
                 mini.style.backgroundImage = `url('${thumbUrl((e.photos && e.photos[0]) || '', 100)}')`;
                 mini.addEventListener('click', (ev) => {
                     ev.stopPropagation();
@@ -6496,8 +6619,8 @@
             igCurrentItem = item; igCurrentIsMine = isMine;
             // Сторі, додані на Головній (кнопкою "+" на власному колі), одразу зʼявляються тут же,
             // у сітці великих кружечків — найновіші спочатку. Дублікати (та саме фото/відео) прибираємо.
-            const storyUrls = (item.stories && item.stories.length)
-                ? [...item.stories].sort((a, b) => (b.ts || 0) - (a.ts || 0)).map(s => s.url)
+            const storyUrls = (liveStories(item.stories).length)
+                ? [...liveStories(item.stories)].sort((a, b) => (b.ts || 0) - (a.ts || 0)).map(s => s.url)
                 : [];
             const basePhotos = (item.photos && item.photos.length) ? item.photos : [DEFAULT_AVATAR];
             const seen = new Set();
