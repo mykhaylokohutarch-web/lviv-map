@@ -282,6 +282,13 @@
            поверх екрана діалогів. Ховаємо її, поки будь-яка бічна панель (профіль, чат) відкрита. */
         body:has(#profile-sidebar.active) #map-compass-btn { display: none; }
 
+        /* ---- Моя мітка на карті: пульсація, світле кільце і підпис «Ви» — щоб відрізнялась від інших ---- */
+        .me-marker { position: relative; width: 38px; height: 38px; }
+        .me-marker .me-pulse { position: absolute; inset: 0; border-radius: 50%; background: rgba(10, 132, 255, 0.45); animation: meMarkerPulse 2s ease-out infinite; pointer-events: none; }
+        .me-marker .me-pulse.d2 { animation-delay: 1s; }
+        .me-marker .avatar-ring { position: relative; z-index: 1; width: 38px; height: 38px; box-shadow: 0 0 0 3px #fff, 0 0 16px 5px rgba(10, 132, 255, 0.85); }
+        .me-marker .me-label { position: absolute; top: calc(100% + 6px); left: 50%; transform: translateX(-50%); z-index: 2; padding: 2px 9px; border-radius: 10px; background: var(--accent-main, #0a84ff); color: #fff; font-size: 11px; font-weight: 700; line-height: 1.3; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,0.35); pointer-events: none; }
+        @keyframes meMarkerPulse { 0% { transform: scale(0.8); opacity: 0.9; } 100% { transform: scale(3); opacity: 0; } }
         /* ---- Підсвітка знайденого на карті місця ---- */
         .map-search-highlight { position: relative; width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; pointer-events: none; }
         .map-search-highlight .pulse-ring {
@@ -742,6 +749,24 @@
             transition: var(--theme-transition);
         }
         #chat-messages { flex-grow: 1; overflow-y: auto; padding: 2px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px; list-style: none; touch-action: pan-y; }
+        #chat-messages li { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+        .msg-quote { border-left: 3px solid rgba(128,128,128,0.7); padding: 2px 8px; margin-bottom: 6px; font-size: 12px; opacity: 0.85; display: flex; flex-direction: column; border-radius: 4px; background: rgba(128,128,128,0.12); }
+        .msg-quote b { font-weight: 700; } .msg-quote span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }
+        .msg-fwd { font-size: 11px; opacity: 0.7; margin-bottom: 3px; font-style: italic; }
+        .msg-edited { font-size: 10px; opacity: 0.6; }
+        .msg-reactions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+        .msg-react { border: none; border-radius: 12px; padding: 2px 8px; font-size: 12px; background: rgba(128,128,128,0.22); color: inherit; cursor: pointer; font-family: inherit; }
+        .msg-react.mine { background: rgba(10,132,255,0.35); }
+        #chat-ctx-bar { display: none; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 12px; margin-bottom: 4px; border-left: 3px solid var(--accent-main); border-radius: 8px; background: rgba(128,128,128,0.14); font-size: 12px; flex-shrink: 0; }
+        #chat-ctx-bar .ctx-text { display: flex; flex-direction: column; min-width: 0; } #chat-ctx-bar b { font-weight: 700; } #chat-ctx-bar span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 0.8; }
+        #chat-ctx-bar button { background: none; border: none; color: inherit; font-size: 16px; cursor: pointer; }
+        #msg-menu-overlay { position: fixed; inset: 0; z-index: 6000; background: rgba(0,0,0,0.4); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 20px; box-sizing: border-box; animation: sheetBackdropIn 0.2s ease backwards; }
+        .mm-react-bar { display: flex; gap: 4px; padding: 8px 10px; border-radius: 28px; background: rgba(38,38,40,0.96); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+        .mm-react-bar button { font-size: 26px; background: none; border: none; border-radius: 50%; width: 42px; height: 42px; cursor: pointer; } .mm-react-bar button.on { background: rgba(255,255,255,0.18); }
+        .mm-card { width: 100%; max-width: 300px; max-height: 60vh; overflow-y: auto; border-radius: 16px; background: rgba(38,38,40,0.96); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); }
+        .mm-row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 13px 16px; background: none; border: none; color: #fff; font-family: inherit; font-size: 16px; text-align: left; cursor: pointer; }
+        .mm-row + .mm-row { border-top: 1px solid rgba(255,255,255,0.1); } .mm-row:active { background: rgba(255,255,255,0.1); } .mm-row.danger { color: #ff453a; }
+        .mm-ic { width: 22px; text-align: center; } .mm-title { padding: 12px 16px; font-weight: 700; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.1); }
         #chat-messages li { max-width: 80%; padding: 10px 14px; border-radius: 18px; font-size: 14px; line-height: 1.4; transition: var(--theme-transition); }
         .msg-other { background: rgba(0,0,0,0.05); color: var(--text-color); align-self: flex-start; }
         body.dark-theme .msg-other { background: rgba(255, 255, 255, 0.1); }
@@ -2308,7 +2333,7 @@
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, push, onChildAdded, onValue, set, off, get, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getDatabase, ref, push, onChildAdded, onChildChanged, onChildRemoved, onValue, set, update, off, get, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         // Нейтральна заглушка-аватар (сірий силует), поки людина ще не додала власне фото.
         // Раніше тут стояло стокове фото конкретної випадкової людини (xsgames.co) — це виглядало
@@ -3832,11 +3857,14 @@
                 msgClosing = false;
             }, 430);
         }
+        let msgSwipeInScroll = false;
         function resetThreadDrag(wrap) { wrap.style.transition = ''; wrap.style.transform = ''; wrap.style.boxShadow = ''; }
         document.addEventListener('touchstart', (e) => {
             if (!(sidebar.classList.contains('chat-mode') && sidebar.classList.contains('active')) || msgClosing) { msgSwipeTracking = false; return; }
             if (e.target.closest('.chat-input-row') || e.target.closest('#chat-send-btn') || e.target.closest('#chat-attach-sheet')) { msgSwipeTracking = false; return; }
             msgSwipeStartX = e.touches[0].clientX; msgSwipeStartY = e.touches[0].clientY; msgSwipeStartTime = Date.now(); msgSwipeTracking = true;
+            // Якщо дотик почався у прокрутній зоні (переписка, список чатів) — це гортання, а не жест «закрити».
+            msgSwipeInScroll = !!e.target.closest('#chat-messages, #chat-thread-wrap, #dm-list, .info-scroll-area, #chat-folders-row');
             msgThreadDrag = false; msgSamples = [{ t: Date.now(), v: e.touches[0].clientX }];
         }, { passive: true });
         // Свайп вправо в переписці — сторінка їде за пальцем (як "назад" в iOS), а не стрибає.
@@ -3876,7 +3904,7 @@
                 return;
             }
             // швидкий, переважно вертикальний рух вгору — не чіпляється до звичайного повільного гортання списку
-            if (dy < -70 && Math.abs(dx) < 90 && dt < 400) { closeMessagesSwipeUp(); return; }
+            if (!msgSwipeInScroll && dy < -70 && Math.abs(dx) < 90 && dt < 400) { closeMessagesSwipeUp(); return; }
         }, { passive: true });
 
         // ---- Загальні бесіди (стіни NPC) та приватні бесіди між реальними користувачами ----
@@ -3924,22 +3952,167 @@
             return (bytes / (1024 * 1024)).toFixed(1) + ' МБ';
         }
 
+        // ---- Повідомлення: рендер, реакції, відповіді, довге натискання (меню як у месенджері) ----
+        const HIDDEN_MSGS_KEY = 'chat_hidden_msgs';
+        function getHiddenMsgs() { try { return new Set(JSON.parse(localStorage.getItem(HIDDEN_MSGS_KEY) || '[]')); } catch (e) { return new Set(); } }
+        function hideMsgLocally(path, key) { const h = getHiddenMsgs(); h.add(path + '|' + key); localStorage.setItem(HIDDEN_MSGS_KEY, JSON.stringify([...h])); }
+        function msgPreviewText(msg) {
+            const t = msg.type || 'text';
+            if (t === 'image') return '📷 Фото'; if (t === 'video') return '🎥 Відео';
+            if (t === 'file') return '📎 ' + (msg.fileName || 'Файл'); if (t === 'location') return '📍 Локація';
+            return msg.text || '';
+        }
+        function fillMessageLi(li, path, key, msg) {
+            const senderName = msg.senderName || msg.sender || 'Гість';
+            const isMine = msg.senderId === myId || senderName === myName;
+            li.className = isMine ? 'msg-me' : 'msg-other'; li.dataset.key = key; li.innerHTML = '';
+            if (!isMine) { const nameSpan = document.createElement('span'); nameSpan.className = 'msg-user-name'; nameSpan.innerText = senderName; li.appendChild(nameSpan); }
+            if (msg.forwarded) { const f = document.createElement('div'); f.className = 'msg-fwd'; f.innerText = '↪ Переслане повідомлення'; li.appendChild(f); }
+            if (msg.replyTo) {
+                const q = document.createElement('div'); q.className = 'msg-quote';
+                const qn = document.createElement('b'); qn.innerText = msg.replyTo.name || 'Гість';
+                const qt = document.createElement('span'); qt.innerText = msg.replyTo.text || '';
+                q.appendChild(qn); q.appendChild(qt); li.appendChild(q);
+            }
+            buildMessageContent(li, msg);
+            if (msg.edited) { const e = document.createElement('span'); e.className = 'msg-edited'; e.innerText = ' (змінено)'; li.appendChild(e); }
+            const rx = msg.reactions || {}; const emojis = Object.keys(rx).filter(em => rx[em] && Object.keys(rx[em]).length);
+            if (emojis.length) {
+                const row = document.createElement('div'); row.className = 'msg-reactions';
+                emojis.forEach(em => {
+                    const n = Object.keys(rx[em]).length, mine = !!rx[em][myId];
+                    const b = document.createElement('button'); b.className = 'msg-react' + (mine ? ' mine' : ''); b.innerText = em + (n > 1 ? ' ' + n : '');
+                    b.addEventListener('click', (ev) => { ev.stopPropagation(); toggleReaction(path, key, em, mine); });
+                    row.appendChild(b);
+                });
+                li.appendChild(row);
+            }
+        }
+        function toggleReaction(path, key, emoji, alreadyMine) {
+            const r = ref(db, `${path}/${key}/reactions/${emoji}/${myId}`);
+            if (alreadyMine) remove(r); else set(r, true);
+        }
+        function attachMsgLongPress(li, getInfo) {
+            let timer = null, sx = 0, sy = 0, fired = false;
+            const fire = () => { fired = true; if (navigator.vibrate) { try { navigator.vibrate(12); } catch (_) {} } const i = getInfo(); if (i) openMsgMenu(i.path, i.key, i.msg); };
+            li.addEventListener('touchstart', (e) => { if (e.target.closest('.msg-react')) return; fired = false; sx = e.touches[0].clientX; sy = e.touches[0].clientY; clearTimeout(timer); timer = setTimeout(fire, 420); }, { passive: true });
+            li.addEventListener('touchmove', (e) => { if (timer && (Math.abs(e.touches[0].clientX - sx) > 8 || Math.abs(e.touches[0].clientY - sy) > 8)) { clearTimeout(timer); timer = null; } }, { passive: true });
+            ['touchend', 'touchcancel'].forEach(ev => li.addEventListener(ev, () => { clearTimeout(timer); timer = null; }, { passive: true }));
+            li.addEventListener('contextmenu', (e) => { e.preventDefault(); clearTimeout(timer); fire(); });
+            li.addEventListener('click', (e) => { if (fired) { e.stopImmediatePropagation(); e.preventDefault(); fired = false; } }, true);
+        }
         function loadChat(path) {
             const chatMessagesUl = document.getElementById('chat-messages'); chatMessagesUl.innerHTML = '';
+            clearChatContext();
             if (currentChatRef) off(currentChatRef);
             currentChatRef = ref(db, path);
+            const cache = {}; const hidden = getHiddenMsgs();
             onChildAdded(currentChatRef, (data) => {
-                const msg = data.val();
-                const senderName = msg.senderName || msg.sender || 'Гість';
-                const isMine = msg.senderId === myId || senderName === myName;
-                const li = document.createElement('li'); li.className = isMine ? 'msg-me' : 'msg-other';
-                if (!isMine) {
-                    const nameSpan = document.createElement('span'); nameSpan.className = 'msg-user-name'; nameSpan.innerText = senderName;
-                    li.appendChild(nameSpan);
-                }
-                buildMessageContent(li, msg);
+                if (hidden.has(path + '|' + data.key)) return;
+                const msg = data.val(); cache[data.key] = msg;
+                const li = document.createElement('li');
+                fillMessageLi(li, path, data.key, msg);
+                attachMsgLongPress(li, () => cache[data.key] ? { path, key: data.key, msg: cache[data.key] } : null);
                 chatMessagesUl.appendChild(li); chatMessagesUl.scrollTop = chatMessagesUl.scrollHeight;
             });
+            onChildChanged(currentChatRef, (data) => {
+                const li = chatMessagesUl.querySelector(`li[data-key="${data.key}"]`); if (!li) return;
+                cache[data.key] = data.val(); fillMessageLi(li, path, data.key, cache[data.key]);
+            });
+            onChildRemoved(currentChatRef, (data) => {
+                delete cache[data.key];
+                const li = chatMessagesUl.querySelector(`li[data-key="${data.key}"]`); if (li) li.remove();
+            });
+        }
+
+        // ---- Відповідь / редагування: смужка над полем вводу ----
+        let pendingReply = null, editingMsg = null;
+        function ctxBar() {
+            let bar = document.getElementById('chat-ctx-bar');
+            if (!bar) {
+                bar = document.createElement('div'); bar.id = 'chat-ctx-bar';
+                bar.innerHTML = '<div class="ctx-text"><b></b><span></span></div><button type="button" aria-label="Скасувати">✕</button>';
+                bar.querySelector('button').addEventListener('click', clearChatContext);
+                const row = document.querySelector('#chat-thread-wrap .chat-input-row'); row.parentNode.insertBefore(bar, row);
+            }
+            return bar;
+        }
+        function showChatContext(title, text) { const bar = ctxBar(); bar.querySelector('b').innerText = title; bar.querySelector('span').innerText = text; bar.style.display = 'flex'; document.getElementById('chat-msg-input').focus(); }
+        function clearChatContext() {
+            pendingReply = null;
+            if (editingMsg) { editingMsg = null; const i = document.getElementById('chat-msg-input'); if (i) i.value = ''; }
+            const bar = document.getElementById('chat-ctx-bar'); if (bar) bar.style.display = 'none';
+        }
+        function takeReplyTo() { const r = pendingReply; if (r) clearChatContext(); return r; }
+
+        // ---- Меню довгого натискання ----
+        function closeMsgMenu() { const m = document.getElementById('msg-menu-overlay'); if (m) m.remove(); }
+        function openMsgMenu(path, key, msg) {
+            closeMsgMenu();
+            const senderName = msg.senderName || msg.sender || 'Гість';
+            const isMine = msg.senderId === myId || senderName === myName;
+            const type = msg.type || 'text';
+            const rx = msg.reactions || {};
+            const ov = document.createElement('div'); ov.id = 'msg-menu-overlay';
+            ov.addEventListener('click', (e) => { if (e.target === ov) closeMsgMenu(); });
+            const bar = document.createElement('div'); bar.className = 'mm-react-bar';
+            ['👍', '❤️', '😂', '😮', '😢', '🔥'].forEach(em => {
+                const mine = !!(rx[em] && rx[em][myId]);
+                const b = document.createElement('button'); b.innerText = em; if (mine) b.className = 'on';
+                b.addEventListener('click', () => { closeMsgMenu(); toggleReaction(path, key, em, mine); });
+                bar.appendChild(b);
+            });
+            const card = document.createElement('div'); card.className = 'mm-card';
+            const rows = [];
+            rows.push({ label: 'Відповісти', icon: '↩️', fn: () => { editingMsg = null; pendingReply = { key, name: senderName, text: msgPreviewText(msg).slice(0, 120) }; showChatContext('Відповідь для ' + senderName, msgPreviewText(msg).slice(0, 80)); } });
+            if (type === 'text' && msg.text) rows.push({ label: 'Копіювати', icon: '📋', fn: async () => { try { await navigator.clipboard.writeText(msg.text); } catch (_) { const ta = document.createElement('textarea'); ta.value = msg.text; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (__) {} ta.remove(); } } });
+            rows.push({ label: 'Переслати', icon: '↪️', fn: () => openForwardPicker(msg) });
+            if (isMine && type === 'text') rows.push({ label: 'Редагувати', icon: '✏️', fn: () => { pendingReply = null; editingMsg = { path, key }; const i = document.getElementById('chat-msg-input'); i.value = msg.text || ''; showChatContext('Редагування', (msg.text || '').slice(0, 80)); } });
+            rows.push({ label: 'Видалити в мене', icon: '🙈', fn: () => { hideMsgLocally(path, key); const li = document.querySelector(`#chat-messages li[data-key="${key}"]`); if (li) li.remove(); } });
+            if (isMine) rows.push({ label: 'Видалити у всіх', icon: '🗑', danger: true, fn: () => { if (confirm('Видалити повідомлення у всіх?')) remove(ref(db, `${path}/${key}`)); } });
+            rows.forEach(r => {
+                const b = document.createElement('button'); b.className = 'mm-row' + (r.danger ? ' danger' : '');
+                b.innerHTML = '<span class="mm-ic"></span><span></span>'; b.firstChild.innerText = r.icon; b.lastChild.innerText = r.label;
+                b.addEventListener('click', () => { closeMsgMenu(); r.fn(); });
+                card.appendChild(b);
+            });
+            ov.appendChild(bar); ov.appendChild(card); document.body.appendChild(ov);
+        }
+        async function openForwardPicker(msg) {
+            const ov = document.createElement('div'); ov.id = 'msg-menu-overlay';
+            ov.addEventListener('click', (e) => { if (e.target === ov) closeMsgMenu(); });
+            const card = document.createElement('div'); card.className = 'mm-card mm-forward';
+            const title = document.createElement('div'); title.className = 'mm-title'; title.innerText = 'Переслати до…'; card.appendChild(title);
+            ov.appendChild(card); document.body.appendChild(ov);
+            const items = [{ id: 'saved', name: 'Збережене', saved: true }];
+            try {
+                const snap = await get(ref(db, `userConvos/${myId}`)); const v = snap.val() || {};
+                Object.keys(v).forEach(k => items.push({ id: k, name: v[k].name || 'Гість', isGroup: !!v[k].isGroup, groupId: v[k].groupId }));
+            } catch (_) {}
+            items.forEach(it => {
+                const b = document.createElement('button'); b.className = 'mm-row'; b.innerText = (it.saved ? '🔖 ' : it.isGroup ? '👥 ' : '💬 ') + it.name;
+                b.addEventListener('click', async () => { closeMsgMenu(); await forwardMessageTo(msg, it); });
+                card.appendChild(b);
+            });
+        }
+        async function forwardMessageTo(msg, it) {
+            const copy = Object.assign({}, msg); delete copy.reactions; delete copy.replyTo; delete copy.edited;
+            copy.senderId = myId; copy.senderName = myName; copy.timestamp = Date.now(); copy.forwarded = true;
+            const preview = msgPreviewText(msg); const myLabel = (myProfile && myProfile.name) || myName;
+            try {
+                if (it.saved) { await push(ref(db, `savedMessages/${myId}`), copy); return; }
+                if (it.isGroup) {
+                    const gid = it.groupId || it.id;
+                    await push(ref(db, `groups/${gid}`), copy);
+                    const ms = await get(ref(db, `groupsMeta/${gid}/members`)); const members = Object.keys(ms.val() || {});
+                    members.forEach(uid => set(ref(db, `userConvos/${uid}/${gid}`), { name: it.name, photo: '', ts: Date.now(), lastMsg: (uid === myId ? '↪ ' + preview : `${myLabel}: ↪ ${preview}`), lastMine: uid === myId, isGroup: true, groupId: gid }));
+                } else {
+                    const convId = [myId, it.id].sort().join('__');
+                    await push(ref(db, `dms/${convId}`), copy);
+                    set(ref(db, `userConvos/${myId}/${it.id}`), { name: it.name, photo: '', ts: Date.now(), lastMsg: '↪ ' + preview, lastMine: true });
+                    set(ref(db, `userConvos/${it.id}/${myId}`), { name: myLabel, photo: (myProfile && myProfile.photos && myProfile.photos[0]) || '', ts: Date.now(), lastMsg: '↪ ' + preview, lastMine: false });
+                }
+            } catch (_) { alert('Не вдалося переслати повідомлення.'); }
         }
 
         // Шлях чату для конкретної картки: раніше NPC-картки, магазини й будь-хто без 'tg_' у id
@@ -3981,7 +4154,14 @@
         function sendMessage() {
             if (!currentChatPath) return;
             const input = document.getElementById('chat-msg-input'); const text = input.value.trim(); if (!text) return;
-            push(ref(db, currentChatPath), { type: 'text', senderId: myId, senderName: myName, text: text, timestamp: Date.now() });
+            if (editingMsg) {
+                update(ref(db, `${editingMsg.path}/${editingMsg.key}`), { text: text, edited: true });
+                clearChatContext(); input.value = '';
+                return;
+            }
+            const payload = { type: 'text', senderId: myId, senderName: myName, text: text, timestamp: Date.now() };
+            const rt = takeReplyTo(); if (rt) payload.replyTo = { name: rt.name, text: rt.text };
+            push(ref(db, currentChatPath), payload);
             input.value = '';
             updateConvoPreview(text);
         }
@@ -3991,6 +4171,7 @@
         // ---- Вкладення в чаті: фото / відео / файл / локація ----
         function sendAttachmentMessage(payload, previewText) {
             if (!currentChatPath) return;
+            const rt = takeReplyTo(); if (rt) payload = Object.assign({}, payload, { replyTo: { name: rt.name, text: rt.text } });
             push(ref(db, currentChatPath), Object.assign({ senderId: myId, senderName: myName, timestamp: Date.now() }, payload));
             updateConvoPreview(previewText);
         }
@@ -4838,6 +5019,20 @@
             }
             return null;
         }
+        // Наперед підвантажуємо перше фото/відео сусідніх людей і наступний елемент поточної сторі — щоб колесо й гортання не чекали на мережу.
+        const storyPreloadCache = [];
+        function preloadStoryItem(it) {
+            if (!it || !it.url) return;
+            try {
+                if (it.type === 'photo') { const im = new Image(); im.decoding = 'async'; im.src = it.url; storyPreloadCache.push(im); }
+                else { const v = document.createElement('video'); v.preload = 'auto'; v.muted = true; setVideoSrc(v, it.url); storyPreloadCache.push(v); }
+                while (storyPreloadCache.length > 12) storyPreloadCache.shift();
+            } catch (_) {}
+        }
+        function preloadStoryNeighbors() {
+            [1, -1].forEach(d => { const nb = peekStoryPerson(d); if (nb) { preloadStoryItem(nb.list[0]); preloadStoryItem(nb.list[1]); } });
+            preloadStoryItem(storyViewerList[storyViewerIdx + 1]);
+        }
         function openStoryViewer(list, startIdx, name, opts, entry, sourceType) {
             opts = opts || {};
             storyViewerShowTime = opts.showTime !== false;
@@ -4888,10 +5083,12 @@
                 wrap.appendChild(bar);
             });
             playStoryAt(storyViewerIdx);
+            setTimeout(preloadStoryNeighbors, 50);
         }
 
         function playStoryAt(idx) {
             clearTimeout(storyViewerTimer);
+            preloadStoryItem(storyViewerList[idx + 1]);
             const bars = document.querySelectorAll('.story-bar-fill');
             bars.forEach((b, i) => { b.style.transition = 'none'; b.style.width = i < idx ? '100%' : '0%'; });
             const media = document.getElementById('story-viewer-media'); media.innerHTML = '';
@@ -5094,8 +5291,10 @@
             let sx = 0, sy = 0, dx = 0, dy = 0, lock = null, active = false, samples = [], closing = false;
             // «Велике колесо»: сторіси людей — грані одного барабана, що стоять одна за одною. Під час свайпу видно і поточну,
             // і сусідню грань (вгору — наступна людина, вниз — попередня); кут між гранями — PHI.
-            const PHI = 52;
-            const wheel = (deg) => { const R = Math.round(window.innerHeight * 1.15); return `perspective(${Math.round(R * 2.6)}px) translateZ(-${R}px) rotateX(${deg}deg) translateZ(${R}px)`; };
+            const PHI = 1; // «конвеєр»: 1 = зсув на одну сторі; між сторі невеликий проміжок GAP
+            const GAP = 10;
+            const WHEEL_EASE = 'cubic-bezier(0.2, 0.9, 0.3, 1)';
+            const wheel = (k) => `translate3d(0, ${Math.round(-k / PHI * (window.innerHeight + GAP))}px, 0)`;
             const wheelBackdrop = document.createElement('div');
             wheelBackdrop.style.cssText = 'position:fixed; inset:0; background:#000; z-index:4999; display:none;';
             document.body.appendChild(wheelBackdrop);
@@ -5132,7 +5331,7 @@
                 if (lock === 'y') {
                     // Перехід між людьми на Головній — «велике колесо»: поточна і сусідня грані крутяться за пальцем.
                     if (storyViewerPeople && storyViewerPeople.length > 1) {
-                        const t = Math.max(-1, Math.min(1, -dy / (window.innerHeight * 0.75)));
+                        const t = Math.max(-1, Math.min(1, -dy / (window.innerHeight + GAP)));
                         if (t === 0) return;
                         const dirNext = t > 0;
                         wheelBackdrop.style.display = 'block';
@@ -5164,7 +5363,7 @@
                 }
                 else if (lock === 'y') {
                     const vy = swipeVelocity(samples);
-                    if (Math.abs(dy) > 110 || (Math.abs(vy) > 0.6 && Math.abs(dy) > 25)) {
+                    if (Math.abs(dy) > ((storyViewerPeople && storyViewerPeople.length > 1) ? 60 : 110) || (Math.abs(vy) > 0.5 && Math.abs(dy) > 20)) {
                         const swipeDir = (dy !== 0 ? dy : vy) < 0 ? -1 : 1;
                         // Свайп вгору на Головній → сторі наступної людини, вниз → попередньої (по колу)
                         if (storyViewerPeople && storyViewerPeople.length > 1) {
@@ -5174,7 +5373,7 @@
                             wheelBackdrop.style.display = 'block';
                             ensureGhost(nextDir);
                             void el.offsetHeight;
-                            const dur = '0.42s ' + IOS_EASE;
+                            const dur = '0.26s ' + WHEEL_EASE;
                             el.style.transition = 'transform ' + dur;
                             ghost.style.transition = 'transform ' + dur;
                             el.style.transform = wheel(nextDir === 1 ? PHI : -PHI);
@@ -5184,9 +5383,9 @@
                                 el.style.transition = 'none'; el.style.transform = '';
                                 if (ok) {
                                     // Нова сторі вже стоїть на місці під копією-«гранню»; прибираємо копію, коли картинка встигне намалюватись.
-                                    setTimeout(() => { resetViewerStyles(); closing = false; }, 200);
+                                    setTimeout(() => { resetViewerStyles(); closing = false; }, 120);
                                 } else { resetViewerStyles(); closing = false; }
-                            }, 430);
+                            }, 270);
                             lock = null; dx = 0; dy = 0;
                             return;
                         }
@@ -5196,10 +5395,10 @@
                         el.style.transform = `translate3d(0, ${dir * 105}%, 0) scale(0.86)`; el.style.opacity = '0';
                         setTimeout(() => { closeStoryViewer(); resetViewerStyles(); closing = false; }, 350);
                     } else if (storyViewerPeople && storyViewerPeople.length > 1) {
-                        el.style.transition = 'transform 0.4s ' + IOS_EASE;
+                        el.style.transition = 'transform 0.25s ' + WHEEL_EASE;
                         el.style.transform = wheel(0);
-                        if (ghostDir) { ghost.style.transition = 'transform 0.4s ' + IOS_EASE; ghost.style.transform = wheel(ghostDir === 1 ? -PHI : PHI); }
-                        setTimeout(resetViewerStyles, 410);
+                        if (ghostDir) { ghost.style.transition = 'transform 0.25s ' + WHEEL_EASE; ghost.style.transform = wheel(ghostDir === 1 ? -PHI : PHI); }
+                        setTimeout(resetViewerStyles, 260);
                     } else {
                         el.style.transition = 'transform 0.4s ' + IOS_EASE + ', opacity 0.3s ease, border-radius 0.4s ease';
                         el.style.transform = 'translate3d(0, 0, 0) scale(1)'; el.style.opacity = '1'; el.style.borderRadius = '0px';
@@ -5618,14 +5817,17 @@
 
         // Власна мітка одразу на карті (локально), не чекаючи, поки профіль уперше збережеться у Firebase —
         // інакше на новому пристрої/сесії просто немає власної іконки, на якій можна затиснути палець для маршруту.
+        function myMarkerHtml(photoUrl) {
+            return `<div class="me-marker"><div class="me-pulse"></div><div class="me-pulse d2"></div><div class="avatar-ring"><div class="avatar-ring-inner" style="background-image: url('${photoUrl}')"></div></div><div class="me-label">Ви</div></div>`;
+        }
         (function ensureMyMarkerLocally() {
             const initialPhotos = (myProfile.photos && myProfile.photos.length) ? myProfile.photos : [DEFAULT_AVATAR];
             const customIcon = L.divIcon({
                 className: 'custom-avatar-marker',
-                html: `<div class="avatar-ring"><div class="avatar-ring-inner" style="background-image: url('${initialPhotos[0]}')"></div></div>`,
+                html: myMarkerHtml(initialPhotos[0]),
                 iconSize: [38, 38], iconAnchor: [19, 19]
             });
-            profileMarkers[myId] = L.marker(myCoords, { icon: customIcon }).addTo(layerGroups.friends);
+            profileMarkers[myId] = L.marker(myCoords, { icon: customIcon, zIndexOffset: 1000 }).addTo(layerGroups.friends);
             profileMarkers[myId].on('click', (e) => {
                 L.DomEvent.stopPropagation(e);
                 if (routeSelecting) return;
@@ -6046,10 +6248,10 @@
                 if (profileMarkers[id]) { layerGroups.friends.removeLayer(profileMarkers[id]); }
                 const customIcon = L.divIcon({
                     className: 'custom-avatar-marker',
-                    html: `<div class="avatar-ring"><div class="avatar-ring-inner" style="background-image: url('${photos[0]}')"></div></div>`,
+                    html: id === myId ? myMarkerHtml(photos[0]) : `<div class="avatar-ring"><div class="avatar-ring-inner" style="background-image: url('${photos[0]}')"></div></div>`,
                     iconSize: [38, 38], iconAnchor: [19, 19]
                 });
-                profileMarkers[id] = L.marker(p.coords, { icon: customIcon }).addTo(layerGroups.friends);
+                profileMarkers[id] = L.marker(p.coords, { icon: customIcon, zIndexOffset: id === myId ? 1000 : 0 }).addTo(layerGroups.friends);
                 profileMarkers[id].on('click', (e) => {
                     L.DomEvent.stopPropagation(e);
                     if (routeSelecting) { if (id !== myId) buildWalkingRoute(myCoords, p.coords, id); return; }
