@@ -419,18 +419,7 @@
         .story-viewer-pill-actions > .story-viewer-action-btn { width: 42px; height: 42px; background: rgba(28,28,30,0.55); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
         #story-viewer-menu-btn { display: none !important; }
         #story-viewer-more-btn svg { stroke: #ff453a; }
-        /* Рядок відповіді внизу сторі — як в Instagram: поле «Надіслати повідомлення…» + кнопка надсилання (лише на чужих сторі) */
-        #story-viewer-reply { display: none; position: absolute; left: 12px; right: 12px; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); z-index: 22; align-items: center; gap: 8px; height: 46px; padding: 0 6px 0 16px; box-sizing: border-box; border-radius: 23px; background: rgba(28,28,30,0.45); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.35); }
-        #story-viewer.has-reply #story-viewer-reply { display: flex; }
-        #story-viewer-reply input { flex: 1; min-width: 0; background: none; border: none; outline: none; color: #fff; font-family: inherit; font-size: 16px; }
-        #story-viewer-reply input::placeholder { color: rgba(255,255,255,0.75); }
-        #story-viewer-reply-send { width: 34px; height: 34px; border-radius: 50%; border: none; background: none; display: none; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; -webkit-tap-highlight-color: transparent; }
-        #story-viewer-reply.has-text #story-viewer-reply-send { display: flex; }
-        #story-viewer-reply-send svg { width: 22px; height: 22px; stroke: #fff; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-        #story-viewer.has-reply .story-viewer-pill { bottom: calc(72px + env(safe-area-inset-bottom, 0px)); }
-        #story-viewer.has-reply #story-viewer-profile-btn { bottom: calc(72px + env(safe-area-inset-bottom, 0px)); }
-        #story-viewer.has-reply #story-viewer-caption { bottom: calc(72px + env(safe-area-inset-bottom, 0px)); }
-        #story-viewer-caption { position: absolute; left: 68px; right: 70px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 20; min-height: 42px; display: flex; align-items: center; color: #fff; font-size: 13px; font-weight: 500; line-height: 1.3; text-shadow: 0 1px 4px rgba(0,0,0,0.6); pointer-events: none; overflow: hidden; word-break: break-word; }
+        #story-viewer-caption { position: absolute; left: 0; right: 0; bottom: 0; z-index: 19; display: block; box-sizing: border-box; padding: 90px 70px calc(18px + env(safe-area-inset-bottom, 0px)) 68px; background: linear-gradient(to top, rgba(0,0,0,0.65), rgba(0,0,0,0)); color: #fff; font-size: 15px; font-weight: 500; line-height: 1.4; text-shadow: 0 1px 4px rgba(0,0,0,0.6); pointer-events: none; word-break: break-word; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 7; overflow: hidden; }
         #story-viewer-caption:empty { display: none; }
         #story-viewer-menu { display: none; position: absolute; inset: 0; z-index: 40; background: rgba(0,0,0,0.38); align-items: flex-end; justify-content: center; flex-direction: column; padding: 0 10px calc(10px + env(safe-area-inset-bottom, 0px)); box-sizing: border-box; animation: sheetBackdropIn 0.25s ease backwards; }
         .sv-menu-card { width: 100%; max-width: 480px; margin: 0 auto 8px; background: rgba(38,38,40,0.94); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-radius: 16px; overflow: hidden; animation: sheetCardIn 0.42s cubic-bezier(0.32, 0.72, 0, 1) backwards; }
@@ -2291,10 +2280,6 @@
             </div>
         </div>
         <div id="story-viewer-caption"></div>
-        <div id="story-viewer-reply">
-            <input type="text" id="story-viewer-reply-input" placeholder="Надіслати повідомлення…" autocomplete="off" enterkeyhint="send">
-            <button id="story-viewer-reply-send" aria-label="Надіслати"><svg viewBox="0 0 24 24"><path d="M22 2L11 13"></path><path d="M22 2l-7 20-4-9-9-4 20-7z"></path></svg></button>
-        </div>
         <div id="story-viewer-menu"></div>
     </div>
 
@@ -4870,9 +4855,6 @@
             msgBtn.style.display = canLike ? 'flex' : 'none';
             moreBtn.style.display = isOwnEditable ? 'flex' : 'none';
             pillText.innerText = (storyViewerEntry && storyViewerEntry.status) ? storyViewerEntry.status : '';
-            document.getElementById('story-viewer').classList.toggle('has-reply', canLike);
-            const replyInput = document.getElementById('story-viewer-reply-input'); replyInput.value = '';
-            document.getElementById('story-viewer-reply').classList.remove('has-text');
             document.getElementById('story-viewer-pill').style.display = 'flex'; // знизу завжди лише кнопка «···»
             // Аватарка знизу зліва → перехід у профіль (не показуємо, якщо цей профіль уже відкритий під сторі)
             const profBtn = document.getElementById('story-viewer-profile-btn');
@@ -4900,7 +4882,7 @@
             const media = document.getElementById('story-viewer-media'); media.innerHTML = '';
             const s = storyViewerList[idx];
             if (storyViewerShowTime) document.getElementById('story-viewer-time').innerText = formatStoryTime(s.ts);
-            document.getElementById('story-viewer-caption').innerText = captionFor(storyViewerEntry, s.url) || ((storyViewerEntry && storyViewerEntry.status) || '');
+            document.getElementById('story-viewer-caption').innerText = captionFor(storyViewerEntry, s.url) || ((storyViewerEntry && (storyViewerEntry.about || storyViewerEntry.status)) || '');
             if (s.type === 'photo') {
                 const img = document.createElement('img'); img.src = s.url; media.appendChild(img);
                 if (storyViewerAutoAdvance) {
@@ -5060,32 +5042,6 @@
             menu.style.display = 'flex';
         }
         document.getElementById('story-viewer-menu-btn').addEventListener('click', (e) => { e.stopPropagation(); openStoryMenu(); });
-        // ---- Відповідь на сторі (як в Instagram): текст летить у особистий чат з автором, сторі лишається відкритою ----
-        (function () {
-            const wrap = document.getElementById('story-viewer-reply');
-            const input = document.getElementById('story-viewer-reply-input');
-            const sendBtn = document.getElementById('story-viewer-reply-send');
-            let paused = false;
-            const resume = () => { if (paused) { paused = false; if (storyViewerAutoAdvance && storyViewerList[storyViewerIdx]) playStoryAt(storyViewerIdx); } };
-            input.addEventListener('focus', () => { paused = true; clearTimeout(storyViewerTimer); const v = document.querySelector('#story-viewer-media video'); if (v) try { v.pause(); } catch (_) {} });
-            input.addEventListener('blur', () => setTimeout(resume, 150));
-            input.addEventListener('input', () => wrap.classList.toggle('has-text', !!input.value.trim()));
-            function sendReply() {
-                const text = input.value.trim(); const entry = storyViewerEntry;
-                if (!text || !entry || entry.id === myId) return;
-                const convId = [myId, entry.id].sort().join('__');
-                const msgText = '↩️ Відповідь на сторі: ' + text;
-                push(ref(db, `dms/${convId}`), { type: 'text', senderId: myId, senderName: myName, text: msgText, timestamp: Date.now() });
-                set(ref(db, `userConvos/${myId}/${entry.id}`), { name: entry.name || 'Гість', photo: (entry.photos && entry.photos[0]) || '', ts: Date.now(), lastMsg: msgText, lastMine: true });
-                set(ref(db, `userConvos/${entry.id}/${myId}`), { name: (myProfile && myProfile.name) || myName, photo: (myProfile && myProfile.photos && myProfile.photos[0]) || '', ts: Date.now(), lastMsg: msgText, lastMine: false });
-                input.value = ''; wrap.classList.remove('has-text');
-                input.placeholder = 'Надіслано ✓'; setTimeout(() => { input.placeholder = 'Надіслати повідомлення…'; }, 1600);
-                input.blur();
-            }
-            sendBtn.addEventListener('click', (e) => { e.stopPropagation(); sendReply(); });
-            input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); sendReply(); } });
-            wrap.addEventListener('click', (e) => e.stopPropagation());
-        })();
         document.getElementById('story-viewer-dl-btn').addEventListener('click', (e) => { e.stopPropagation(); const cur = storyViewerList[storyViewerIdx]; if (cur) saveMediaToDevice(cur.url); });
         document.getElementById('story-viewer-share-btn').addEventListener('click', (e) => { e.stopPropagation(); const cur = storyViewerList[storyViewerIdx]; if (cur) shareMediaLink(cur.url); });
 
@@ -5121,9 +5077,15 @@
         (function () {
             const el = document.getElementById('story-viewer');
             let sx = 0, sy = 0, dx = 0, dy = 0, lock = null, active = false, samples = [], closing = false;
-            const resetViewerStyles = () => { el.style.transition = ''; el.style.transform = ''; el.style.opacity = ''; el.style.borderRadius = ''; el.style.overflow = ''; };
+            // «Велике колесо»: сторіси людей — як грані барабана. Додатний кут — грань їде вгору й назад, від'ємний — вниз.
+            const WHEEL_R = 520;
+            const wheel = (deg) => `perspective(1400px) translateZ(-${WHEEL_R}px) rotateX(${deg}deg) translateZ(${WHEEL_R}px)`;
+            const wheelBackdrop = document.createElement('div');
+            wheelBackdrop.style.cssText = 'position:fixed; inset:0; background:#000; z-index:4999; display:none;';
+            document.body.appendChild(wheelBackdrop);
+            const resetViewerStyles = () => { el.style.transition = ''; el.style.transform = ''; el.style.opacity = ''; el.style.borderRadius = ''; el.style.overflow = ''; wheelBackdrop.style.display = 'none'; };
             el.addEventListener('touchstart', (e) => {
-                if (closing || e.target.closest('#story-viewer-close') || e.target.closest('#story-viewer-pill') || e.target.closest('#story-viewer-reply') || e.target.closest('#story-viewer-menu')) { active = false; return; }
+                if (closing || e.target.closest('#story-viewer-close') || e.target.closest('#story-viewer-pill') || e.target.closest('#story-viewer-menu')) { active = false; return; }
                 sx = e.touches[0].clientX; sy = e.touches[0].clientY; dx = 0; dy = 0; lock = null; active = true;
                 samples = [{ t: Date.now(), v: sy }];
             }, { passive: true });
@@ -5133,12 +5095,13 @@
                 samples.push({ t: Date.now(), v: e.touches[0].clientY }); if (samples.length > 8) samples.shift();
                 if (!lock) { if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return; lock = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y'; }
                 if (lock === 'y') {
-                    // Свайп вгору на Головній (перехід до наступної людини) — сторі нікуди не їде, а лише
-                    // поступово затухає (без «перегортання» як у TikTok).
+                    // Перехід між людьми на Головній — «велике колесо»: сторі плавно обертається за пальцем
+                    // (без затухання), вгору — наступна людина, вниз — попередня.
                     if (storyViewerPeople && storyViewerPeople.length > 1) {
-                        const pf = Math.min(1, Math.abs(dy) / 260);
+                        const deg = Math.max(-80, Math.min(80, -dy / (window.innerHeight * 0.7) * 70));
+                        wheelBackdrop.style.display = 'block';
                         el.style.transition = 'none';
-                        el.style.opacity = String(1 - pf * 0.85);
+                        el.style.transform = wheel(deg);
                         return;
                     }
                     // Сторіс їде за пальцем, трохи зменшується, заокруглюється і тане — як закриття в iOS.
@@ -5167,19 +5130,25 @@
                         // Свайп вгору на Головній → сторі наступної людини, вниз → попередньої (по колу)
                         if (storyViewerPeople && storyViewerPeople.length > 1) {
                             closing = true;
-                            // Плавне затухання поточної сторі → нова людина проявляється на тому ж місці.
-                            el.style.transition = 'opacity 0.2s ease';
-                            el.style.opacity = '0';
+                            // Колесо докручується: поточна грань їде геть, наступна під'їжджає з протилежного боку.
+                            const out = swipeDir === -1 ? 88 : -88;
+                            wheelBackdrop.style.display = 'block';
+                            el.style.transition = 'transform 0.32s cubic-bezier(0.4, 0, 0.6, 1)';
+                            el.style.transform = wheel(out);
                             setTimeout(() => {
                                 const ok = switchStoryPerson(swipeDir === -1 ? 1 : -1);
                                 if (ok) {
-                                    el.style.transition = 'none'; el.style.opacity = '0';
+                                    el.style.transition = 'none';
+                                    el.style.transform = wheel(-out);
                                     void el.offsetHeight;
-                                    el.style.transition = 'opacity 0.28s ease';
-                                    el.style.opacity = '1';
-                                    setTimeout(() => { resetViewerStyles(); closing = false; }, 300);
-                                } else { resetViewerStyles(); closing = false; }
-                            }, 200);
+                                    el.style.transition = 'transform 0.42s ' + IOS_EASE;
+                                    el.style.transform = wheel(0);
+                                    setTimeout(() => { resetViewerStyles(); closing = false; }, 440);
+                                } else {
+                                    el.style.transition = 'transform 0.35s ' + IOS_EASE; el.style.transform = wheel(0);
+                                    setTimeout(() => { resetViewerStyles(); closing = false; }, 360);
+                                }
+                            }, 320);
                             lock = null; dx = 0; dy = 0;
                             return;
                         }
@@ -5188,6 +5157,10 @@
                         el.style.transition = 'transform 0.35s ' + IOS_EASE + ', opacity 0.35s ease, border-radius 0.35s ease';
                         el.style.transform = `translate3d(0, ${dir * 105}%, 0) scale(0.86)`; el.style.opacity = '0';
                         setTimeout(() => { closeStoryViewer(); resetViewerStyles(); closing = false; }, 350);
+                    } else if (storyViewerPeople && storyViewerPeople.length > 1) {
+                        el.style.transition = 'transform 0.4s ' + IOS_EASE;
+                        el.style.transform = wheel(0);
+                        setTimeout(resetViewerStyles, 410);
                     } else {
                         el.style.transition = 'transform 0.4s ' + IOS_EASE + ', opacity 0.3s ease, border-radius 0.4s ease';
                         el.style.transform = 'translate3d(0, 0, 0) scale(1)'; el.style.opacity = '1'; el.style.borderRadius = '0px';
