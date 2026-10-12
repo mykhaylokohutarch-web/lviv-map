@@ -16,6 +16,60 @@
          "свайп вниз закриває застосунок" і не конфліктувати з власними жестами. -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
+    // ---- Вібровідгук: затиснення (довгий тап) на кнопках, іконках, рядках, фото тощо ----
+    // У Telegram Mini App використовуємо HapticFeedback (працює і на iPhone), інакше — navigator.vibrate (Android).
+    (function () {
+        var nativeVibrate = (navigator.vibrate ? navigator.vibrate.bind(navigator) : null);
+        var lastHaptic = 0;
+        function tgHaptic() { var w = window.Telegram && window.Telegram.WebApp; return (w && w.HapticFeedback) || null; }
+        function impact(style) {
+            var h = tgHaptic();
+            if (h && h.impactOccurred) { try { h.impactOccurred(style || 'medium'); return true; } catch (e) {} }
+            if (nativeVibrate) { try { nativeVibrate(15); return true; } catch (e) {} }
+            return false;
+        }
+        // Режим «відкрита переписка»: клас на #chat-container вмикає повноекранне гортання як у Telegram
+        document.addEventListener('DOMContentLoaded', function () {
+            var wrap = document.getElementById('chat-thread-wrap'), cont = document.getElementById('chat-container');
+            if (!wrap || !cont) return;
+            var sync = function () { cont.classList.toggle('in-thread', wrap.style.display === 'flex'); };
+            new MutationObserver(sync).observe(wrap, { attributes: true, attributeFilter: ['style'] });
+            sync();
+        });
+        // Усі існуючі виклики navigator.vibrate(...) у застосунку тепер теж працюють на iPhone через Telegram
+        navigator.vibrate = function (pattern) {
+            var h = tgHaptic();
+            if (h && h.impactOccurred) {
+                var now = Date.now(); if (now - lastHaptic < 120) return true; lastHaptic = now;
+                try { h.impactOccurred('medium'); if (Array.isArray(pattern) && pattern.length > 2) setTimeout(function () { try { h.impactOccurred('medium'); } catch (e) {} }, 75); } catch (e) {}
+                return true;
+            }
+            return nativeVibrate ? nativeVibrate(pattern) : false;
+        };
+        window.hapticPress = function () { var now = Date.now(); if (now - lastHaptic < 250) return; lastHaptic = now; impact('medium'); };
+
+        var PRESSABLE = 'button, a, [role="button"], .dm-row, .nav-btn, .leaflet-marker-icon, img, video, li, .hero-story-thumb, .folder-tab, .ng-person-row';
+        var HOLD_MS = 450, MOVE_TOL = 10;
+        var timer = null, sx = 0, sy = 0;
+        function cancel() { if (timer) { clearTimeout(timer); timer = null; } }
+        document.addEventListener('touchstart', function (e) {
+            cancel();
+            if (e.touches.length !== 1) return;
+            var t = e.target; if (!t || !t.closest) return;
+            if (t.closest('input, textarea, select, [contenteditable="true"]')) return;
+            var hit = t.closest(PRESSABLE);
+            if (!hit) { try { if (getComputedStyle(t).cursor !== 'pointer') return; } catch (_) { return; } }
+            sx = e.touches[0].clientX; sy = e.touches[0].clientY;
+            timer = setTimeout(function () { timer = null; window.hapticPress(); }, HOLD_MS);
+        }, { passive: true, capture: true });
+        document.addEventListener('touchmove', function (e) {
+            if (!timer || !e.touches[0]) return;
+            if (Math.abs(e.touches[0].clientX - sx) > MOVE_TOL || Math.abs(e.touches[0].clientY - sy) > MOVE_TOL) cancel();
+        }, { passive: true, capture: true });
+        ['touchend', 'touchcancel'].forEach(function (ev) { document.addEventListener(ev, cancel, { passive: true, capture: true }); });
+    })();
+    </script>
+    <script>
         // Одразу вимикаємо вертикальні свайпи Telegram (це і був той жест, що згортав/закривав
         // застосунок під час звичайного гортання чи свайпів усередині UI) та розгортаємо на весь екран.
         (function () {
@@ -428,7 +482,8 @@
         #story-viewer-more-btn svg { stroke: #ff453a; }
         #story-viewer-caption { position: absolute; left: 0; right: 0; bottom: 0; z-index: 19; display: block; box-sizing: border-box; padding: 70px 70px calc(18px + env(safe-area-inset-bottom, 0px)) 68px; background: linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0)); color: #fff; font-size: 12px; font-weight: 400; line-height: 1.35; text-shadow: 0 1px 4px rgba(0,0,0,0.6); pointer-events: none; word-break: break-word; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 7; overflow: hidden; }
         /* Під час свайпу сторі текст, кнопки й аватарка плавно зникають — лишається тільки саме фото/відео */
-        #story-viewer-pill, #story-viewer-caption, #story-viewer-profile-btn { transition: opacity 0.2s ease; }
+        /* Поки фото й аватарка вантажаться — усе приховано, а потім з'являється ОДНИМ кадром (без поступового підтягування) */
+        #story-viewer.sv-pending > * { opacity: 0 !important; transition: none !important; }
         #story-viewer.sv-swiping #story-viewer-pill, #story-viewer.sv-swiping #story-viewer-caption, #story-viewer.sv-swiping #story-viewer-profile-btn { opacity: 0; transition: opacity 0.1s ease; pointer-events: none; }
         #story-viewer-caption:empty { display: none; }
         /* Копії текстів/іконок/аватарки для сусідньої сторі на «колесі» — щоб вони їхали разом із фото, а не з'являлись після */
@@ -799,6 +854,42 @@
         body.dark-theme .chat-input-row { background: rgba(255, 255, 255, 0.06); }
         .chat-input-row input { flex-grow: 1; border: none; background: transparent; font-size: 14px; outline: none; color: var(--text-color); user-select: text; }
         .chat-input-row button { background: var(--accent-main); color: white; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+        /* ==== Переписка як у Telegram: повідомлення гортаються на ВЕСЬ екран, а шапка з іменем і поле вводу —
+           напівпрозорі «скляні» панелі поверх них (повідомлення пропливають під ними), без вузького віконця. ==== */
+        #profile-sidebar.chat-mode #chat-container.in-thread { padding: 0; }
+        #profile-sidebar.chat-mode #chat-container.in-thread #chat-thread-wrap {
+            position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end;
+            overflow: hidden; background: #ffffff;
+        }
+        body.dark-theme #profile-sidebar.chat-mode #chat-container.in-thread #chat-thread-wrap { background: #000000; }
+        #profile-sidebar.chat-mode #chat-container.in-thread #chat-messages {
+            position: absolute; inset: 0; z-index: 1; margin: 0;
+            padding: calc(56px + env(safe-area-inset-top, 0px)) 12px calc(144px + env(safe-area-inset-bottom, 0px));
+            overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+            scrollbar-width: none; box-sizing: border-box;
+        }
+        #profile-sidebar.chat-mode #chat-container.in-thread #chat-messages::-webkit-scrollbar { display: none; }
+        /* Мало повідомлень — вони притиснуті донизу, як у Telegram */
+        #profile-sidebar.chat-mode #chat-container.in-thread #chat-messages::before { content: ''; margin-top: auto; flex-shrink: 0; }
+        #profile-sidebar.chat-mode #chat-container.in-thread #dm-back-row {
+            position: absolute; top: 0; left: 0; right: 0; z-index: 3; margin: 0;
+            padding: calc(10px + env(safe-area-inset-top, 0px)) 0 12px; box-sizing: border-box;
+            background: rgba(255,255,255,0.72); backdrop-filter: blur(22px) saturate(180%); -webkit-backdrop-filter: blur(22px) saturate(180%);
+        }
+        body.dark-theme #profile-sidebar.chat-mode #chat-container.in-thread #dm-back-row { background: rgba(0,0,0,0.6); }
+        #profile-sidebar.chat-mode #chat-container.in-thread .chat-input-row {
+            position: relative; z-index: 3; margin: 0 12px calc(88px + env(safe-area-inset-bottom, 0px));
+            background: rgba(242,242,247,0.82); backdrop-filter: blur(22px) saturate(180%); -webkit-backdrop-filter: blur(22px) saturate(180%);
+            box-shadow: 0 2px 14px rgba(0,0,0,0.08);
+        }
+        body.dark-theme #profile-sidebar.chat-mode #chat-container.in-thread .chat-input-row { background: rgba(44,44,46,0.78); box-shadow: 0 2px 14px rgba(0,0,0,0.4); }
+        #profile-sidebar.chat-mode #chat-container.in-thread #chat-ctx-bar {
+            position: relative; z-index: 3; margin: 0 12px 6px;
+            background: rgba(242,242,247,0.82); backdrop-filter: blur(22px); -webkit-backdrop-filter: blur(22px);
+        }
+        body.dark-theme #profile-sidebar.chat-mode #chat-container.in-thread #chat-ctx-bar { background: rgba(44,44,46,0.78); }
+        #profile-sidebar.chat-mode #chat-container.in-thread #chat-thread-wrap:has(#chat-ctx-bar[style*="flex"]) #chat-messages { padding-bottom: calc(196px + env(safe-area-inset-bottom, 0px)); }
         #qr-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); z-index: 3000; justify-content: center; align-items: center; }
         body.dark-theme #qr-modal { background: rgba(0,0,0,0.6); }
         .qr-content { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); padding: 24px; border-radius: 28px; text-align: center; max-width: 240px; border: 1px solid rgba(255, 255, 255, 0.2); transition: var(--theme-transition); }
@@ -5051,7 +5142,10 @@
             storyViewerPeople = (opts.people && opts.people.length) ? opts.people : null;
             document.getElementById('story-viewer-name').innerText = name;
             document.getElementById('story-viewer-time').style.display = storyViewerShowTime ? '' : 'none';
-            document.getElementById('story-viewer').style.display = 'flex';
+            const svEl = document.getElementById('story-viewer');
+            const svFreshOpen = svEl.style.display !== 'flex';
+            if (svFreshOpen) svEl.classList.add('sv-pending');
+            svEl.style.display = 'flex';
             document.getElementById('story-viewer-media').classList.toggle('fill', isFullscreenMediaOn());
             document.getElementById('story-viewer-media').classList.toggle('fit', !isFullscreenMediaOn());
             const likeBtn = document.getElementById('story-viewer-like-btn');
@@ -5091,6 +5185,30 @@
             });
             playStoryAt(storyViewerIdx);
             setTimeout(preloadStoryNeighbors, 50);
+            if (svFreshOpen) {
+                // Чекаємо фото сторі та аватарку (максимум ~0.8 с), потім показуємо все разом
+                const waitUrls = [];
+                const first = storyViewerList[storyViewerIdx];
+                if (first && first.type === 'photo' && first.url) waitUrls.push(first.url);
+                if (profBtn.style.display === 'block') {
+                    const m = /url\(['"]?(.*?)['"]?\)/.exec(profBtn.style.backgroundImage || '');
+                    if (m && m[1]) waitUrls.push(m[1]);
+                }
+                svWhenReady(waitUrls, () => { requestAnimationFrame(() => svEl.classList.remove('sv-pending')); }, 800);
+            }
+        }
+        function svWhenReady(urls, cb, maxMs) {
+            let done = false, left = urls.length;
+            const fin = () => { if (done) return; done = true; cb(); };
+            if (!left) { fin(); return; }
+            urls.forEach(u => {
+                const im = new Image();
+                const one = () => { if (--left <= 0) fin(); };
+                im.onload = () => { (im.decode ? im.decode().catch(() => {}) : Promise.resolve()).then(one); };
+                im.onerror = one;
+                im.src = u;
+            });
+            setTimeout(fin, maxMs || 800);
         }
 
         function playStoryAt(idx) {
@@ -5153,7 +5271,7 @@
             clearTimeout(storyViewerTimer);
             const svMenu = document.getElementById('story-viewer-menu'); svMenu.style.display = 'none'; svMenu.innerHTML = '';
             document.getElementById('story-viewer-media').innerHTML = '';
-            document.getElementById('story-viewer').style.display = 'none';
+            document.getElementById('story-viewer').style.display = 'none'; document.getElementById('story-viewer').classList.remove('sv-pending');
             storyViewerEntry = null;
         }
         document.getElementById('story-viewer-close').addEventListener('click', closeStoryViewer);
