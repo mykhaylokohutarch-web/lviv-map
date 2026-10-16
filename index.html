@@ -519,6 +519,7 @@
             overflow: hidden; background: #000;
         }
         /* "На весь екран" (за замовчуванням) — заповнює весь простір, без чорних смуг, з обрізкою країв. */
+        #story-viewer video::-webkit-media-controls, #story-viewer video::-webkit-media-controls-start-playback-button, .hero-slide video::-webkit-media-controls-start-playback-button { display: none !important; -webkit-appearance: none; }
         .story-viewer-media.fill img, .story-viewer-media.fill video { width: 100%; height: 100%; object-fit: cover; }
         /* "Вміщати повністю" — показує весь кадр без обрізки; рівні відступи зверху й знизу,
            бо медіа тепер справжній повноекранний шар (а не звужений шапкою рядок). */
@@ -3432,126 +3433,126 @@
         const people = [
             {
                 id: 'demo_p1', name: 'Марта', coords: [49.8419, 24.0297],
-                photos: ['https://images.unsplash.com/photo-1573496527892-904f897eb744?w=2048&q=90&fit=crop&auto=format', 'https://images.unsplash.com/photo-1573496527892-904f897eb744?w=2048&q=90&fit=crop&auto=format', 'https://assets.mixkit.co/videos/1300/1300-720.mp4'],
+                photos: ['https://images.unsplash.com/photo-1573496527892-904f897eb744?w=2048&q=90&fit=crop&auto=format', 'https://images.unsplash.com/photo-1573496527892-904f897eb744?w=2048&q=90&fit=crop&auto=format', 'https://assets.mixkit.co/videos/1300/1300-720.mp4', 'https://assets.mixkit.co/videos/1290/1290-720.mp4'],
                 status: 'Роблю манікюр і покриття гель-лак 💅 Пишіть — запишу на зручний час',
                 about: 'Майстер манікюру, 5 років досвіду. Працюю у затишній студії в центрі, є всі матеріали й дизайни на вибір.',
                 interests: 'Манікюр · Педикюр · Нейл-дизайн'
             },
             {
                 id: 'demo_p2', name: 'Олег', coords: [49.8398, 24.0328],
-                photos: ['https://images.unsplash.com/photo-1758876204244-930299843f07?w=2048&q=90&fit=crop&auto=format', 'https://images.unsplash.com/photo-1758876204244-930299843f07?w=2048&q=90&fit=crop&auto=format', 'https://assets.mixkit.co/videos/49117/49117-720.mp4'],
+                photos: ['https://images.unsplash.com/photo-1758876204244-930299843f07?w=2048&q=90&fit=crop&auto=format', 'https://images.unsplash.com/photo-1758876204244-930299843f07?w=2048&q=90&fit=crop&auto=format', 'https://assets.mixkit.co/videos/49117/49117-720.mp4', 'https://assets.mixkit.co/videos/1291/1291-720.mp4'],
                 status: 'Фотографую портрети й прогулянки по Львову 📸 Перші 15 фото — безкоштовно',
                 about: 'Фотограф-фрілансер. Знімаю на вулицях старого міста, є готові локації та ідеї для образів.',
                 interests: 'Фотографія · Ретуш · Прогулянки містом'
             },
             {
                 id: 'demo_p3', name: 'Яна', coords: [49.8437, 24.0271],
-                photos: ['https://images.unsplash.com/photo-1569925444984-9e2e5fc3d1fb?w=2048&q=90&fit=crop&auto=format', 'https://images.unsplash.com/photo-1569925444984-9e2e5fc3d1fb?w=2048&q=90&fit=crop&auto=format', 'https://assets.mixkit.co/videos/1234/1234-720.mp4'],
+                photos: ['https://images.unsplash.com/photo-1569925444984-9e2e5fc3d1fb?w=2048&q=90&fit=crop&auto=format', 'https://images.unsplash.com/photo-1569925444984-9e2e5fc3d1fb?w=2048&q=90&fit=crop&auto=format', 'https://assets.mixkit.co/videos/1234/1234-720.mp4', 'https://assets.mixkit.co/videos/1292/1292-720.mp4'],
                 status: 'Даю приватні уроки англійської 🇬🇧 Перше заняття — знайомче, безкоштовно',
                 about: 'Викладачка англійської, готую до IELTS та розмовної практики. Заняття онлайн або офлайн у кав\'ярні.',
                 interests: 'Англійська · IELTS · Розмовний клуб'
             },
             {
                 id: 'demo_p4', name: 'Соломія', coords: [49.8420, 24.0304],
-                photos: ['https://picsum.photos/seed/tourguide93810/2048/2048', 'https://picsum.photos/seed/tourguide24592/2048/2048'],
+                photos: ['https://picsum.photos/seed/tourguide93810/2048/2048', 'https://picsum.photos/seed/tourguide24592/2048/2048', 'https://assets.mixkit.co/videos/1861/1861-720.mp4'],
                 status: 'Проводжу авторські екскурсії площею Ринок 🏛 Збір щодня о 12:00 біля Ратуші',
                 about: 'Львівський гід із ліцензією, розповідаю історії старого міста без занудства — з легендами й таємними двориками.',
                 interests: 'Історія Львова · Екскурсії · Архітектура'
             },
             {
                 id: 'demo_p5', name: 'Богдан', coords: [49.8409, 24.0315],
-                photos: ['https://picsum.photos/seed/barista13278/2048/2048', 'https://picsum.photos/seed/barista46048/2048/2048'],
+                photos: ['https://picsum.photos/seed/barista13278/2048/2048', 'https://picsum.photos/seed/barista46048/2048/2048', 'https://assets.mixkit.co/videos/49115/49115-720.mp4'],
                 status: 'Бариста, підбираю каву під смак 🫘 Дегустації щосуботи',
                 about: 'Кавовий консультант, 6 років за стійкою. Допомагаю обрати зерно й спосіб приготування під себе.',
                 interests: 'Спешелті кава · Дегустації · Латте-арт'
             },
             {
                 id: 'demo_p6', name: 'Ірина', coords: [49.8431, 24.0309],
-                photos: ['https://picsum.photos/seed/florist42098/2048/2048', 'https://picsum.photos/seed/florist39256/2048/2048', 'https://assets.mixkit.co/videos/1290/1290-720.mp4'],
+                photos: ['https://picsum.photos/seed/florist42098/2048/2048', 'https://picsum.photos/seed/florist39256/2048/2048', 'https://assets.mixkit.co/videos/1290/1290-720.mp4', 'https://assets.mixkit.co/videos/49117/49117-720.mp4'],
                 status: 'Флористка, збираю букети з живих квітів 💐 Майстер-класи щонеділі',
                 about: 'Проводжу флористичні майстер-класи для початківців, усі матеріали включені, готовий букет забираєш із собою.',
                 interests: 'Флористика · Майстер-класи · Декор'
             },
             {
                 id: 'demo_p7', name: 'Тарас', coords: [49.8416, 24.0334],
-                photos: ['https://picsum.photos/seed/guitarist28289/2048/2048', 'https://picsum.photos/seed/guitarist23434/2048/2048'],
+                photos: ['https://picsum.photos/seed/guitarist28289/2048/2048', 'https://picsum.photos/seed/guitarist23434/2048/2048', 'https://assets.mixkit.co/videos/52273/52273-720.mp4'],
                 status: 'Граю на гітарі просто неба 🎸 Вчу охочих — перший урок безкоштовно',
                 about: 'Вуличний музикант і викладач гітари, займаюсь індивідуально або в парах, будь-який рівень підготовки.',
                 interests: 'Гітара · Вокал · Вулична музика'
             },
             {
                 id: 'demo_p8', name: 'Оксана', coords: [49.8426, 24.0326],
-                photos: ['https://picsum.photos/seed/pastrychef98696/2048/2048', 'https://picsum.photos/seed/pastrychef81482/2048/2048', 'https://assets.mixkit.co/videos/1292/1292-720.mp4'],
+                photos: ['https://picsum.photos/seed/pastrychef98696/2048/2048', 'https://picsum.photos/seed/pastrychef81482/2048/2048', 'https://assets.mixkit.co/videos/1292/1292-720.mp4', 'https://assets.mixkit.co/videos/52280/52280-720.mp4'],
                 status: 'Пеку торти на замовлення 🎂 Дегустаційний сет — за попереднім записом',
                 about: 'Кондитерка, спеціалізуюсь на весільних і святкових тортах, працюю з алергенами й веганськими рецептами.',
                 interests: 'Кондитерка · Торти на замовлення · Десерти'
             },
             {
                 id: 'demo_p9', name: 'Роман', coords: [49.8403, 24.0309],
-                photos: ['https://picsum.photos/seed/cyclist21395/2048/2048', 'https://picsum.photos/seed/cyclist87397/2048/2048'],
+                photos: ['https://picsum.photos/seed/cyclist21395/2048/2048', 'https://picsum.photos/seed/cyclist87397/2048/2048', 'https://assets.mixkit.co/videos/1234/1234-720.mp4'],
                 status: 'Велоекскурсії вулицями Львова 🚲 Прокат велосипеда включено',
                 about: 'Показую місто на двох колесах — маршрути для будь-якого рівня підготовки, зупинки на каву й огляди.',
                 interests: 'Велотуризм · Екскурсії · Активний відпочинок'
             },
             {
                 id: 'demo_p10', name: 'Христина', coords: [49.8434, 24.0330],
-                photos: ['https://picsum.photos/seed/yogainstructor65302/2048/2048', 'https://picsum.photos/seed/yogainstructor14165/2048/2048', 'https://assets.mixkit.co/videos/1861/1861-720.mp4'],
+                photos: ['https://picsum.photos/seed/yogainstructor65302/2048/2048', 'https://picsum.photos/seed/yogainstructor14165/2048/2048', 'https://assets.mixkit.co/videos/1861/1861-720.mp4', 'https://assets.mixkit.co/videos/1300/1300-720.mp4'],
                 status: 'Йога-інструкторка, ранкові практики 🧘 Перше заняття безкоштовне',
                 about: 'Веду групові й індивідуальні заняття хатха-йогою, підходить для початківців, килимки надаю.',
                 interests: 'Йога · Розтяжка · Дихальні практики'
             },
             {
                 id: 'demo_p11', name: 'Андрій', coords: [49.8413, 24.0298],
-                photos: ['https://picsum.photos/seed/clockmaker13905/2048/2048', 'https://picsum.photos/seed/clockmaker22280/2048/2048'],
+                photos: ['https://picsum.photos/seed/clockmaker13905/2048/2048', 'https://picsum.photos/seed/clockmaker22280/2048/2048', 'https://assets.mixkit.co/videos/1290/1290-720.mp4'],
                 status: 'Ремонтую годинники — механічні й наручні ⌚ Діагностика безкоштовна',
                 about: 'Майстер-годинникар у третьому поколінні, беруся за складний ремонт і реставрацію старовинних механізмів.',
                 interests: 'Годинники · Реставрація · Механіка'
             },
             {
                 id: 'demo_p12', name: 'Леся', coords: [49.8442, 24.0312],
-                photos: ['https://picsum.photos/seed/painter38657/2048/2048', 'https://picsum.photos/seed/painter40495/2048/2048', 'https://assets.mixkit.co/videos/1291/1291-720.mp4'],
+                photos: ['https://picsum.photos/seed/painter38657/2048/2048', 'https://picsum.photos/seed/painter40495/2048/2048', 'https://assets.mixkit.co/videos/1291/1291-720.mp4', 'https://assets.mixkit.co/videos/1292/1292-720.mp4'],
                 status: 'Арт-терапія та малювання для дорослих 🎨 Матеріали надаю',
                 about: 'Психологиня, веду групи арт-терапії — не потрібно вміти малювати, важливий сам процес і розмова.',
                 interests: 'Арт-терапія · Малювання · Психологія'
             },
             {
                 id: 'demo_p13', name: 'Максим', coords: [49.8407, 24.0339],
-                photos: ['https://picsum.photos/seed/videographer76237/2048/2048', 'https://picsum.photos/seed/videographer88907/2048/2048'],
+                photos: ['https://picsum.photos/seed/videographer76237/2048/2048', 'https://picsum.photos/seed/videographer88907/2048/2048', 'https://assets.mixkit.co/videos/1861/1861-720.mp4'],
                 status: 'Відеооператор — весілля, події, реклама 🎥 Портфоліо покажу при зустрічі',
                 about: 'Знімаю й монтую відео під ключ, працюю з дроном, є власне світлове обладнання.',
                 interests: 'Відеозйомка · Монтаж · Дрон'
             },
             {
                 id: 'demo_p14', name: 'Наталія', coords: [49.8423, 24.0350],
-                photos: ['https://picsum.photos/seed/translator13478/2048/2048', 'https://picsum.photos/seed/translator83563/2048/2048', 'https://assets.mixkit.co/videos/49115/49115-720.mp4'],
+                photos: ['https://picsum.photos/seed/translator13478/2048/2048', 'https://picsum.photos/seed/translator83563/2048/2048', 'https://assets.mixkit.co/videos/49115/49115-720.mp4', 'https://assets.mixkit.co/videos/49117/49117-720.mp4'],
                 status: 'Усні й письмові переклади англ/нім 🇬🇧🇩🇪 Термінові — за домовленістю',
                 about: 'Синхронна й послідовна перекладачка, супроводжую ділові зустрічі та переклад документів.',
                 interests: 'Переклад · Англійська · Німецька'
             },
             {
                 id: 'demo_p15', name: 'Данило', coords: [49.8399, 24.0320],
-                photos: ['https://picsum.photos/seed/barber36062/2048/2048', 'https://picsum.photos/seed/barber95181/2048/2048'],
+                photos: ['https://picsum.photos/seed/barber36062/2048/2048', 'https://picsum.photos/seed/barber95181/2048/2048', 'https://assets.mixkit.co/videos/52273/52273-720.mp4'],
                 status: 'Барбер, класичні й фейд-стрижки 💈 Запис через повідомлення',
                 about: 'Барбер із 4-річним досвідом, працюю з бородою й камеральним доглядом, є вечірні слоти.',
                 interests: 'Барберинг · Стрижки · Догляд за бородою'
             },
             {
                 id: 'demo_p16', name: 'Юлія', coords: [49.8436, 24.0300],
-                photos: ['https://picsum.photos/seed/makeupartist81426/2048/2048', 'https://picsum.photos/seed/makeupartist64987/2048/2048', 'https://assets.mixkit.co/videos/52273/52273-720.mp4'],
+                photos: ['https://picsum.photos/seed/makeupartist81426/2048/2048', 'https://picsum.photos/seed/makeupartist64987/2048/2048', 'https://assets.mixkit.co/videos/52273/52273-720.mp4', 'https://assets.mixkit.co/videos/52280/52280-720.mp4'],
                 status: 'Стиліст-візажист, макіяж на подію 💄 Виїзд можливий',
                 about: 'Роблю денний, вечірній та весільний макіяж, підбираю образ під тип зовнішності й подію.',
                 interests: 'Візаж · Стиль · Весільний макіяж'
             },
             {
                 id: 'demo_p17', name: 'Іван', coords: [49.8418, 24.0290],
-                photos: ['https://picsum.photos/seed/brewer38893/2048/2048', 'https://picsum.photos/seed/brewer68878/2048/2048'],
+                photos: ['https://picsum.photos/seed/brewer38893/2048/2048', 'https://picsum.photos/seed/brewer68878/2048/2048', 'https://assets.mixkit.co/videos/1234/1234-720.mp4'],
                 status: 'Варю крафтове пиво малими партіями 🍺 Дегустація — за попереднім записом',
                 about: 'Домашня крафтова пивоварня, експериментую зі стилями, є ель, стаут і сезонні варіння.',
                 interests: 'Крафтове пиво · Пивоваріння · Дегустації'
             },
             {
                 id: 'demo_p18', name: 'Софія', coords: [49.8445, 24.0335],
-                photos: ['https://picsum.photos/seed/dancer87236/2048/2048', 'https://picsum.photos/seed/dancer46463/2048/2048', 'https://assets.mixkit.co/videos/52280/52280-720.mp4'],
+                photos: ['https://picsum.photos/seed/dancer87236/2048/2048', 'https://picsum.photos/seed/dancer46463/2048/2048', 'https://assets.mixkit.co/videos/52280/52280-720.mp4', 'https://assets.mixkit.co/videos/1300/1300-720.mp4'],
                 status: 'Вчу бачата й сальсу 💃 Перше групове заняття безкоштовне',
                 about: 'Танцівниця й інструкторка соціальних танців, групи для будь-якого рівня, є парні й соло формати.',
                 interests: 'Бачата · Сальса · Соціальні танці'
@@ -5585,11 +5586,14 @@
                     storyViewerTimer = setTimeout(() => storyAdvance(1), STORY_PHOTO_MS);
                 } else if (bars[idx]) { bars[idx].style.width = '100%'; }
             } else {
-                const v = document.createElement('video'); setVideoSrc(v, s.url); v.autoplay = true; v.muted = true; v.playsInline = true; v.controls = false;
+                const v = document.createElement('video'); v.muted = true; v.defaultMuted = true; v.autoplay = true; v.playsInline = true; v.controls = false; v.disablePictureInPicture = true; v.setAttribute('controlsList', 'nodownload noplaybackrate noremoteplayback'); setVideoSrc(v, s.url);
                 v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
                 applyStoryVideoFrame(v, s.frame);
                 media.appendChild(v);
                 attemptCirclePlay(v); allCircleVideos.add(v);
+                // Якщо браузер сам поставив відео на паузу (показав іконку play) — одразу відновлюємо відтворення.
+                v.addEventListener('pause', () => { if (v.isConnected && !v.ended && !document.hidden) setTimeout(() => { if (v.isConnected && v.paused && !v.ended) { const pr = v.play(); if (pr && pr.catch) pr.catch(() => {}); } }, 120); });
+                v.addEventListener('loadeddata', () => { const pr = v.play(); if (pr && pr.catch) pr.catch(() => {}); }, { once: true });
                 v.onloadedmetadata = () => {
                     const dur = Math.min(v.duration * 1000, 60000);
                     requestAnimationFrame(() => { const b = bars[idx]; if (b) { b.style.transition = `width ${dur}ms linear`; b.style.width = '100%'; } });
