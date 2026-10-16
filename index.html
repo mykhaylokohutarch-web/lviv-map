@@ -3761,7 +3761,7 @@
         // «Якість відео» (Авто — 720, а на повільному зв'язку чи в режимі економії трафіку — 360;
         // Висока — 1080; Економія — 360). Якщо потрібної якості немає — спускаємось нижче.
         function mixkitMatch(url) { return /^(https:\/\/assets\.mixkit\.co\/videos\/\d+\/\d+)-(?:360|720|1080)\.mp4$/.exec(url || ''); }
-        function mixkitQualityChain(url) {
+        function mixkitQualityChain(url, hq) {
             const m = mixkitMatch(url); if (!m) return null;
             const pref = localStorage.getItem('settings_video_quality') || 'Авто';
             let start;
@@ -3769,7 +3769,7 @@
             else if (pref === 'Економія') start = 360;
             else {
                 const c = navigator.connection;
-                start = (c && (c.saveData || /^(slow-2g|2g)$/.test(c.effectiveType || ''))) ? 360 : ((c && c.effectiveType === '3g') ? 720 : 1080); // Авто: найкраща якість, якщо мережа дозволяє
+                start = (c && (c.saveData || /^(slow-2g|2g)$/.test(c.effectiveType || ''))) ? 360 : ((hq && !(c && c.effectiveType === '3g')) ? 1080 : 720); // Авто: найкраща якість, якщо мережа дозволяє
             }
             const all = [1080, 720, 360];
             return all.slice(all.indexOf(start)).map(q => `${m[1]}-${q}.mp4`);
@@ -3782,18 +3782,29 @@
             return m[1] + 'so_0,w_600,c_limit,f_jpg,q_auto/' + m[2].replace(/\.[a-z0-9]+(\?.*)?$/i, '.jpg');
         }
         const BLANK_POSTER = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-        function setVideoSrc(v, url) {
+        function setVideoSrc(v, url, hq) {
             v.preload = 'auto';
             const poster = videoPosterUrl(url);
             // Прозорий poster: Android/Telegram WebView інакше малює власну сіру заставку з іконкою play.
             v.poster = BLANK_POSTER;
             if (poster) { v.style.backgroundImage = `url('${poster}')`; v.style.backgroundSize = 'cover'; v.style.backgroundPosition = 'center'; }
-            const chain = mixkitQualityChain(url);
+            const chain = mixkitQualityChain(url, hq);
             if (chain) {
                 let step = 0;
                 v.src = chain[0];
                 v.addEventListener('error', () => {
-                    if (step >= chain.length - 1) return;   // нижче нікуди — далі спрацює екран помилки
+                    if (step >= chain.length - 1) {
+                        // Кліп недоступний у жодній якості → підміняємо перевіреним запасним відео, щоб сторі не лишалась порожньою.
+                        if (!v._safeSwapped) {
+                            v._safeSwapped = true; v._fallbackPending = true;
+                            const SAFE = [1300, 1290, 1291, 1292, 1861, 49115, 49117, 52273, 52280, 1234];
+                            const idm = /\/videos\/(\d+)\//.exec(url || ''); const n = idm ? +idm[1] : 0;
+                            const sid = SAFE[n % SAFE.length];
+                            v.src = `https://assets.mixkit.co/videos/${sid}/${sid}-720.mp4`; v.load();
+                            const pr = v.play(); if (pr && pr.catch) pr.catch(() => {});
+                        }
+                        return;   // далі, якщо й запасне не вийшло, спрацює екран помилки
+                    }
                     step++; v._fallbackPending = true;
                     v.src = chain[step]; v.load();
                     const pr = v.play(); if (pr && pr.catch) pr.catch(() => {});
@@ -3827,7 +3838,7 @@
                 const slide = document.createElement('div'); slide.className = 'hero-slide';
                 if (isHeroVideoUrl(src)) {
                     const video = document.createElement('video');
-                    setVideoSrc(video, src); video.autoplay = true; video.muted = true; video.loop = true; video.playsInline = true; video.setAttribute('webkit-playsinline', '');
+                    setVideoSrc(video, src, true); video.autoplay = true; video.muted = true; video.loop = true; video.playsInline = true; video.setAttribute('webkit-playsinline', '');
                     slide.appendChild(video);
                     slide.classList.add('loaded');
                     attemptCirclePlay(video); allCircleVideos.add(video);
@@ -5574,7 +5585,7 @@
             v.addEventListener('playing', () => { if (v._warming) { v.pause(); try { v.currentTime = 0; } catch (_) {} } });
             svWarmHost.appendChild(v);
             svWarm.set(url, v);
-            while (svWarm.size > 8) { const k = svWarm.keys().next().value; const old = svWarm.get(k); svWarm.delete(k); if (old && old.parentNode) old.remove(); }
+            while (svWarm.size > 4) { const k = svWarm.keys().next().value; const old = svWarm.get(k); svWarm.delete(k); if (old && old.parentNode) old.remove(); }
             const pr = v.play(); if (pr && pr.catch) pr.catch(() => {});
         }
         const svGhostVideos = new Map();
@@ -5730,6 +5741,23 @@
                 if (v.readyState >= 1) startBar();
                 if (loopIt) { let lastT = 0; v.addEventListener('timeupdate', () => { if (v.currentTime + 0.4 < lastT) startBar(); lastT = v.currentTime; }); }
                 { const pr0 = v.play(); if (pr0 && pr0.catch) pr0.catch(() => {}); }
+                // Сторожок: якщо за кілька секунд відео так і не пішло (видно лише картинку) — перезапускаємо, а потім підміняємо запасним кліпом.
+                (function svWatchdog(tries) {
+                    setTimeout(() => {
+                        if (!v.isConnected || document.hidden) return;
+                        if (!v.paused && v.currentTime > 0.05 && v.readyState >= 2) return;   // грає
+                        if (tries >= 3) {
+                            if (v._safeSwapped) return;
+                            v._safeSwapped = true; v._fallbackPending = true;
+                            const SAFE = [1300, 1290, 1291, 1292, 1861, 49115, 49117, 52273, 52280, 1234];
+                            const idm = /\/videos\/(\d+)\//.exec(s.url || ''); const sid = SAFE[(idm ? +idm[1] : 0) % SAFE.length];
+                            v.src = `https://assets.mixkit.co/videos/${sid}/${sid}-720.mp4`;
+                        }
+                        try { v.muted = true; v.defaultMuted = true; if (v.readyState < 2 || tries >= 1) v.load(); } catch (_) {}
+                        const pr = v.play(); if (pr && pr.catch) pr.catch(() => {});
+                        if (tries < 4) svWatchdog(tries + 1);
+                    }, tries === 0 ? 1500 : 2000);
+                })(0);
                 v.onended = loopIt ? () => { try { v.currentTime = 0; const pr = v.play(); if (pr && pr.catch) pr.catch(() => {}); } catch (_) {} } : () => storyAdvance(1);
                 // Стара посилання на відео (завантажене ще до переходу на поточне сховище медіа)
                 // могло "протухнути" — замість мовчазного чорного екрана показуємо зрозуміле
