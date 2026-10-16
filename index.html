@@ -5453,13 +5453,26 @@
         const STORY_PHOTO_MS = 5000;
 
         let storyViewerPeople = null;
+        const STORY_VIDEO_POOL = [1300, 1290, 1291, 1292, 1861, 49115, 49117, 52273, 52280, 1234];
+        // Відео для людини визначається її позицією в списку: сусіди (зокрема по колу) завжди мають РІЗНІ відео.
+        function storyVideoFor(e) {
+            const pool = STORY_VIDEO_POOL, P = pool.length;
+            const ppl = (storyViewerPeople && storyViewerPeople.length) ? storyViewerPeople : (typeof homeViewerEntries !== 'undefined' ? homeViewerEntries : null);
+            let idx = ppl ? ppl.findIndex(p => p.id === e.id) : -1;
+            if (idx < 0) { let h = 0; const key = String(e.id || e.name || ''); for (let q = 0; q < key.length; q++) h = (h * 31 + key.charCodeAt(q)) >>> 0; idx = h; }
+            let k = idx % P;
+            // Стик по колу: якщо остання людина збіглась би з першою — зсуваємо її на одне відео.
+            if (ppl && ppl.length > 1 && idx === ppl.length - 1 && k === 0) k = 1;
+            return pool[k];
+        }
         function buildHomeStoryList(e) {
-            const list = (e.photos || []).map(url => ({ type: isHeroVideoUrl(url) ? 'video' : 'photo', url, ts: Date.now() }));
-            if (!e.isMe && e.id !== myId && !list.some(x => x.type === 'video')) {
-                const pool = [1300, 1290, 1291, 1292, 1861, 49115, 49117, 52273, 52280, 1234];
-                let h = 0; const key = String(e.id || e.name || ''); for (let q = 0; q < key.length; q++) h = (h * 31 + key.charCodeAt(q)) >>> 0;
-                const vid = pool[h % pool.length];
-                list.push({ type: 'video', url: `https://assets.mixkit.co/videos/${vid}/${vid}-720.mp4`, ts: Date.now() });
+            const base = (e.photos || []).map(url => ({ type: isHeroVideoUrl(url) ? 'video' : 'photo', url, ts: Date.now() }));
+            let list = base;
+            if (!e.isMe && e.id !== myId) {
+                const vid = storyVideoFor(e);
+                const url = `https://assets.mixkit.co/videos/${vid}/${vid}-720.mp4`;
+                // Власні відео з даних можуть повторюватись у сусідів — тому першим ставимо унікальне, інші відео прибираємо.
+                list = [{ type: 'video', url, ts: Date.now() }].concat(base.filter(x => x.type !== 'video'));
             }
             // Відео — першим: коли гортаєш між людьми, сторі одразу починається з відео, а не з фото.
             return list.filter(x => x.type === 'video').concat(list.filter(x => x.type !== 'video'));
@@ -5515,12 +5528,20 @@
             v.addEventListener('playing', () => { if (v._warming) { v.pause(); try { v.currentTime = 0; } catch (_) {} } });
             svWarmHost.appendChild(v);
             svWarm.set(url, v);
-            while (svWarm.size > 10) { const k = svWarm.keys().next().value; const old = svWarm.get(k); svWarm.delete(k); if (old && old.parentNode) old.remove(); }
+            while (svWarm.size > 12) { const k = svWarm.keys().next().value; const old = svWarm.get(k); svWarm.delete(k); if (old && old.parentNode) old.remove(); }
             const pr = v.play(); if (pr && pr.catch) pr.catch(() => {});
         }
+        const svGhostVideos = new Map();
         function takeWarmVideo(url) {
-            const v = svWarm.get(url); if (!v) return null;
-            svWarm.delete(url); v._warming = false;
+            let v = svWarm.get(url);
+            if (v) svWarm.delete(url);
+            else {
+                v = svGhostVideos.get(url); if (!v) return null; svGhostVideos.delete(url);
+                // Відео переїжджає з «грані» у плеєр — лишаємо на грані постер, щоб не було чорного блимання.
+                const par = v.parentNode, pu = videoPosterUrl(url);
+                if (par && pu) { par.style.backgroundImage = `url('${pu}')`; par.style.backgroundSize = 'cover'; par.style.backgroundPosition = 'center'; }
+            }
+            v._warming = false; v.loop = false;
             try { v.currentTime = 0; } catch (_) {}
             return v;
         }
@@ -5539,7 +5560,7 @@
                 const ppl = storyViewerPeople;
                 if (ppl && ppl.length > 1 && storyViewerEntry) {
                     const n = ppl.length; let i0 = ppl.findIndex(p => p.id === storyViewerEntry.id); if (i0 < 0) i0 = 0;
-                    [2, -2, 3].forEach(d => { const c = ppl[(i0 + d + n * n) % n]; if (c && c.id !== storyViewerEntry.id) { const l = buildHomeStoryList(c); if (l[0]) preloadStoryItem(l[0]); } });
+                    [2, -2, 3, -3].forEach(d => { const c = ppl[(i0 + d + n * n) % n]; if (c && c.id !== storyViewerEntry.id) { const l = buildHomeStoryList(c); if (l[0]) preloadStoryItem(l[0]); } });
                 }
                 preloadStoryItem(storyViewerList[storyViewerIdx + 2]);
             } catch (_) {}
@@ -5847,7 +5868,7 @@
             ghost.style.cssText = 'position:fixed; inset:0; background:#000; z-index:5001; display:none; overflow:hidden; pointer-events:none; will-change:transform;';
             document.body.appendChild(ghost);
             let ghostDir = 0;
-            const hideGhost = () => { ghost.style.display = 'none'; ghost.innerHTML = ''; ghost.style.transition = ''; ghost.style.transform = ''; ghostDir = 0; };
+            const hideGhost = () => { ghost.querySelectorAll('video').forEach(v => { const u = v._ghostUrl; if (u && svGhostVideos.get(u) === v) { svGhostVideos.delete(u); v._warming = true; v.loop = false; try { v.pause(); v.currentTime = 0; } catch (_) {} if (svWarmHost && !svWarm.has(u)) { svWarmHost.appendChild(v); svWarm.set(u, v); } } }); ghost.style.display = 'none'; ghost.innerHTML = ''; ghost.style.transition = ''; ghost.style.transform = ''; ghostDir = 0; };
             const ensureGhost = (dir) => {
                 if (ghostDir === dir) return;
                 hideGhost(); ghostDir = dir;
@@ -5856,7 +5877,15 @@
                 const m = document.createElement('div');
                 m.className = 'story-viewer-media ' + (isFullscreenMediaOn() ? 'fill' : 'fit');
                 if (first.type === 'photo') { const im = document.createElement('img'); im.src = first.url; m.appendChild(im); }
-                else { const v = document.createElement('video'); setVideoSrc(v, first.url); v.muted = true; v.loop = true; v.autoplay = true; v.playsInline = true; v.preload = 'auto'; v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); applyStoryVideoFrame(v, first.frame); m.appendChild(v); attemptCirclePlay(v); allCircleVideos.add(v); }
+                else {
+                    let v = svWarm.get(first.url);
+                    if (v) { svWarm.delete(first.url); v._warming = false; }
+                    else { v = document.createElement('video'); v.muted = true; v.defaultMuted = true; v.autoplay = true; v.playsInline = true; v.preload = 'auto'; v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); setVideoSrc(v, first.url); }
+                    v._ghostUrl = first.url; v.loop = true; svGhostVideos.set(first.url, v);
+                    applyStoryVideoFrame(v, first.frame); m.appendChild(v); attemptCirclePlay(v); allCircleVideos.add(v);
+                    try { v.currentTime = 0; } catch (_) {}
+                    const pg = v.play(); if (pg && pg.catch) pg.catch(() => {});
+                }
                 ghost.appendChild(m);
                 // Текст, іконки справа й аватарка сусідньої людини — одразу на «грані», разом зі сторі
                 const c = nb.cand;
