@@ -1,6 +1,12 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
+    <link rel="preconnect" href="https://assets.mixkit.co" crossorigin>
+    <link rel="dns-prefetch" href="https://assets.mixkit.co">
+    <style>
+        video::-webkit-media-controls-start-playback-button, video::-webkit-media-controls-overlay-play-button, video::-webkit-media-controls-overlay-enclosure { display: none !important; opacity: 0 !important; pointer-events: none !important; -webkit-appearance: none; }
+        video:not([controls])::-webkit-media-controls, video:not([controls])::-webkit-media-controls-panel, video:not([controls])::-webkit-media-controls-play-button { display: none !important; -webkit-appearance: none; }
+    </style>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -5494,7 +5500,7 @@
             v.addEventListener('playing', () => { if (v._warming) { v.pause(); try { v.currentTime = 0; } catch (_) {} } });
             svWarmHost.appendChild(v);
             svWarm.set(url, v);
-            while (svWarm.size > 5) { const k = svWarm.keys().next().value; const old = svWarm.get(k); svWarm.delete(k); if (old && old.parentNode) old.remove(); }
+            while (svWarm.size > 10) { const k = svWarm.keys().next().value; const old = svWarm.get(k); svWarm.delete(k); if (old && old.parentNode) old.remove(); }
             const pr = v.play(); if (pr && pr.catch) pr.catch(() => {});
         }
         function takeWarmVideo(url) {
@@ -5513,6 +5519,15 @@
         }
         function preloadStoryNeighbors() {
             [1, -1].forEach(d => { const nb = peekStoryPerson(d); if (nb) { preloadStoryItem(nb.list[0]); preloadStoryItem(nb.list[1]); } });
+            // Як у TikTok: прогріваємо перші відео ще на 2-3 людини вперед і назад + наступні елементи поточної сторі.
+            try {
+                const ppl = storyViewerPeople;
+                if (ppl && ppl.length > 1 && storyViewerEntry) {
+                    const n = ppl.length; let i0 = ppl.findIndex(p => p.id === storyViewerEntry.id); if (i0 < 0) i0 = 0;
+                    [2, -2, 3].forEach(d => { const c = ppl[(i0 + d + n * n) % n]; if (c && c.id !== storyViewerEntry.id) { const l = buildHomeStoryList(c); if (l[0]) preloadStoryItem(l[0]); } });
+                }
+                preloadStoryItem(storyViewerList[storyViewerIdx + 2]);
+            } catch (_) {}
             preloadStoryItem(storyViewerList[storyViewerIdx + 1]);
         }
         function openStoryViewer(list, startIdx, name, opts, entry, sourceType) {
@@ -7064,6 +7079,7 @@
             }
             window.homeSearchNoResults = false;
             homeViewerEntries = entries.filter(e => e.photos && e.photos.length);
+            setTimeout(() => { try { homeViewerEntries.slice(0, 6).forEach(e => { const l = buildHomeStoryList(e); if (l[0] && l[0].type === 'video') preloadStoryItem(l[0]); }); } catch (_) {} }, 300);
             entries.forEach(e => {
                 const item = document.createElement('div'); item.className = 'home-circle-item';
                 const avatar = document.createElement('div'); avatar.className = 'home-circle-avatar' + (e.isMe ? ' is-me' : '');
