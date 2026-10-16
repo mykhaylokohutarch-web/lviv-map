@@ -5453,24 +5453,54 @@
         const STORY_PHOTO_MS = 5000;
 
         let storyViewerPeople = null;
-        const STORY_VIDEO_POOL = [1300, 1290, 1291, 1292, 1861, 49115, 49117, 52273, 52280, 1234];
-        // Відео для людини визначається її позицією в списку: сусіди (зокрема по колу) завжди мають РІЗНІ відео.
+        // Кожен акаунт має СВОЄ відео, що відповідає його темі. Таблиця: id акаунта → id кліпу на mixkit.
+        // Щоб змінити/додати відео — просто допишіть рядок: 'id_акаунта': ID_кліпу (число з посилання mixkit.co/.../назва-12345/).
+        const STORY_VIDEO_BY_ID = {
+            demo_p1: 13084,   // Марта — манікюр: нанесення лаку клієнтці
+            demo_p2: 4855,    // Олег — фотограф: прогулянка містом
+            demo_p3: 11973,   // Яна — англійська: розмовний клуб на терасі
+            demo_p5: 810,     // Богдан — спешелті кава: латте-арт
+            demo_p6: 1780,    // Ірина — флористика: квіти в горщику
+            demo_p9: 41884,   // Роман — велотуризм: поїздка вулицями міста
+            demo_p13: 51585,  // Максим — відео/дрон: політ над місцевістю
+            demo_p16: 13088,  // Юлія — візаж/б'юті: салон краси
+            demo_p17: 52410,  // Іван — крафтове пиво: золоте пиво в келиху
+            demo_p18: 337,    // Софія — бачата/сальса: пара танцює
+            demo_pl1: 41859,  // Кава Хата — капучино
+            demo_pl8: 8711,   // Бар «Дегустаціум» — атмосфера пивного бару
+            demo_pl9: 4742,   // Квіткова крамниця «Пелюстка» — вітрина з букетами
+            demo_pl10: 830,   // Концертний клуб «Підвал» — діджейський пульт
+            demo_pl11: 1730,  // Коворкінг «Вулик» — розробник за ноутбуком
+            demo_pl12: 4385,  // Піцерія «Неаполітано» — ресторан зі столиками
+            demo_pl14: 43210, // Театр «Драбина» — сучасний танець/сцена
+            demo_pl15: 15835, // Йога-студія «Дихання» — спокійний масаж рук/спа
+            demo_pl16: 9267,  // Чайна «Шовковий Шлях» — чай у скляній чашці
+            demo_pl18: 372    // Бургерна — чоловік їсть бургер
+        };
+        // Для акаунтів без окремої теми — запасні кліпи (кожен акаунт отримує різний, без повторів).
+        const STORY_VIDEO_FALLBACK = [1300, 1290, 1291, 1292, 1861, 49115, 49117, 52273, 52280, 1234, 4348, 4331, 41871, 1590, 2002, 41875, 4062];
+        const STORY_VIDEO_POOL = Object.values(STORY_VIDEO_BY_ID).concat(STORY_VIDEO_FALLBACK);
         function storyVideoFor(e) {
-            const pool = STORY_VIDEO_POOL, P = pool.length;
-            const ppl = (storyViewerPeople && storyViewerPeople.length) ? storyViewerPeople : (typeof homeViewerEntries !== 'undefined' ? homeViewerEntries : null);
-            let idx = ppl ? ppl.findIndex(p => p.id === e.id) : -1;
-            if (idx < 0) { let h = 0; const key = String(e.id || e.name || ''); for (let q = 0; q < key.length; q++) h = (h * 31 + key.charCodeAt(q)) >>> 0; idx = h; }
-            let k = idx % P;
-            // Стик по колу: якщо остання людина збіглась би з першою — зсуваємо її на одне відео.
-            if (ppl && ppl.length > 1 && idx === ppl.length - 1 && k === 0) k = 1;
-            return pool[k];
+            const key = String(e.id || '');
+            if (STORY_VIDEO_BY_ID[key]) return STORY_VIDEO_BY_ID[key];
+            // Демо-акаунти без теми: по черзі беремо запасні кліпи → ніхто не повторюється.
+            try {
+                const all = [].concat(typeof people !== 'undefined' ? people : [], typeof places !== 'undefined' ? places : []);
+                const free = all.filter(a => !STORY_VIDEO_BY_ID[a.id]);
+                const i = free.findIndex(a => a.id === key);
+                if (i >= 0) return STORY_VIDEO_FALLBACK[i % STORY_VIDEO_FALLBACK.length];
+            } catch (_) {}
+            // Інші (справжні) акаунти — стабільний вибір за хешем id
+            let h = 0; const k2 = key || String(e.name || '');
+            for (let q = 0; q < k2.length; q++) h = (h * 31 + k2.charCodeAt(q)) >>> 0;
+            return STORY_VIDEO_FALLBACK[h % STORY_VIDEO_FALLBACK.length];
         }
         // Усі відео пулу тихо вантажимо в кеш браузера (по одному, у простої) — далі відтворення стартує з кешу, без мережі.
         let svPrefetchStarted = false;
         function prefetchStoryVideos() {
             if (svPrefetchStarted) return; svPrefetchStarted = true;
             try { const c = navigator.connection; if (c && c.saveData) return; } catch (_) {}
-            const urls = STORY_VIDEO_POOL.map(id => { const u = `https://assets.mixkit.co/videos/${id}/${id}-720.mp4`; const ch = mixkitQualityChain(u); return ch ? ch[0] : u; });
+            const urls = STORY_VIDEO_POOL.slice(0, 10).map(id => { const u = `https://assets.mixkit.co/videos/${id}/${id}-720.mp4`; const ch = mixkitQualityChain(u); return ch ? ch[0] : u; });
             let i = 0;
             const next = () => {
                 if (i >= urls.length) return;
@@ -5686,14 +5716,21 @@
                 // Якщо браузер сам поставив відео на паузу (показав іконку play) — одразу відновлюємо відтворення.
                 v.addEventListener('pause', () => { if (v.isConnected && !v.ended && !document.hidden) setTimeout(() => { if (v.isConnected && v.paused && !v.ended) { const pr = v.play(); if (pr && pr.catch) pr.catch(() => {}); } }, 120); });
                 v.addEventListener('loadeddata', () => { const pr = v.play(); if (pr && pr.catch) pr.catch(() => {}); }, { once: true });
+                const loopIt = storyViewerList.length === 1 || !storyViewerAutoAdvance;
+                v.loop = loopIt; if (loopIt) v.setAttribute('loop', ''); else v.removeAttribute('loop');
                 const startBar = () => {
                     const dur = Math.min(v.duration * 1000, 60000);
-                    requestAnimationFrame(() => { const b = bars[idx]; if (b) { b.style.transition = `width ${dur}ms linear`; b.style.width = '100%'; } });
+                    requestAnimationFrame(() => {
+                        const b = bars[idx]; if (!b) return;
+                        b.style.transition = 'none'; b.style.width = '0%'; void b.offsetWidth;
+                        b.style.transition = `width ${dur}ms linear`; b.style.width = '100%';
+                    });
                 };
                 v.onloadedmetadata = startBar;
                 if (v.readyState >= 1) startBar();
+                if (loopIt) { let lastT = 0; v.addEventListener('timeupdate', () => { if (v.currentTime + 0.4 < lastT) startBar(); lastT = v.currentTime; }); }
                 { const pr0 = v.play(); if (pr0 && pr0.catch) pr0.catch(() => {}); }
-                v.onended = () => storyAdvance(1);
+                v.onended = loopIt ? () => { try { v.currentTime = 0; const pr = v.play(); if (pr && pr.catch) pr.catch(() => {}); } catch (_) {} } : () => storyAdvance(1);
                 // Стара посилання на відео (завантажене ще до переходу на поточне сховище медіа)
                 // могло "протухнути" — замість мовчазного чорного екрана показуємо зрозуміле
                 // повідомлення й за пару секунд самі гортаємо далі, щоб не залишати людину в глухому куті.
