@@ -5478,11 +5478,36 @@
         }
         // Наперед підвантажуємо перше фото/відео сусідніх людей і наступний елемент поточної сторі — щоб колесо й гортання не чекали на мережу.
         const storyPreloadCache = [];
+        // «Прогріті» відео: сусідні сторі заздалегідь створені, прикріплені до DOM (так автоплей дозволений)
+        // і вже відтворились до першого кадру. При гортанні беремо готовий елемент і одразу play().
+        const svWarmHost = document.createElement('div');
+        svWarmHost.style.cssText = 'position:fixed;left:0;top:0;width:2px;height:2px;opacity:0.01;overflow:hidden;pointer-events:none;z-index:-1;';
+        document.body.appendChild(svWarmHost);
+        const svWarm = new Map();
+        function warmVideo(url) {
+            if (!url || svWarm.has(url)) return;
+            const v = document.createElement('video');
+            v.muted = true; v.defaultMuted = true; v.playsInline = true; v.autoplay = true; v.preload = 'auto';
+            v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
+            v._warming = true;
+            setVideoSrc(v, url);
+            v.addEventListener('playing', () => { if (v._warming) { v.pause(); try { v.currentTime = 0; } catch (_) {} } });
+            svWarmHost.appendChild(v);
+            svWarm.set(url, v);
+            while (svWarm.size > 5) { const k = svWarm.keys().next().value; const old = svWarm.get(k); svWarm.delete(k); if (old && old.parentNode) old.remove(); }
+            const pr = v.play(); if (pr && pr.catch) pr.catch(() => {});
+        }
+        function takeWarmVideo(url) {
+            const v = svWarm.get(url); if (!v) return null;
+            svWarm.delete(url); v._warming = false;
+            try { v.currentTime = 0; } catch (_) {}
+            return v;
+        }
         function preloadStoryItem(it) {
             if (!it || !it.url) return;
             try {
                 if (it.type === 'photo') { const im = new Image(); im.decoding = 'async'; im.src = it.url; storyPreloadCache.push(im); }
-                else { const v = document.createElement('video'); v.preload = 'auto'; v.muted = true; setVideoSrc(v, it.url); storyPreloadCache.push(v); }
+                else { warmVideo(it.url); }
                 while (storyPreloadCache.length > 12) storyPreloadCache.shift();
             } catch (_) {}
         }
@@ -5586,7 +5611,7 @@
                     storyViewerTimer = setTimeout(() => storyAdvance(1), STORY_PHOTO_MS);
                 } else if (bars[idx]) { bars[idx].style.width = '100%'; }
             } else {
-                const v = document.createElement('video'); v.muted = true; v.defaultMuted = true; v.autoplay = true; v.playsInline = true; v.controls = false; v.disablePictureInPicture = true; v.setAttribute('controlsList', 'nodownload noplaybackrate noremoteplayback'); setVideoSrc(v, s.url);
+                const warmV = takeWarmVideo(s.url); const v = warmV || document.createElement('video'); v.muted = true; v.defaultMuted = true; v.autoplay = true; v.playsInline = true; v.controls = false; v.disablePictureInPicture = true; v.setAttribute('controlsList', 'nodownload noplaybackrate noremoteplayback'); if (!warmV) setVideoSrc(v, s.url);
                 v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
                 applyStoryVideoFrame(v, s.frame);
                 media.appendChild(v);
@@ -5594,10 +5619,13 @@
                 // Якщо браузер сам поставив відео на паузу (показав іконку play) — одразу відновлюємо відтворення.
                 v.addEventListener('pause', () => { if (v.isConnected && !v.ended && !document.hidden) setTimeout(() => { if (v.isConnected && v.paused && !v.ended) { const pr = v.play(); if (pr && pr.catch) pr.catch(() => {}); } }, 120); });
                 v.addEventListener('loadeddata', () => { const pr = v.play(); if (pr && pr.catch) pr.catch(() => {}); }, { once: true });
-                v.onloadedmetadata = () => {
+                const startBar = () => {
                     const dur = Math.min(v.duration * 1000, 60000);
                     requestAnimationFrame(() => { const b = bars[idx]; if (b) { b.style.transition = `width ${dur}ms linear`; b.style.width = '100%'; } });
                 };
+                v.onloadedmetadata = startBar;
+                if (v.readyState >= 1) startBar();
+                { const pr0 = v.play(); if (pr0 && pr0.catch) pr0.catch(() => {}); }
                 v.onended = () => storyAdvance(1);
                 // Стара посилання на відео (завантажене ще до переходу на поточне сховище медіа)
                 // могло "протухнути" — замість мовчазного чорного екрана показуємо зрозуміле
