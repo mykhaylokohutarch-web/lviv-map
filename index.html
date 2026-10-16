@@ -7166,6 +7166,77 @@
             }, { passive: true });
         });
 
+        // ---- Автоплей відео-сторі в колах Головної під час гортання стрічки ----
+        // Відео створюється ліниво (src ставиться лише коли коло опиняється в зоні видимості),
+        // лишається прозорим, доки не почне реально грати (тож жодної «застряглої» іконки play),
+        // а коли коло виїжджає з екрана — ставиться на паузу. Одночасно грає не більше HOME_VIDEO_MAX_PLAYING.
+        const HOME_VIDEO_MAX_PLAYING = 8;
+        const HOME_VIDEO_MAX_LOADED = 14;
+        const homeVisibleVideos = new Set();
+        const homeLoadedVideos = new Set();
+        let homeVideoIO = null;
+        function homePlay(v) { try { const pr = v.play(); if (pr && pr.catch) pr.catch(() => {}); } catch (_) {} }
+        function homeEnsureSrc(v) {
+            if (v._srcSet) { homeLoadedVideos.delete(v); homeLoadedVideos.add(v); return; }
+            v._srcSet = true;
+            setVideoSrc(v, v._homeUrl);
+            homeLoadedVideos.add(v);
+            // Не тримаємо в пам'яті забагато декодерів: вивантажуємо найстаріші, яких зараз не видно.
+            for (const old of Array.from(homeLoadedVideos)) {
+                if (homeLoadedVideos.size <= HOME_VIDEO_MAX_LOADED) break;
+                if (old === v || homeVisibleVideos.has(old)) continue;
+                homeLoadedVideos.delete(old);
+                try { old.pause(); old.removeAttribute('src'); old.load(); } catch (_) {}
+                old._srcSet = false; old.classList.remove('is-visible');
+            }
+        }
+        function updateHomeCircleVideos() {
+            const list = Array.from(homeVisibleVideos).filter(v => v.isConnected).sort((a, b) => {
+                const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
+                return (ra.top - rb.top) || (ra.left - rb.left);
+            });
+            list.forEach((v, i) => {
+                if (i < HOME_VIDEO_MAX_PLAYING) { homeEnsureSrc(v); if (v.paused) homePlay(v); }
+                else if (!v.paused) v.pause();
+            });
+        }
+        function resetHomeCircleVideos() {
+            if (homeVideoIO) { homeVideoIO.disconnect(); homeVideoIO = null; }
+            homeVisibleVideos.forEach(v => { try { v.pause(); } catch (_) {} });
+            homeVisibleVideos.clear();
+            homeLoadedVideos.clear();
+        }
+        function attachHomeCircleVideo(wrap, url) {
+            if (!url || !('IntersectionObserver' in window)) return;
+            const v = document.createElement('video');
+            v.className = 'home-circle-video-layer';
+            v._homeUrl = url; v._srcSet = false;
+            v.muted = true; v.defaultMuted = true; v.loop = true; v.playsInline = true; v.controls = false;
+            v.disablePictureInPicture = true;
+            v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
+            v.addEventListener('playing', () => v.classList.add('is-visible'));
+            v.addEventListener('canplay', () => { if (homeVisibleVideos.has(v) && v.paused) homePlay(v); });
+            wrap.appendChild(v);
+            wrap._homeVideo = v;
+            if (!homeVideoIO) {
+                homeVideoIO = new IntersectionObserver((entries) => {
+                    entries.forEach(en => {
+                        const vid = en.target._homeVideo; if (!vid) return;
+                        if (en.isIntersecting && en.intersectionRatio >= 0.5) homeVisibleVideos.add(vid);
+                        else { homeVisibleVideos.delete(vid); try { vid.pause(); } catch (_) {} }
+                    });
+                    updateHomeCircleVideos();
+                }, { root: document.getElementById('home-grid'), threshold: [0, 0.5, 1] });
+            }
+            homeVideoIO.observe(wrap);
+        }
+        // Якщо WebView блокував автоплей до першої взаємодії — пробуємо знову на першому дотику/поверненні на вкладку.
+        ['touchstart', 'pointerdown', 'click'].forEach(evt => document.addEventListener(evt, updateHomeCircleVideos, { passive: true }));
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) homeVisibleVideos.forEach(v => { try { v.pause(); } catch (_) {} });
+            else updateHomeCircleVideos();
+        });
+
         // Показує фото кола по черзі — справжній кросфейд (нове фото плавно проявляється поверх
         // попереднього, без "миготіння"), кожен кадр тримається приблизно 5 секунд.
         // Старт і тривалість кожного кадру трохи рандомізовані, тож кола перемикаються не одночасно, а хаотично.
@@ -7184,6 +7255,7 @@
         function renderHomeGrid(filterText, filterMode) {
             const box = document.getElementById('home-grid-inner');
             if (!box) return;
+            resetHomeCircleVideos();
             homeCircleTimers.forEach(id => clearTimeout(id));
             homeCircleTimers.clear();
             if (filterMode !== undefined) currentHomeFilter = filterMode;
@@ -7235,6 +7307,7 @@
                 // кола, якщо світлин більше однієї, зсуваємо список на одну позицію вперед.
                 const bigCirclePhotoList = storyPhotoList.length > 1 ? storyPhotoList.slice(1) : storyPhotoList;
                 startHomeCircleStory(mediaWrap, bigCirclePhotoList);
+                try { const hsl = buildHomeStoryList(e); if (hsl[0] && hsl[0].type === 'video') attachHomeCircleVideo(mediaWrap, hsl[0].url); } catch (_) {}
                 // Тап по самому колу (фото) — відкриває сторі на весь екран.
                 // Важливо: беремо ПОВНИЙ e.photos (з відео), а не storyPhotoList — той список
                 // спеціально відфільтрований від відео лише для фонового кросфейду в самому колі.
