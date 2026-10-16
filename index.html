@@ -5465,6 +5465,22 @@
             if (ppl && ppl.length > 1 && idx === ppl.length - 1 && k === 0) k = 1;
             return pool[k];
         }
+        // Усі відео пулу тихо вантажимо в кеш браузера (по одному, у простої) — далі відтворення стартує з кешу, без мережі.
+        let svPrefetchStarted = false;
+        function prefetchStoryVideos() {
+            if (svPrefetchStarted) return; svPrefetchStarted = true;
+            try { const c = navigator.connection; if (c && c.saveData) return; } catch (_) {}
+            const urls = STORY_VIDEO_POOL.map(id => { const u = `https://assets.mixkit.co/videos/${id}/${id}-720.mp4`; const ch = mixkitQualityChain(u); return ch ? ch[0] : u; });
+            let i = 0;
+            const next = () => {
+                if (i >= urls.length) return;
+                const u = urls[i++];
+                fetch(u, { mode: 'no-cors', cache: 'force-cache', priority: 'low' }).then(r => r.arrayBuffer()).catch(() => {}).then(() => {
+                    (window.requestIdleCallback || ((f) => setTimeout(f, 150)))(next);
+                });
+            };
+            (window.requestIdleCallback || ((f) => setTimeout(f, 800)))(next);
+        }
         function buildHomeStoryList(e) {
             const base = (e.photos || []).map(url => ({ type: isHeroVideoUrl(url) ? 'video' : 'photo', url, ts: Date.now() }));
             let list = base;
@@ -5528,7 +5544,7 @@
             v.addEventListener('playing', () => { if (v._warming) { v.pause(); try { v.currentTime = 0; } catch (_) {} } });
             svWarmHost.appendChild(v);
             svWarm.set(url, v);
-            while (svWarm.size > 12) { const k = svWarm.keys().next().value; const old = svWarm.get(k); svWarm.delete(k); if (old && old.parentNode) old.remove(); }
+            while (svWarm.size > 8) { const k = svWarm.keys().next().value; const old = svWarm.get(k); svWarm.delete(k); if (old && old.parentNode) old.remove(); }
             const pr = v.play(); if (pr && pr.catch) pr.catch(() => {});
         }
         const svGhostVideos = new Map();
@@ -7123,6 +7139,7 @@
             }
             window.homeSearchNoResults = false;
             homeViewerEntries = entries.filter(e => e.photos && e.photos.length);
+            setTimeout(prefetchStoryVideos, 1200);
             setTimeout(() => { try { homeViewerEntries.slice(0, 6).forEach(e => { const l = buildHomeStoryList(e); if (l[0] && l[0].type === 'video') preloadStoryItem(l[0]); }); } catch (_) {} }, 300);
             entries.forEach(e => {
                 const item = document.createElement('div'); item.className = 'home-circle-item';
