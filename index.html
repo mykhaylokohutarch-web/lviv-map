@@ -1377,6 +1377,45 @@
         #vf-crop-frame video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
         .vf-hint { text-align: center; color: rgba(255,255,255,0.55); font-size: 12px; margin: 4px 24px calc(16px + env(safe-area-inset-bottom,0px)); }
 
+
+        /* ---- iOS-стиль налаштувань у редакторах сторі ---- */
+        .pe-seg-wrap { display: none; justify-content: center; padding: 0 16px 8px; flex-shrink: 0; position: relative; z-index: 3; }
+        .ios-seg { position: relative; display: flex; width: 100%; max-width: 260px; padding: 2px; box-sizing: border-box; background: rgba(118,118,128,0.24); border-radius: 9px; }
+        .ios-seg button { flex: 1; position: relative; z-index: 1; background: none; border: none; padding: 6px 0; border-radius: 7px; font-family: inherit; font-size: 13px; font-weight: 500; color: #fff; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: font-weight 0.2s; }
+        .ios-seg button.active { font-weight: 600; }
+        .ios-seg-thumb { position: absolute; top: 2px; bottom: 2px; left: 2px; width: calc(50% - 2px); border-radius: 7px; background: #636366; box-shadow: 0 3px 8px rgba(0,0,0,0.18), 0 3px 1px rgba(0,0,0,0.06); transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1); }
+        .ios-seg[data-mode="circle"] .ios-seg-thumb { transform: translateX(100%); }
+        .ios-group-title { display: flex; align-items: center; justify-content: space-between; padding: 12px 30px 6px; font-size: 12px; letter-spacing: 0.3px; text-transform: uppercase; color: rgba(235,235,245,0.6); }
+        .ios-group-title button { background: none; border: none; color: var(--accent-main, #0a84ff); font-size: 13px; font-weight: 500; text-transform: none; letter-spacing: 0; cursor: pointer; padding: 2px 0; font-family: inherit; }
+        .ios-group { margin: 0 16px 6px; background: #1c1c1e; border-radius: 12px; overflow: hidden; }
+        .ios-group .pe-adjust-row { padding: 0 16px; min-height: 44px; gap: 12px; box-sizing: border-box; }
+        .ios-group .pe-adjust-row + .pe-adjust-row { border-top: 0.5px solid rgba(84,84,88,0.65); }
+        .ios-group .pe-adjust-row label { width: 88px; font-size: 15px; color: #fff; }
+        .pe-val { width: 34px; flex-shrink: 0; text-align: right; font-size: 14px; color: rgba(235,235,245,0.6); font-variant-numeric: tabular-nums; }
+        .ios-footnote { margin: 4px 30px 10px; font-size: 12px; line-height: 1.4; color: rgba(235,235,245,0.5); }
+        input[type="range"].ios-range { -webkit-appearance: none; appearance: none; flex: 1; min-width: 0; height: 28px; margin: 0; background: transparent; outline: none; }
+        input[type="range"].ios-range::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: linear-gradient(to right, rgba(120,120,128,0.36) var(--lo, 0%), var(--accent-main, #0a84ff) var(--lo, 0%), var(--accent-main, #0a84ff) var(--hi, 0%), rgba(120,120,128,0.36) var(--hi, 0%)); }
+        input[type="range"].ios-range::-webkit-slider-thumb { -webkit-appearance: none; width: 27px; height: 27px; margin-top: -11.5px; border-radius: 50%; background: #fff; border: none; box-shadow: 0 3px 8px rgba(0,0,0,0.15), 0 1px 1px rgba(0,0,0,0.16), 0 3px 1px rgba(0,0,0,0.1); }
+        input[type="range"].ios-range::-moz-range-track { height: 4px; border-radius: 2px; background: rgba(120,120,128,0.36); }
+        input[type="range"].ios-range::-moz-range-progress { height: 4px; border-radius: 2px; background: var(--accent-main, #0a84ff); }
+        input[type="range"].ios-range::-moz-range-thumb { width: 27px; height: 27px; border-radius: 50%; background: #fff; border: none; box-shadow: 0 3px 8px rgba(0,0,0,0.15), 0 1px 1px rgba(0,0,0,0.16); }
+        .pe-caption-row { padding: 0 !important; }
+        .pe-caption-row .ios-group { padding: 4px 4px 0; }
+        .pe-caption-row #pe-caption-input { border: none; background: transparent; padding: 10px 12px 4px; border-radius: 0; }
+        .pe-caption-row .pe-caption-count { padding: 0 14px 8px; margin: 0; }
+
+        /* ---- Кадр кола (як сторі виглядає в кружечку) ---- */
+        .pe-circle-pick { display: none; position: absolute; z-index: 4; border-radius: 50%; border: 2px solid rgba(255,255,255,0.95); box-sizing: border-box; box-shadow: 0 0 0 4000px rgba(0,0,0,0.62); pointer-events: none; }
+        .pe-circle-pick::after { content: ""; position: absolute; inset: 0; border-radius: 50%; box-shadow: inset 0 0 0 0.5px rgba(0,0,0,0.35); }
+        .pe-circle-previews { display: flex; align-items: flex-end; justify-content: center; gap: 34px; padding: 16px 16px 14px; border-bottom: 0.5px solid rgba(84,84,88,0.65); }
+        .pe-cp-item { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .pe-cp-item span { font-size: 11px; color: rgba(235,235,245,0.6); }
+        .pe-cp { position: relative; width: 46px; height: 46px; border-radius: 50%; overflow: hidden; background: #2c2c2e; flex-shrink: 0; }
+        .pe-cp.lg { width: 92px; height: 92px; }
+        .circle-stage { position: absolute; background-size: cover; background-position: center; background-repeat: no-repeat; pointer-events: none; overflow: hidden; }
+        .circle-stage video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 0; display: block; pointer-events: none; }
+        #vf-circle-panel { position: relative; z-index: 3; }
+
         /* Стара нижня панель шарів і кнопка "моя сторінка" (топ-ліво) на карті — прибрані з вигляду
            за проханням користувача; елементи лишаються в DOM, бо на них досі посилається інший код,
            але їх більше не видно і по них не можна натиснути. */
@@ -2194,34 +2233,59 @@
             <h3>Редагувати фото</h3>
             <button id="pe-done-btn">Готово</button>
         </div>
+        <div class="pe-seg-wrap" id="pe-seg-wrap">
+            <div class="ios-seg" id="pe-seg" data-mode="frame">
+                <span class="ios-seg-thumb"></span>
+                <button type="button" class="active" data-mode="frame">Кадр</button>
+                <button type="button" data-mode="circle">Коло</button>
+            </div>
+        </div>
         <div class="pe-crop-wrap">
             <div class="pe-crop-frame" id="pe-crop-frame">
                 <img id="pe-image" draggable="false" alt="">
                 <div class="pe-vignette" id="pe-vignette"></div>
                 <div class="pe-circle-guide" id="pe-circle-guide"></div>
+                <div class="pe-circle-pick" id="pe-circle-pick"></div>
             </div>
         </div>
         <div class="pe-preview-row" id="pe-preview-row">
             <div id="pe-preview-circle"></div>
             <span>Так фото виглядатиме в колі профілю. Рухайте та масштабуйте пальцями.</span>
         </div>
-        <div class="pe-zoom-row">
+        <div class="pe-zoom-row" id="pe-zoom-row">
             <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path><path d="M8 11h6"></path></svg>
-            <input type="range" id="pe-zoom-range" min="100" max="400" value="100">
+            <input type="range" class="ios-range" id="pe-zoom-range" min="100" max="400" value="100">
             <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path><path d="M11 8v6"></path><path d="M8 11h6"></path></svg>
         </div>
         <div class="pe-panel">
-            <div class="pe-filters" id="pe-filters"></div>
-            <div class="pe-adjust-title"><span>Налаштування</span><button id="pe-reset-btn">Скинути</button></div>
-            <div class="pe-adjust-row"><label>Яскравість</label><input type="range" id="pe-brightness-range" min="-40" max="40" value="0"></div>
-            <div class="pe-adjust-row"><label>Контраст</label><input type="range" id="pe-contrast-range" min="-40" max="40" value="0"></div>
-            <div class="pe-adjust-row"><label>Насиченість</label><input type="range" id="pe-saturation-range" min="-60" max="60" value="0"></div>
-            <div class="pe-adjust-row"><label>Тепло</label><input type="range" id="pe-warmth-range" min="-40" max="40" value="0"></div>
-            <div class="pe-adjust-row"><label>Віньєтка</label><input type="range" id="pe-vignette-range" min="0" max="100" value="0"></div>
-            <div class="pe-caption-row" id="pe-caption-row">
-                <label for="pe-caption-input">Опис</label>
-                <textarea id="pe-caption-input" rows="2" maxlength="200" placeholder="Додайте опис до фото…"></textarea>
-                <div class="pe-caption-count"><span id="pe-caption-count">0</span>/200</div>
+            <div id="pe-frame-panel">
+                <div class="pe-filters" id="pe-filters"></div>
+                <div class="ios-group-title"><span>Налаштування</span><button id="pe-reset-btn">Скинути</button></div>
+                <div class="ios-group">
+                    <div class="pe-adjust-row"><label>Яскравість</label><input type="range" class="ios-range" id="pe-brightness-range" min="-40" max="40" value="0"><span class="pe-val">0</span></div>
+                    <div class="pe-adjust-row"><label>Контраст</label><input type="range" class="ios-range" id="pe-contrast-range" min="-40" max="40" value="0"><span class="pe-val">0</span></div>
+                    <div class="pe-adjust-row"><label>Насиченість</label><input type="range" class="ios-range" id="pe-saturation-range" min="-60" max="60" value="0"><span class="pe-val">0</span></div>
+                    <div class="pe-adjust-row"><label>Тепло</label><input type="range" class="ios-range" id="pe-warmth-range" min="-40" max="40" value="0"><span class="pe-val">0</span></div>
+                    <div class="pe-adjust-row"><label>Віньєтка</label><input type="range" class="ios-range" id="pe-vignette-range" min="0" max="100" value="0"><span class="pe-val">0</span></div>
+                </div>
+                <div class="pe-caption-row" id="pe-caption-row">
+                    <div class="ios-group-title"><span>Опис</span></div>
+                    <div class="ios-group">
+                        <textarea id="pe-caption-input" rows="2" maxlength="200" placeholder="Додайте опис до фото…"></textarea>
+                        <div class="pe-caption-count"><span id="pe-caption-count">0</span>/200</div>
+                    </div>
+                </div>
+            </div>
+            <div id="pe-circle-panel" style="display:none;">
+                <div class="ios-group-title"><span>Вигляд у колі</span><button id="pe-circle-reset">Скинути</button></div>
+                <div class="ios-group">
+                    <div class="pe-circle-previews">
+                        <div class="pe-cp-item"><div class="pe-cp" id="pe-cp-sm"></div><span>Мініатюра</span></div>
+                        <div class="pe-cp-item"><div class="pe-cp lg" id="pe-cp-lg"></div><span>Головна</span></div>
+                    </div>
+                    <div class="pe-adjust-row"><label>Розмір кола</label><input type="range" class="ios-range" id="pe-circle-size" data-unit="%" min="34" max="100" value="100"><span class="pe-val">100%</span></div>
+                </div>
+                <p class="ios-footnote">Перетягніть коло по фото. Двома пальцями змінюється розмір.</p>
             </div>
         </div>
     </div>
@@ -2234,17 +2298,35 @@
             <h3>Кадрування відео</h3>
             <button id="vf-done-btn">Готово</button>
         </div>
+        <div class="pe-seg-wrap" id="vf-seg-wrap" style="display:flex;">
+            <div class="ios-seg" id="vf-seg" data-mode="frame">
+                <span class="ios-seg-thumb"></span>
+                <button type="button" class="active" data-mode="frame">Кадр</button>
+                <button type="button" data-mode="circle">Коло</button>
+            </div>
+        </div>
         <div class="pe-crop-wrap">
             <div class="pe-crop-frame aspect-story" id="vf-crop-frame">
                 <video id="vf-video" muted autoplay loop playsinline webkit-playsinline></video>
+                <div class="pe-circle-pick" id="vf-circle-pick"></div>
             </div>
         </div>
-        <div class="pe-zoom-row">
+        <div class="pe-zoom-row" id="vf-zoom-row">
             <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path><path d="M8 11h6"></path></svg>
-            <input type="range" id="vf-zoom-range" min="100" max="250" value="100">
+            <input type="range" class="ios-range" id="vf-zoom-range" min="100" max="250" value="100">
             <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path><path d="M11 8v6"></path><path d="M8 11h6"></path></svg>
         </div>
-        <p class="vf-hint">Перетягніть відео пальцем, щоб вибрати потрібну частину кадру</p>
+        <div id="vf-circle-panel" style="display:none;">
+            <div class="ios-group-title"><span>Вигляд у колі</span><button id="vf-circle-reset">Скинути</button></div>
+            <div class="ios-group">
+                <div class="pe-circle-previews">
+                    <div class="pe-cp-item"><div class="pe-cp" id="vf-cp-sm"></div><span>Мініатюра</span></div>
+                    <div class="pe-cp-item"><div class="pe-cp lg" id="vf-cp-lg"></div><span>Головна</span></div>
+                </div>
+                <div class="pe-adjust-row"><label>Розмір кола</label><input type="range" class="ios-range" id="vf-circle-size" data-unit="%" min="34" max="100" value="100"><span class="pe-val">100%</span></div>
+            </div>
+        </div>
+        <p class="vf-hint" id="vf-hint">Перетягніть відео пальцем, щоб вибрати потрібну частину кадру</p>
     </div>
 
 
@@ -3350,7 +3432,7 @@
         const people = [
             {
                 id: 'demo_p1', name: 'Марта', coords: [49.8419, 24.0297],
-                photos: ['https://images.unsplash.com/photo-1573496527892-904f897eb744?w=2048&q=90&fit=crop&auto=format', 'https://images.unsplash.com/photo-1573496527892-904f897eb744?w=2048&q=90&fit=crop&auto=format'],
+                photos: ['https://images.unsplash.com/photo-1573496527892-904f897eb744?w=2048&q=90&fit=crop&auto=format', 'https://images.unsplash.com/photo-1573496527892-904f897eb744?w=2048&q=90&fit=crop&auto=format', 'https://assets.mixkit.co/videos/1300/1300-720.mp4'],
                 status: 'Роблю манікюр і покриття гель-лак 💅 Пишіть — запишу на зручний час',
                 about: 'Майстер манікюру, 5 років досвіду. Працюю у затишній студії в центрі, є всі матеріали й дизайни на вибір.',
                 interests: 'Манікюр · Педикюр · Нейл-дизайн'
@@ -3364,7 +3446,7 @@
             },
             {
                 id: 'demo_p3', name: 'Яна', coords: [49.8437, 24.0271],
-                photos: ['https://images.unsplash.com/photo-1569925444984-9e2e5fc3d1fb?w=2048&q=90&fit=crop&auto=format', 'https://images.unsplash.com/photo-1569925444984-9e2e5fc3d1fb?w=2048&q=90&fit=crop&auto=format'],
+                photos: ['https://images.unsplash.com/photo-1569925444984-9e2e5fc3d1fb?w=2048&q=90&fit=crop&auto=format', 'https://images.unsplash.com/photo-1569925444984-9e2e5fc3d1fb?w=2048&q=90&fit=crop&auto=format', 'https://assets.mixkit.co/videos/1234/1234-720.mp4'],
                 status: 'Даю приватні уроки англійської 🇬🇧 Перше заняття — знайомче, безкоштовно',
                 about: 'Викладачка англійської, готую до IELTS та розмовної практики. Заняття онлайн або офлайн у кав\'ярні.',
                 interests: 'Англійська · IELTS · Розмовний клуб'
@@ -3385,7 +3467,7 @@
             },
             {
                 id: 'demo_p6', name: 'Ірина', coords: [49.8431, 24.0309],
-                photos: ['https://picsum.photos/seed/florist42098/2048/2048', 'https://picsum.photos/seed/florist39256/2048/2048'],
+                photos: ['https://picsum.photos/seed/florist42098/2048/2048', 'https://picsum.photos/seed/florist39256/2048/2048', 'https://assets.mixkit.co/videos/1290/1290-720.mp4'],
                 status: 'Флористка, збираю букети з живих квітів 💐 Майстер-класи щонеділі',
                 about: 'Проводжу флористичні майстер-класи для початківців, усі матеріали включені, готовий букет забираєш із собою.',
                 interests: 'Флористика · Майстер-класи · Декор'
@@ -3455,7 +3537,7 @@
             },
             {
                 id: 'demo_p16', name: 'Юлія', coords: [49.8436, 24.0300],
-                photos: ['https://picsum.photos/seed/makeupartist81426/2048/2048', 'https://picsum.photos/seed/makeupartist64987/2048/2048'],
+                photos: ['https://picsum.photos/seed/makeupartist81426/2048/2048', 'https://picsum.photos/seed/makeupartist64987/2048/2048', 'https://assets.mixkit.co/videos/52273/52273-720.mp4'],
                 status: 'Стиліст-візажист, макіяж на подію 💄 Виїзд можливий',
                 about: 'Роблю денний, вечірній та весільний макіяж, підбираю образ під тип зовнішності й подію.',
                 interests: 'Візаж · Стиль · Весільний макіяж'
@@ -3469,7 +3551,7 @@
             },
             {
                 id: 'demo_p18', name: 'Софія', coords: [49.8445, 24.0335],
-                photos: ['https://picsum.photos/seed/dancer87236/2048/2048', 'https://picsum.photos/seed/dancer46463/2048/2048'],
+                photos: ['https://picsum.photos/seed/dancer87236/2048/2048', 'https://picsum.photos/seed/dancer46463/2048/2048', 'https://assets.mixkit.co/videos/52280/52280-720.mp4'],
                 status: 'Вчу бачата й сальсу 💃 Перше групове заняття безкоштовне',
                 about: 'Танцівниця й інструкторка соціальних танців, групи для будь-якого рівня, є парні й соло формати.',
                 interests: 'Бачата · Сальса · Соціальні танці'
@@ -3662,7 +3744,26 @@
         // Спершу вантажимо ОРИГІНАЛ (швидко, без перекодування). Лише якщо формат не підтримується
         // (помилка або відео без картинки — типово для HEVC .mov) — перемикаємось на H.264 MP4.
         // Перший кадр відео як мініатюра (Cloudinary віддає її миттєво) — щоб не чекати на порожньому екрані.
+        // Відео Mixkit лежать у трьох якостях: 360 / 720 / 1080. Обираємо за налаштуванням
+        // «Якість відео» (Авто — 720, а на повільному зв'язку чи в режимі економії трафіку — 360;
+        // Висока — 1080; Економія — 360). Якщо потрібної якості немає — спускаємось нижче.
+        function mixkitMatch(url) { return /^(https:\/\/assets\.mixkit\.co\/videos\/\d+\/\d+)-(?:360|720|1080)\.mp4$/.exec(url || ''); }
+        function mixkitQualityChain(url) {
+            const m = mixkitMatch(url); if (!m) return null;
+            const pref = localStorage.getItem('settings_video_quality') || 'Авто';
+            let start;
+            if (pref === 'Висока') start = 1080;
+            else if (pref === 'Економія') start = 360;
+            else {
+                const c = navigator.connection;
+                start = (c && (c.saveData || /^(slow-2g|2g|3g)$/.test(c.effectiveType || ''))) ? 360 : 720;
+            }
+            const all = [1080, 720, 360];
+            return all.slice(all.indexOf(start)).map(q => `${m[1]}-${q}.mp4`);
+        }
         function videoPosterUrl(url) {
+            const mk = mixkitMatch(url);
+            if (mk) return mk[1] + '-thumb-360-0.jpg';
             const m = (url || '').match(/^(https:\/\/res\.cloudinary\.com\/[^/]+\/video\/upload\/)(v\d+\/.*)$/i);
             if (!m) return '';
             return m[1] + 'so_0,w_600,c_limit,f_jpg,q_auto/' + m[2].replace(/\.[a-z0-9]+(\?.*)?$/i, '.jpg');
@@ -3671,6 +3772,18 @@
             v.preload = 'auto';
             const poster = videoPosterUrl(url);
             if (poster) v.poster = poster;
+            const chain = mixkitQualityChain(url);
+            if (chain) {
+                let step = 0;
+                v.src = chain[0];
+                v.addEventListener('error', () => {
+                    if (step >= chain.length - 1) return;   // нижче нікуди — далі спрацює екран помилки
+                    step++; v._fallbackPending = true;
+                    v.src = chain[step]; v.load();
+                    const pr = v.play(); if (pr && pr.catch) pr.catch(() => {});
+                });
+                return;
+            }
             v.src = url;
             const alt = playableVideoUrl(url);
             if (!alt || alt === url) return;
@@ -4520,6 +4633,17 @@
         })();
         // Опис, який користувач ввів у редакторі; викликач читає його одразу після await openPhotoEditor(...).
         let peLastCaption = '';
+        let peLastCircle = null; // {x, y, z} — кадр кола для сторі (null = за замовчуванням)
+        // Заливка повзунка в стилі iOS + підпис зі значенням (.pe-val поруч).
+        function updateRangeFill(el) {
+            const min = Number(el.min || 0), max = Number(el.max || 100), v = Number(el.value);
+            const pct = (n) => ((n - min) / (max - min)) * 100;
+            const a = min < 0 ? pct(0) : 0, b = pct(v);
+            el.style.setProperty('--lo', Math.min(a, b) + '%'); el.style.setProperty('--hi', Math.max(a, b) + '%');
+            const lab = el.parentElement && el.parentElement.querySelector('.pe-val');
+            if (lab) lab.textContent = (el.dataset.unit === '%') ? Math.round(v) + '%' : ((v > 0 && min < 0) ? '+' + v : String(v));
+        }
+        document.querySelectorAll('input.ios-range').forEach(el => { el.addEventListener('input', () => updateRangeFill(el)); updateRangeFill(el); });
         function capKey(url) { let h = 5381; url = String(url || ''); for (let i = 0; i < url.length; i++) h = ((h << 5) + h + url.charCodeAt(i)) | 0; return 'c' + (h >>> 0).toString(36); }
         function captionFor(entry, url) {
             if (!entry || !entry.id) return '';
@@ -4545,6 +4669,15 @@
                 const captionInput = document.getElementById('pe-caption-input');
                 const captionCount = document.getElementById('pe-caption-count');
                 const resetBtn = document.getElementById('pe-reset-btn');
+                const segWrap = document.getElementById('pe-seg-wrap'), seg = document.getElementById('pe-seg');
+                const circlePick = document.getElementById('pe-circle-pick');
+                const circlePanel = document.getElementById('pe-circle-panel'), framePanel = document.getElementById('pe-frame-panel');
+                const zoomRow = document.getElementById('pe-zoom-row');
+                const circleSizeRange = document.getElementById('pe-circle-size'), circleResetBtn = document.getElementById('pe-circle-reset');
+                const cpEls = [document.getElementById('pe-cp-sm'), document.getElementById('pe-cp-lg')];
+                cpEls.forEach(el => { el.innerHTML = ''; const st = document.createElement('div'); st.className = 'circle-stage'; el.appendChild(st); });
+                segWrap.style.display = isStory ? 'flex' : 'none';
+                peLastCircle = null;
                 document.getElementById('pe-caption-row').style.display = opts.noCaption ? 'none' : 'block';
                 captionInput.value = ''; captionCount.innerText = '0'; peLastCaption = '';
                 frame.classList.toggle('aspect-story', isStory);
@@ -4560,6 +4693,7 @@
                 reader.onload = (e) => {
                     imgEl.src = e.target.result;
                     previewCircle.style.backgroundImage = `url(${e.target.result})`;
+                    cpEls.forEach(el => { if (el.firstChild) el.firstChild.style.backgroundImage = `url(${e.target.result})`; });
                     Object.keys(PE_FILTERS).forEach(key => {
                         const thumb = document.getElementById('pe-thumb-' + key);
                         if (thumb) { thumb.style.backgroundImage = `url(${e.target.result})`; thumb.style.filter = PE_FILTERS[key]; }
@@ -4570,6 +4704,70 @@
                 let naturalW = 0, naturalH = 0, frameW = 0, frameH = 0, baseScale = 1, zoom = 1;
                 let offX = 0, offY = 0, activeFilter = 'none', brightness = 0, contrast = 0, saturation = 0, warmth = 0, vignette = 0;
                 let dragging = false, startX = 0, startY = 0, startOffX = 0, startOffY = 0;
+
+                // ---- Режим «Коло»: яку частину сторі-кадру видно в кружечку ----
+                let circleMode = false, circleTouched = false, circle = { x: 0.5, y: 0.5, s: 1 }, cdrag = null, cpinch = null;
+                function clampCircle() {
+                    circle.s = Math.min(1, Math.max(0.34, circle.s));
+                    const hx = circle.s / 2, hy = circle.s / (2 * STORY_AR);
+                    circle.x = Math.min(1 - hx, Math.max(hx, circle.x));
+                    circle.y = Math.min(1 - hy, Math.max(hy, circle.y));
+                }
+                function refreshCirclePreviews() {
+                    if (!frameW || !naturalW) return;
+                    const c = { x: circle.x, y: circle.y, z: 1 / circle.s };
+                    const scale = baseScale * zoom;
+                    cpEls.forEach(el => {
+                        const st = el.firstChild; if (!st) return;
+                        styleCircleStage(st, c);
+                        const D = el.clientWidth || 46;
+                        const k = (D * c.z) / frameW;
+                        st.style.backgroundSize = `${naturalW * scale * k}px ${naturalH * scale * k}px`;
+                        st.style.backgroundPosition = `${offX * k}px ${offY * k}px`;
+                        st.style.filter = currentCssFilter();
+                    });
+                }
+                function layoutCircle() {
+                    if (!frameW) return;
+                    clampCircle();
+                    const d = circle.s * frameW;
+                    circlePick.style.width = d + 'px'; circlePick.style.height = d + 'px';
+                    circlePick.style.left = (circle.x * frameW - d / 2) + 'px';
+                    circlePick.style.top = (circle.y * frameH - d / 2) + 'px';
+                    circleSizeRange.value = Math.round(circle.s * 100); updateRangeFill(circleSizeRange);
+                    refreshCirclePreviews();
+                }
+                function setMode(m) {
+                    circleMode = (m === 'circle');
+                    pointers.clear(); dragging = false; cdrag = null; cpinch = null;
+                    seg.setAttribute('data-mode', m);
+                    seg.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.getAttribute('data-mode') === m));
+                    zoomRow.style.display = circleMode ? 'none' : '';
+                    framePanel.style.display = circleMode ? 'none' : '';
+                    circlePanel.style.display = circleMode ? 'block' : 'none';
+                    circlePick.style.display = circleMode ? 'block' : 'none';
+                    if (circleMode) { const r = frame.getBoundingClientRect(); frameW = r.width; frameH = r.height; layoutCircle(); }
+                }
+                function circleDown(e) {
+                    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+                    try { frame.setPointerCapture && e.pointerId != null && frame.setPointerCapture(e.pointerId); } catch (_) {}
+                    if (pointers.size === 2) { cpinch = { d: pointerDist() || 1, s: circle.s }; cdrag = null; }
+                    else if (pointers.size === 1) { cdrag = { sx: e.clientX, sy: e.clientY, x: circle.x, y: circle.y }; cpinch = null; }
+                }
+                function circleMove(e) {
+                    if (!pointers.has(e.pointerId)) return;
+                    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+                    if (pointers.size >= 2 && cpinch) { circle.s = cpinch.s * pointerDist() / cpinch.d; circleTouched = true; layoutCircle(); return; }
+                    if (!cdrag) return;
+                    circle.x = cdrag.x + (e.clientX - cdrag.sx) / frameW;
+                    circle.y = cdrag.y + (e.clientY - cdrag.sy) / frameH;
+                    circleTouched = true; layoutCircle();
+                }
+                function circleUp(e) {
+                    pointers.delete(e.pointerId);
+                    if (pointers.size === 1) { const p = [...pointers.values()][0]; cdrag = { sx: p.x, sy: p.y, x: circle.x, y: circle.y }; cpinch = null; }
+                    else if (pointers.size === 0) { cdrag = null; cpinch = null; }
+                }
 
                 function applyTransform() {
                     const scale = baseScale * zoom;
@@ -4633,18 +4831,20 @@
                     zoom = z;
                     const newScale = baseScale * zoom;
                     offX = cx - px * newScale; offY = cy - py * newScale;
-                    zoomRange.value = Math.round(zoom * 100);
+                    zoomRange.value = Math.round(zoom * 100); updateRangeFill(zoomRange);
                     clampOffsets(); applyTransform();
                 }
                 function pointerDist() { const [a, b] = [...pointers.values()]; return Math.hypot(a.x - b.x, a.y - b.y); }
                 function beginDrag(pt) { dragging = true; startX = pt.x; startY = pt.y; startOffX = offX; startOffY = offY; }
                 function onPointerDown(e) {
+                    if (circleMode) { circleDown(e); return; }
                     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
                     try { frame.setPointerCapture && e.pointerId != null && frame.setPointerCapture(e.pointerId); } catch (_) {}
                     if (pointers.size === 2) { pinchStartDist = pointerDist() || 1; pinchStartZoom = zoom; dragging = false; }
                     else if (pointers.size === 1) beginDrag(pointers.get(e.pointerId));
                 }
                 function onPointerMove(e) {
+                    if (circleMode) { circleMove(e); return; }
                     if (!pointers.has(e.pointerId)) return;
                     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
                     if (pointers.size >= 2) {
@@ -4660,12 +4860,14 @@
                     applyTransform();
                 }
                 function onPointerUp(e) {
+                    if (circleMode) { circleUp(e); return; }
                     pointers.delete(e.pointerId);
                     if (pointers.size === 1) beginDrag([...pointers.values()][0]); // лишився один палець — продовжуємо перетягувати без стрибка
                     else if (pointers.size === 0) dragging = false;
                 }
                 function onWheel(e) {
                     e.preventDefault();
+                    if (circleMode) { circle.s *= Math.exp(-e.deltaY * 0.0015); circleTouched = true; layoutCircle(); return; }
                     const r = frame.getBoundingClientRect();
                     setZoom(zoom * Math.exp(-e.deltaY * 0.0015), e.clientX - r.left, e.clientY - r.top);
                 }
@@ -4687,11 +4889,19 @@
                 captionInput.addEventListener('input', onCaptionInput);
                 function onResetClick() {
                     brightness = contrast = saturation = warmth = vignette = 0; activeFilter = 'none';
-                    [brightnessRange, contrastRange, saturationRange, warmthRange, vignetteRange].forEach(el => el.value = 0);
+                    [brightnessRange, contrastRange, saturationRange, warmthRange, vignetteRange].forEach(el => { el.value = 0; updateRangeFill(el); });
                     filterBtns.forEach(b => b.classList.toggle('active', b.getAttribute('data-filter') === 'none'));
                     refreshLook();
                 }
                 resetBtn.addEventListener('click', onResetClick);
+
+                function onSegClick(e) { const b = e.target.closest('button'); if (b) setMode(b.getAttribute('data-mode')); }
+                seg.addEventListener('click', onSegClick);
+                function onCircleSize() { circle.s = Number(circleSizeRange.value) / 100; circleTouched = true; layoutCircle(); }
+                circleSizeRange.addEventListener('input', onCircleSize);
+                function onCircleReset() { circle = { x: 0.5, y: 0.5, s: 1 }; circleTouched = false; layoutCircle(); }
+                circleResetBtn.addEventListener('click', onCircleReset);
+                setMode('frame');
 
                 function onFilterClick(e) {
                     const btn = e.currentTarget;
@@ -4711,18 +4921,24 @@
                     frame.removeEventListener('wheel', onWheel);
                     pointers.clear();
                     zoomRange.removeEventListener('input', onZoomInput);
-                    adjustInputs.forEach(([el, fn]) => { el.removeEventListener('input', fn); el.value = 0; });
+                    adjustInputs.forEach(([el, fn]) => { el.removeEventListener('input', fn); el.value = 0; updateRangeFill(el); });
                     captionInput.removeEventListener('input', onCaptionInput);
                     resetBtn.removeEventListener('click', onResetClick);
                     vignetteEl.style.background = 'none';
                     filterBtns.forEach(btn => btn.removeEventListener('click', onFilterClick));
                     zoomRange.value = 100;
                     filterBtns.forEach(b => b.classList.toggle('active', b.getAttribute('data-filter') === 'none'));
+                    setMode('frame');
+                    segWrap.style.display = 'none';
+                    seg.removeEventListener('click', onSegClick);
+                    circleSizeRange.removeEventListener('input', onCircleSize);
+                    circleResetBtn.removeEventListener('click', onCircleReset);
+                    circleSizeRange.value = 100; updateRangeFill(circleSizeRange); updateRangeFill(zoomRange);
                     document.getElementById('pe-cancel-btn').onclick = null;
                     document.getElementById('pe-done-btn').onclick = null;
                 }
 
-                document.getElementById('pe-cancel-btn').onclick = () => { peLastCaption = ''; cleanup(); captionInput.value = ''; resolve(null); };
+                document.getElementById('pe-cancel-btn').onclick = () => { peLastCaption = ''; peLastCircle = null; cleanup(); captionInput.value = ''; resolve(null); };
                 document.getElementById('pe-done-btn').onclick = () => {
                     const scale = baseScale * zoom;
                     const srcX = -offX / scale, srcY = -offY / scale;
@@ -4750,6 +4966,8 @@
                         ctx.fillStyle = g; ctx.fillRect(0, 0, cw, ch);
                     }
                     peLastCaption = opts.noCaption ? '' : captionInput.value.trim();
+                    clampCircle();
+                    peLastCircle = (isStory && circleTouched) ? { x: +circle.x.toFixed(3), y: +circle.y.toFixed(3), z: +(1 / circle.s).toFixed(2) } : null;
                     cleanup();
                     // Кроп готовий локально — тепер вивантажуємо результат на сервер Telegram і
                     // повертаємо вже постійне посилання на нього (замість base64 у Firebase).
@@ -4774,66 +4992,169 @@
         // вибирає позицію/зум, і ці координати зберігаються разом зі сторі та застосовуються
         // при кожному показі (object-position + transform) — так завантажене відео будь-яких
         // пропорцій виглядає так само підігнаним під 9:16, як і зняте прямо у форматі сторі.
+        let vfLastCircle = null; // {x, y, z} — кадр кола для відео-сторі (null = за замовчуванням)
+        // Повертає: об'єкт кадрування або null (без змін); false — якщо натиснуто «Скасувати».
         function openVideoFramer(file) {
             return new Promise((resolve) => {
                 const modal = document.getElementById('video-framer-modal');
                 const frame = document.getElementById('vf-crop-frame');
                 const videoEl = document.getElementById('vf-video');
                 const zoomRange = document.getElementById('vf-zoom-range');
+                const seg = document.getElementById('vf-seg');
+                const circlePick = document.getElementById('vf-circle-pick');
+                const zoomRow = document.getElementById('vf-zoom-row');
+                const circlePanel = document.getElementById('vf-circle-panel');
+                const hint = document.getElementById('vf-hint');
+                const sizeRange = document.getElementById('vf-circle-size');
+                const circleResetBtn = document.getElementById('vf-circle-reset');
+                const HINT_FRAME = 'Перетягніть відео пальцем, щоб вибрати потрібну частину кадру';
+                const HINT_CIRCLE = 'Перетягніть коло, щоб вибрати, що буде видно в кружечку. Двома пальцями — розмір';
                 modal.style.display = 'flex';
+                vfLastCircle = null;
 
                 const objUrl = URL.createObjectURL(file);
                 videoEl.src = objUrl;
 
                 let cx = 0.5, cy = 0.5, zoom = 1;
                 let dragging = false, startX = 0, startY = 0, startCx = 0.5, startCy = 0.5, frameW = 0, frameH = 0;
+                let circleMode = false, circleTouched = false, circle = { x: 0.5, y: 0.5, s: 1 }, cdrag = null, cpinch = null;
+                const pointers = new Map();
+                function pointerDist() { const [a, b] = [...pointers.values()]; return Math.hypot(a.x - b.x, a.y - b.y); }
+
+                // Дві мініатюри кола — з власними копіями відео (той самий файл), щоб бачити рух.
+                const previews = ['vf-cp-sm', 'vf-cp-lg'].map(id => {
+                    const el = document.getElementById(id); el.innerHTML = '';
+                    const st = document.createElement('div'); st.className = 'circle-stage';
+                    const v = document.createElement('video');
+                    v.muted = true; v.defaultMuted = true; v.loop = true; v.autoplay = true; v.playsInline = true;
+                    v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
+                    v.src = objUrl; st.appendChild(v); el.appendChild(st);
+                    return { st, v };
+                });
 
                 function apply() {
                     videoEl.style.objectPosition = `${cx * 100}% ${cy * 100}%`;
                     videoEl.style.transformOrigin = `${cx * 100}% ${cy * 100}%`;
                     videoEl.style.transform = `scale(${zoom})`;
                 }
+                function clampCircle() {
+                    circle.s = Math.min(1, Math.max(0.34, circle.s));
+                    const hx = circle.s / 2, hy = circle.s / (2 * STORY_AR);
+                    circle.x = Math.min(1 - hx, Math.max(hx, circle.x));
+                    circle.y = Math.min(1 - hy, Math.max(hy, circle.y));
+                }
+                function layoutCircle() {
+                    if (!frameW) return;
+                    clampCircle();
+                    const d = circle.s * frameW;
+                    circlePick.style.width = d + 'px'; circlePick.style.height = d + 'px';
+                    circlePick.style.left = (circle.x * frameW - d / 2) + 'px';
+                    circlePick.style.top = (circle.y * frameH - d / 2) + 'px';
+                    sizeRange.value = Math.round(circle.s * 100); updateRangeFill(sizeRange);
+                    const c = { x: circle.x, y: circle.y, z: 1 / circle.s };
+                    previews.forEach(p => { styleCircleStage(p.st, c); applyStoryVideoFrame(p.v, { cx, cy, zoom }); });
+                }
+                function setMode(m) {
+                    circleMode = (m === 'circle');
+                    pointers.clear(); dragging = false; cdrag = null; cpinch = null;
+                    seg.setAttribute('data-mode', m);
+                    seg.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.getAttribute('data-mode') === m));
+                    zoomRow.style.display = circleMode ? 'none' : '';
+                    circlePanel.style.display = circleMode ? 'block' : 'none';
+                    circlePick.style.display = circleMode ? 'block' : 'none';
+                    hint.textContent = circleMode ? HINT_CIRCLE : HINT_FRAME;
+                    if (circleMode) {
+                        const r = frame.getBoundingClientRect(); frameW = r.width; frameH = r.height;
+                        layoutCircle();
+                        previews.forEach(p => { try { const pr = p.v.play(); if (pr && pr.catch) pr.catch(() => {}); } catch (_) {} });
+                    }
+                }
+                function circleDown(e) {
+                    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+                    try { frame.setPointerCapture && e.pointerId != null && frame.setPointerCapture(e.pointerId); } catch (_) {}
+                    if (pointers.size === 2) { cpinch = { d: pointerDist() || 1, s: circle.s }; cdrag = null; }
+                    else if (pointers.size === 1) { cdrag = { sx: e.clientX, sy: e.clientY, x: circle.x, y: circle.y }; cpinch = null; }
+                }
+                function circleMove(e) {
+                    if (!pointers.has(e.pointerId)) return;
+                    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+                    if (pointers.size >= 2 && cpinch) { circle.s = cpinch.s * pointerDist() / cpinch.d; circleTouched = true; layoutCircle(); return; }
+                    if (!cdrag) return;
+                    circle.x = cdrag.x + (e.clientX - cdrag.sx) / frameW;
+                    circle.y = cdrag.y + (e.clientY - cdrag.sy) / frameH;
+                    circleTouched = true; layoutCircle();
+                }
+                function circleUp(e) {
+                    pointers.delete(e.pointerId);
+                    if (pointers.size === 1) { const p = [...pointers.values()][0]; cdrag = { sx: p.x, sy: p.y, x: circle.x, y: circle.y }; cpinch = null; }
+                    else if (pointers.size === 0) { cdrag = null; cpinch = null; }
+                }
+
                 function onDown(e) {
+                    if (circleMode) { circleDown(e); return; }
                     dragging = true; startX = e.clientX; startY = e.clientY; startCx = cx; startCy = cy;
                     const r = frame.getBoundingClientRect(); frameW = r.width; frameH = r.height;
                     frame.setPointerCapture && e.pointerId != null && frame.setPointerCapture(e.pointerId);
                 }
                 function onMove(e) {
+                    if (circleMode) { circleMove(e); return; }
                     if (!dragging) return;
                     const dx = e.clientX - startX, dy = e.clientY - startY;
                     cx = Math.min(1, Math.max(0, startCx - dx / frameW));
                     cy = Math.min(1, Math.max(0, startCy - dy / frameH));
                     apply();
                 }
-                function onUp() { dragging = false; }
+                function onUp(e) { if (circleMode) { circleUp(e); return; } dragging = false; }
+                function onWheel(e) {
+                    if (!circleMode) return;
+                    e.preventDefault();
+                    circle.s *= Math.exp(-e.deltaY * 0.0015); circleTouched = true; layoutCircle();
+                }
                 frame.addEventListener('pointerdown', onDown);
                 frame.addEventListener('pointermove', onMove);
                 frame.addEventListener('pointerup', onUp);
                 frame.addEventListener('pointercancel', onUp);
                 frame.addEventListener('pointerleave', onUp);
+                frame.addEventListener('wheel', onWheel, { passive: false });
 
                 function onZoom() { zoom = Number(zoomRange.value) / 100; apply(); }
                 zoomRange.addEventListener('input', onZoom);
+                function onSegClick(e) { const b = e.target.closest('button'); if (b) setMode(b.getAttribute('data-mode')); }
+                seg.addEventListener('click', onSegClick);
+                function onCircleSize() { circle.s = Number(sizeRange.value) / 100; circleTouched = true; layoutCircle(); }
+                sizeRange.addEventListener('input', onCircleSize);
+                function onCircleReset() { circle = { x: 0.5, y: 0.5, s: 1 }; circleTouched = false; layoutCircle(); }
+                circleResetBtn.addEventListener('click', onCircleReset);
                 apply();
+                setMode('frame');
 
                 function cleanup() {
                     modal.style.display = 'none';
                     videoEl.pause(); videoEl.removeAttribute('src'); videoEl.load();
+                    previews.forEach(p => { p.v.pause(); p.v.removeAttribute('src'); p.v.load(); });
                     URL.revokeObjectURL(objUrl);
                     frame.removeEventListener('pointerdown', onDown);
                     frame.removeEventListener('pointermove', onMove);
                     frame.removeEventListener('pointerup', onUp);
                     frame.removeEventListener('pointercancel', onUp);
                     frame.removeEventListener('pointerleave', onUp);
+                    frame.removeEventListener('wheel', onWheel);
                     zoomRange.removeEventListener('input', onZoom);
-                    zoomRange.value = 100;
+                    seg.removeEventListener('click', onSegClick);
+                    sizeRange.removeEventListener('input', onCircleSize);
+                    circleResetBtn.removeEventListener('click', onCircleReset);
+                    setMode('frame');
+                    zoomRange.value = 100; updateRangeFill(zoomRange);
+                    sizeRange.value = 100; updateRangeFill(sizeRange);
                     document.getElementById('vf-cancel-btn').onclick = null;
                     document.getElementById('vf-done-btn').onclick = null;
                 }
 
-                document.getElementById('vf-cancel-btn').onclick = () => { cleanup(); resolve(null); };
+                document.getElementById('vf-cancel-btn').onclick = () => { vfLastCircle = null; cleanup(); resolve(false); };
                 document.getElementById('vf-done-btn').onclick = () => {
                     const frameData = (zoom === 1 && cx === 0.5 && cy === 0.5) ? null : { cx, cy, zoom };
+                    clampCircle();
+                    vfLastCircle = circleTouched ? { x: +circle.x.toFixed(3), y: +circle.y.toFixed(3), z: +(1 / circle.s).toFixed(2) } : null;
                     cleanup();
                     resolve(frameData);
                 };
@@ -4848,6 +5169,35 @@
             videoEl.style.transformOrigin = `${frame.cx * 100}% ${frame.cy * 100}%`;
             videoEl.style.transform = `scale(${frame.zoom})`;
         }
+
+        // ---- Кадр кола для сторі ----
+        // Сторі завжди 9:16; у колі показується ділянка з центром (x, y) — частки кадру — і масштабом z (1…3).
+        // «Сцена» — 9:16-блок, зсунутий і збільшений усередині квадратного контейнера (кола), що обрізає зайве.
+        const STORY_AR = 16 / 9;
+        function circleLayout(c) {
+            const z = Math.min(3, Math.max(1, Number(c && c.z) || 1));
+            const x = (c && isFinite(c.x)) ? c.x : 0.5, y = (c && isFinite(c.y)) ? c.y : 0.5;
+            const w = z, h = z * STORY_AR;
+            return { w, h, l: Math.min(0, Math.max(1 - w, 0.5 - x * w)), t: Math.min(0, Math.max(1 - h, 0.5 - y * h)) };
+        }
+        function styleCircleStage(stage, c) {
+            const L = circleLayout(c);
+            stage.style.width = (L.w * 100) + '%'; stage.style.height = (L.h * 100) + '%';
+            stage.style.left = (L.l * 100) + '%'; stage.style.top = (L.t * 100) + '%';
+        }
+        function makeCircleStage(container, c) {
+            const st = document.createElement('div'); st.className = 'circle-stage';
+            styleCircleStage(st, c); container.appendChild(st); return st;
+        }
+        function storyForUrl(url) {
+            const scan = (list) => { for (const s of (list || [])) if (s && s.url === url) return s; return null; };
+            try {
+                let s = scan(myProfile && myProfile.stories); if (s) return s;
+                for (const id in firebaseProfilesCache) { s = scan((firebaseProfilesCache[id] || {}).stories); if (s) return s; }
+            } catch (_) {}
+            return null;
+        }
+        function circleCropForUrl(url) { const s = storyForUrl(url); return (s && s.circle) || null; }
 
         function saveMyProfileToFirebase() {
             return set(ref(db, `profiles/${myId}`), {
@@ -4969,11 +5319,12 @@
             } catch (e) {}
         }, 60000);
 
-        async function addStory(type, url, frame, caption) {
+        async function addStory(type, url, frame, caption, circle) {
             myProfile.stories = myProfile.stories || [];
             if (caption) { myProfile.photoCaptions = myProfile.photoCaptions || {}; myProfile.photoCaptions[capKey(url)] = caption; }
             const entry = { type, url, ts: Date.now(), exp: Date.now() + storyDurationH * 3600000 };
             if (frame) entry.frame = frame;
+            if (circle) entry.circle = circle;
             myProfile.stories = liveStories(myProfile.stories);
             myProfile.stories.push(entry);
             if (myProfile.stories.length > 10) myProfile.stories = myProfile.stories.slice(-10);
@@ -5012,14 +5363,17 @@
             stories.forEach((s, i) => {
                 const thumb = document.createElement('div'); thumb.className = 'hero-story-thumb';
                 const inner = document.createElement('div'); inner.className = 'hero-story-thumb-inner';
-                if (s.type === 'photo') { inner.style.backgroundImage = `url('${s.url}')`; }
+                if (s.type === 'photo') {
+                    if (s.circle) { makeCircleStage(inner, s.circle).style.backgroundImage = `url('${s.url}')`; }
+                    else inner.style.backgroundImage = `url('${s.url}')`;
+                }
                 else {
                     const v = document.createElement('video');
                     v.className = 'hero-story-thumb-video'; setVideoSrc(v, s.url);
                     v.muted = true; v.defaultMuted = true; v.loop = true; v.autoplay = true; v.playsInline = true;
                     v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
                     applyStoryVideoFrame(v, s.frame);
-                    inner.appendChild(v);
+                    if (s.circle) makeCircleStage(inner, s.circle).appendChild(v); else inner.appendChild(v);
                     attemptCirclePlay(v); allCircleVideos.add(v);
                 }
                 thumb.appendChild(inner);
@@ -5066,13 +5420,15 @@
             try { dataUrl = await openPhotoEditor(file, { aspect: 'story', outW: 1080, outH: 1920 }); }
             catch (err) { alert(mediaUploadErrorMessage(err)); return; }
             if (!dataUrl) return; // користувач натиснув "Скасувати"
-            await addStory('photo', dataUrl, undefined, peLastCaption);
+            await addStory('photo', dataUrl, undefined, peLastCaption, peLastCircle);
         });
         document.getElementById('story-add-video-input').addEventListener('change', async (e) => {
             const file = e.target.files[0]; if (!file) return;
             e.target.value = '';
             const frame = await openVideoFramer(file);
-            checkVideoDurationAndLoad(file, async (dataUrl) => { await addStory('video', dataUrl, frame); });
+            if (frame === false) return; // «Скасувати»
+            const circ = vfLastCircle;
+            checkVideoDurationAndLoad(file, async (dataUrl) => { await addStory('video', dataUrl, frame, undefined, circ); });
         });
 
         // ---- Повноекранний перегляд сторіс ----
@@ -5082,7 +5438,9 @@
 
         let storyViewerPeople = null;
         function buildHomeStoryList(e) {
-            return (e.photos || []).map(url => ({ type: isHeroVideoUrl(url) ? 'video' : 'photo', url, ts: Date.now() }));
+            const list = (e.photos || []).map(url => ({ type: isHeroVideoUrl(url) ? 'video' : 'photo', url, ts: Date.now() }));
+            // Відео — першим: коли гортаєш між людьми, сторі одразу починається з відео, а не з фото.
+            return list.filter(x => x.type === 'video').concat(list.filter(x => x.type !== 'video'));
         }
         // Перемикає на сторі іншої людини зі списку Головної (dir: 1 — наступна, -1 — попередня), по колу.
         function switchStoryPerson(dir) {
@@ -6344,7 +6702,7 @@
             try { dataUrl = await openPhotoEditor(file, { aspect: 'story', outW: 1080, outH: 1920, noCaption: true }); }
             catch (err) { alert(mediaUploadErrorMessage(err)); return; }
             if (!dataUrl) return; // користувач натиснув "Скасувати"
-            obStoryData = { type: 'photo', url: dataUrl };
+            obStoryData = { type: 'photo', url: dataUrl, circle: peLastCircle };
             const prev = document.getElementById('ob-story-preview');
             prev.innerHTML = ''; prev.style.backgroundImage = `url('${dataUrl}')`;
         });
@@ -6352,8 +6710,10 @@
             const file = e.target.files[0]; if (!file) return;
             e.target.value = '';
             const frame = await openVideoFramer(file);
+            if (frame === false) return; // «Скасувати»
+            const circ = vfLastCircle;
             checkVideoDurationAndLoad(file, (dataUrl) => {
-                obStoryData = { type: 'video', url: dataUrl, frame };
+                obStoryData = { type: 'video', url: dataUrl, frame, circle: circ };
                 const prev = document.getElementById('ob-story-preview');
                 prev.style.backgroundImage = 'none'; prev.innerHTML = '';
                 const v = document.createElement('video'); v.src = dataUrl; v.muted = true; v.autoplay = true; v.loop = true; v.playsInline = true;
@@ -6366,7 +6726,7 @@
             localStorage.setItem('chat_onboarded', '1');
             document.getElementById('onboarding-modal').style.display = 'none';
             showPinPlacement(true);
-            if (obStoryData) { addStory(obStoryData.type, obStoryData.url, obStoryData.frame); }
+            if (obStoryData) { addStory(obStoryData.type, obStoryData.url, obStoryData.frame, undefined, obStoryData.circle); }
         }
         document.getElementById('ob-story-next').addEventListener('click', obFinishWizard);
         document.getElementById('ob-story-skip').addEventListener('click', obFinishWizard);
@@ -6638,7 +6998,9 @@
             // просто показує перше фото статично, без циклічної анімації кросфейду.
             if (!list || !list.length) return;
             const layerA = document.createElement('div'); layerA.className = 'home-circle-layer is-visible';
-            layerA.style.backgroundImage = `url('${thumbUrl(list[0], 220)}')`;
+            const crop = circleCropForUrl(list[0]);
+            if (crop) { styleCircleStage(layerA, crop); layerA.style.backgroundImage = `url('${list[0]}')`; }
+            else layerA.style.backgroundImage = `url('${thumbUrl(list[0], 220)}')`;
             wrap.appendChild(layerA);
         }
 
@@ -7125,10 +7487,14 @@
                     v.className = 'ig-grid-item-video'; setVideoSrc(v, url);
                     v.muted = true; v.defaultMuted = true; v.loop = true; v.autoplay = true; v.playsInline = true;
                     v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
-                    cell.appendChild(v);
+                    const st = storyForUrl(url);
+                    if (st && st.circle) { cell.style.overflow = 'hidden'; makeCircleStage(cell, st.circle).appendChild(v); applyStoryVideoFrame(v, st.frame); }
+                    else cell.appendChild(v);
                     attemptCirclePlay(v); allCircleVideos.add(v);
                 } else {
-                    cell.style.backgroundImage = `url('${url}')`;
+                    const st = storyForUrl(url);
+                    if (st && st.circle) { cell.style.overflow = 'hidden'; makeCircleStage(cell, st.circle).style.backgroundImage = `url('${url}')`; }
+                    else cell.style.backgroundImage = `url('${url}')`;
                 }
                 cell.addEventListener('click', () => openMediaGallery(photos, i, item.name, item));
                 grid.appendChild(cell);
