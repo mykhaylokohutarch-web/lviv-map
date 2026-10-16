@@ -3769,7 +3769,7 @@
             else if (pref === 'Економія') start = 360;
             else {
                 const c = navigator.connection;
-                start = (c && (c.saveData || /^(slow-2g|2g|3g)$/.test(c.effectiveType || ''))) ? 360 : 720;
+                start = (c && (c.saveData || /^(slow-2g|2g)$/.test(c.effectiveType || ''))) ? 360 : ((c && c.effectiveType === '3g') ? 720 : 1080); // Авто: найкраща якість, якщо мережа дозволяє
             }
             const all = [1080, 720, 360];
             return all.slice(all.indexOf(start)).map(q => `${m[1]}-${q}.mp4`);
@@ -7123,6 +7123,10 @@
                 tryPlay();
             }, 500);
         }
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) return;
+            allCircleVideos.forEach(v => { if (!v.isConnected) { allCircleVideos.delete(v); return; } if (v.paused && !v.ended) attemptCirclePlay(v); });
+        });
         ['touchstart', 'click', 'pointerdown'].forEach(evt => {
             document.addEventListener(evt, () => {
                 // Заразом прибираємо з набору відео, які вже відкріплені від DOM (стара сторі/профіль,
