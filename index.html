@@ -3439,7 +3439,7 @@
             },
             {
                 id: 'demo_p2', name: 'Олег', coords: [49.8398, 24.0328],
-                photos: ['https://images.unsplash.com/photo-1758876204244-930299843f07?w=2048&q=90&fit=crop&auto=format', 'https://images.unsplash.com/photo-1758876204244-930299843f07?w=2048&q=90&fit=crop&auto=format'],
+                photos: ['https://images.unsplash.com/photo-1758876204244-930299843f07?w=2048&q=90&fit=crop&auto=format', 'https://images.unsplash.com/photo-1758876204244-930299843f07?w=2048&q=90&fit=crop&auto=format', 'https://assets.mixkit.co/videos/49117/49117-720.mp4'],
                 status: 'Фотографую портрети й прогулянки по Львову 📸 Перші 15 фото — безкоштовно',
                 about: 'Фотограф-фрілансер. Знімаю на вулицях старого міста, є готові локації та ідеї для образів.',
                 interests: 'Фотографія · Ретуш · Прогулянки містом'
@@ -3481,7 +3481,7 @@
             },
             {
                 id: 'demo_p8', name: 'Оксана', coords: [49.8426, 24.0326],
-                photos: ['https://picsum.photos/seed/pastrychef98696/2048/2048', 'https://picsum.photos/seed/pastrychef81482/2048/2048'],
+                photos: ['https://picsum.photos/seed/pastrychef98696/2048/2048', 'https://picsum.photos/seed/pastrychef81482/2048/2048', 'https://assets.mixkit.co/videos/1292/1292-720.mp4'],
                 status: 'Пеку торти на замовлення 🎂 Дегустаційний сет — за попереднім записом',
                 about: 'Кондитерка, спеціалізуюсь на весільних і святкових тортах, працюю з алергенами й веганськими рецептами.',
                 interests: 'Кондитерка · Торти на замовлення · Десерти'
@@ -3495,7 +3495,7 @@
             },
             {
                 id: 'demo_p10', name: 'Христина', coords: [49.8434, 24.0330],
-                photos: ['https://picsum.photos/seed/yogainstructor65302/2048/2048', 'https://picsum.photos/seed/yogainstructor14165/2048/2048'],
+                photos: ['https://picsum.photos/seed/yogainstructor65302/2048/2048', 'https://picsum.photos/seed/yogainstructor14165/2048/2048', 'https://assets.mixkit.co/videos/1861/1861-720.mp4'],
                 status: 'Йога-інструкторка, ранкові практики 🧘 Перше заняття безкоштовне',
                 about: 'Веду групові й індивідуальні заняття хатха-йогою, підходить для початківців, килимки надаю.',
                 interests: 'Йога · Розтяжка · Дихальні практики'
@@ -3509,7 +3509,7 @@
             },
             {
                 id: 'demo_p12', name: 'Леся', coords: [49.8442, 24.0312],
-                photos: ['https://picsum.photos/seed/painter38657/2048/2048', 'https://picsum.photos/seed/painter40495/2048/2048'],
+                photos: ['https://picsum.photos/seed/painter38657/2048/2048', 'https://picsum.photos/seed/painter40495/2048/2048', 'https://assets.mixkit.co/videos/1291/1291-720.mp4'],
                 status: 'Арт-терапія та малювання для дорослих 🎨 Матеріали надаю',
                 about: 'Психологиня, веду групи арт-терапії — не потрібно вміти малювати, важливий сам процес і розмова.',
                 interests: 'Арт-терапія · Малювання · Психологія'
@@ -3523,7 +3523,7 @@
             },
             {
                 id: 'demo_p14', name: 'Наталія', coords: [49.8423, 24.0350],
-                photos: ['https://picsum.photos/seed/translator13478/2048/2048', 'https://picsum.photos/seed/translator83563/2048/2048'],
+                photos: ['https://picsum.photos/seed/translator13478/2048/2048', 'https://picsum.photos/seed/translator83563/2048/2048', 'https://assets.mixkit.co/videos/49115/49115-720.mp4'],
                 status: 'Усні й письмові переклади англ/нім 🇬🇧🇩🇪 Термінові — за домовленістю',
                 about: 'Синхронна й послідовна перекладачка, супроводжую ділові зустрічі та переклад документів.',
                 interests: 'Переклад · Англійська · Німецька'
@@ -5794,7 +5794,7 @@
                 const m = document.createElement('div');
                 m.className = 'story-viewer-media ' + (isFullscreenMediaOn() ? 'fill' : 'fit');
                 if (first.type === 'photo') { const im = document.createElement('img'); im.src = first.url; m.appendChild(im); }
-                else { const v = document.createElement('video'); setVideoSrc(v, first.url); v.muted = true; v.playsInline = true; v.preload = 'auto'; v.setAttribute('playsinline', ''); applyStoryVideoFrame(v, first.frame); m.appendChild(v); }
+                else { const v = document.createElement('video'); setVideoSrc(v, first.url); v.muted = true; v.loop = true; v.autoplay = true; v.playsInline = true; v.preload = 'auto'; v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); applyStoryVideoFrame(v, first.frame); m.appendChild(v); attemptCirclePlay(v); allCircleVideos.add(v); }
                 ghost.appendChild(m);
                 // Текст, іконки справа й аватарка сусідньої людини — одразу на «грані», разом зі сторі
                 const c = nb.cand;
