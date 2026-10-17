@@ -2717,6 +2717,7 @@
                     if (xhr.status >= 200 && xhr.status < 300) {
                         try {
                             const data = JSON.parse(xhr.responseText);
+                            if (kind === 'video') { try { const d = playableVideoUrl(data.secure_url); if (d && d !== data.secure_url) { const wv = document.createElement('video'); wv.preload = 'metadata'; wv.muted = true; wv.src = d; setTimeout(() => { try { wv.removeAttribute('src'); wv.load(); } catch (_) {} }, 30000); } } catch (_) {} }
                             resolveTelegramFileUrl(data.secure_url, kind).then(resolve).catch(reject);
                         } catch (err) { reject(err); }
                     } else {
@@ -3934,18 +3935,23 @@
                 });
                 return;
             }
-            v.src = url;
+            // Cloudinary-відео (те, що заливають люди): першим граємо стиснену версію 720p H.264 (у рази легша за оригінал із телефона),
+            // а якщо її немає/ще не готова — одразу переходимо на оригінал.
             const alt = playableVideoUrl(url);
-            if (!alt || alt === url) return;
-            let switched = false;
+            const isCld = !!alt && alt !== url;
+            v.src = isCld ? alt : url;
+            if (!isCld) return;
+            let switched = false, mdTimer = null;
             const fallback = (fromError) => {
-                if (switched) return; switched = true;
+                if (switched) return; switched = true; clearTimeout(mdTimer);
                 if (fromError) v._fallbackPending = true; // щоб екран помилки не спрацював на першу, «очікувану» помилку
-                v.src = alt; v.load();
+                v.src = url; v.load();
                 const pr = v.play(); if (pr && pr.catch) pr.catch(() => {});
             };
             v.addEventListener('error', () => fallback(true), { once: true });
-            v.addEventListener('loadedmetadata', () => { if (v.videoWidth === 0) fallback(false); }, { once: true });
+            v.addEventListener('loadedmetadata', () => { clearTimeout(mdTimer); if (v.videoWidth === 0) fallback(false); }, { once: true });
+            // Стисла версія ще перекодовується на сервері → не чекаємо довго, граємо оригінал.
+            mdTimer = setTimeout(() => { if (!switched && v.readyState < 1) fallback(false); }, 3500);
         }
 
         // Будує повноекранну стрічку фото/відео картки, яку можна гортати вбоки (як в Instagram/Apple)
@@ -5764,12 +5770,24 @@
         }
         function buildHomeStoryList(e) {
             const base = (e.photos || []).map(url => ({ type: isHeroVideoUrl(url) ? 'video' : 'photo', url, ts: Date.now() }));
-            let list = base;
-            if (!e.isMe && e.id !== myId) {
+            const isDemo = String(e.id || '').indexOf('demo_') === 0;
+            let list;
+            if (isDemo && !e.isMe && e.id !== myId) {
+                // Демо-акаунти: першим ставимо унікальний стоковий кліп, власні відео з даних прибираємо (вони повторюються).
                 const vid = storyVideoFor(e);
                 const url = `https://assets.mixkit.co/videos/${vid}/${vid}-720.mp4`;
-                // Власні відео з даних можуть повторюватись у сусідів — тому першим ставимо унікальне, інші відео прибираємо.
                 list = [{ type: 'video', url, ts: Date.now() }].concat(base.filter(x => x.type !== 'video'));
+            } else {
+                // Справжні люди (і ти сам): спершу їхні активні сторі (від старіших до новіших), далі фото/відео профілю — зі своїми відео.
+                let live = [];
+                try {
+                    live = liveStories(e.stories)
+                        .filter(st => st && st.url && (st.type === 'photo' || st.type === 'video'))
+                        .sort((a, b) => (a.ts || 0) - (b.ts || 0))
+                        .map(st => { const it = { type: st.type, url: st.url, ts: st.ts || Date.now() }; if (st.frame) it.frame = st.frame; return it; });
+                } catch (_) {}
+                const seen = new Set(live.map(x => x.url));
+                list = live.concat(base.filter(x => !seen.has(x.url)));
             }
             // Відео — першим: коли гортаєш між людьми, сторі одразу починається з відео, а не з фото.
             return list.filter(x => x.type === 'video').concat(list.filter(x => x.type !== 'video'));
