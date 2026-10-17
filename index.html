@@ -1,6 +1,57 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
+<script>
+/* ДІАГНОСТИКА відео сторі — лише в цій копії. Показує стан відео зверху екрана. */
+(function(){
+  var logs=[]; function L(m){ logs.push(new Date().toTimeString().slice(3,8)+' '+m); if(logs.length>8) logs.shift(); }
+  var op=HTMLMediaElement.prototype.play;
+  HTMLMediaElement.prototype.play=function(){ var v=this, p=op.apply(this,arguments);
+    if(p&&p.catch) p.catch(function(e){ if(v.closest&&v.closest('#story-viewer')) L('play() ✗ '+e.name); });
+    return p; };
+  ['error','stalled','waiting','playing','abort','emptied','suspend'].forEach(function(ev){
+    document.addEventListener(ev,function(e){ var v=e.target; if(!(v&&v.tagName==='VIDEO'&&v.closest&&v.closest('#story-viewer'))) return;
+      L(ev+(ev==='error'&&v.error?' код'+v.error.code:'')+' '+((v.currentSrc||'').split('/').pop())); },true); });
+  window.addEventListener('error',function(e){ L('JS: '+e.message); });
+  window.addEventListener('unhandledrejection',function(e){ L('REJ: '+(e.reason&&e.reason.message||e.reason)); });
+  function start(){
+    var box=document.createElement('div');
+    box.style.cssText='position:fixed;left:4px;top:118px;right:4px;z-index:2147483647;background:rgba(0,0,0,.72);color:#7CFC00;font:10px/1.35 monospace;padding:4px 6px;border-radius:6px;pointer-events:none;white-space:pre-wrap;max-height:55vh;overflow:hidden;word-break:break-all';
+    document.documentElement.appendChild(box);
+
+    var probeTxt='чекаю…';
+    function probeQ(q,cb){ var v=document.createElement('video'); v.muted=true; v.preload='auto'; v.setAttribute('playsinline',''); v.playsInline=true;
+      v.style.cssText='position:fixed;left:0;top:0;width:2px;height:2px;opacity:.01;pointer-events:none';
+      var t0=performance.now(), meta='-', fin=false;
+      function end(txt){ if(fin) return; fin=true; try{v.removeAttribute('src'); v.load(); v.remove();}catch(e){} cb(q+'p: '+txt); }
+      v.addEventListener('loadedmetadata',function(){ meta=((performance.now()-t0)/1000).toFixed(1)+'с'; });
+      v.addEventListener('canplay',function(){ end('метадані '+meta+', готове '+((performance.now()-t0)/1000).toFixed(1)+'с'); });
+      v.addEventListener('error',function(){ end('ПОМИЛКА код'+(v.error&&v.error.code)); });
+      setTimeout(function(){ end('НЕ ГОТОВЕ за 25с (метадані '+meta+')'); },25000);
+      document.documentElement.appendChild(v);
+      v.src='https://assets.mixkit.co/videos/1234/1234-'+q+'.mp4?p='+Date.now();
+      try{ var pr=v.play(); if(pr&&pr.catch) pr.catch(function(){}); }catch(e){} }
+    setTimeout(function(){ var res=[]; function step(i){ var qs=[360,720,1080]; if(i>=qs.length) return;
+      probeQ(qs[i],function(r){ res.push(r); probeTxt=res.join(' | ')+(i<qs.length-1?' …':''); step(i+1); }); }
+      probeTxt='міряю…'; step(0); },2500);
+    setInterval(function(){
+      var sv=document.getElementById('story-viewer'), open=sv&&sv.style.display==='flex';
+      var c=navigator.connection||{}; var tg=(window.Telegram&&Telegram.WebApp)||{};
+      var t='якість у налаштуваннях: '+(localStorage.getItem('settings_video_quality')||'Авто')+'\nтест Mixkit: '+probeTxt+'\nмережа:'+(c.effectiveType||'?')+(c.saveData?' saveData':'')+' tg:'+(tg.platform||'-')+' v'+(tg.version||'-')+'\n';
+      if(!open){ t+='сторі закрито'; }
+      else {
+        var vs=sv.querySelectorAll('video');
+        if(!vs.length) t+='у сторі НЕМАЄ <video> (фото або помилка)\n';
+        vs.forEach(function(v){ var e=v.error;
+          t+=(v.paused?'ПАУЗА':'грає')+' ready='+v.readyState+' net='+v.networkState+' t='+v.currentTime.toFixed(1)+' '+v.videoWidth+'x'+v.videoHeight+(e?' ПОМИЛКА код'+e.code:'')+'\n'+(v.currentSrc||v.src||'нема src').replace('https://assets.mixkit.co/videos/','')+'\n'; });
+      }
+      box.textContent=t+logs.join('\n');
+    },400);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start); else start();
+})();
+</script>
+
     <link rel="preconnect" href="https://assets.mixkit.co" crossorigin>
     <link rel="dns-prefetch" href="https://assets.mixkit.co">
     <style>
