@@ -116,6 +116,8 @@
     <!-- Прогріваємо з'єднання з тайл-сервером карти заздалегідь (DNS/TLS), щоб перші тайли
          почали вантажитись одразу, а не з нуля, коли користувач відкриє вкладку Карта. -->
     <link rel="preconnect" href="https://tile.openstreetmap.org" crossorigin>
+    <link rel="preconnect" href="https://assets.mixkit.co" crossorigin>
+    <link rel="dns-prefetch" href="https://assets.mixkit.co">
     <link rel="dns-prefetch" href="https://unpkg.com">
     <link rel="preconnect" href="https://api.cloudinary.com">
     <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
@@ -511,6 +513,8 @@
         #sv-reply-bar { display: none; position: absolute; left: 12px; right: 12px; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); z-index: 30; gap: 8px; align-items: center; }
         #sv-reply-input { flex: 1; min-width: 0; padding: 11px 16px; border-radius: 22px; border: 1px solid rgba(255,255,255,0.4); background: rgba(0,0,0,0.35); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #fff; font: inherit; font-size: 16px; outline: none; }
         #sv-reply-input::placeholder { color: rgba(255,255,255,0.65); }
+        /* Панель «Відповісти… / ❤️ / ➤» на сторі прибрана */
+        #sv-reply-bar { display: none !important; }
         #sv-reply-bar button { width: 44px; height: 44px; border-radius: 50%; border: none; background: rgba(0,0,0,0.35); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #fff; font-size: 20px; cursor: pointer; flex-shrink: 0; -webkit-tap-highlight-color: transparent; }
         /* Копії текстів/іконок/аватарки для сусідньої сторі на «колесі» — щоб вони їхали разом із фото, а не з'являлись після */
         .sv-ghost-prof { position: absolute; left: 14px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 21; width: 42px; height: 42px; border-radius: 50%; background-size: cover; background-position: center; background-color: #2c2c2e; border: 2px solid #fff; box-shadow: 0 6px 20px rgba(0,0,0,0.35); box-sizing: border-box; }
@@ -3855,7 +3859,7 @@
         }
         function demoClipFor(url) {
             const m = /^https:\/\/assets\.mixkit\.co\/videos\/(\d+)\/\d+-(?:360|720|1080)\.mp4$/.exec(url || '');
-            return m ? demoBlobUrl(+m[1] % DEMO_CLIPS, 'v') : null;
+            return null;   // вбудовані кольорові демо-анімації вимкнено — тепер завжди грають справжні стокові відео Mixkit
         }
         function mixkitMatch(url) { return /^(https:\/\/assets\.mixkit\.co\/videos\/\d+\/\d+)-(?:360|720|1080)\.mp4$/.exec(url || ''); }
         function mixkitQualityChain(url, hq, cap) {
@@ -3874,7 +3878,7 @@
         }
         function videoPosterUrl(url) {
             const mk = mixkitMatch(url);
-            if (mk) { const m2 = /\/videos\/(\d+)\//.exec(url); return demoBlobUrl(+m2[1] % DEMO_CLIPS, 'p'); }
+            if (mk) return '';   // без кольорових заставок-анімацій: до завантаження відео — тло сторі
             const m = (url || '').match(/^(https:\/\/res\.cloudinary\.com\/[^/]+\/video\/upload\/)(v\d+\/.*)$/i);
             if (!m) return '';
             return m[1] + 'so_0,w_600,c_limit,f_jpg,q_auto/' + m[2].replace(/\.[a-z0-9]+(\?.*)?$/i, '.jpg');
@@ -5810,7 +5814,7 @@
             v.addEventListener('playing', () => { if (v._warming) { v.pause(); try { v.currentTime = 0; } catch (_) {} } });
             svWarmHost.appendChild(v);
             svWarm.set(url, v);
-            while (svWarm.size > 3) { const k = svWarm.keys().next().value; const old = svWarm.get(k); svWarm.delete(k); if (old && old.parentNode) old.remove(); }
+            while (svWarm.size > 6) { const k = svWarm.keys().next().value; const old = svWarm.get(k); svWarm.delete(k); if (old && old.parentNode) old.remove(); }
             const pr = v.play(); if (pr && pr.catch) pr.catch(() => {});
         }
         const svGhostVideos = new Map();
@@ -5842,7 +5846,7 @@
             const run = () => {
                 if (done) return; done = true;
                 try {
-                    [1, 2, -1].forEach(d => { const nb = peekStoryPerson(d); if (nb) preloadStoryItem(nb.list[0]); });
+                    [1, 2, 3, -1].forEach(d => { const nb = peekStoryPerson(d); if (nb) preloadStoryItem(nb.list[0]); });
                     preloadStoryItem(storyViewerList[storyViewerIdx + 1]);
                 } catch (_) {}
             };
@@ -7608,7 +7612,7 @@
             window.homeSearchNoResults = false;
             homeViewerEntries = entries.filter(e => e.photos && e.photos.length);
             setTimeout(prefetchStoryVideos, 1200);
-            setTimeout(() => { try { homeViewerEntries.slice(0, 2).forEach(e => { const l = buildHomeStoryList(e); if (l[0] && l[0].type === 'video') preloadStoryItem(l[0]); }); } catch (_) {} }, 300);
+            try { homeViewerEntries.slice(0, 5).forEach((e, i) => setTimeout(() => { try { const l = buildHomeStoryList(e); if (l[0] && l[0].type === 'video') preloadStoryItem(l[0]); } catch (_) {} }, 150 + i * 450)); } catch (_) {}
             entries.forEach(e => {
                 const item = document.createElement('div'); item.className = 'home-circle-item';
                 const avatar = document.createElement('div'); avatar.className = 'home-circle-avatar' + (e.isMe ? ' is-me' : '');
