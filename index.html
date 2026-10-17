@@ -196,7 +196,7 @@
            щоб не було видно "чорного спалаху" до підвантаження тайлів. */
         body.dark-theme #map { background-color: #17171b; }
         #map.map-dark-mode .leaflet-tile-pane {
-            filter: invert(1) hue-rotate(180deg) brightness(0.94) contrast(0.92) saturate(0.85);
+            filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.96) saturate(0.42) sepia(0.12);
         }
         /* Напівпрозорий темний шар ПЕРЕД картою (над тайлами, але під маршрутом і мітками) —
            приглушує інвертовані тайли на чорному фоні теми, щоб карта не "світила" кольором. */
@@ -204,7 +204,7 @@
             position: absolute; inset: 0; z-index: 250; pointer-events: none;
             background: rgba(0, 0, 0, 0); transition: background 0.5s ease;
         }
-        #map.map-dark-mode #map-dark-dim { background: rgba(0, 0, 0, 0.32); }
+        #map.map-dark-mode #map-dark-dim { background: linear-gradient(180deg, rgba(10, 14, 32, 0.40) 0%, rgba(6, 8, 20, 0.34) 100%); mix-blend-mode: multiply; }
 
         /* Прибираємо напис-атрибуцію ("OpenStreetMap...") у кутку карти. */
         .leaflet-control-attribution { display: none !important; }
