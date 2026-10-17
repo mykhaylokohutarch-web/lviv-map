@@ -823,6 +823,9 @@
         .msg-quote b { font-weight: 700; } .msg-quote span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }
         .msg-fwd { font-size: 11px; opacity: 0.7; margin-bottom: 3px; font-style: italic; }
         .msg-edited { font-size: 10px; opacity: 0.6; }
+        #chat-messages li { touch-action: manipulation; -webkit-user-select: none; user-select: none; }
+        .msg-heart-pop { position: absolute; left: 50%; top: 50%; font-size: 44px; line-height: 1; pointer-events: none; z-index: 5; transform: translate(-50%, -50%) scale(0); animation: msgHeartPop 0.75s cubic-bezier(0.2, 0.9, 0.3, 1) forwards; filter: drop-shadow(0 3px 8px rgba(0,0,0,0.3)); }
+        @keyframes msgHeartPop { 0% { transform: translate(-50%, -50%) scale(0); opacity: 0; } 25% { transform: translate(-50%, -50%) scale(1.25); opacity: 1; } 45% { transform: translate(-50%, -50%) scale(1); } 100% { transform: translate(-50%, -95%) scale(1); opacity: 0; } }
         .msg-reactions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
         .msg-react { border: none; border-radius: 12px; padding: 2px 8px; font-size: 12px; background: rgba(128,128,128,0.22); color: inherit; cursor: pointer; font-family: inherit; }
         .msg-react.mine { background: rgba(10,132,255,0.35); }
@@ -1381,6 +1384,10 @@
             padding: calc(44px + env(safe-area-inset-top, 0px)) 0 env(safe-area-inset-bottom, 0px);
         }
         #vf-crop-frame { touch-action: none; cursor: grab; }
+        #video-framer-modal .pe-crop-frame.aspect-story { height: min(34vh, 460px); }
+        #vf-frame-panel { max-height: 30vh; }
+        #vf-preview-row { padding-top: 6px; }
+        #vf-cp-live { width: 64px; height: 64px; border: 2px solid rgba(255,255,255,0.85); box-sizing: border-box; }
         #vf-crop-frame video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
         .vf-hint { text-align: center; color: rgba(255,255,255,0.55); font-size: 12px; margin: 4px 24px calc(16px + env(safe-area-inset-bottom,0px)); }
 
@@ -2302,7 +2309,7 @@
     <div id="video-framer-modal">
         <div class="pe-header">
             <button id="vf-cancel-btn">Скасувати</button>
-            <h3>Кадрування відео</h3>
+            <h3>Редактор відео</h3>
             <button id="vf-done-btn">Готово</button>
         </div>
         <div class="pe-seg-wrap" id="vf-seg-wrap" style="display:flex;">
@@ -2322,6 +2329,20 @@
             <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path><path d="M8 11h6"></path></svg>
             <input type="range" class="ios-range" id="vf-zoom-range" min="100" max="250" value="100">
             <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path><path d="M11 8v6"></path><path d="M8 11h6"></path></svg>
+        </div>
+        <div class="pe-preview-row" id="vf-preview-row">
+            <div class="pe-cp lg" id="vf-cp-live"></div>
+            <span>Так сторі виглядатиме в колі. Кадр і фільтр видно тут одразу.</span>
+        </div>
+        <div class="pe-panel" id="vf-frame-panel">
+            <div class="pe-filters" id="vf-filters"></div>
+            <div class="ios-group-title"><span>Налаштування</span><button id="vf-reset-btn">Скинути</button></div>
+            <div class="ios-group">
+                <div class="pe-adjust-row"><label>Яскравість</label><input type="range" class="ios-range" id="vf-brightness" min="-40" max="40" value="0"><span class="pe-val">0</span></div>
+                <div class="pe-adjust-row"><label>Контраст</label><input type="range" class="ios-range" id="vf-contrast" min="-40" max="40" value="0"><span class="pe-val">0</span></div>
+                <div class="pe-adjust-row"><label>Насиченість</label><input type="range" class="ios-range" id="vf-saturation" min="-60" max="60" value="0"><span class="pe-val">0</span></div>
+                <div class="pe-adjust-row"><label>Тепло</label><input type="range" class="ios-range" id="vf-warmth" min="-40" max="40" value="0"><span class="pe-val">0</span></div>
+            </div>
         </div>
         <div id="vf-circle-panel" style="display:none;">
             <div class="ios-group-title"><span>Вигляд у колі</span><button id="vf-circle-reset">Скинути</button></div>
@@ -3278,6 +3299,11 @@
         let routeSelecting = false;
         let routeSelectFromId = null;
         let routeLine = null;
+        // Маршрут і кільця — на ОКРЕМОМУ векторному (SVG) шарі, а не на canvas карти (preferCanvas):
+        // canvas під час зуму лише розтягує готову картинку й перемальовує після завершення жесту (звідси «запізнення»),
+        // а SVG-шар зсувається/масштабується разом із тайлами й мітками кадр у кадр. padding 1 — щоб лінія
+        // не обрізалась по краях, коли карту віддаляють пальцями.
+        const routeRenderer = L.svg({ padding: 1 });
         let routeRings = [];
 
         // ---- Реєстр усіх маркерів на карті (люди, місця, профілі) — потрібен, щоб під час маршруту
@@ -3331,7 +3357,7 @@
         function addRoutePing(coords) {
             const ring = L.circleMarker(coords, {
                 radius: 22, color: '#ff2d78', weight: 3, fillOpacity: 0, opacity: 0.95,
-                className: 'route-ping-ring', interactive: false
+                className: 'route-ping-ring', interactive: false, renderer: routeRenderer
             }).addTo(map);
             routeRings.push(ring);
             return ring;
@@ -3421,14 +3447,14 @@
                 if (data.code !== 'Ok' || !data.routes || !data.routes[0]) throw new Error('no route');
                 const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
                 if (routeLine) map.removeLayer(routeLine);
-                routeLine = L.polyline(coords, { color: '#ff2d78', weight: 5, opacity: 0.9, lineCap: 'round', lineJoin: 'round' }).addTo(map);
+                routeLine = L.polyline(coords, { color: '#ff2d78', weight: 5, opacity: 0.9, lineCap: 'round', lineJoin: 'round', renderer: routeRenderer, interactive: false }).addTo(map);
                 map.fitBounds(routeLine.getBounds(), { padding: [70, 90] });
                 const km = (data.routes[0].distance / 1000).toFixed(1);
                 const mins = Math.max(1, Math.round(data.routes[0].duration / 60));
                 showRouteInfo(`Пішки: ${km} км · ~${mins} хв`);
             } catch (err) {
                 if (routeLine) map.removeLayer(routeLine);
-                routeLine = L.polyline([fromCoords, toCoords], { color: '#ff2d78', weight: 4, opacity: 0.85, dashArray: '6 8' }).addTo(map);
+                routeLine = L.polyline([fromCoords, toCoords], { color: '#ff2d78', weight: 4, opacity: 0.85, dashArray: '6 8', renderer: routeRenderer, interactive: false }).addTo(map);
                 map.fitBounds(routeLine.getBounds(), { padding: [70, 90] });
                 showRouteInfo('Маршрут показано приблизно (немає з’єднання з сервісом маршрутів)');
             }
@@ -4255,6 +4281,26 @@
             li.addEventListener('touchmove', (e) => { if (timer && (Math.abs(e.touches[0].clientX - sx) > 8 || Math.abs(e.touches[0].clientY - sy) > 8)) { clearTimeout(timer); timer = null; } }, { passive: true });
             ['touchend', 'touchcancel'].forEach(ev => li.addEventListener(ev, () => { clearTimeout(timer); timer = null; }, { passive: true }));
             li.addEventListener('contextmenu', (e) => { e.preventDefault(); clearTimeout(timer); fire(); });
+            // Подвійний тап / подвійний клік — миттєвий лайк ❤️ (як в Instagram: лише ставить, повторний — не знімає).
+            let lastTap = 0, lastLike = 0, moved = false;
+            const likeIt = () => {
+                if (Date.now() - lastLike < 500) return; lastLike = Date.now();
+                const i = getInfo(); if (!i) return;
+                const mine = !!(i.msg.reactions && i.msg.reactions['❤️'] && i.msg.reactions['❤️'][myId]);
+                if (!mine) toggleReaction(i.path, i.key, '❤️', false);
+                if (getComputedStyle(li).position === 'static') li.style.position = 'relative';
+                const h = document.createElement('span'); h.className = 'msg-heart-pop'; h.textContent = '❤️'; li.appendChild(h);
+                setTimeout(() => h.remove(), 800);
+                if (navigator.vibrate) { try { navigator.vibrate(10); } catch (_) {} }
+            };
+            li.addEventListener('touchstart', () => { moved = false; }, { passive: true });
+            li.addEventListener('touchmove', () => { moved = true; }, { passive: true });
+            li.addEventListener('touchend', (e) => {
+                if (moved || fired || e.target.closest('.msg-react')) { lastTap = 0; return; }
+                const now = Date.now();
+                if (now - lastTap < 320) { lastTap = 0; likeIt(); } else lastTap = now;
+            }, { passive: true });
+            li.addEventListener('dblclick', (e) => { if (e.target.closest('.msg-react')) return; e.preventDefault(); likeIt(); });
             li.addEventListener('click', (e) => { if (fired) { e.stopImmediatePropagation(); e.preventDefault(); fired = false; } }, true);
         }
         function loadChat(path) {
@@ -5067,7 +5113,7 @@
                 function pointerDist() { const [a, b] = [...pointers.values()]; return Math.hypot(a.x - b.x, a.y - b.y); }
 
                 // Дві мініатюри кола — з власними копіями відео (той самий файл), щоб бачити рух.
-                const previews = ['vf-cp-sm', 'vf-cp-lg'].map(id => {
+                const previews = ['vf-cp-sm', 'vf-cp-lg', 'vf-cp-live'].map(id => {
                     const el = document.getElementById(id); el.innerHTML = '';
                     const st = document.createElement('div'); st.className = 'circle-stage';
                     const v = document.createElement('video');
@@ -5077,10 +5123,28 @@
                     return { st, v };
                 });
 
+                // ---- Apple-стиль: фільтри + налаштування (зберігаються як CSS-фільтр разом зі сторі) ----
+                let fxFilter = 'none', fxB = 0, fxC = 0, fxS = 0, fxW = 0;
+                function fxString() {
+                    const parts = [PE_FILTERS[fxFilter]];
+                    if (fxB) parts.push(`brightness(${1 + fxB / 100})`);
+                    if (fxC) parts.push(`contrast(${1 + fxC / 100})`);
+                    if (fxS) parts.push(`saturate(${1 + fxS / 100})`);
+                    if (fxW > 0) parts.push(`sepia(${(fxW / 40) * 0.35}) saturate(${1 + (fxW / 40) * 0.15})`);
+                    else if (fxW < 0) parts.push(`hue-rotate(${(fxW / 40) * 18}deg)`);
+                    return parts.filter(Boolean).join(' ');
+                }
+                function refreshPreviews() {
+                    clampCircle();
+                    const c = { x: circle.x, y: circle.y, z: 1 / circle.s }, f = fxString();
+                    previews.forEach(p => { styleCircleStage(p.st, c); applyStoryVideoFrame(p.v, { cx, cy, zoom, fx: f }); });
+                }
                 function apply() {
                     videoEl.style.objectPosition = `${cx * 100}% ${cy * 100}%`;
                     videoEl.style.transformOrigin = `${cx * 100}% ${cy * 100}%`;
                     videoEl.style.transform = `scale(${zoom})`;
+                    videoEl.style.filter = fxString();
+                    refreshPreviews();
                 }
                 function clampCircle() {
                     circle.s = Math.min(1, Math.max(0.34, circle.s));
@@ -5097,7 +5161,7 @@
                     circlePick.style.top = (circle.y * frameH - d / 2) + 'px';
                     sizeRange.value = Math.round(circle.s * 100); updateRangeFill(sizeRange);
                     const c = { x: circle.x, y: circle.y, z: 1 / circle.s };
-                    previews.forEach(p => { styleCircleStage(p.st, c); applyStoryVideoFrame(p.v, { cx, cy, zoom }); });
+                    refreshPreviews();
                 }
                 function setMode(m) {
                     circleMode = (m === 'circle');
@@ -5107,6 +5171,8 @@
                     zoomRow.style.display = circleMode ? 'none' : '';
                     circlePanel.style.display = circleMode ? 'block' : 'none';
                     circlePick.style.display = circleMode ? 'block' : 'none';
+                    document.getElementById('vf-frame-panel').style.display = circleMode ? 'none' : '';
+                    document.getElementById('vf-preview-row').style.display = circleMode ? 'none' : '';
                     hint.textContent = circleMode ? HINT_CIRCLE : HINT_FRAME;
                     if (circleMode) {
                         const r = frame.getBoundingClientRect(); frameW = r.width; frameH = r.height;
@@ -5170,6 +5236,41 @@
                 sizeRange.addEventListener('input', onCircleSize);
                 function onCircleReset() { circle = { x: 0.5, y: 0.5, s: 1 }; circleTouched = false; layoutCircle(); }
                 circleResetBtn.addEventListener('click', onCircleReset);
+                // Смужка фільтрів (мініатюри — з першого кадру відео) і повзунки
+                const fxBox = document.getElementById('vf-filters');
+                fxBox.innerHTML = '';
+                Object.keys(PE_FILTERS).forEach((key, i) => {
+                    const b = document.createElement('button');
+                    b.className = 'pe-filter-btn' + (i === 0 ? ' active' : ''); b.setAttribute('data-filter', key);
+                    b.innerHTML = `<span class="pe-filter-thumb"></span><span>${PE_FILTER_LABELS[key] || key}</span>`;
+                    b.firstChild.style.filter = PE_FILTERS[key]; fxBox.appendChild(b);
+                });
+                videoEl.addEventListener('loadeddata', function snap() {
+                    try {
+                        const cv = document.createElement('canvas'); cv.width = cv.height = 104;
+                        const w = videoEl.videoWidth, h = videoEl.videoHeight, m = Math.min(w, h);
+                        cv.getContext('2d').drawImage(videoEl, (w - m) / 2, (h - m) / 2, m, m, 0, 0, 104, 104);
+                        const u = cv.toDataURL('image/jpeg', 0.7);
+                        fxBox.querySelectorAll('.pe-filter-thumb').forEach(t => { t.style.backgroundImage = `url(${u})`; });
+                    } catch (_) {}
+                }, { once: true });
+                fxBox.onclick = (e) => {
+                    const b = e.target.closest('.pe-filter-btn'); if (!b) return;
+                    fxFilter = b.getAttribute('data-filter');
+                    fxBox.querySelectorAll('.pe-filter-btn').forEach(x => x.classList.toggle('active', x === b));
+                    apply();
+                };
+                const fxRanges = [['vf-brightness', v => fxB = v], ['vf-contrast', v => fxC = v], ['vf-saturation', v => fxS = v], ['vf-warmth', v => fxW = v]];
+                fxRanges.forEach(([id, set]) => {
+                    const r = document.getElementById(id); r.value = 0; r.nextElementSibling.textContent = '0'; updateRangeFill(r);
+                    r.oninput = () => { set(Number(r.value)); r.nextElementSibling.textContent = r.value; updateRangeFill(r); apply(); };
+                });
+                document.getElementById('vf-reset-btn').onclick = () => {
+                    fxFilter = 'none'; fxB = fxC = fxS = fxW = 0;
+                    fxBox.querySelectorAll('.pe-filter-btn').forEach((x, i) => x.classList.toggle('active', i === 0));
+                    fxRanges.forEach(([id]) => { const r = document.getElementById(id); r.value = 0; r.nextElementSibling.textContent = '0'; updateRangeFill(r); });
+                    apply();
+                };
                 apply();
                 setMode('frame');
 
@@ -5197,7 +5298,8 @@
 
                 document.getElementById('vf-cancel-btn').onclick = () => { vfLastCircle = null; cleanup(); resolve(false); };
                 document.getElementById('vf-done-btn').onclick = () => {
-                    const frameData = (zoom === 1 && cx === 0.5 && cy === 0.5) ? null : { cx, cy, zoom };
+                    const fxOut = fxString();
+                    const frameData = (zoom === 1 && cx === 0.5 && cy === 0.5 && !fxOut) ? null : Object.assign({ cx, cy, zoom }, fxOut ? { fx: fxOut } : {});
                     clampCircle();
                     vfLastCircle = circleTouched ? { x: +circle.x.toFixed(3), y: +circle.y.toFixed(3), z: +(1 / circle.s).toFixed(2) } : null;
                     cleanup();
@@ -5213,6 +5315,7 @@
             videoEl.style.objectPosition = `${frame.cx * 100}% ${frame.cy * 100}%`;
             videoEl.style.transformOrigin = `${frame.cx * 100}% ${frame.cy * 100}%`;
             videoEl.style.transform = `scale(${frame.zoom})`;
+            videoEl.style.filter = frame.fx || '';
         }
 
         // ---- Кадр кола для сторі ----
@@ -7211,8 +7314,8 @@
         // Відео створюється ліниво (src ставиться лише коли коло опиняється в зоні видимості),
         // лишається прозорим, доки не почне реально грати (тож жодної «застряглої» іконки play),
         // а коли коло виїжджає з екрана — ставиться на паузу. Одночасно грає не більше HOME_VIDEO_MAX_PLAYING.
-        const HOME_VIDEO_MAX_PLAYING = 3;   // як у TikTok: грають лише кола, найближчі до центру екрана (більше — не тягнуть декодери телефону)
-        const HOME_VIDEO_MAX_LOADED = 9;    // + кілька сусідніх «прогріті» наперед, щоб старт був миттєвим
+        const HOME_VIDEO_MAX_PLAYING = 4;   // як у TikTok: грають лише кола, найближчі до центру екрана (більше — не тягнуть декодери телефону)
+        const HOME_VIDEO_MAX_LOADED = 10;    // + кілька сусідніх «прогріті» наперед, щоб старт був миттєвим
         const homeVisibleVideos = new Set();
         const homeLoadedVideos = new Set();
         let homeVideoIO = null;
@@ -7220,7 +7323,7 @@
         function homeEnsureSrc(v) {
             if (v._srcSet) { homeLoadedVideos.delete(v); homeLoadedVideos.add(v); return; }
             v._srcSet = true;
-            setVideoSrc(v, v._homeUrl, false, 360);   // коло ~100px — 360p за очі
+            setVideoSrc(v, v._homeUrl, true, 720);   // якісне відео в колах: до 720p (Авто/Висока), 360p лише на слабкому зв'язку чи в «Економії»
             homeLoadedVideos.add(v);
             // Не тримаємо в пам'яті забагато декодерів: вивантажуємо найстаріші, яких зараз не видно.
             for (const old of Array.from(homeLoadedVideos)) {
@@ -7243,7 +7346,7 @@
             const root = document.getElementById('home-grid');
             const rr = root ? root.getBoundingClientRect() : { top: 0, bottom: window.innerHeight, left: 0, right: window.innerWidth };
             const cy = (rr.top + rr.bottom) / 2, cx = (rr.left + rr.right) / 2;
-            const dist = (v) => { const r = v.parentNode.getBoundingClientRect(); return Math.hypot((r.left + r.width / 2) - cx, ((r.top + r.height / 2) - cy) * 1.0); };
+            const dist = (v) => { const r = (v._wrap || v.parentNode).getBoundingClientRect(); return Math.hypot((r.left + r.width / 2) - cx, ((r.top + r.height / 2) - cy) * 1.0); };
             const list = Array.from(homeVisibleVideos).filter(v => v.isConnected && v.parentNode).sort((a, b) => dist(a) - dist(b));
             list.forEach((v, i) => {
                 if (i < HOME_VIDEO_MAX_PLAYING) { homeEnsureSrc(v); if (v.paused) homePlay(v); }
@@ -7280,7 +7383,10 @@
             v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
             v.addEventListener('playing', () => v.classList.add('is-visible'));
             v.addEventListener('canplay', () => { if (homeVisibleVideos.has(v) && v.paused) homePlay(v); });
-            wrap.appendChild(v);
+            v._wrap = wrap;
+            const hst = storyForUrl(url);
+            if (hst && hst.circle) { makeCircleStage(wrap, hst.circle).appendChild(v); } else wrap.appendChild(v);
+            if (hst && hst.frame) applyStoryVideoFrame(v, hst.frame);
             wrap._homeVideo = v;
             if (!homeVideoIO) {
                 homeVideoIO = new IntersectionObserver((entries) => {
