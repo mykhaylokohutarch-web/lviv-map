@@ -1,57 +1,6 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-<script>
-/* ДІАГНОСТИКА відео сторі — лише в цій копії. Показує стан відео зверху екрана. */
-(function(){
-  var logs=[]; function L(m){ logs.push(new Date().toTimeString().slice(3,8)+' '+m); if(logs.length>8) logs.shift(); }
-  var op=HTMLMediaElement.prototype.play;
-  HTMLMediaElement.prototype.play=function(){ var v=this, p=op.apply(this,arguments);
-    if(p&&p.catch) p.catch(function(e){ if(v.closest&&v.closest('#story-viewer')) L('play() ✗ '+e.name); });
-    return p; };
-  ['error','stalled','waiting','playing','abort','emptied','suspend'].forEach(function(ev){
-    document.addEventListener(ev,function(e){ var v=e.target; if(!(v&&v.tagName==='VIDEO'&&v.closest&&v.closest('#story-viewer'))) return;
-      L(ev+(ev==='error'&&v.error?' код'+v.error.code:'')+' '+((v.currentSrc||'').split('/').pop())); },true); });
-  window.addEventListener('error',function(e){ L('JS: '+e.message); });
-  window.addEventListener('unhandledrejection',function(e){ L('REJ: '+(e.reason&&e.reason.message||e.reason)); });
-  function start(){
-    var box=document.createElement('div');
-    box.style.cssText='position:fixed;left:4px;top:118px;right:4px;z-index:2147483647;background:rgba(0,0,0,.72);color:#7CFC00;font:10px/1.35 monospace;padding:4px 6px;border-radius:6px;pointer-events:none;white-space:pre-wrap;max-height:55vh;overflow:hidden;word-break:break-all';
-    document.documentElement.appendChild(box);
-
-    var probeTxt='чекаю…';
-    function probeQ(q,cb){ var v=document.createElement('video'); v.muted=true; v.preload='auto'; v.setAttribute('playsinline',''); v.playsInline=true;
-      v.style.cssText='position:fixed;left:0;top:0;width:2px;height:2px;opacity:.01;pointer-events:none';
-      var t0=performance.now(), meta='-', fin=false;
-      function end(txt){ if(fin) return; fin=true; try{v.removeAttribute('src'); v.load(); v.remove();}catch(e){} cb(q+'p: '+txt); }
-      v.addEventListener('loadedmetadata',function(){ meta=((performance.now()-t0)/1000).toFixed(1)+'с'; });
-      v.addEventListener('canplay',function(){ end('метадані '+meta+', готове '+((performance.now()-t0)/1000).toFixed(1)+'с'); });
-      v.addEventListener('error',function(){ end('ПОМИЛКА код'+(v.error&&v.error.code)); });
-      setTimeout(function(){ end('НЕ ГОТОВЕ за 25с (метадані '+meta+')'); },25000);
-      document.documentElement.appendChild(v);
-      v.src='https://assets.mixkit.co/videos/1234/1234-'+q+'.mp4?p='+Date.now();
-      try{ var pr=v.play(); if(pr&&pr.catch) pr.catch(function(){}); }catch(e){} }
-    setTimeout(function(){ var res=[]; function step(i){ var qs=[360,720,1080]; if(i>=qs.length) return;
-      probeQ(qs[i],function(r){ res.push(r); probeTxt=res.join(' | ')+(i<qs.length-1?' …':''); step(i+1); }); }
-      probeTxt='міряю…'; step(0); },2500);
-    setInterval(function(){
-      var sv=document.getElementById('story-viewer'), open=sv&&sv.style.display==='flex';
-      var c=navigator.connection||{}; var tg=(window.Telegram&&Telegram.WebApp)||{};
-      var t='якість у налаштуваннях: '+(localStorage.getItem('settings_video_quality')||'Авто')+'\nтест Mixkit: '+probeTxt+'\nмережа:'+(c.effectiveType||'?')+(c.saveData?' saveData':'')+' tg:'+(tg.platform||'-')+' v'+(tg.version||'-')+'\n';
-      if(!open){ t+='сторі закрито'; }
-      else {
-        var vs=sv.querySelectorAll('video');
-        if(!vs.length) t+='у сторі НЕМАЄ <video> (фото або помилка)\n';
-        vs.forEach(function(v){ var e=v.error;
-          t+=(v.paused?'ПАУЗА':'грає')+' ready='+v.readyState+' net='+v.networkState+' t='+v.currentTime.toFixed(1)+' '+v.videoWidth+'x'+v.videoHeight+(e?' ПОМИЛКА код'+e.code:'')+'\n'+(v.currentSrc||v.src||'нема src').replace('https://assets.mixkit.co/videos/','')+'\n'; });
-      }
-      box.textContent=t+logs.join('\n');
-    },400);
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start); else start();
-})();
-</script>
-
     <link rel="preconnect" href="https://assets.mixkit.co" crossorigin>
     <link rel="dns-prefetch" href="https://assets.mixkit.co">
     <style>
@@ -3811,6 +3760,13 @@
         // Відео Mixkit лежать у трьох якостях: 360 / 720 / 1080. Обираємо за налаштуванням
         // «Якість відео» (Авто — 720, а на повільному зв'язку чи в режимі економії трафіку — 360;
         // Висока — 1080; Економія — 360). Якщо потрібної якості немає — спускаємось нижче.
+        // Демо-відео лежать поруч із застосунком (папка videos/) — вантажаться з того ж сервера, що й сторінка, без повільного Mixkit.
+        // Кожен id відео Mixkit однозначно відповідає одному з DEMO_CLIPS локальних кліпів. Якщо кліпу немає (папку не залили) — працює як раніше, через Mixkit.
+        const DEMO_CLIPS = 10;
+        function demoClipFor(url) {
+            const m = /^https:\/\/assets\.mixkit\.co\/videos\/(\d+)\/\d+-(?:360|720|1080)\.mp4$/.exec(url || '');
+            return m ? 'videos/v' + (+m[1] % DEMO_CLIPS) + '.mp4' : null;
+        }
         function mixkitMatch(url) { return /^(https:\/\/assets\.mixkit\.co\/videos\/\d+\/\d+)-(?:360|720|1080)\.mp4$/.exec(url || ''); }
         function mixkitQualityChain(url, hq, cap) {
             const m = mixkitMatch(url); if (!m) return null;
@@ -3828,7 +3784,7 @@
         }
         function videoPosterUrl(url) {
             const mk = mixkitMatch(url);
-            if (mk) return mk[1] + '-thumb-360-0.jpg';
+            if (mk) { const lc = demoClipFor(url); return lc ? lc.replace(/\.mp4$/, '.jpg') : mk[1] + '-thumb-360-0.jpg'; }
             const m = (url || '').match(/^(https:\/\/res\.cloudinary\.com\/[^/]+\/video\/upload\/)(v\d+\/.*)$/i);
             if (!m) return '';
             return m[1] + 'so_0,w_600,c_limit,f_jpg,q_auto/' + m[2].replace(/\.[a-z0-9]+(\?.*)?$/i, '.jpg');
@@ -3840,6 +3796,16 @@
             // Прозорий poster: Android/Telegram WebView інакше малює власну сіру заставку з іконкою play.
             v.poster = BLANK_POSTER;
             if (poster) { v.style.backgroundImage = `url('${poster}')`; v.style.backgroundSize = 'cover'; v.style.backgroundPosition = 'center'; }
+            const localClip = v._noLocal ? null : demoClipFor(url);
+            if (localClip) {
+                v.src = localClip;
+                v.addEventListener('error', () => {
+                    if (v._noLocal) return; v._noLocal = true; v._fallbackPending = true;
+                    setVideoSrc(v, url, hq, cap); try { v.load(); } catch (_) {}
+                    const pr = v.play(); if (pr && pr.catch) pr.catch(() => {});
+                }, { once: true });
+                return;
+            }
             const chain = mixkitQualityChain(url, hq, cap);
             if (chain) {
                 let step = 0;
@@ -5562,6 +5528,7 @@
         let svPrefetchStarted = false;
         function prefetchStoryVideos() {
             if (svPrefetchStarted) return; svPrefetchStarted = true;
+            return;   // вимкнено: 10 повних відео у фоні забирали канал у відео, яке користувач дивиться зараз
             try { const c = navigator.connection; if (c && c.saveData) return; } catch (_) {}
             const urls = STORY_VIDEO_POOL.slice(0, 10).map(id => { const u = `https://assets.mixkit.co/videos/${id}/${id}-720.mp4`; const ch = mixkitQualityChain(u); return ch ? ch[0] : u; });
             let i = 0;
@@ -5638,7 +5605,7 @@
             v.addEventListener('playing', () => { if (v._warming) { v.pause(); try { v.currentTime = 0; } catch (_) {} } });
             svWarmHost.appendChild(v);
             svWarm.set(url, v);
-            while (svWarm.size > 2) { const k = svWarm.keys().next().value; const old = svWarm.get(k); svWarm.delete(k); if (old && old.parentNode) old.remove(); }
+            while (svWarm.size > 3) { const k = svWarm.keys().next().value; const old = svWarm.get(k); svWarm.delete(k); if (old && old.parentNode) old.remove(); }
             const pr = v.play(); if (pr && pr.catch) pr.catch(() => {});
         }
         const svGhostVideos = new Map();
@@ -5669,12 +5636,12 @@
             const run = () => {
                 if (done) return; done = true;
                 try {
-                    [1, -1].forEach(d => { const nb = peekStoryPerson(d); if (nb) preloadStoryItem(nb.list[0]); });
+                    [1, 2, -1].forEach(d => { const nb = peekStoryPerson(d); if (nb) preloadStoryItem(nb.list[0]); });
                     preloadStoryItem(storyViewerList[storyViewerIdx + 1]);
                 } catch (_) {}
             };
             const cur = document.querySelector('#story-viewer-media video');
-            if (cur && cur.readyState < 3) { cur.addEventListener('playing', () => setTimeout(run, 400), { once: true }); setTimeout(run, 5000); }
+            if (cur && cur.readyState < 3) { cur.addEventListener('playing', () => setTimeout(run, 400), { once: true }); setTimeout(run, 3000); }
             else run();
         }
         function openStoryViewer(list, startIdx, name, opts, entry, sourceType) {
@@ -5807,13 +5774,6 @@
                         if (!v.paused && v.currentTime > 0.05 && v.readyState >= 2) return;   // грає
                         // Відео ще вантажиться (повільна мережа) — НЕ перезапускаємо: load() обнуляє вже скачане і відео ніколи не стартує.
                         if (v.networkState === 2 && !v.error && tries < 8) {
-                            // Дані взагалі не йдуть (ready=0) довше ~3с — переходимо на нижчу якість (1080→720→360), вона стартує швидше.
-                            if (v.readyState === 0 && tries >= 1) {
-                                const cs = v.currentSrc || v.src || '';
-                                const mq = /^(.*-)(1080|720|360)(\.mp4)$/.exec(cs);
-                                const lowerQ = mq ? (mq[2] === '1080' ? '720' : (mq[2] === '720' ? '360' : null)) : null;
-                                if (lowerQ) { v.src = mq[1] + lowerQ + mq[3]; try { v.load(); } catch (_) {} }
-                            }
                             const pr = v.play(); if (pr && pr.catch) pr.catch(() => {}); svWatchdog(tries + 1); return;
                         }
                         if (tries >= 3) {
@@ -7290,7 +7250,7 @@
                 else {
                     if (!v.paused) v.pause();
                     // наступні за близькістю — лише підвантажуємо (без відтворення), щоб при скролі стартували одразу
-                    if (i < HOME_VIDEO_MAX_PLAYING + 3) homeEnsureSrc(v);
+                    
                 }
             });
         }
@@ -7395,7 +7355,7 @@
             window.homeSearchNoResults = false;
             homeViewerEntries = entries.filter(e => e.photos && e.photos.length);
             setTimeout(prefetchStoryVideos, 1200);
-            setTimeout(() => { try { homeViewerEntries.slice(0, 6).forEach(e => { const l = buildHomeStoryList(e); if (l[0] && l[0].type === 'video') preloadStoryItem(l[0]); }); } catch (_) {} }, 300);
+            setTimeout(() => { try { homeViewerEntries.slice(0, 2).forEach(e => { const l = buildHomeStoryList(e); if (l[0] && l[0].type === 'video') preloadStoryItem(l[0]); }); } catch (_) {} }, 300);
             entries.forEach(e => {
                 const item = document.createElement('div'); item.className = 'home-circle-item';
                 const avatar = document.createElement('div'); avatar.className = 'home-circle-avatar' + (e.isMe ? ' is-me' : '');
