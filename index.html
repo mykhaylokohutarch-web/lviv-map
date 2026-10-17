@@ -3761,7 +3761,7 @@
         // «Якість відео» (Авто — 720, а на повільному зв'язку чи в режимі економії трафіку — 360;
         // Висока — 1080; Економія — 360). Якщо потрібної якості немає — спускаємось нижче.
         function mixkitMatch(url) { return /^(https:\/\/assets\.mixkit\.co\/videos\/\d+\/\d+)-(?:360|720|1080)\.mp4$/.exec(url || ''); }
-        function mixkitQualityChain(url, hq) {
+        function mixkitQualityChain(url) {
             const m = mixkitMatch(url); if (!m) return null;
             const pref = localStorage.getItem('settings_video_quality') || 'Авто';
             let start;
@@ -3769,7 +3769,7 @@
             else if (pref === 'Економія') start = 360;
             else {
                 const c = navigator.connection;
-                start = (c && (c.saveData || /^(slow-2g|2g)$/.test(c.effectiveType || ''))) ? 360 : ((hq && !(c && c.effectiveType === '3g')) ? 1080 : 720); // Авто: найкраща якість, якщо мережа дозволяє
+                start = (c && (c.saveData || /^(slow-2g|2g|3g)$/.test(c.effectiveType || ''))) ? 360 : 720;
             }
             const all = [1080, 720, 360];
             return all.slice(all.indexOf(start)).map(q => `${m[1]}-${q}.mp4`);
@@ -3782,29 +3782,18 @@
             return m[1] + 'so_0,w_600,c_limit,f_jpg,q_auto/' + m[2].replace(/\.[a-z0-9]+(\?.*)?$/i, '.jpg');
         }
         const BLANK_POSTER = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-        function setVideoSrc(v, url, hq) {
+        function setVideoSrc(v, url) {
             v.preload = 'auto';
             const poster = videoPosterUrl(url);
             // Прозорий poster: Android/Telegram WebView інакше малює власну сіру заставку з іконкою play.
             v.poster = BLANK_POSTER;
             if (poster) { v.style.backgroundImage = `url('${poster}')`; v.style.backgroundSize = 'cover'; v.style.backgroundPosition = 'center'; }
-            const chain = mixkitQualityChain(url, hq);
+            const chain = mixkitQualityChain(url);
             if (chain) {
                 let step = 0;
                 v.src = chain[0];
                 v.addEventListener('error', () => {
-                    if (step >= chain.length - 1) {
-                        // Кліп недоступний у жодній якості → підміняємо перевіреним запасним відео, щоб сторі не лишалась порожньою.
-                        if (!v._safeSwapped) {
-                            v._safeSwapped = true; v._fallbackPending = true;
-                            const SAFE = [1300, 1290, 1291, 1292, 1861, 49115, 49117, 52273, 52280, 1234];
-                            const idm = /\/videos\/(\d+)\//.exec(url || ''); const n = idm ? +idm[1] : 0;
-                            const sid = SAFE[n % SAFE.length];
-                            v.src = `https://assets.mixkit.co/videos/${sid}/${sid}-720.mp4`; v.load();
-                            const pr = v.play(); if (pr && pr.catch) pr.catch(() => {});
-                        }
-                        return;   // далі, якщо й запасне не вийшло, спрацює екран помилки
-                    }
+                    if (step >= chain.length - 1) return;   // нижче нікуди — далі спрацює екран помилки
                     step++; v._fallbackPending = true;
                     v.src = chain[step]; v.load();
                     const pr = v.play(); if (pr && pr.catch) pr.catch(() => {});
@@ -3838,7 +3827,7 @@
                 const slide = document.createElement('div'); slide.className = 'hero-slide';
                 if (isHeroVideoUrl(src)) {
                     const video = document.createElement('video');
-                    setVideoSrc(video, src, true); video.autoplay = true; video.muted = true; video.loop = true; video.playsInline = true; video.setAttribute('webkit-playsinline', '');
+                    setVideoSrc(video, src); video.autoplay = true; video.muted = true; video.loop = true; video.playsInline = true; video.setAttribute('webkit-playsinline', '');
                     slide.appendChild(video);
                     slide.classList.add('loaded');
                     attemptCirclePlay(video); allCircleVideos.add(video);
@@ -5464,72 +5453,13 @@
         const STORY_PHOTO_MS = 5000;
 
         let storyViewerPeople = null;
-        // Кожен акаунт має СВОЄ відео, що відповідає його темі. Таблиця: id акаунта → id кліпу на mixkit.
-        // Щоб змінити/додати відео — просто допишіть рядок: 'id_акаунта': ID_кліпу (число з посилання mixkit.co/.../назва-12345/).
-        const STORY_VIDEO_BY_ID = {
-            demo_p1: 13084,   // Марта — манікюр: нанесення лаку клієнтці
-            demo_p2: 4855,    // Олег — фотограф: прогулянка містом
-            demo_p3: 11973,   // Яна — англійська: розмовний клуб на терасі
-            demo_p5: 810,     // Богдан — спешелті кава: латте-арт
-            demo_p6: 1780,    // Ірина — флористика: квіти в горщику
-            demo_p9: 41884,   // Роман — велотуризм: поїздка вулицями міста
-            demo_p13: 51585,  // Максим — відео/дрон: політ над місцевістю
-            demo_p16: 13088,  // Юлія — візаж/б'юті: салон краси
-            demo_p17: 52410,  // Іван — крафтове пиво: золоте пиво в келиху
-            demo_p18: 337,    // Софія — бачата/сальса: пара танцює
-            demo_pl1: 41859,  // Кава Хата — капучино
-            demo_pl8: 8711,   // Бар «Дегустаціум» — атмосфера пивного бару
-            demo_pl9: 4742,   // Квіткова крамниця «Пелюстка» — вітрина з букетами
-            demo_pl10: 830,   // Концертний клуб «Підвал» — діджейський пульт
-            demo_pl11: 1730,  // Коворкінг «Вулик» — розробник за ноутбуком
-            demo_pl12: 4385,  // Піцерія «Неаполітано» — ресторан зі столиками
-            demo_pl14: 43210, // Театр «Драбина» — сучасний танець/сцена
-            demo_pl15: 15835, // Йога-студія «Дихання» — спокійний масаж рук/спа
-            demo_pl16: 9267,  // Чайна «Шовковий Шлях» — чай у скляній чашці
-            demo_pl18: 372    // Бургерна — чоловік їсть бургер
-        };
-        // Для акаунтів без окремої теми — запасні кліпи (кожен акаунт отримує різний, без повторів).
-        const STORY_VIDEO_FALLBACK = [1300, 1290, 1291, 1292, 1861, 49115, 49117, 52273, 52280, 1234, 4348, 4331, 41871, 1590, 2002, 41875, 4062];
-        const STORY_VIDEO_POOL = Object.values(STORY_VIDEO_BY_ID).concat(STORY_VIDEO_FALLBACK);
-        function storyVideoFor(e) {
-            const key = String(e.id || '');
-            if (STORY_VIDEO_BY_ID[key]) return STORY_VIDEO_BY_ID[key];
-            // Демо-акаунти без теми: по черзі беремо запасні кліпи → ніхто не повторюється.
-            try {
-                const all = [].concat(typeof people !== 'undefined' ? people : [], typeof places !== 'undefined' ? places : []);
-                const free = all.filter(a => !STORY_VIDEO_BY_ID[a.id]);
-                const i = free.findIndex(a => a.id === key);
-                if (i >= 0) return STORY_VIDEO_FALLBACK[i % STORY_VIDEO_FALLBACK.length];
-            } catch (_) {}
-            // Інші (справжні) акаунти — стабільний вибір за хешем id
-            let h = 0; const k2 = key || String(e.name || '');
-            for (let q = 0; q < k2.length; q++) h = (h * 31 + k2.charCodeAt(q)) >>> 0;
-            return STORY_VIDEO_FALLBACK[h % STORY_VIDEO_FALLBACK.length];
-        }
-        // Усі відео пулу тихо вантажимо в кеш браузера (по одному, у простої) — далі відтворення стартує з кешу, без мережі.
-        let svPrefetchStarted = false;
-        function prefetchStoryVideos() {
-            if (svPrefetchStarted) return; svPrefetchStarted = true;
-            try { const c = navigator.connection; if (c && c.saveData) return; } catch (_) {}
-            const urls = STORY_VIDEO_POOL.slice(0, 10).map(id => { const u = `https://assets.mixkit.co/videos/${id}/${id}-720.mp4`; const ch = mixkitQualityChain(u); return ch ? ch[0] : u; });
-            let i = 0;
-            const next = () => {
-                if (i >= urls.length) return;
-                const u = urls[i++];
-                fetch(u, { mode: 'no-cors', cache: 'force-cache', priority: 'low' }).then(r => r.arrayBuffer()).catch(() => {}).then(() => {
-                    (window.requestIdleCallback || ((f) => setTimeout(f, 150)))(next);
-                });
-            };
-            (window.requestIdleCallback || ((f) => setTimeout(f, 800)))(next);
-        }
         function buildHomeStoryList(e) {
-            const base = (e.photos || []).map(url => ({ type: isHeroVideoUrl(url) ? 'video' : 'photo', url, ts: Date.now() }));
-            let list = base;
-            if (!e.isMe && e.id !== myId) {
-                const vid = storyVideoFor(e);
-                const url = `https://assets.mixkit.co/videos/${vid}/${vid}-720.mp4`;
-                // Власні відео з даних можуть повторюватись у сусідів — тому першим ставимо унікальне, інші відео прибираємо.
-                list = [{ type: 'video', url, ts: Date.now() }].concat(base.filter(x => x.type !== 'video'));
+            const list = (e.photos || []).map(url => ({ type: isHeroVideoUrl(url) ? 'video' : 'photo', url, ts: Date.now() }));
+            if (!e.isMe && e.id !== myId && !list.some(x => x.type === 'video')) {
+                const pool = [1300, 1290, 1291, 1292, 1861, 49115, 49117, 52273, 52280, 1234];
+                let h = 0; const key = String(e.id || e.name || ''); for (let q = 0; q < key.length; q++) h = (h * 31 + key.charCodeAt(q)) >>> 0;
+                const vid = pool[h % pool.length];
+                list.push({ type: 'video', url: `https://assets.mixkit.co/videos/${vid}/${vid}-720.mp4`, ts: Date.now() });
             }
             // Відео — першим: коли гортаєш між людьми, сторі одразу починається з відео, а не з фото.
             return list.filter(x => x.type === 'video').concat(list.filter(x => x.type !== 'video'));
@@ -5585,20 +5515,12 @@
             v.addEventListener('playing', () => { if (v._warming) { v.pause(); try { v.currentTime = 0; } catch (_) {} } });
             svWarmHost.appendChild(v);
             svWarm.set(url, v);
-            while (svWarm.size > 4) { const k = svWarm.keys().next().value; const old = svWarm.get(k); svWarm.delete(k); if (old && old.parentNode) old.remove(); }
+            while (svWarm.size > 10) { const k = svWarm.keys().next().value; const old = svWarm.get(k); svWarm.delete(k); if (old && old.parentNode) old.remove(); }
             const pr = v.play(); if (pr && pr.catch) pr.catch(() => {});
         }
-        const svGhostVideos = new Map();
         function takeWarmVideo(url) {
-            let v = svWarm.get(url);
-            if (v) svWarm.delete(url);
-            else {
-                v = svGhostVideos.get(url); if (!v) return null; svGhostVideos.delete(url);
-                // Відео переїжджає з «грані» у плеєр — лишаємо на грані постер, щоб не було чорного блимання.
-                const par = v.parentNode, pu = videoPosterUrl(url);
-                if (par && pu) { par.style.backgroundImage = `url('${pu}')`; par.style.backgroundSize = 'cover'; par.style.backgroundPosition = 'center'; }
-            }
-            v._warming = false; v.loop = false;
+            const v = svWarm.get(url); if (!v) return null;
+            svWarm.delete(url); v._warming = false;
             try { v.currentTime = 0; } catch (_) {}
             return v;
         }
@@ -5617,7 +5539,7 @@
                 const ppl = storyViewerPeople;
                 if (ppl && ppl.length > 1 && storyViewerEntry) {
                     const n = ppl.length; let i0 = ppl.findIndex(p => p.id === storyViewerEntry.id); if (i0 < 0) i0 = 0;
-                    [2, -2, 3, -3].forEach(d => { const c = ppl[(i0 + d + n * n) % n]; if (c && c.id !== storyViewerEntry.id) { const l = buildHomeStoryList(c); if (l[0]) preloadStoryItem(l[0]); } });
+                    [2, -2, 3].forEach(d => { const c = ppl[(i0 + d + n * n) % n]; if (c && c.id !== storyViewerEntry.id) { const l = buildHomeStoryList(c); if (l[0]) preloadStoryItem(l[0]); } });
                 }
                 preloadStoryItem(storyViewerList[storyViewerIdx + 2]);
             } catch (_) {}
@@ -5727,38 +5649,14 @@
                 // Якщо браузер сам поставив відео на паузу (показав іконку play) — одразу відновлюємо відтворення.
                 v.addEventListener('pause', () => { if (v.isConnected && !v.ended && !document.hidden) setTimeout(() => { if (v.isConnected && v.paused && !v.ended) { const pr = v.play(); if (pr && pr.catch) pr.catch(() => {}); } }, 120); });
                 v.addEventListener('loadeddata', () => { const pr = v.play(); if (pr && pr.catch) pr.catch(() => {}); }, { once: true });
-                const loopIt = storyViewerList.length === 1 || !storyViewerAutoAdvance;
-                v.loop = loopIt; if (loopIt) v.setAttribute('loop', ''); else v.removeAttribute('loop');
                 const startBar = () => {
                     const dur = Math.min(v.duration * 1000, 60000);
-                    requestAnimationFrame(() => {
-                        const b = bars[idx]; if (!b) return;
-                        b.style.transition = 'none'; b.style.width = '0%'; void b.offsetWidth;
-                        b.style.transition = `width ${dur}ms linear`; b.style.width = '100%';
-                    });
+                    requestAnimationFrame(() => { const b = bars[idx]; if (b) { b.style.transition = `width ${dur}ms linear`; b.style.width = '100%'; } });
                 };
                 v.onloadedmetadata = startBar;
                 if (v.readyState >= 1) startBar();
-                if (loopIt) { let lastT = 0; v.addEventListener('timeupdate', () => { if (v.currentTime + 0.4 < lastT) startBar(); lastT = v.currentTime; }); }
                 { const pr0 = v.play(); if (pr0 && pr0.catch) pr0.catch(() => {}); }
-                // Сторожок: якщо за кілька секунд відео так і не пішло (видно лише картинку) — перезапускаємо, а потім підміняємо запасним кліпом.
-                (function svWatchdog(tries) {
-                    setTimeout(() => {
-                        if (!v.isConnected || document.hidden) return;
-                        if (!v.paused && v.currentTime > 0.05 && v.readyState >= 2) return;   // грає
-                        if (tries >= 3) {
-                            if (v._safeSwapped) return;
-                            v._safeSwapped = true; v._fallbackPending = true;
-                            const SAFE = [1300, 1290, 1291, 1292, 1861, 49115, 49117, 52273, 52280, 1234];
-                            const idm = /\/videos\/(\d+)\//.exec(s.url || ''); const sid = SAFE[(idm ? +idm[1] : 0) % SAFE.length];
-                            v.src = `https://assets.mixkit.co/videos/${sid}/${sid}-720.mp4`;
-                        }
-                        try { v.muted = true; v.defaultMuted = true; if (v.readyState < 2 || tries >= 1) v.load(); } catch (_) {}
-                        const pr = v.play(); if (pr && pr.catch) pr.catch(() => {});
-                        if (tries < 4) svWatchdog(tries + 1);
-                    }, tries === 0 ? 1500 : 2000);
-                })(0);
-                v.onended = loopIt ? () => { try { v.currentTime = 0; const pr = v.play(); if (pr && pr.catch) pr.catch(() => {}); } catch (_) {} } : () => storyAdvance(1);
+                v.onended = () => storyAdvance(1);
                 // Стара посилання на відео (завантажене ще до переходу на поточне сховище медіа)
                 // могло "протухнути" — замість мовчазного чорного екрана показуємо зрозуміле
                 // повідомлення й за пару секунд самі гортаємо далі, щоб не залишати людину в глухому куті.
@@ -5949,7 +5847,7 @@
             ghost.style.cssText = 'position:fixed; inset:0; background:#000; z-index:5001; display:none; overflow:hidden; pointer-events:none; will-change:transform;';
             document.body.appendChild(ghost);
             let ghostDir = 0;
-            const hideGhost = () => { ghost.querySelectorAll('video').forEach(v => { const u = v._ghostUrl; if (u && svGhostVideos.get(u) === v) { svGhostVideos.delete(u); v._warming = true; v.loop = false; try { v.pause(); v.currentTime = 0; } catch (_) {} if (svWarmHost && !svWarm.has(u)) { svWarmHost.appendChild(v); svWarm.set(u, v); } } }); ghost.style.display = 'none'; ghost.innerHTML = ''; ghost.style.transition = ''; ghost.style.transform = ''; ghostDir = 0; };
+            const hideGhost = () => { ghost.style.display = 'none'; ghost.innerHTML = ''; ghost.style.transition = ''; ghost.style.transform = ''; ghostDir = 0; };
             const ensureGhost = (dir) => {
                 if (ghostDir === dir) return;
                 hideGhost(); ghostDir = dir;
@@ -5958,15 +5856,7 @@
                 const m = document.createElement('div');
                 m.className = 'story-viewer-media ' + (isFullscreenMediaOn() ? 'fill' : 'fit');
                 if (first.type === 'photo') { const im = document.createElement('img'); im.src = first.url; m.appendChild(im); }
-                else {
-                    let v = svWarm.get(first.url);
-                    if (v) { svWarm.delete(first.url); v._warming = false; }
-                    else { v = document.createElement('video'); v.muted = true; v.defaultMuted = true; v.autoplay = true; v.playsInline = true; v.preload = 'auto'; v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); setVideoSrc(v, first.url); }
-                    v._ghostUrl = first.url; v.loop = true; svGhostVideos.set(first.url, v);
-                    applyStoryVideoFrame(v, first.frame); m.appendChild(v); attemptCirclePlay(v); allCircleVideos.add(v);
-                    try { v.currentTime = 0; } catch (_) {}
-                    const pg = v.play(); if (pg && pg.catch) pg.catch(() => {});
-                }
+                else { const v = document.createElement('video'); setVideoSrc(v, first.url); v.muted = true; v.loop = true; v.autoplay = true; v.playsInline = true; v.preload = 'auto'; v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); applyStoryVideoFrame(v, first.frame); m.appendChild(v); attemptCirclePlay(v); allCircleVideos.add(v); }
                 ghost.appendChild(m);
                 // Текст, іконки справа й аватарка сусідньої людини — одразу на «грані», разом зі сторі
                 const c = nb.cand;
@@ -7151,10 +7041,6 @@
                 tryPlay();
             }, 500);
         }
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) return;
-            allCircleVideos.forEach(v => { if (!v.isConnected) { allCircleVideos.delete(v); return; } if (v.paused && !v.ended) attemptCirclePlay(v); });
-        });
         ['touchstart', 'click', 'pointerdown'].forEach(evt => {
             document.addEventListener(evt, () => {
                 // Заразом прибираємо з набору відео, які вже відкріплені від DOM (стара сторі/профіль,
@@ -7164,77 +7050,6 @@
                     if (v.paused) attemptCirclePlay(v);
                 });
             }, { passive: true });
-        });
-
-        // ---- Автоплей відео-сторі в колах Головної під час гортання стрічки ----
-        // Відео створюється ліниво (src ставиться лише коли коло опиняється в зоні видимості),
-        // лишається прозорим, доки не почне реально грати (тож жодної «застряглої» іконки play),
-        // а коли коло виїжджає з екрана — ставиться на паузу. Одночасно грає не більше HOME_VIDEO_MAX_PLAYING.
-        const HOME_VIDEO_MAX_PLAYING = 8;
-        const HOME_VIDEO_MAX_LOADED = 14;
-        const homeVisibleVideos = new Set();
-        const homeLoadedVideos = new Set();
-        let homeVideoIO = null;
-        function homePlay(v) { try { const pr = v.play(); if (pr && pr.catch) pr.catch(() => {}); } catch (_) {} }
-        function homeEnsureSrc(v) {
-            if (v._srcSet) { homeLoadedVideos.delete(v); homeLoadedVideos.add(v); return; }
-            v._srcSet = true;
-            setVideoSrc(v, v._homeUrl);
-            homeLoadedVideos.add(v);
-            // Не тримаємо в пам'яті забагато декодерів: вивантажуємо найстаріші, яких зараз не видно.
-            for (const old of Array.from(homeLoadedVideos)) {
-                if (homeLoadedVideos.size <= HOME_VIDEO_MAX_LOADED) break;
-                if (old === v || homeVisibleVideos.has(old)) continue;
-                homeLoadedVideos.delete(old);
-                try { old.pause(); old.removeAttribute('src'); old.load(); } catch (_) {}
-                old._srcSet = false; old.classList.remove('is-visible');
-            }
-        }
-        function updateHomeCircleVideos() {
-            const list = Array.from(homeVisibleVideos).filter(v => v.isConnected).sort((a, b) => {
-                const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
-                return (ra.top - rb.top) || (ra.left - rb.left);
-            });
-            list.forEach((v, i) => {
-                if (i < HOME_VIDEO_MAX_PLAYING) { homeEnsureSrc(v); if (v.paused) homePlay(v); }
-                else if (!v.paused) v.pause();
-            });
-        }
-        function resetHomeCircleVideos() {
-            if (homeVideoIO) { homeVideoIO.disconnect(); homeVideoIO = null; }
-            homeVisibleVideos.forEach(v => { try { v.pause(); } catch (_) {} });
-            homeVisibleVideos.clear();
-            homeLoadedVideos.clear();
-        }
-        function attachHomeCircleVideo(wrap, url) {
-            if (!url || !('IntersectionObserver' in window)) return;
-            const v = document.createElement('video');
-            v.className = 'home-circle-video-layer';
-            v._homeUrl = url; v._srcSet = false;
-            v.muted = true; v.defaultMuted = true; v.loop = true; v.playsInline = true; v.controls = false;
-            v.disablePictureInPicture = true;
-            v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
-            v.addEventListener('playing', () => v.classList.add('is-visible'));
-            v.addEventListener('canplay', () => { if (homeVisibleVideos.has(v) && v.paused) homePlay(v); });
-            wrap.appendChild(v);
-            wrap._homeVideo = v;
-            if (!homeVideoIO) {
-                homeVideoIO = new IntersectionObserver((entries) => {
-                    entries.forEach(en => {
-                        const vid = en.target._homeVideo; if (!vid) return;
-                        if (en.isIntersecting && en.intersectionRatio >= 0.5) homeVisibleVideos.add(vid);
-                        else { homeVisibleVideos.delete(vid); try { vid.pause(); } catch (_) {} }
-                    });
-                    updateHomeCircleVideos();
-                }, { root: document.getElementById('home-grid'), threshold: [0, 0.5, 1] });
-            }
-            homeVideoIO.observe(wrap);
-        }
-        // Якщо WebView блокував автоплей до першої взаємодії — пробуємо знову на першому дотику/поверненні на вкладку.
-        ['touchstart', 'pointerdown', 'click'].forEach(evt => document.addEventListener(evt, updateHomeCircleVideos, { passive: true }));
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) homeVisibleVideos.forEach(v => { try { v.pause(); } catch (_) {} });
-            else updateHomeCircleVideos();
         });
 
         // Показує фото кола по черзі — справжній кросфейд (нове фото плавно проявляється поверх
@@ -7255,7 +7070,6 @@
         function renderHomeGrid(filterText, filterMode) {
             const box = document.getElementById('home-grid-inner');
             if (!box) return;
-            resetHomeCircleVideos();
             homeCircleTimers.forEach(id => clearTimeout(id));
             homeCircleTimers.clear();
             if (filterMode !== undefined) currentHomeFilter = filterMode;
@@ -7280,7 +7094,6 @@
             }
             window.homeSearchNoResults = false;
             homeViewerEntries = entries.filter(e => e.photos && e.photos.length);
-            setTimeout(prefetchStoryVideos, 1200);
             setTimeout(() => { try { homeViewerEntries.slice(0, 6).forEach(e => { const l = buildHomeStoryList(e); if (l[0] && l[0].type === 'video') preloadStoryItem(l[0]); }); } catch (_) {} }, 300);
             entries.forEach(e => {
                 const item = document.createElement('div'); item.className = 'home-circle-item';
@@ -7307,7 +7120,6 @@
                 // кола, якщо світлин більше однієї, зсуваємо список на одну позицію вперед.
                 const bigCirclePhotoList = storyPhotoList.length > 1 ? storyPhotoList.slice(1) : storyPhotoList;
                 startHomeCircleStory(mediaWrap, bigCirclePhotoList);
-                try { const hsl = buildHomeStoryList(e); if (hsl[0] && hsl[0].type === 'video') attachHomeCircleVideo(mediaWrap, hsl[0].url); } catch (_) {}
                 // Тап по самому колу (фото) — відкриває сторі на весь екран.
                 // Важливо: беремо ПОВНИЙ e.photos (з відео), а не storyPhotoList — той список
                 // спеціально відфільтрований від відео лише для фонового кросфейду в самому колі.
