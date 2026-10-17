@@ -449,7 +449,7 @@
         .admin-del-btn { flex-shrink: 0; background: rgba(255,59,48,0.15); color: #ff453a; border: none; padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; }
         .admin-empty { color: rgba(255,255,255,0.4); text-align: center; padding: 40px 0; font-size: 13px; }
 
-        #story-viewer { display: none; position: fixed; inset: 0; z-index: 5000; background: #000; }
+        #story-viewer { display: none; position: fixed; inset: 0; z-index: 5000; background: #1c1c1e; }
         /* Бари прогресу й шапка — прозорий оверлей ПОВЕРХ медіа (не займають окремий рядок),
            із легким градієнтом для читабельності — так медіа під ним лишається справжнім
            повноекранним шаром і центрується рівно відносно всього екрана. */
@@ -492,6 +492,26 @@
         #story-viewer.sv-pending > * { opacity: 0 !important; transition: none !important; }
         #story-viewer.sv-swiping #story-viewer-pill, #story-viewer.sv-swiping #story-viewer-caption, #story-viewer.sv-swiping #story-viewer-profile-btn { opacity: 0; transition: opacity 0.1s ease; pointer-events: none; }
         #story-viewer-caption:empty { display: none; }
+        #story-opts-sheet { display: none; position: fixed; inset: 0; z-index: 4600; background: rgba(0,0,0,0.5); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); align-items: flex-end; justify-content: center; }
+        .so-title { color: #fff; font-weight: 700; font-size: 16px; text-align: center; padding: 6px 0 2px; }
+        .so-label { color: rgba(255,255,255,0.55); font-size: 12px; font-weight: 600; padding: 6px 2px 0; }
+        #so-text { width: 100%; box-sizing: border-box; padding: 12px; border-radius: 12px; border: none; background: rgba(255,255,255,0.08); color: #fff; font: inherit; font-size: 16px; outline: none; }
+        #so-text::placeholder { color: rgba(255,255,255,0.4); }
+        .so-row { display: flex; gap: 8px; }
+        .story-add-card .so-chip.active { background: var(--ultramarine-gradient); }
+        .so-switch { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #fff; font-size: 15px; padding: 8px 4px; }
+        .so-switch small { display: block; color: rgba(255,255,255,0.5); font-size: 12px; margin-top: 2px; }
+        .so-switch input { -webkit-appearance: none; appearance: none; width: 46px; height: 28px; border-radius: 14px; background: rgba(120,120,128,0.36); position: relative; transition: background 0.2s; flex-shrink: 0; margin: 0; }
+        .so-switch input::after { content: ""; position: absolute; top: 2px; left: 2px; width: 24px; height: 24px; border-radius: 50%; background: #fff; transition: transform 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+        .so-switch input:checked { background: #34c759; }
+        .so-switch input:checked::after { transform: translateX(18px); }
+        .story-add-card #so-publish { background: var(--ultramarine-gradient); }
+        .sv-text-overlay { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%); max-width: 82%; z-index: 6; padding: 8px 14px; border-radius: 12px; background: rgba(0,0,0,0.45); color: #fff; font-size: 24px; font-weight: 700; text-align: center; line-height: 1.25; pointer-events: none; word-break: break-word; }
+        .sv-text-overlay:empty { display: none; }
+        #sv-reply-bar { display: none; position: absolute; left: 12px; right: 12px; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); z-index: 30; gap: 8px; align-items: center; }
+        #sv-reply-input { flex: 1; min-width: 0; padding: 11px 16px; border-radius: 22px; border: 1px solid rgba(255,255,255,0.4); background: rgba(0,0,0,0.35); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #fff; font: inherit; font-size: 16px; outline: none; }
+        #sv-reply-input::placeholder { color: rgba(255,255,255,0.65); }
+        #sv-reply-bar button { width: 44px; height: 44px; border-radius: 50%; border: none; background: rgba(0,0,0,0.35); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #fff; font-size: 20px; cursor: pointer; flex-shrink: 0; -webkit-tap-highlight-color: transparent; }
         /* Копії текстів/іконок/аватарки для сусідньої сторі на «колесі» — щоб вони їхали разом із фото, а не з'являлись після */
         .sv-ghost-prof { position: absolute; left: 14px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 21; width: 42px; height: 42px; border-radius: 50%; background-size: cover; background-position: center; background-color: #2c2c2e; border: 2px solid #fff; box-shadow: 0 6px 20px rgba(0,0,0,0.35); box-sizing: border-box; }
         .sv-ghost-caption { position: absolute; left: 0; right: 0; bottom: 0; z-index: 19; box-sizing: border-box; padding: 70px 70px calc(18px + env(safe-area-inset-bottom, 0px)) 68px; background: linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0)); color: #fff; font-size: 12px; font-weight: 400; line-height: 1.35; text-shadow: 0 1px 4px rgba(0,0,0,0.6); word-break: break-word; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 7; overflow: hidden; }
@@ -522,7 +542,7 @@
         .story-viewer-media {
             position: absolute; inset: 0; z-index: 1;
             display: flex; align-items: center; justify-content: center;
-            overflow: hidden; background: #000;
+            overflow: hidden; background: #1c1c1e;
         }
         /* "На весь екран" (за замовчуванням) — заповнює весь простір, без чорних смуг, з обрізкою країв. */
         #story-viewer video::-webkit-media-controls, #story-viewer video::-webkit-media-controls-start-playback-button, .hero-slide video::-webkit-media-controls-start-playback-button { display: none !important; -webkit-appearance: none; }
@@ -832,13 +852,21 @@
         #chat-ctx-bar { display: none; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 12px; margin-bottom: 4px; border-left: 3px solid var(--accent-main); border-radius: 8px; background: rgba(128,128,128,0.14); font-size: 12px; flex-shrink: 0; }
         #chat-ctx-bar .ctx-text { display: flex; flex-direction: column; min-width: 0; } #chat-ctx-bar b { font-weight: 700; } #chat-ctx-bar span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 0.8; }
         #chat-ctx-bar button { background: none; border: none; color: inherit; font-size: 16px; cursor: pointer; }
-        #msg-menu-overlay { position: fixed; inset: 0; z-index: 6000; background: rgba(0,0,0,0.4); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 20px; box-sizing: border-box; animation: sheetBackdropIn 0.2s ease backwards; }
-        .mm-react-bar { display: flex; gap: 4px; padding: 8px 10px; border-radius: 28px; background: rgba(38,38,40,0.96); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
-        .mm-react-bar button { font-size: 26px; background: none; border: none; border-radius: 50%; width: 42px; height: 42px; cursor: pointer; } .mm-react-bar button.on { background: rgba(255,255,255,0.18); }
-        .mm-card { width: 100%; max-width: 300px; max-height: 60vh; overflow-y: auto; border-radius: 16px; background: rgba(38,38,40,0.96); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); }
-        .mm-row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 13px 16px; background: none; border: none; color: #fff; font-family: inherit; font-size: 16px; text-align: left; cursor: pointer; }
-        .mm-row + .mm-row { border-top: 1px solid rgba(255,255,255,0.1); } .mm-row:active { background: rgba(255,255,255,0.1); } .mm-row.danger { color: #ff453a; }
-        .mm-ic { width: 22px; text-align: center; } .mm-title { padding: 12px 16px; font-weight: 700; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        /* ---- Меню повідомлення (довге натискання): мінімалізм у стилі Apple — розмитий фон, «піднята» бульбашка, матеріал-скло ---- */
+        #msg-menu-overlay { position: fixed; inset: 0; z-index: 6000; background: rgba(0,0,0,0.26); backdrop-filter: blur(22px) saturate(1.4); -webkit-backdrop-filter: blur(22px) saturate(1.4); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 24px 16px; box-sizing: border-box; animation: sheetBackdropIn 0.22s ease backwards; --mm-bg: rgba(255,255,255,0.78); --mm-fg: #000; --mm-line: rgba(60,60,67,0.18); --mm-press: rgba(60,60,67,0.12); --mm-red: #ff3b30; }
+        body.dark-theme #msg-menu-overlay { --mm-bg: rgba(44,44,46,0.78); --mm-fg: #fff; --mm-line: rgba(84,84,88,0.65); --mm-press: rgba(255,255,255,0.12); --mm-red: #ff453a; }
+        #msg-menu-overlay.side-me > * { align-self: flex-end; } #msg-menu-overlay.side-other > * { align-self: flex-start; }
+        .mm-react-bar { display: flex; gap: 2px; padding: 6px 8px; border-radius: 30px; background: var(--mm-bg); backdrop-filter: blur(30px) saturate(1.8); -webkit-backdrop-filter: blur(30px) saturate(1.8); box-shadow: 0 8px 30px rgba(0,0,0,0.18); transform-origin: bottom center; animation: mmPop 0.38s cubic-bezier(0.32, 0.72, 0, 1.15) backwards; }
+        .mm-react-bar button { font-size: 25px; line-height: 1; background: none; border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; padding: 0; transition: transform 0.15s ease; -webkit-tap-highlight-color: transparent; }
+        .mm-react-bar button:active { transform: scale(1.35); } .mm-react-bar button.on { background: var(--mm-press); }
+        .mm-preview { margin: 0 !important; max-width: 82%; max-height: 30vh; overflow: hidden; pointer-events: none; box-shadow: 0 10px 34px rgba(0,0,0,0.22); animation: mmPop 0.34s cubic-bezier(0.32, 0.72, 0, 1.1) backwards; }
+        .mm-card { width: 252px; max-width: 100%; max-height: 46vh; overflow-y: auto; border-radius: 14px; background: var(--mm-bg); backdrop-filter: blur(30px) saturate(1.8); -webkit-backdrop-filter: blur(30px) saturate(1.8); box-shadow: 0 10px 40px rgba(0,0,0,0.2); transform-origin: top center; animation: mmPop 0.36s cubic-bezier(0.32, 0.72, 0, 1.08) backwards; }
+        .mm-card.mm-forward { width: 300px; }
+        .mm-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; padding: 12px 16px; background: none; border: none; color: var(--mm-fg); font-family: inherit; font-size: 17px; letter-spacing: -0.2px; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        .mm-row + .mm-row { border-top: 0.5px solid var(--mm-line); } .mm-row:active { background: var(--mm-press); } .mm-row.danger { color: var(--mm-red); }
+        .mm-ic { width: 20px; height: 20px; flex-shrink: 0; display: flex; } .mm-ic svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+        .mm-title { padding: 12px 16px; font-weight: 600; font-size: 13px; color: rgba(128,128,128,0.9); text-transform: none; border-bottom: 0.5px solid var(--mm-line); }
+        @keyframes mmPop { from { opacity: 0; transform: scale(0.86); } to { opacity: 1; transform: scale(1); } }
         #chat-messages li { max-width: 80%; padding: 10px 14px; border-radius: 18px; font-size: 14px; line-height: 1.4; transition: var(--theme-transition); }
         .msg-other { background: rgba(0,0,0,0.05); color: var(--text-color); align-self: flex-start; }
         body.dark-theme .msg-other { background: rgba(255, 255, 255, 0.1); }
@@ -2450,6 +2478,23 @@
     </div>
 
     <!-- ---- Меню вибору "Фото / Відео" для додавання на сторінку профілю ---- -->
+    <div id="story-opts-sheet">
+        <div class="story-add-card">
+            <div class="so-title">Параметри сторі</div>
+            <div class="so-label">Текст поверх сторі</div>
+            <input id="so-text" maxlength="80" placeholder="Додайте текст…" autocomplete="off">
+            <div class="so-label">Хто бачить</div>
+            <div class="so-row">
+                <button type="button" class="so-chip" data-v="all">🌍 Усі</button>
+                <button type="button" class="so-chip" data-v="friends">👥 Лише друзі</button>
+            </div>
+            <label class="so-switch"><span>Відповіді й реакції<small>Інші зможуть відповісти на сторі</small></span><input type="checkbox" id="so-replies" checked></label>
+            <label class="so-switch"><span>Зберегти в «Актуальне»<small>Після завершення сторі лишиться на вашій сторінці</small></span><input type="checkbox" id="so-keep"></label>
+            <button id="so-publish">Опублікувати</button>
+            <button id="so-cancel">Скасувати</button>
+        </div>
+    </div>
+
     <div id="prof-media-add-sheet">
         <div class="story-add-card">
             <button id="prof-media-add-photo-btn">📷 Фото</button>
@@ -2513,6 +2558,12 @@
             </div>
         </div>
         <div id="story-viewer-caption"></div>
+        <div class="sv-text-overlay" id="sv-text-overlay"></div>
+        <div id="sv-reply-bar">
+            <input id="sv-reply-input" maxlength="300" placeholder="Відповісти…" enterkeyhint="send" autocomplete="off">
+            <button id="sv-reply-heart" aria-label="Реакція">❤️</button>
+            <button id="sv-reply-send" aria-label="Надіслати">➤</button>
+        </div>
         <div id="story-viewer-menu"></div>
     </div>
 
@@ -4355,7 +4406,7 @@
             const isMine = msg.senderId === myId || senderName === myName;
             const type = msg.type || 'text';
             const rx = msg.reactions || {};
-            const ov = document.createElement('div'); ov.id = 'msg-menu-overlay';
+            const ov = document.createElement('div'); ov.id = 'msg-menu-overlay'; ov.className = isMine ? 'side-me' : 'side-other';
             ov.addEventListener('click', (e) => { if (e.target === ov) closeMsgMenu(); });
             const bar = document.createElement('div'); bar.className = 'mm-react-bar';
             ['👍', '❤️', '😂', '😮', '😢', '🔥'].forEach(em => {
@@ -4374,16 +4425,21 @@
             if (isMine) rows.push({ label: 'Видалити у всіх', icon: '🗑', danger: true, fn: () => { if (confirm('Видалити повідомлення у всіх?')) remove(ref(db, `${path}/${key}`)); } });
             rows.forEach(r => {
                 const b = document.createElement('button'); b.className = 'mm-row' + (r.danger ? ' danger' : '');
-                b.innerHTML = '<span class="mm-ic"></span><span></span>'; b.firstChild.innerText = r.icon; b.lastChild.innerText = r.label;
+                const ICONS = { 'Відповісти': '<path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 6 6v3"/>', 'Копіювати': '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/>', 'Переслати': '<path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0-6 6v3"/>', 'Редагувати': '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>', 'Видалити в мене': '<path d="M17.9 17.9A10 10 0 0 1 12 20c-7 0-10-8-10-8a18 18 0 0 1 5-5.9"/><path d="M1 1l22 22"/><path d="M9.9 4.2A9 9 0 0 1 12 4c7 0 10 8 10 8a18 18 0 0 1-2.2 3.2"/>', 'Видалити у всіх': '<path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/>' };
+                b.innerHTML = '<span class="mm-label"></span><span class="mm-ic"><svg viewBox="0 0 24 24">' + (ICONS[r.label] || '') + '</svg></span>'; b.firstChild.innerText = r.label;
                 b.addEventListener('click', () => { closeMsgMenu(); r.fn(); });
                 card.appendChild(b);
             });
-            ov.appendChild(bar); ov.appendChild(card); document.body.appendChild(ov);
+            // «Піднята» копія повідомлення між реакціями й меню — як у iOS.
+            ov.appendChild(bar);
+            const srcLi = document.querySelector(`#chat-messages li[data-key="${key}"]`);
+            if (srcLi) { const pv = srcLi.cloneNode(true); pv.classList.add('mm-preview'); pv.removeAttribute('style'); pv.querySelectorAll('video').forEach(v => { v.removeAttribute('autoplay'); v.pause && v.pause(); }); ov.appendChild(pv); }
+            ov.appendChild(card); document.body.appendChild(ov);
         }
         async function openForwardPicker(msg) {
-            const ov = document.createElement('div'); ov.id = 'msg-menu-overlay';
+            const ov = document.createElement('div'); ov.id = 'msg-menu-overlay'; ov.className = 'side-other'; ov.style.alignItems = 'center';
             ov.addEventListener('click', (e) => { if (e.target === ov) closeMsgMenu(); });
-            const card = document.createElement('div'); card.className = 'mm-card mm-forward';
+            const card = document.createElement('div'); card.className = 'mm-card mm-forward'; card.style.alignSelf = 'center';
             const title = document.createElement('div'); title.className = 'mm-title'; title.innerText = 'Переслати до…'; card.appendChild(title);
             ov.appendChild(card); document.body.appendChild(ov);
             const items = [{ id: 'saved', name: 'Збережене', saved: true }];
@@ -5453,8 +5509,9 @@
             try {
                 const before = (myProfile && myProfile.stories) ? myProfile.stories.length : 0;
                 if (before) {
+                    const arch = archiveExpiredStories();
                     const live = liveStories(myProfile.stories);
-                    if (live.length !== before) {
+                    if (live.length !== before || arch) {
                         myProfile.stories = live;
                         if (currentActiveItem && currentActiveItem.id === myId) { currentActiveItem.stories = live; renderHeroStoriesRow(currentActiveItem); }
                         if (typeof renderHomeGrid === 'function' && document.getElementById('home-grid-inner')) {
@@ -5467,12 +5524,42 @@
             } catch (e) {}
         }, 60000);
 
-        async function addStory(type, url, frame, caption, circle) {
+        function archiveExpiredStories() {
+            const now = Date.now(); let n = 0;
+            ((myProfile && myProfile.stories) || []).forEach(st => {
+                if (st.keep && st.exp && st.exp <= now) {
+                    myProfile.photos = myProfile.photos || [];
+                    if (!myProfile.photos.includes(st.url)) { myProfile.photos.push(st.url); n++; }
+                }
+            });
+            return n;
+        }
+        // «Лише друзі»: бачить власник, його друзі та ті, на кого він підписаний (тобто хто є в його друзях/підписках на мене).
+        function storyAllowedFor(st, ownerId) {
+            return !st || st.vis !== 'friends' || ownerId === myId || myFriends.has(ownerId) || myFollowers.has(ownerId);
+        }
+        function openStoryOptions() {
+            return new Promise(res => {
+                const sh = document.getElementById('story-opts-sheet'), t = document.getElementById('so-text');
+                const chips = sh.querySelectorAll('.so-chip'); let vis = 'all';
+                const setV = (v) => { vis = v; chips.forEach(c => c.classList.toggle('active', c.dataset.v === v)); };
+                t.value = ''; setV('all');
+                document.getElementById('so-replies').checked = true; document.getElementById('so-keep').checked = false;
+                chips.forEach(c => { c.onclick = () => setV(c.dataset.v); });
+                const close = (r) => { sh.style.display = 'none'; res(r); };
+                document.getElementById('so-publish').onclick = () => close({ text: t.value.trim().slice(0, 80), vis, noReply: !document.getElementById('so-replies').checked, keep: document.getElementById('so-keep').checked });
+                document.getElementById('so-cancel').onclick = () => close(null);
+                sh.style.display = 'flex';
+            });
+        }
+        async function addStory(type, url, frame, caption, circle, opts) {
+            archiveExpiredStories();
             myProfile.stories = myProfile.stories || [];
             if (caption) { myProfile.photoCaptions = myProfile.photoCaptions || {}; myProfile.photoCaptions[capKey(url)] = caption; }
             const entry = { type, url, ts: Date.now(), exp: Date.now() + storyDurationH * 3600000 };
             if (frame) entry.frame = frame;
             if (circle) entry.circle = circle;
+            if (opts) { if (opts.text) entry.text = opts.text; if (opts.vis === 'friends') entry.vis = 'friends'; if (opts.noReply) entry.noReply = true; if (opts.keep) entry.keep = true; }
             myProfile.stories = liveStories(myProfile.stories);
             myProfile.stories.push(entry);
             if (myProfile.stories.length > 10) myProfile.stories = myProfile.stories.slice(-10);
@@ -5568,7 +5655,8 @@
             try { dataUrl = await openPhotoEditor(file, { aspect: 'story', outW: 1080, outH: 1920 }); }
             catch (err) { alert(mediaUploadErrorMessage(err)); return; }
             if (!dataUrl) return; // користувач натиснув "Скасувати"
-            await addStory('photo', dataUrl, undefined, peLastCaption, peLastCircle);
+            const so = await openStoryOptions(); if (!so) return;
+            await addStory('photo', dataUrl, undefined, peLastCaption, peLastCircle, so);
         });
         document.getElementById('story-add-video-input').addEventListener('change', async (e) => {
             const file = e.target.files[0]; if (!file) return;
@@ -5576,7 +5664,8 @@
             const frame = await openVideoFramer(file);
             if (frame === false) return; // «Скасувати»
             const circ = vfLastCircle;
-            checkVideoDurationAndLoad(file, async (dataUrl) => { await addStory('video', dataUrl, frame, undefined, circ); });
+            const so = await openStoryOptions(); if (!so) return;
+            checkVideoDurationAndLoad(file, async (dataUrl) => { await addStory('video', dataUrl, frame, undefined, circ, so); });
         });
 
         // ---- Повноекранний перегляд сторіс ----
@@ -5722,7 +5811,8 @@
                 if (par && pu) { par.style.backgroundImage = `url('${pu}')`; par.style.backgroundSize = 'cover'; par.style.backgroundPosition = 'center'; }
             }
             v._warming = false; v.loop = false;
-            try { v.currentTime = 0; } catch (_) {}
+            // Відео, що вже грало на «грані» під час свайпу, не перемотуємо на 0 — перемотування дає чорний кадр.
+            try { if (v.paused || v.currentTime > 1.5) v.currentTime = 0; } catch (_) {}
             return v;
         }
         function preloadStoryItem(it) {
@@ -5807,6 +5897,7 @@
                 const waitUrls = [];
                 const first = storyViewerList[storyViewerIdx];
                 if (first && first.type === 'photo' && first.url) waitUrls.push(first.url);
+                else if (first && first.type === 'video') { const pu = svPosterUrls(first); if (pu.length) waitUrls.push(pu[pu.length - 1]); }
                 if (profBtn.style.display === 'block') {
                     const m = /url\(['"]?(.*?)['"]?\)/.exec(profBtn.style.backgroundImage || '');
                     if (m && m[1]) waitUrls.push(m[1]);
@@ -5814,6 +5905,43 @@
                 svWhenReady(waitUrls, () => { requestAnimationFrame(() => svEl.classList.remove('sv-pending')); }, 800);
             }
         }
+        // Підкладка під сторі: мініатюра фото/відео. Поки відео ще не віддало перший кадр (або фото не догрузилось),
+        // замість чорного екрана видно картинку — тож свайп між людьми й відкриття сторі виглядають без «чорних проваль».
+        function svPosterUrls(it) {
+            if (!it || !it.url) return [];
+            if (it.type === 'photo') return [thumbUrl(it.url, 200)];
+            const mk = mixkitMatch(it.url);
+            if (mk) { const lc = demoClipFor(it.url); const remote = mk[1] + '-thumb-360-0.jpg'; return lc ? [lc.replace(/\.mp4$/, '.jpg'), remote] : [remote]; }
+            const pu = videoPosterUrl(it.url); return pu ? [pu] : [];
+        }
+        function svSetPosterBg(el, it) {
+            const urls = svPosterUrls(it);
+            el.style.backgroundImage = urls.map(u => `url('${u}')`).join(', ');
+            el.style.backgroundSize = 'cover'; el.style.backgroundPosition = 'center'; el.style.backgroundRepeat = 'no-repeat';
+        }
+        function sendStoryReply(text) {
+            const e = storyViewerEntry; if (!e || !e.id || e.id === myId || !text) return;
+            const convId = [myId, e.id].sort().join('__'), now = Date.now();
+            push(ref(db, `dms/${convId}`), { type: 'text', senderId: myId, senderName: myName, text, timestamp: now, storyReply: true }).catch(() => {});
+            set(ref(db, `userConvos/${myId}/${e.id}`), { name: e.name || 'Гість', photo: (e.photos && e.photos[0]) || '', ts: now, lastMsg: text, lastMine: true });
+            set(ref(db, `userConvos/${e.id}/${myId}`), { name: (myProfile && myProfile.name) || myName, photo: (myProfile && myProfile.photos && myProfile.photos[0]) || '', ts: now, lastMsg: text, lastMine: false });
+        }
+        (function () {
+            const bar = document.getElementById('sv-reply-bar'), inp = document.getElementById('sv-reply-input');
+            ['touchstart', 'touchmove', 'touchend', 'pointerdown', 'pointerup', 'click'].forEach(ev => bar.addEventListener(ev, (e) => e.stopPropagation()));
+            inp.addEventListener('focus', () => { clearTimeout(storyViewerTimer); const v = document.querySelector('#story-viewer-media video'); if (v) v.pause(); });
+            document.getElementById('sv-reply-send').addEventListener('click', () => {
+                const t = inp.value.trim(); if (!t) return;
+                sendStoryReply('↩️ Відповідь на сторі: ' + t); inp.value = ''; inp.blur(); playStoryAt(storyViewerIdx);
+            });
+            inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('sv-reply-send').click(); } });
+            document.getElementById('sv-reply-heart').addEventListener('click', () => {
+                sendStoryReply('❤️ Реакція на сторі');
+                const h = document.createElement('span'); h.className = 'msg-heart-pop'; h.textContent = '❤️'; h.style.fontSize = '72px';
+                document.getElementById('story-viewer').appendChild(h); setTimeout(() => h.remove(), 800);
+                if (navigator.vibrate) { try { navigator.vibrate(10); } catch (_) {} }
+            });
+        })();
         function svWhenReady(urls, cb, maxMs) {
             let done = false, left = urls.length;
             const fin = () => { if (done) return; done = true; cb(); };
@@ -5835,6 +5963,11 @@
             bars.forEach((b, i) => { b.style.transition = 'none'; b.style.width = i < idx ? '100%' : '0%'; });
             const media = document.getElementById('story-viewer-media'); media.innerHTML = '';
             const s = storyViewerList[idx];
+            const sMeta = storyForUrl(s.url);
+            svSetPosterBg(media, s);
+            document.getElementById('sv-text-overlay').textContent = (sMeta && sMeta.text) || '';
+            document.getElementById('sv-reply-bar').style.display = (storyViewerEntry && storyViewerEntry.id && storyViewerEntry.id !== myId && !(sMeta && sMeta.noReply)) ? 'flex' : 'none';
+            document.getElementById('sv-reply-input').value = '';
             if (storyViewerShowTime) document.getElementById('story-viewer-time').innerText = formatStoryTime(s.ts);
             document.getElementById('story-viewer-caption').innerText = captionFor(storyViewerEntry, s.url) || ((storyViewerEntry && (storyViewerEntry.about || storyViewerEntry.status)) || '');
             if (s.type === 'photo') {
@@ -6077,10 +6210,10 @@
             const WHEEL_EASE = 'cubic-bezier(0.2, 0.9, 0.3, 1)';
             const wheel = (k) => `translate3d(0, ${Math.round(-k / PHI * (window.innerHeight + GAP))}px, 0)`;
             const wheelBackdrop = document.createElement('div');
-            wheelBackdrop.style.cssText = 'position:fixed; inset:0; background:#000; z-index:4999; display:none;';
+            wheelBackdrop.style.cssText = 'position:fixed; inset:0; background:#1c1c1e; z-index:4999; display:none;';
             document.body.appendChild(wheelBackdrop);
             const ghost = document.createElement('div');
-            ghost.style.cssText = 'position:fixed; inset:0; background:#000; z-index:5001; display:none; overflow:hidden; pointer-events:none; will-change:transform;';
+            ghost.style.cssText = 'position:fixed; inset:0; background:#1c1c1e; z-index:5001; display:none; overflow:hidden; pointer-events:none; will-change:transform;';
             document.body.appendChild(ghost);
             let ghostDir = 0;
             const hideGhost = () => { ghost.querySelectorAll('video').forEach(v => { const u = v._ghostUrl; if (u && svGhostVideos.get(u) === v) { svGhostVideos.delete(u); v._warming = true; v.loop = false; try { v.pause(); v.currentTime = 0; } catch (_) {} if (svWarmHost && !svWarm.has(u)) { svWarmHost.appendChild(v); svWarm.set(u, v); } } }); ghost.style.display = 'none'; ghost.innerHTML = ''; ghost.style.transition = ''; ghost.style.transform = ''; ghostDir = 0; };
@@ -6091,6 +6224,7 @@
                 const first = nb.list[0];
                 const m = document.createElement('div');
                 m.className = 'story-viewer-media ' + (isFullscreenMediaOn() ? 'fill' : 'fit');
+                svSetPosterBg(m, first);
                 if (first.type === 'photo') { const im = document.createElement('img'); im.src = first.url; m.appendChild(im); }
                 else {
                     let v = svWarm.get(first.url);
@@ -7064,7 +7198,7 @@
                 const p = data[id];
                 if (!p || !p.coords) return;
                 const photos = (p.photos && p.photos.length) ? p.photos : [DEFAULT_AVATAR];
-                const personObj = { id: id, type: 'person', name: p.name || 'Гість', coords: p.coords, photos: photos, status: p.status || '', about: p.about || '', interests: p.interests || '', stories: liveStories(p.stories) };
+                const personObj = { id: id, type: 'person', name: p.name || 'Гість', coords: p.coords, photos: photos, status: p.status || '', about: p.about || '', interests: p.interests || '', stories: liveStories(p.stories).filter(x => storyAllowedFor(x, id)) };
 
                 if (profileMarkers[id]) { layerGroups.friends.removeLayer(profileMarkers[id]); }
                 const customIcon = L.divIcon({
