@@ -1,41 +1,6 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-<script>
-/* ДІАГНОСТИКА відео сторі — лише в цій копії. Показує стан відео зверху екрана. */
-(function(){
-  var logs=[]; function L(m){ logs.push(new Date().toTimeString().slice(3,8)+' '+m); if(logs.length>8) logs.shift(); }
-  var op=HTMLMediaElement.prototype.play;
-  HTMLMediaElement.prototype.play=function(){ var v=this, p=op.apply(this,arguments);
-    if(p&&p.catch) p.catch(function(e){ if(v.closest&&v.closest('#story-viewer')) L('play() ✗ '+e.name); });
-    return p; };
-  ['error','stalled','waiting','playing','abort','emptied','suspend'].forEach(function(ev){
-    document.addEventListener(ev,function(e){ var v=e.target; if(!(v&&v.tagName==='VIDEO'&&v.closest&&v.closest('#story-viewer'))) return;
-      L(ev+(ev==='error'&&v.error?' код'+v.error.code:'')+' '+((v.currentSrc||'').split('/').pop())); },true); });
-  window.addEventListener('error',function(e){ L('JS: '+e.message); });
-  window.addEventListener('unhandledrejection',function(e){ L('REJ: '+(e.reason&&e.reason.message||e.reason)); });
-  function start(){
-    var box=document.createElement('div');
-    box.style.cssText='position:fixed;left:4px;top:4px;right:4px;z-index:2147483647;background:rgba(0,0,0,.72);color:#7CFC00;font:10px/1.35 monospace;padding:4px 6px;border-radius:6px;pointer-events:none;white-space:pre-wrap;word-break:break-all';
-    document.documentElement.appendChild(box);
-    setInterval(function(){
-      var sv=document.getElementById('story-viewer'), open=sv&&sv.style.display==='flex';
-      var c=navigator.connection||{}; var tg=(window.Telegram&&Telegram.WebApp)||{};
-      var t='мережа:'+(c.effectiveType||'?')+(c.saveData?' saveData':'')+' tg:'+(tg.platform||'-')+' v'+(tg.version||'-')+'\n';
-      if(!open){ t+='сторі закрито'; }
-      else {
-        var vs=sv.querySelectorAll('video');
-        if(!vs.length) t+='у сторі НЕМАЄ <video> (фото або помилка)\n';
-        vs.forEach(function(v){ var e=v.error;
-          t+=(v.paused?'ПАУЗА':'грає')+' ready='+v.readyState+' net='+v.networkState+' t='+v.currentTime.toFixed(1)+' '+v.videoWidth+'x'+v.videoHeight+(e?' ПОМИЛКА код'+e.code:'')+'\n'+(v.currentSrc||v.src||'нема src').replace('https://assets.mixkit.co/videos/','')+'\n'; });
-      }
-      box.textContent=t+logs.join('\n');
-    },400);
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start); else start();
-})();
-</script>
-
     <link rel="preconnect" href="https://assets.mixkit.co" crossorigin>
     <link rel="dns-prefetch" href="https://assets.mixkit.co">
     <style>
@@ -5790,7 +5755,16 @@
                         if (!v.isConnected || document.hidden) return;
                         if (!v.paused && v.currentTime > 0.05 && v.readyState >= 2) return;   // грає
                         // Відео ще вантажиться (повільна мережа) — НЕ перезапускаємо: load() обнуляє вже скачане і відео ніколи не стартує.
-                        if (v.networkState === 2 && !v.error && tries < 8) { const pr = v.play(); if (pr && pr.catch) pr.catch(() => {}); svWatchdog(tries + 1); return; }
+                        if (v.networkState === 2 && !v.error && tries < 8) {
+                            // Дані взагалі не йдуть (ready=0) довше ~3с — переходимо на нижчу якість (1080→720→360), вона стартує швидше.
+                            if (v.readyState === 0 && tries >= 1) {
+                                const cs = v.currentSrc || v.src || '';
+                                const mq = /^(.*-)(1080|720|360)(\.mp4)$/.exec(cs);
+                                const lowerQ = mq ? (mq[2] === '1080' ? '720' : (mq[2] === '720' ? '360' : null)) : null;
+                                if (lowerQ) { v.src = mq[1] + lowerQ + mq[3]; try { v.load(); } catch (_) {} }
+                            }
+                            const pr = v.play(); if (pr && pr.catch) pr.catch(() => {}); svWatchdog(tries + 1); return;
+                        }
                         if (tries >= 3) {
                             if (v._safeSwapped) return;
                             v._safeSwapped = true; v._fallbackPending = true;
