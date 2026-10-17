@@ -1,41 +1,6 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-<script>
-/* ДІАГНОСТИКА відео сторі — лише в цій копії. Показує стан відео зверху екрана. */
-(function(){
-  var logs=[]; function L(m){ logs.push(new Date().toTimeString().slice(3,8)+' '+m); if(logs.length>8) logs.shift(); }
-  var op=HTMLMediaElement.prototype.play;
-  HTMLMediaElement.prototype.play=function(){ var v=this, p=op.apply(this,arguments);
-    if(p&&p.catch) p.catch(function(e){ if(v.closest&&v.closest('#story-viewer')) L('play() ✗ '+e.name); });
-    return p; };
-  ['error','stalled','waiting','playing','abort','emptied','suspend'].forEach(function(ev){
-    document.addEventListener(ev,function(e){ var v=e.target; if(!(v&&v.tagName==='VIDEO'&&v.closest&&v.closest('#story-viewer'))) return;
-      L(ev+(ev==='error'&&v.error?' код'+v.error.code:'')+' '+((v.currentSrc||'').split('/').pop())); },true); });
-  window.addEventListener('error',function(e){ L('JS: '+e.message); });
-  window.addEventListener('unhandledrejection',function(e){ L('REJ: '+(e.reason&&e.reason.message||e.reason)); });
-  function start(){
-    var box=document.createElement('div');
-    box.style.cssText='position:fixed;left:4px;top:4px;right:4px;z-index:2147483647;background:rgba(0,0,0,.72);color:#7CFC00;font:10px/1.35 monospace;padding:4px 6px;border-radius:6px;pointer-events:none;white-space:pre-wrap;word-break:break-all';
-    document.documentElement.appendChild(box);
-    setInterval(function(){
-      var sv=document.getElementById('story-viewer'), open=sv&&sv.style.display==='flex';
-      var c=navigator.connection||{}; var tg=(window.Telegram&&Telegram.WebApp)||{};
-      var t='мережа:'+(c.effectiveType||'?')+(c.saveData?' saveData':'')+' tg:'+(tg.platform||'-')+' v'+(tg.version||'-')+'\n';
-      if(!open){ t+='сторі закрито'; }
-      else {
-        var vs=sv.querySelectorAll('video');
-        if(!vs.length) t+='у сторі НЕМАЄ <video> (фото або помилка)\n';
-        vs.forEach(function(v){ var e=v.error;
-          t+=(v.paused?'ПАУЗА':'грає')+' ready='+v.readyState+' net='+v.networkState+' t='+v.currentTime.toFixed(1)+' '+v.videoWidth+'x'+v.videoHeight+(e?' ПОМИЛКА код'+e.code:'')+'\n'+(v.currentSrc||v.src||'нема src').replace('https://assets.mixkit.co/videos/','')+'\n'; });
-      }
-      box.textContent=t+logs.join('\n');
-    },400);
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start); else start();
-})();
-</script>
-
     <link rel="preconnect" href="https://assets.mixkit.co" crossorigin>
     <link rel="dns-prefetch" href="https://assets.mixkit.co">
     <style>
@@ -5551,6 +5516,7 @@
             let i = 0;
             const next = () => {
                 if (i >= urls.length) return;
+                if (svOpen()) { setTimeout(next, 1500); return; }
                 const u = urls[i++];
                 fetch(u, { mode: 'no-cors', cache: 'force-cache', priority: 'low' }).then(r => r.arrayBuffer()).catch(() => {}).then(() => {
                     (window.requestIdleCallback || ((f) => setTimeout(f, 150)))(next);
@@ -5617,11 +5583,11 @@
             v.muted = true; v.defaultMuted = true; v.playsInline = true; v.autoplay = true; v.preload = 'auto';
             v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
             v._warming = true;
-            setVideoSrc(v, url, true);   // сторі на весь екран — найкраща якість
+            setVideoSrc(v, url);
             v.addEventListener('playing', () => { if (v._warming) { v.pause(); try { v.currentTime = 0; } catch (_) {} } });
             svWarmHost.appendChild(v);
             svWarm.set(url, v);
-            while (svWarm.size > 4) { const k = svWarm.keys().next().value; const old = svWarm.get(k); svWarm.delete(k); if (old && old.parentNode) old.remove(); }
+            while (svWarm.size > 2) { const k = svWarm.keys().next().value; const old = svWarm.get(k); svWarm.delete(k); if (old && old.parentNode) old.remove(); }
             const pr = v.play(); if (pr && pr.catch) pr.catch(() => {});
         }
         const svGhostVideos = new Map();
@@ -5647,17 +5613,18 @@
             } catch (_) {}
         }
         function preloadStoryNeighbors() {
-            [1, -1].forEach(d => { const nb = peekStoryPerson(d); if (nb) { preloadStoryItem(nb.list[0]); preloadStoryItem(nb.list[1]); } });
-            // Як у TikTok: прогріваємо перші відео ще на 2-3 людини вперед і назад + наступні елементи поточної сторі.
-            try {
-                const ppl = storyViewerPeople;
-                if (ppl && ppl.length > 1 && storyViewerEntry) {
-                    const n = ppl.length; let i0 = ppl.findIndex(p => p.id === storyViewerEntry.id); if (i0 < 0) i0 = 0;
-                    [2, -2, 3, -3].forEach(d => { const c = ppl[(i0 + d + n * n) % n]; if (c && c.id !== storyViewerEntry.id) { const l = buildHomeStoryList(c); if (l[0]) preloadStoryItem(l[0]); } });
-                }
-                preloadStoryItem(storyViewerList[storyViewerIdx + 2]);
-            } catch (_) {}
-            preloadStoryItem(storyViewerList[storyViewerIdx + 1]);
+            // Не змагаємось за канал із відео, яке зараз стартує: сусідів підвантажуємо, лише коли поточне вже пішло (або за 5с).
+            let done = false;
+            const run = () => {
+                if (done) return; done = true;
+                try {
+                    [1, -1].forEach(d => { const nb = peekStoryPerson(d); if (nb) preloadStoryItem(nb.list[0]); });
+                    preloadStoryItem(storyViewerList[storyViewerIdx + 1]);
+                } catch (_) {}
+            };
+            const cur = document.querySelector('#story-viewer-media video');
+            if (cur && cur.readyState < 3) { cur.addEventListener('playing', () => setTimeout(run, 400), { once: true }); setTimeout(run, 5000); }
+            else run();
         }
         function openStoryViewer(list, startIdx, name, opts, entry, sourceType) {
             opts = opts || {};
@@ -5756,7 +5723,7 @@
                     storyViewerTimer = setTimeout(() => storyAdvance(1), STORY_PHOTO_MS);
                 } else if (bars[idx]) { bars[idx].style.width = '100%'; }
             } else {
-                const warmV = takeWarmVideo(s.url); const v = warmV || document.createElement('video'); v.muted = true; v.defaultMuted = true; v.autoplay = true; v.playsInline = true; v.controls = false; v.disablePictureInPicture = true; v.setAttribute('controlsList', 'nodownload noplaybackrate noremoteplayback'); if (!warmV) setVideoSrc(v, s.url, true);
+                const warmV = takeWarmVideo(s.url); const v = warmV || document.createElement('video'); v.muted = true; v.defaultMuted = true; v.autoplay = true; v.playsInline = true; v.controls = false; v.disablePictureInPicture = true; v.setAttribute('controlsList', 'nodownload noplaybackrate noremoteplayback'); if (!warmV) setVideoSrc(v, s.url);
                 v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
                 applyStoryVideoFrame(v, s.frame);
                 media.appendChild(v);
@@ -5787,6 +5754,8 @@
                     setTimeout(() => {
                         if (!v.isConnected || document.hidden) return;
                         if (!v.paused && v.currentTime > 0.05 && v.readyState >= 2) return;   // грає
+                        // Відео ще вантажиться (повільна мережа) — НЕ перезапускаємо: load() обнуляє вже скачане і відео ніколи не стартує.
+                        if (v.networkState === 2 && !v.error && tries < 8) { const pr = v.play(); if (pr && pr.catch) pr.catch(() => {}); svWatchdog(tries + 1); return; }
                         if (tries >= 3) {
                             if (v._safeSwapped) return;
                             v._safeSwapped = true; v._fallbackPending = true;
@@ -6003,7 +5972,7 @@
                 else {
                     let v = svWarm.get(first.url);
                     if (v) { svWarm.delete(first.url); v._warming = false; }
-                    else { v = document.createElement('video'); v.muted = true; v.defaultMuted = true; v.autoplay = true; v.playsInline = true; v.preload = 'auto'; v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); setVideoSrc(v, first.url, true); }
+                    else { v = document.createElement('video'); v.muted = true; v.defaultMuted = true; v.autoplay = true; v.playsInline = true; v.preload = 'auto'; v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); setVideoSrc(v, first.url); }
                     v._ghostUrl = first.url; v.loop = true; svGhostVideos.set(first.url, v);
                     applyStoryVideoFrame(v, first.frame); m.appendChild(v); attemptCirclePlay(v); allCircleVideos.add(v);
                     try { v.currentTime = 0; } catch (_) {}
