@@ -1098,33 +1098,30 @@
         /* Карта отримує трохи менше місця знизу, щоб її власна панель шарів не билася з новою навігацією */
         #bottom-bar { bottom: 86px; }
 
-        /* ---- Візитка на карті: випливає прямо над міткою (або під нею, якщо зверху немає місця) ---- */
-        #map-card { position: fixed; left: 0; top: 0; z-index: 2550; width: var(--mc-w, 300px); box-sizing: border-box; pointer-events: none; will-change: transform; --mc-ax: 50%; }
-        #map-card-pop { position: relative; opacity: 0; transform: translate3d(0, 8px, 0) scale(0.82); transform-origin: var(--mc-ax) 100%; transition: opacity 0.18s ease, transform 0.3s cubic-bezier(0.34, 1.45, 0.5, 1); pointer-events: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-        #map-card-pop.below { transform: translate3d(0, -8px, 0) scale(0.82); transform-origin: var(--mc-ax) 0%; }
+        /* ---- Візитка на карті: мінімалістичне напівпрозоре «скло», випливає з мітки ---- */
+        #map-card { position: fixed; left: 0; top: 0; z-index: 2550; width: var(--mc-w, 300px); box-sizing: border-box; pointer-events: none; will-change: transform; --mc-ax: 50%; --mc-bg: rgba(255,255,255,0.55); --mc-line: rgba(255,255,255,0.55); --mc-sub: rgba(60,60,67,0.62); --mc-hair: rgba(60,60,67,0.14); }
+        body.dark-theme #map-card { --mc-bg: rgba(30,30,32,0.5); --mc-line: rgba(255,255,255,0.14); --mc-sub: rgba(235,235,245,0.6); --mc-hair: rgba(255,255,255,0.14); }
+        #map-card-pop { position: relative; opacity: 0; transform: translate3d(0, 8px, 0) scale(0.9); transform-origin: var(--mc-ax) 100%; transition: opacity 0.18s ease, transform 0.3s cubic-bezier(0.34, 1.35, 0.5, 1); pointer-events: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        #map-card-pop.below { transform: translate3d(0, -8px, 0) scale(0.9); transform-origin: var(--mc-ax) 0%; }
         #map-card-pop.open { opacity: 1; transform: none; pointer-events: auto; }
-        #map-card-body { display: flex; flex-direction: column; gap: 8px; padding: 12px; box-sizing: border-box; background: rgba(255,255,255,0.94); color: #1c1c1e; backdrop-filter: blur(22px) saturate(180%); -webkit-backdrop-filter: blur(22px) saturate(180%); border: 1px solid rgba(120,120,128,0.2); border-radius: 20px; box-shadow: 0 12px 32px rgba(0,0,0,0.22); overflow: hidden; }
-        body.dark-theme #map-card-body { background: rgba(28,28,30,0.94); color: #fff; border-color: rgba(255,255,255,0.12); box-shadow: 0 12px 32px rgba(0,0,0,0.5); }
-        #map-card-arrow { position: absolute; left: var(--mc-ax); bottom: -7px; width: 14px; height: 14px; margin-left: -7px; background: rgba(255,255,255,0.94); border-right: 1px solid rgba(120,120,128,0.2); border-bottom: 1px solid rgba(120,120,128,0.2); border-radius: 0 0 4px 0; transform: rotate(45deg); }
-        #map-card-pop.below #map-card-arrow { bottom: auto; top: -7px; transform: rotate(225deg); }
-        body.dark-theme #map-card-arrow { background: rgba(28,28,30,0.94); border-color: rgba(255,255,255,0.12); }
+        #map-card-body { display: flex; flex-direction: column; gap: 7px; padding: 11px 12px; box-sizing: border-box; background: var(--mc-bg); color: #1c1c1e; backdrop-filter: blur(26px) saturate(190%); -webkit-backdrop-filter: blur(26px) saturate(190%); border: 1px solid var(--mc-line); border-radius: 18px; box-shadow: 0 8px 28px rgba(0,0,0,0.16); overflow: hidden; }
+        body.dark-theme #map-card-body { color: #fff; box-shadow: 0 8px 28px rgba(0,0,0,0.4); }
+        #map-card-arrow { position: absolute; left: var(--mc-ax); bottom: -8px; width: 18px; height: 8px; margin-left: -9px; background: var(--mc-bg); backdrop-filter: blur(26px) saturate(190%); -webkit-backdrop-filter: blur(26px) saturate(190%); clip-path: polygon(0 0, 100% 0, 50% 100%); }
+        #map-card-pop.below #map-card-arrow { bottom: auto; top: -8px; clip-path: polygon(50% 0, 0 100%, 100% 100%); }
         #map-card-top { display: flex; align-items: center; gap: 10px; }
-        #map-card-avatar { width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0; background-size: cover; background-position: center; background-color: #2c2c2e; border: 2px solid var(--accent-main); box-sizing: border-box; }
+        #map-card-avatar { width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0; background-size: cover; background-position: center; background-color: rgba(120,120,128,0.3); box-shadow: 0 0 0 2px var(--mc-bg), 0 0 0 3px var(--accent-main); }
         #map-card-text { min-width: 0; flex: 1; }
-        #map-card-name { margin: 0; font-size: 15.5px; font-weight: 700; letter-spacing: -0.2px; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        #map-card-sub { margin: 2px 0 0; font-size: 12.5px; line-height: 1.25; color: var(--text-secondary, #8e8e93); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        #map-card-chips, #map-card-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+        #map-card-name { margin: 0; font-size: 15px; font-weight: 650; letter-spacing: -0.2px; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        #map-card-sub { margin: 1px 0 0; font-size: 12.5px; line-height: 1.25; color: var(--mc-sub); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        #map-card-chevron { width: 16px; height: 16px; flex-shrink: 0; stroke: var(--mc-sub); fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+        #map-card-chips, #map-card-tags { display: flex; flex-wrap: wrap; align-items: center; font-size: 11.5px; font-weight: 500; color: var(--mc-sub); }
+        #map-card-chips span + span::before, #map-card-tags span + span::before { content: '·'; margin: 0 6px; opacity: 0.6; }
         #map-card-sub:empty, #map-card-chips:empty, #map-card-desc:empty, #map-card-tags:empty, #map-card-promo:empty { display: none; }
-        .mc-chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 999px; background: rgba(120,120,128,0.14); font-size: 11.5px; font-weight: 600; white-space: nowrap; }
-        .mc-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--mc-c, #888); }
-        .mc-chip-accent { background: var(--accent-main); color: #fff; }
-        .mc-chip-fav { background: rgba(255,59,48,0.14); color: #ff3b30; }
-        #map-card-desc { margin: 0; font-size: 13px; line-height: 1.35; opacity: 0.88; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-        .mc-tag { padding: 3px 9px; border-radius: 999px; border: 1px solid rgba(120,120,128,0.3); font-size: 11.5px; }
-        #map-card-promo { padding: 7px 10px; border-radius: 12px; background: rgba(255,149,0,0.14); color: #b35c00; font-size: 12.5px; font-weight: 600; line-height: 1.3; }
-        body.dark-theme #map-card-promo { color: #ffb866; }
-        #map-card-cta { display: flex; align-items: center; justify-content: space-between; padding-top: 7px; border-top: 1px solid rgba(120,120,128,0.18); color: var(--accent-main); font-size: 13px; font-weight: 600; }
-        #map-card-chevron { width: 16px; height: 16px; flex-shrink: 0; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        .mc-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--mc-c, #888); margin-right: 5px; vertical-align: 1px; }
+        #map-card-chips .mc-me { color: var(--accent-main); font-weight: 650; }
+        #map-card-chips .mc-fav { color: #ff3b30; font-weight: 650; }
+        #map-card-desc { margin: 0; padding-top: 7px; border-top: 1px solid var(--mc-hair); font-size: 12.5px; line-height: 1.38; opacity: 0.88; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        #map-card-promo { padding-left: 9px; border-left: 2px solid #ff9500; font-size: 12.5px; font-weight: 600; line-height: 1.3; }
 
         /* ---- Глобальна нижня навігація ---- */
         #bottom-nav {
@@ -1988,12 +1985,12 @@
                 <div id="map-card-top">
                     <div id="map-card-avatar"></div>
                     <div id="map-card-text"><p id="map-card-name"></p><p id="map-card-sub"></p></div>
+                    <svg id="map-card-chevron" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"></path></svg>
                 </div>
                 <div id="map-card-chips"></div>
                 <p id="map-card-desc"></p>
                 <div id="map-card-tags"></div>
                 <div id="map-card-promo"></div>
-                <div id="map-card-cta"><span id="map-card-cta-text">Відкрити</span><svg id="map-card-chevron" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"></path></svg></div>
             </div>
             <span id="map-card-arrow"></span>
         </div>
@@ -4064,34 +4061,33 @@
             document.getElementById('map-card-sub').textContent = item.status || '';
 
             const chips = [];
-            if (isMe) chips.push('<span class="mc-chip mc-chip-accent">Це ви</span>');
+            if (isMe) chips.push('<span class="mc-me">Це ви</span>');
             if (!isPerson) {
                 const c = MC_CAT[item.category];
-                if (c) chips.push(`<span class="mc-chip" style="--mc-c:${c[1]}"><i class="mc-dot"></i>${c[0]}</span>`);
+                if (c) chips.push(`<span><i class="mc-dot" style="--mc-c:${c[1]}"></i>${c[0]}</span>`);
             }
             if (!isMe && item.coords) {
                 try {
                     const d = haversineMeters(myCoords, item.coords);
-                    if (isFinite(d)) chips.push(`<span class="mc-chip">📍 ${mcFormatDist(d)} · ${Math.max(1, Math.round(d / 80))} хв пішки</span>`);
+                    if (isFinite(d)) chips.push(`<span>${mcFormatDist(d)} · ${Math.max(1, Math.round(d / 80))} хв пішки</span>`);
                 } catch (e) {}
             }
             const photoCount = (item.photos || []).length;
-            if (photoCount > 1) chips.push(`<span class="mc-chip">📷 ${photoCount}</span>`);
+            if (photoCount > 1) chips.push(`<span>${photoCount} фото</span>`);
             const storyCount = isPerson && item.stories ? item.stories.length : 0;
-            if (storyCount) chips.push(`<span class="mc-chip">⭕ ${storyCount} ${mcPlural(storyCount, 'сторіс', 'сторіс', 'сторіс')}</span>`);
-            if (myFavorites.has(item.id)) chips.push('<span class="mc-chip mc-chip-fav">♥ В улюбленому</span>');
+            if (storyCount) chips.push(`<span>${storyCount} сторіс</span>`);
+            if (myFavorites.has(item.id)) chips.push('<span class="mc-fav">♥</span>');
             document.getElementById('map-card-chips').innerHTML = chips.join('');
 
             document.getElementById('map-card-desc').textContent = (isPerson ? item.about : item.text1) || '';
 
             let tags = [];
             if (isPerson && !(isMe && !myProfile.interests)) {
-                tags = String(item.interests || '').split(/[·•,;|]/).map(s => s.trim()).filter(Boolean).slice(0, 4);
+                tags = String(item.interests || '').split(/[·•,;|]/).map(s => s.trim()).filter(Boolean).slice(0, 3);
             }
-            document.getElementById('map-card-tags').innerHTML = tags.map(t => `<span class="mc-tag">${escapeHtml(t)}</span>`).join('');
+            document.getElementById('map-card-tags').innerHTML = tags.map(t => `<span>${escapeHtml(t)}</span>`).join('');
 
             document.getElementById('map-card-promo').textContent = (!isPerson && item.text2) ? item.text2 : '';
-            document.getElementById('map-card-cta-text').textContent = isPerson ? 'Відкрити профіль' : 'Детальніше про заклад';
         }
 
         // Де зараз мітка на екрані: беремо реальний DOM-елемент (враховує зум, пан і поворот карти).
