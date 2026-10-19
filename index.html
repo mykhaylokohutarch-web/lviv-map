@@ -1098,25 +1098,33 @@
         /* Карта отримує трохи менше місця знизу, щоб її власна панель шарів не билася з новою навігацією */
         #bottom-bar { bottom: 86px; }
 
-        /* ---- Мінімалістична візитка на карті: аватарка (веде на сторінку), ім'я, один рядок опису ---- */
-        #map-card {
-            position: fixed; left: 50%; bottom: calc(78px + env(safe-area-inset-bottom, 0px)); z-index: 2550;
-            width: min(calc(100% - 32px), 360px); box-sizing: border-box;
-            display: flex; align-items: center; gap: 12px; padding: 10px 16px 10px 10px;
-            background: rgba(255,255,255,0.78); color: #1c1c1e;
-            backdrop-filter: blur(22px) saturate(180%); -webkit-backdrop-filter: blur(22px) saturate(180%);
-            border: 1px solid rgba(120,120,128,0.2); border-radius: 22px; box-shadow: 0 10px 30px rgba(0,0,0,0.14);
-            opacity: 0; pointer-events: none; transform: translate3d(-50%, 16px, 0);
-            transition: opacity 0.22s ease, transform 0.3s cubic-bezier(0.32, 0.72, 0, 1); cursor: pointer;
-            -webkit-tap-highlight-color: transparent;
-        }
-        body.dark-theme #map-card { background: rgba(28,28,30,0.78); color: #fff; border-color: rgba(255,255,255,0.12); box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
-        #map-card.open { opacity: 1; pointer-events: auto; transform: translate3d(-50%, 0, 0); }
-        #map-card-avatar { width: 56px; height: 56px; border-radius: 50%; flex-shrink: 0; background-size: cover; background-position: center; background-color: #2c2c2e; border: 2px solid var(--accent-main); box-sizing: border-box; }
+        /* ---- Візитка на карті: випливає прямо над міткою (або під нею, якщо зверху немає місця) ---- */
+        #map-card { position: fixed; left: 0; top: 0; z-index: 2550; width: var(--mc-w, 300px); box-sizing: border-box; pointer-events: none; will-change: transform; --mc-ax: 50%; }
+        #map-card-pop { position: relative; opacity: 0; transform: translate3d(0, 8px, 0) scale(0.82); transform-origin: var(--mc-ax) 100%; transition: opacity 0.18s ease, transform 0.3s cubic-bezier(0.34, 1.45, 0.5, 1); pointer-events: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        #map-card-pop.below { transform: translate3d(0, -8px, 0) scale(0.82); transform-origin: var(--mc-ax) 0%; }
+        #map-card-pop.open { opacity: 1; transform: none; pointer-events: auto; }
+        #map-card-body { display: flex; flex-direction: column; gap: 8px; padding: 12px; box-sizing: border-box; background: rgba(255,255,255,0.94); color: #1c1c1e; backdrop-filter: blur(22px) saturate(180%); -webkit-backdrop-filter: blur(22px) saturate(180%); border: 1px solid rgba(120,120,128,0.2); border-radius: 20px; box-shadow: 0 12px 32px rgba(0,0,0,0.22); overflow: hidden; }
+        body.dark-theme #map-card-body { background: rgba(28,28,30,0.94); color: #fff; border-color: rgba(255,255,255,0.12); box-shadow: 0 12px 32px rgba(0,0,0,0.5); }
+        #map-card-arrow { position: absolute; left: var(--mc-ax); bottom: -7px; width: 14px; height: 14px; margin-left: -7px; background: rgba(255,255,255,0.94); border-right: 1px solid rgba(120,120,128,0.2); border-bottom: 1px solid rgba(120,120,128,0.2); border-radius: 0 0 4px 0; transform: rotate(45deg); }
+        #map-card-pop.below #map-card-arrow { bottom: auto; top: -7px; transform: rotate(225deg); }
+        body.dark-theme #map-card-arrow { background: rgba(28,28,30,0.94); border-color: rgba(255,255,255,0.12); }
+        #map-card-top { display: flex; align-items: center; gap: 10px; }
+        #map-card-avatar { width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0; background-size: cover; background-position: center; background-color: #2c2c2e; border: 2px solid var(--accent-main); box-sizing: border-box; }
         #map-card-text { min-width: 0; flex: 1; }
-        #map-card-name { margin: 0; font-size: 16px; font-weight: 700; letter-spacing: -0.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        #map-card-sub { margin: 2px 0 0; font-size: 13px; color: var(--text-secondary, #8e8e93); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        #map-card-chevron { width: 18px; height: 18px; flex-shrink: 0; stroke: var(--text-secondary, #8e8e93); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        #map-card-name { margin: 0; font-size: 15.5px; font-weight: 700; letter-spacing: -0.2px; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        #map-card-sub { margin: 2px 0 0; font-size: 12.5px; line-height: 1.25; color: var(--text-secondary, #8e8e93); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        #map-card-chips, #map-card-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+        #map-card-sub:empty, #map-card-chips:empty, #map-card-desc:empty, #map-card-tags:empty, #map-card-promo:empty { display: none; }
+        .mc-chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 999px; background: rgba(120,120,128,0.14); font-size: 11.5px; font-weight: 600; white-space: nowrap; }
+        .mc-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--mc-c, #888); }
+        .mc-chip-accent { background: var(--accent-main); color: #fff; }
+        .mc-chip-fav { background: rgba(255,59,48,0.14); color: #ff3b30; }
+        #map-card-desc { margin: 0; font-size: 13px; line-height: 1.35; opacity: 0.88; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        .mc-tag { padding: 3px 9px; border-radius: 999px; border: 1px solid rgba(120,120,128,0.3); font-size: 11.5px; }
+        #map-card-promo { padding: 7px 10px; border-radius: 12px; background: rgba(255,149,0,0.14); color: #b35c00; font-size: 12.5px; font-weight: 600; line-height: 1.3; }
+        body.dark-theme #map-card-promo { color: #ffb866; }
+        #map-card-cta { display: flex; align-items: center; justify-content: space-between; padding-top: 7px; border-top: 1px solid rgba(120,120,128,0.18); color: var(--accent-main); font-size: 13px; font-weight: 600; }
+        #map-card-chevron { width: 16px; height: 16px; flex-shrink: 0; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
         /* ---- Глобальна нижня навігація ---- */
         #bottom-nav {
@@ -1975,9 +1983,20 @@
     </div>
 
     <div id="map-card">
-        <div id="map-card-avatar"></div>
-        <div id="map-card-text"><p id="map-card-name"></p><p id="map-card-sub"></p></div>
-        <svg id="map-card-chevron" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"></path></svg>
+        <div id="map-card-pop">
+            <div id="map-card-body">
+                <div id="map-card-top">
+                    <div id="map-card-avatar"></div>
+                    <div id="map-card-text"><p id="map-card-name"></p><p id="map-card-sub"></p></div>
+                </div>
+                <div id="map-card-chips"></div>
+                <p id="map-card-desc"></p>
+                <div id="map-card-tags"></div>
+                <div id="map-card-promo"></div>
+                <div id="map-card-cta"><span id="map-card-cta-text">Відкрити</span><svg id="map-card-chevron" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"></path></svg></div>
+            </div>
+            <span id="map-card-arrow"></span>
+        </div>
     </div>
 
     <!-- ==================== Глобальна нижня навігація ==================== -->
@@ -4018,21 +4037,137 @@
             setTimeout(() => { map.invalidateSize(); placeFocusMarker.openPopup(); }, 120);
         }
 
-        // Візитка на карті: тап по мітці показує невелику картку, тап по ній веде на сторінку людини/закладу.
-        let mapCardItem = null;
-        function showMapCard(item) {
-            mapCardItem = item;
+        // Візитка на карті: тап по мітці — картка випливає просто над нею (або під нею, якщо зверху тісно)
+        // і супроводжує мітку, поки карту рухають/масштабують/обертають. Тап по картці веде на сторінку.
+        const MC_CAT = { food: ['Їжа', '#e8792f'], shopping: ['Магазини', '#2f93e8'], services: ['Послуги', '#12b586'], events: ['Події', '#ab53f0'] };
+        let mapCardItem = null, mapCardRaf = 0, mapCardLost = 0, mapCardH = 0, mapCardW = 300, mcLastKey = '';
+        const mcEl = document.getElementById('map-card');
+        const mcPop = document.getElementById('map-card-pop');
+
+        function mcPlural(n, one, few, many) {
+            const a = n % 10, b = n % 100;
+            if (a === 1 && b !== 11) return one;
+            if (a >= 2 && a <= 4 && (b < 12 || b > 14)) return few;
+            return many;
+        }
+        function mcFormatDist(m) {
+            if (m < 1000) return Math.max(10, Math.round(m / 10) * 10) + ' м';
+            return (m / 1000).toFixed(m < 10000 ? 1 : 0).replace('.', ',') + ' км';
+        }
+
+        function mcFill(item) {
+            const isPerson = item.type === 'person';
+            const isMe = item.id === myId;
             const photo = (item.photos && item.photos[0]) || DEFAULT_AVATAR;
             document.getElementById('map-card-avatar').style.backgroundImage = `url('${photo}')`;
-            document.getElementById('map-card-name').innerText = item.name || 'Гість';
-            document.getElementById('map-card-sub').innerText = item.status || item.about || '';
-            document.getElementById('map-card').classList.add('open');
+            document.getElementById('map-card-name').textContent = item.name || 'Гість';
+            document.getElementById('map-card-sub').textContent = item.status || '';
+
+            const chips = [];
+            if (isMe) chips.push('<span class="mc-chip mc-chip-accent">Це ви</span>');
+            if (!isPerson) {
+                const c = MC_CAT[item.category];
+                if (c) chips.push(`<span class="mc-chip" style="--mc-c:${c[1]}"><i class="mc-dot"></i>${c[0]}</span>`);
+            }
+            if (!isMe && item.coords) {
+                try {
+                    const d = haversineMeters(myCoords, item.coords);
+                    if (isFinite(d)) chips.push(`<span class="mc-chip">📍 ${mcFormatDist(d)} · ${Math.max(1, Math.round(d / 80))} хв пішки</span>`);
+                } catch (e) {}
+            }
+            const photoCount = (item.photos || []).length;
+            if (photoCount > 1) chips.push(`<span class="mc-chip">📷 ${photoCount}</span>`);
+            const storyCount = isPerson && item.stories ? item.stories.length : 0;
+            if (storyCount) chips.push(`<span class="mc-chip">⭕ ${storyCount} ${mcPlural(storyCount, 'сторіс', 'сторіс', 'сторіс')}</span>`);
+            if (myFavorites.has(item.id)) chips.push('<span class="mc-chip mc-chip-fav">♥ В улюбленому</span>');
+            document.getElementById('map-card-chips').innerHTML = chips.join('');
+
+            document.getElementById('map-card-desc').textContent = (isPerson ? item.about : item.text1) || '';
+
+            let tags = [];
+            if (isPerson && !(isMe && !myProfile.interests)) {
+                tags = String(item.interests || '').split(/[·•,;|]/).map(s => s.trim()).filter(Boolean).slice(0, 4);
+            }
+            document.getElementById('map-card-tags').innerHTML = tags.map(t => `<span class="mc-tag">${escapeHtml(t)}</span>`).join('');
+
+            document.getElementById('map-card-promo').textContent = (!isPerson && item.text2) ? item.text2 : '';
+            document.getElementById('map-card-cta-text').textContent = isPerson ? 'Відкрити профіль' : 'Детальніше про заклад';
+        }
+
+        // Де зараз мітка на екрані: беремо реальний DOM-елемент (враховує зум, пан і поворот карти).
+        function mcTarget(item) {
+            const mk = markerRegistry[item.id];
+            const el = mk && mk.getElement && mk.getElement();
+            if (el) {
+                if (!el.isConnected) return { ok: false };
+                const r = el.getBoundingClientRect();
+                if (r.width || r.height) {
+                    const half = Math.min(Math.max(r.height, r.width, 30), 60) / 2;
+                    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+                    return { ok: true, x: cx, top: cy - half, bottom: cy + half };
+                }
+                return { ok: false };
+            }
+            if (item.coords) {
+                const p = map.latLngToContainerPoint(item.coords);
+                const cr = map.getContainer().getBoundingClientRect();
+                return { ok: true, x: cr.left + p.x, top: cr.top + p.y - 19, bottom: cr.top + p.y + 19 };
+            }
+            return { ok: false };
+        }
+
+        function mcPlace(t) {
+            const vw = window.innerWidth, vh = window.innerHeight;
+            const w = mapCardW, h = mapCardH, gap = 10, margin = 12;
+            const topLimit = 100, bottomLimit = vh - 90;
+            let above = (t.top - gap - h) >= topLimit;
+            if (!above && (t.bottom + gap + h) > bottomLimit) above = (t.top - topLimit) >= (bottomLimit - t.bottom);
+            const left = Math.min(Math.max(t.x - w / 2, margin), vw - margin - w);
+            const y = above ? t.top - gap - h : t.bottom + gap;
+            const ax = Math.round(Math.min(Math.max(t.x - left, 24), w - 24));
+            const key = Math.round(left) + '|' + Math.round(y) + '|' + (above ? 1 : 0) + '|' + ax;
+            if (key !== mcLastKey) {
+                mcLastKey = key;
+                mcEl.style.transform = `translate3d(${Math.round(left)}px, ${Math.round(y)}px, 0)`;
+                mcEl.style.setProperty('--mc-ax', ax + 'px');
+                mcPop.classList.toggle('below', !above);
+            }
+            const off = t.x < -20 || t.x > vw + 20 || t.top > vh || t.bottom < 0;
+            mcEl.style.visibility = off ? 'hidden' : 'visible';
+        }
+
+        function mcFrame() {
+            mapCardRaf = 0;
+            if (!mapCardItem) return;
+            const t = mcTarget(mapCardItem);
+            if (t.ok) { mapCardLost = 0; mcPlace(t); }
+            else if (++mapCardLost > 8) { hideMapCard(); return; } // мітку сховали (шар вимкнено / її поглинув кластер)
+            mapCardRaf = requestAnimationFrame(mcFrame);
+        }
+
+        function showMapCard(item) {
+            mapCardItem = item; mapCardLost = 0; mcLastKey = '';
+            mcFill(item);
+            mapCardW = Math.min(window.innerWidth - 24, 300);
+            mcEl.style.setProperty('--mc-w', mapCardW + 'px');
+            mapCardH = mcEl.offsetHeight;
+            const t = mcTarget(item);
+            if (t.ok) mcPlace(t);
+            mcPop.classList.add('open');
+            if (!mapCardRaf) mapCardRaf = requestAnimationFrame(mcFrame);
         }
         function hideMapCard() {
             mapCardItem = null;
-            document.getElementById('map-card').classList.remove('open');
+            mcPop.classList.remove('open');
+            if (mapCardRaf) { cancelAnimationFrame(mapCardRaf); mapCardRaf = 0; }
         }
-        document.getElementById('map-card').addEventListener('click', () => {
+        window.addEventListener('resize', () => {
+            if (!mapCardItem) return;
+            mapCardW = Math.min(window.innerWidth - 24, 300);
+            mcEl.style.setProperty('--mc-w', mapCardW + 'px');
+            mapCardH = mcEl.offsetHeight; mcLastKey = '';
+        });
+        mcPop.addEventListener('click', () => {
             const it = mapCardItem; if (!it) return;
             hideMapCard();
             openIgProfile(it, it.id === myId);
