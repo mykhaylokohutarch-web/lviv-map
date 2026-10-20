@@ -105,9 +105,9 @@
     // Потягніть вниз від верху сторінки й потримайте палець: з'явиться вібровідгук = «готово».
     // Відпустіть — застосунок перезавантажиться. Якщо відпустити раніше — нічого не станеться.
     (function () {
-        var PULL_TRIGGER = 90;    // px, на скільки треба потягнути
-        var HOLD_MS = 450;        // скільки потримати після цього
-        var MAX_PULL = 150;
+        var PULL_TRIGGER = 50;    // px, на скільки треба потягнути
+        var HOLD_MS = 120;        // скільки потримати після цього
+        var MAX_PULL = 110;
         var EXCLUDE = '.leaflet-container, input, textarea, select, [contenteditable="true"], #story-viewer, #photo-editor-modal, #video-framer-modal, .no-ptr';
 
         var ind, ring, label;
@@ -179,10 +179,10 @@
             if (!pulling) {
                 if (Math.abs(mx) > 12 && Math.abs(mx) > Math.abs(my)) { tracking = false; return; } // горизонтальний свайп
                 if (my < -6) { tracking = false; return; }                                          // скрол вгору
-                if (my < 12) return;
+                if (my < 8) return;
                 pulling = true; build();
             }
-            dy = my * 0.6;
+            dy = my * 0.85;
             if (e.cancelable) e.preventDefault();
             if (dy >= PULL_TRIGGER) {
                 if (!holdTimer && !ready) {
@@ -203,9 +203,9 @@
                 reloading = true;
                 label.textContent = 'Оновлення…';
                 ring.style.animation = 'ptrspin .7s linear infinite';
-                ind.style.transition = 'transform .15s';
+                ind.style.transition = 'transform .1s';
                 ind.style.transform = 'translate(-50%,40px)';
-                setTimeout(function () { location.reload(); }, 150);
+                location.reload();
             } else {
                 reset(true);
             }
@@ -1949,6 +1949,33 @@
     <style>
     html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; }
     button, a, [role="button"], .nav-btn { touch-action: manipulation; }
+    </style>
+    <style>
+    /* Кружок для фото/відео в повідомленні, поки його не відкрито на повний екран */
+    #chat-messages li.msg-circle { background: transparent !important; padding: 0 !important; border-radius: 0 !important; overflow: visible !important; width: fit-content; }
+    li.msg-circle .msg-circle-wrap { position: relative; width: 200px; height: 200px; border-radius: 50%; overflow: hidden; cursor: pointer; box-shadow: 0 0 0 2.5px rgba(128,128,128,0.35); -webkit-tap-highlight-color: transparent; transition: transform .18s ease; }
+    li.msg-circle .msg-circle-wrap:active { transform: scale(0.96); }
+    li.msg-circle .msg-circle-wrap img, li.msg-circle .msg-circle-wrap video { width: 100%; height: 100%; max-width: none; object-fit: cover; border-radius: 0; display: block; }
+    .msg-circle-play { display: none; position: absolute; left: 50%; top: 50%; width: 52px; height: 52px; margin: -26px 0 0 -26px; border-radius: 50%; background: rgba(0,0,0,0.45); align-items: center; justify-content: center; }
+    .msg-circle-play svg { width: 26px; height: 26px; fill: #fff; margin-left: 3px; }
+    li.msg-circle .msg-circle-play { display: flex; }
+    .msg-circle-wrap { position: relative; }
+    </style>
+    <style>
+    /* Групування повідомлень (як у Telegram): щільні серії від одного автора, імʼя лише над першим */
+    #chat-messages { gap: 10px; }
+    #chat-messages li { padding: 8px 12px; line-height: 1.35; }
+    #chat-messages li[data-grp="mid"], #chat-messages li[data-grp="last"] { margin-top: -8px; }
+    #chat-messages li[data-grp="mid"] .msg-user-name, #chat-messages li[data-grp="last"] .msg-user-name { display: none; }
+    /* власні — з'єднання з правого боку */
+    #chat-messages li.msg-me[data-grp="first"] { border-bottom-right-radius: 6px; }
+    #chat-messages li.msg-me[data-grp="mid"] { border-top-right-radius: 6px; border-bottom-right-radius: 6px; }
+    #chat-messages li.msg-me[data-grp="last"] { border-top-right-radius: 6px; }
+    /* чужі — з'єднання з лівого боку */
+    #chat-messages li.msg-other[data-grp="first"] { border-bottom-left-radius: 6px; }
+    #chat-messages li.msg-other[data-grp="mid"] { border-top-left-radius: 6px; border-bottom-left-radius: 6px; }
+    #chat-messages li.msg-other[data-grp="last"] { border-top-left-radius: 6px; }
+    #chat-messages li.msg-circle { border-radius: 0 !important; }
     </style>
 </head>
 <body class="dark-theme">
@@ -4646,18 +4673,31 @@
         let currentChatOtherName = null;
         let currentChatOtherPhoto = null;
 
+        // ---- Фото/відео в чаті приходять «кружком», доки їх не відкрито на весь екран ----
+        const OPENED_MEDIA_KEY = 'chat_opened_media';
+        function openedMediaSet() { try { return new Set(JSON.parse(localStorage.getItem(OPENED_MEDIA_KEY) || '[]')); } catch (e) { return new Set(); } }
+        function isMediaOpened(url) { return openedMediaSet().has(url); }
+        function markMediaOpened(url) {
+            try { const set = openedMediaSet(); set.add(url); localStorage.setItem(OPENED_MEDIA_KEY, JSON.stringify([...set].slice(-300))); } catch (e) {}
+        }
         function buildMessageContent(li, msg) {
             const type = msg.type || 'text';
             if (type === 'image') {
                 li.classList.add('msg-media');
-                const img = document.createElement('img'); img.src = msg.url; img.loading = 'lazy';
-                img.addEventListener('click', () => openStoryViewer([{ type: 'photo', url: msg.url, ts: msg.timestamp || Date.now() }], 0, 'Фото', { showTime: false, autoAdvance: false }));
-                li.appendChild(img);
+                const wrap = document.createElement('div'); wrap.className = 'msg-circle-wrap';
+                if (!isMediaOpened(msg.url)) li.classList.add('msg-circle');
+                const img = document.createElement('img'); img.src = msg.url; img.loading = 'lazy'; img.draggable = false;
+                img.addEventListener('click', () => { markMediaOpened(msg.url); li.classList.remove('msg-circle'); openStoryViewer([{ type: 'photo', url: msg.url, ts: msg.timestamp || Date.now() }], 0, 'Фото', { showTime: false, autoAdvance: false }); });
+                wrap.appendChild(img); li.appendChild(wrap);
             } else if (type === 'video') {
                 li.classList.add('msg-media');
-                const video = document.createElement('video'); setVideoSrc(video, msg.url); video.playsInline = true; video.muted = true;
-                video.addEventListener('click', () => openStoryViewer([{ type: 'video', url: msg.url, ts: msg.timestamp || Date.now() }], 0, 'Відео', { showTime: false, autoAdvance: false }));
-                li.appendChild(video);
+                const wrap = document.createElement('div'); wrap.className = 'msg-circle-wrap';
+                if (!isMediaOpened(msg.url)) li.classList.add('msg-circle');
+                const video = document.createElement('video'); setVideoSrc(video, msg.url); video.playsInline = true; video.muted = true; video.preload = 'metadata';
+                const play = document.createElement('span'); play.className = 'msg-circle-play'; play.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+                const open = () => { markMediaOpened(msg.url); li.classList.remove('msg-circle'); openStoryViewer([{ type: 'video', url: msg.url, ts: msg.timestamp || Date.now() }], 0, 'Відео', { showTime: false, autoAdvance: false }); };
+                video.addEventListener('click', open); play.addEventListener('click', open);
+                wrap.appendChild(video); wrap.appendChild(play); li.appendChild(wrap);
             } else if (type === 'file') {
                 const card = document.createElement('div'); card.className = 'msg-file-card';
                 card.innerHTML = `<div class="msg-file-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path></svg></div>
@@ -4698,7 +4738,7 @@
         function fillMessageLi(li, path, key, msg) {
             const senderName = msg.senderName || msg.sender || 'Гість';
             const isMine = msg.senderId === myId || senderName === myName;
-            li.className = isMine ? 'msg-me' : 'msg-other'; li.dataset.key = key; li.innerHTML = '';
+            li.className = isMine ? 'msg-me' : 'msg-other'; li.dataset.key = key; li.dataset.sender = isMine ? '__me' : String(msg.senderId || senderName); li.dataset.ts = String(+msg.timestamp || 0); li.innerHTML = '';
             if (!isMine) { const nameSpan = document.createElement('span'); nameSpan.className = 'msg-user-name'; nameSpan.innerText = senderName; li.appendChild(nameSpan); }
             if (msg.forwarded) { const f = document.createElement('div'); f.className = 'msg-fwd'; f.innerText = '↪ Переслане повідомлення'; li.appendChild(f); }
             if (msg.replyTo) {
@@ -4754,6 +4794,27 @@
             li.addEventListener('dblclick', (e) => { if (e.target.closest('.msg-react')) return; e.preventDefault(); likeIt(); });
             li.addEventListener('click', (e) => { if (fired) { e.stopImmediatePropagation(); e.preventDefault(); fired = false; } }, true);
         }
+        // ---- Групування повідомлень як у Telegram: підряд від одного автора (до 5 хв між ними) ----
+        const GROUP_GAP_MS = 5 * 60 * 1000;
+        let regroupQueued = false;
+        function regroupChat() {
+            regroupQueued = false;
+            const ul = document.getElementById('chat-messages'); if (!ul) return;
+            const items = Array.prototype.filter.call(ul.children, (el) => el.tagName === 'LI' && el.dataset.sender);
+            items.forEach((li, i) => {
+                const prev = items[i - 1], next = items[i + 1];
+                const joins = (a, b) => a && b && a.dataset.sender === b.dataset.sender &&
+                    (!(+a.dataset.ts) || !(+b.dataset.ts) || Math.abs(b.dataset.ts - a.dataset.ts) <= GROUP_GAP_MS);
+                const withPrev = joins(prev, li), withNext = joins(li, next);
+                const pos = withPrev ? (withNext ? 'mid' : 'last') : (withNext ? 'first' : 'single');
+                if (li.dataset.grp !== pos) li.dataset.grp = pos;
+            });
+        }
+        function scheduleRegroup() { if (regroupQueued) return; regroupQueued = true; requestAnimationFrame(regroupChat); }
+        (function () {
+            const ul = document.getElementById('chat-messages'); if (!ul) return;
+            new MutationObserver(scheduleRegroup).observe(ul, { childList: true });
+        })();
         function loadChat(path) {
             const chatMessagesUl = document.getElementById('chat-messages'); chatMessagesUl.innerHTML = '';
             clearChatContext();
@@ -4770,7 +4831,7 @@
             });
             onChildChanged(currentChatRef, (data) => {
                 const li = chatMessagesUl.querySelector(`li[data-key="${data.key}"]`); if (!li) return;
-                cache[data.key] = data.val(); fillMessageLi(li, path, data.key, cache[data.key]);
+                cache[data.key] = data.val(); fillMessageLi(li, path, data.key, cache[data.key]); scheduleRegroup();
             });
             onChildRemoved(currentChatRef, (data) => {
                 delete cache[data.key];
