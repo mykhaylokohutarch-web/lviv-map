@@ -769,6 +769,18 @@
         }
         /* синій ободок — лише коли є сторі */
         .hero-circle-wrap.has-story { background: var(--ultramarine-gradient); padding: 3px; }
+        /* ---- Кільце таймера сторі: повне на старті, поступово «зʼїдається» до кінця життя сторі ---- */
+        .story-ring { position: absolute; pointer-events: none; z-index: 7; overflow: visible; transform: rotate(-90deg); }
+        .story-ring circle { fill: none; stroke-linecap: round; }
+        .story-ring .sr-track { stroke: rgba(120,120,140,0.22); }
+        .story-ring .sr-prog { stroke-dasharray: 100; stroke-dashoffset: 0; animation-name: storyRingDrain; animation-timing-function: linear; animation-fill-mode: forwards; }
+        @keyframes storyRingDrain { from { stroke-dashoffset: 0; } to { stroke-dashoffset: 100; } }
+        .hero-circle-wrap.has-story { background: transparent; padding: 0; }
+        .hero-circle-wrap.has-story .hero-track { clip-path: circle(calc(50% - 4px) at 50% 50%); }
+        .hero-circle-wrap > .story-ring { inset: 0; width: 100%; height: 100%; }
+        .ig-avatar > .story-ring { inset: -8px; width: calc(100% + 16px); height: calc(100% + 16px); }
+        .ig-avatar.has-story { border-color: transparent; }
+        .home-circle-mini-avatar > .story-ring { inset: -5px; width: calc(100% + 10px); height: calc(100% + 10px); }
         .hero-track { display: flex; width: 100%; height: 100%; border-radius: 50%; overflow: hidden; will-change: transform; }
         .hero-slide { flex: 0 0 100%; width: 100%; height: 100%; background-size: cover; background-position: center; background-color: #1c1c1e; opacity: 0; transition: opacity 0.25s ease; }
         .hero-slide.loaded { opacity: 1; }
@@ -4214,7 +4226,7 @@
                 renderHeroStoriesRow(item);
             } else {
                 statusEl.className = "profile-status status-place";
-                { const hw = document.getElementById('hero-circle-wrap'); if (hw) hw.classList.remove('has-story'); }
+                { const hw = document.getElementById('hero-circle-wrap'); if (hw) { hw.classList.remove('has-story'); const r = hw.querySelector(':scope > .story-ring'); if (r) r.remove(); } }
                 label1.innerText = "Про локацію"; label2.innerText = "🔥 Спеціальна пропозиція";
                 text1Box.className = ""; text2Box.className = "promo-box";
                 document.getElementById('prof-text1').innerText = item.text1;
@@ -5669,6 +5681,37 @@
         syncStoryDurChips();
         function liveStories(list) { const now = Date.now(); return (list || []).filter(s => !s.exp || s.exp > now); }
 
+        // Кільце-таймер навколо аватарки: повне, коли сторі щойно додали, і плавно зменшується до нуля,
+        // коли сторі зникає. Береться сторі, що житиме найдовше. Анімація — чистий CSS із відʼємним delay,
+        // тож жодних таймерів: після перемальовування кільце саме стає на правильне місце.
+        function applyStoryRing(el, stories, strokeW) {
+            if (!el) return;
+            const old = el.querySelector(':scope > .story-ring'); if (old) old.remove();
+            const now = Date.now();
+            const live = (stories || []).filter(s => s && s.exp && s.exp > now);
+            if (!live.length) return;
+            const st = live.reduce((a, b) => (b.exp > a.exp ? b : a));
+            const start = st.ts || (st.exp - 12 * 3600000);
+            const total = Math.max(1000, st.exp - start);
+            const elapsed = Math.min(total, Math.max(0, now - start));
+            const NS = 'http://www.w3.org/2000/svg';
+            const svg = document.createElementNS(NS, 'svg');
+            svg.setAttribute('viewBox', '0 0 100 100'); svg.setAttribute('class', 'story-ring');
+            const sw = strokeW || 4;
+            const mk = (cls) => { const c = document.createElementNS(NS, 'circle'); c.setAttribute('cx', '50'); c.setAttribute('cy', '50'); c.setAttribute('r', String(50 - sw / 2)); c.setAttribute('stroke-width', String(sw)); c.setAttribute('class', cls); c.setAttribute('pathLength', '100'); return c; };
+            const gid = 'sr' + Math.random().toString(36).slice(2, 8);
+            const defs = document.createElementNS(NS, 'defs');
+            defs.innerHTML = '<linearGradient id="' + gid + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8f8dff"/><stop offset="1" stop-color="#4542f4"/></linearGradient>';
+            svg.appendChild(defs);
+            svg.appendChild(mk('sr-track'));
+            const prog = mk('sr-prog');
+            prog.setAttribute('stroke', 'url(#' + gid + ')');
+            prog.style.animationDuration = total + 'ms';
+            prog.style.animationDelay = (-elapsed) + 'ms';
+            svg.appendChild(prog);
+            el.appendChild(svg);
+        }
+
         // Раз на хвилину прибираємо прострочені сторі й оновлюємо екрани.
         setInterval(() => {
             try {
@@ -5751,6 +5794,7 @@
             const isMine = item.id === myId;
             const heroWrap = document.getElementById('hero-circle-wrap');
             if (heroWrap) heroWrap.classList.toggle('has-story', stories.length > 0);
+            applyStoryRing(heroWrap, stories, 3.5);
             row.innerHTML = '';
             if (!stories.length && !isMine) { row.style.display = 'none'; return; }
             row.style.display = 'flex';
@@ -7830,6 +7874,7 @@
                     ev.stopPropagation();
                     openIgProfile(e, false);
                 });
+                applyStoryRing(mini, liveStories(e.stories), 7);
                 avatar.appendChild(mini);
                 if (e.isMe) {
                     // Кнопка "+" знизу справа — додати нове фото/відео в сторі, не заходячи в профіль.
@@ -8188,6 +8233,7 @@
 
             document.getElementById('ig-avatar').style.backgroundImage = `url('${basePhotos[0]}')`;
             document.getElementById('ig-avatar').classList.toggle('has-story', storyUrls.length > 0);
+            applyStoryRing(document.getElementById('ig-avatar'), liveStories(item.stories), 3);
             document.getElementById('ig-avatar').onclick = () => openMediaGallery(photos, 0, item.name, item);
             // Кнопка "+" на аватарці — тільки у власному профілі, дозволяє одразу додати сторі.
             let igAvatarAddBadge = document.getElementById('ig-avatar-add-badge');
