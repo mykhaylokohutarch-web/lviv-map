@@ -346,7 +346,11 @@
         #gl-basemap { position: absolute !important; inset: 0; z-index: 0; pointer-events: none; }
         #map.gl-active { background-color: transparent; }
         body:not(.dark-theme) #map.gl-active { background-color: #f2efe9; }
-        #map.map-dark-mode #gl-basemap {
+        body.dark-theme #map.gl-active { background-color: #111318; }
+        /* Темна карта — це окремий темний стиль (кольори перемальовано в самому стилі), а не інверсія. Затемнення поверх не потрібне. */
+        #map.gl-active #map-dark-dim { display: none; }
+        /* Аварійний варіант: якщо темний стиль не вдалось побудувати — старий фільтр-інверсія. */
+        #map.map-dark-mode #gl-basemap.gl-invert {
             filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.96) saturate(0.42) sepia(0.12);
         }
         #map.map-dark-mode .leaflet-tile-pane {
@@ -3422,6 +3426,123 @@ const tileRefreshing = new Set();
         const VECTOR_STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
         let vectorState = USE_VECTOR_MAP ? 'pending' : 'failed'; // 'pending' | 'ok' | 'failed'
         let glMap = null;
+
+        // ---- Поява підписів при наближенні ----
+        // Іконки закладів з'являються з зуму ~15, їхні назви — з ~16 (плавно проявляються), номери будинків — з 17.
+        const POI_ICON_ZOOM = 15, POI_LABEL_ZOOM = 16;
+        function zoomFade(z) { return ['interpolate', ['linear'], ['zoom'], z - 0.6, 0, z, 1]; }
+        function applyLabelZooms(style) {
+            (style.layers || []).forEach(l => {
+                if (l.type !== 'symbol') return;
+                const id = (l.id || '').toLowerCase();
+                l.paint = l.paint || {};
+                if (id.includes('poi')) {
+                    l.minzoom = Math.max(l.minzoom || 0, POI_ICON_ZOOM - 0.6);
+                    if (l.layout && l.layout['icon-image']) l.paint['icon-opacity'] = zoomFade(POI_ICON_ZOOM);
+                    if (l.layout && l.layout['text-field']) l.paint['text-opacity'] = zoomFade(POI_LABEL_ZOOM);
+                } else if (id.includes('housenumber')) {
+                    l.minzoom = Math.max(l.minzoom || 0, 17);
+                }
+            });
+        }
+
+        // ---- Стильна темна карта: перемальовуємо кольори самого стилю (не інверсія) ----
+        function parseCssColor(str) {
+            str = String(str).trim().toLowerCase();
+            let m;
+            if ((m = str.match(/^#([0-9a-f]{3})$/))) { const h = m[1]; return { r: parseInt(h[0] + h[0], 16), g: parseInt(h[1] + h[1], 16), b: parseInt(h[2] + h[2], 16), a: 1 }; }
+            if ((m = str.match(/^#([0-9a-f]{6})$/))) { const h = m[1]; return { r: parseInt(h.slice(0, 2), 16), g: parseInt(h.slice(2, 4), 16), b: parseInt(h.slice(4, 6), 16), a: 1 }; }
+            if ((m = str.match(/^#([0-9a-f]{8})$/))) { const h = m[1]; return { r: parseInt(h.slice(0, 2), 16), g: parseInt(h.slice(2, 4), 16), b: parseInt(h.slice(4, 6), 16), a: parseInt(h.slice(6, 8), 16) / 255 }; }
+            if ((m = str.match(/^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*(?:,\s*([\d.]+)\s*)?\)$/))) return { r: +m[1], g: +m[2], b: +m[3], a: m[4] === undefined ? 1 : +m[4] };
+            if ((m = str.match(/^hsla?\(\s*([\d.]+)\s*,\s*([\d.]+)%\s*,\s*([\d.]+)%\s*(?:,\s*([\d.]+)\s*)?\)$/))) {
+                const rgb = hslToRgb(+m[1], +m[2] / 100, +m[3] / 100);
+                return { r: rgb.r, g: rgb.g, b: rgb.b, a: m[4] === undefined ? 1 : +m[4] };
+            }
+            if (str === 'white') return { r: 255, g: 255, b: 255, a: 1 };
+            if (str === 'black') return { r: 0, g: 0, b: 0, a: 1 };
+            return null;
+        }
+        function rgbToHsl(r, g, b) {
+            r /= 255; g /= 255; b /= 255;
+            const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+            let h = 0, s = 0; const l = (mx + mn) / 2;
+            if (d > 0) {
+                s = d / (1 - Math.abs(2 * l - 1));
+                if (mx === r) h = ((g - b) / d) % 6; else if (mx === g) h = (b - r) / d + 2; else h = (r - g) / d + 4;
+                h = (h * 60 + 360) % 360;
+            }
+            return { h, s, l };
+        }
+        function hslToRgb(h, s, l) {
+            h = ((h % 360) + 360) % 360;
+            const c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = l - c / 2;
+            let r = 0, g = 0, b = 0;
+            if (h < 60) { r = c; g = x; } else if (h < 120) { r = x; g = c; } else if (h < 180) { g = c; b = x; }
+            else if (h < 240) { g = x; b = c; } else if (h < 300) { r = x; b = c; } else { r = c; b = x; }
+            return { r: Math.round((r + m) * 255), g: Math.round((g + m) * 255), b: Math.round((b + m) * 255) };
+        }
+        const clamp01 = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+        function darkColor(c, ctx) {
+            const { h, s, l } = rgbToHsl(c.r, c.g, c.b);
+            const id = ctx.id, prop = ctx.prop, type = ctx.type;
+            let H = h, S = s, L;
+            const isRoad = /road|bridge|tunnel|highway|motorway|trunk|primary|secondary|tertiary|street|service|link|path|track/.test(id) && !/rail|transit/.test(id);
+            if (prop === 'text-color' || prop === 'icon-color') { L = clamp01(1 - l * 0.92, 0.58, 0.92); S = s * 0.55; }
+            else if (prop === 'text-halo-color' || prop === 'icon-halo-color') { L = 0.07 + 0.08 * (1 - l); S = s * 0.3; }
+            else if (prop === 'background-color') { return `rgba(17,19,24,${c.a})`; }
+            else if (type === 'line') {
+                if (/casing/.test(id)) { L = 0.055; S = s * 0.3; }
+                else if (isRoad) {
+                    if (s > 0.3) { L = 0.27 + 0.08 * l; S = Math.min(s, 0.5) * 0.8; }
+                    else { H = 220; L = 0.07 + 0.16 * Math.pow(l, 4); S = 0.14; }
+                }
+                else if (/water/.test(id)) { L = 0.22; S = Math.min(Math.max(s, 0.3), 0.5); }
+                else if (/boundary|admin/.test(id)) { L = 0.30; S = s * 0.2; }
+                else { L = 0.10 + 0.28 * l * l; S = s * 0.4; }
+            } else {
+                if (/water/.test(id)) { H = 208; L = 0.11; S = clamp01(s, 0.4, 0.6); }
+                else if (/building/.test(id)) { H = 220; L = 0.125; S = 0.08; }
+                else if (s > 0.18 && h > 45 && h < 170) { L = 0.10; S = 0.28; }
+                else { if (s < 0.25) H = 220; L = 0.07 + 0.22 * (1 - l); S = s < 0.25 ? 0.12 : s * 0.4; }
+            }
+            const rgb = hslToRgb(H, clamp01(S, 0, 1), clamp01(L, 0, 1));
+            return `rgba(${rgb.r},${rgb.g},${rgb.b},${c.a})`;
+        }
+        function mapColors(v, fn) {
+            if (typeof v === 'string') { const c = parseCssColor(v); return c ? fn(c) : v; }
+            if (Array.isArray(v)) {
+                if ((v[0] === 'rgb' || v[0] === 'rgba') && v.length >= 4 && v.slice(1).every(x => typeof x === 'number')) {
+                    return fn({ r: v[1], g: v[2], b: v[3], a: v[4] === undefined ? 1 : v[4] });
+                }
+                return v.map(x => mapColors(x, fn));
+            }
+            if (v && typeof v === 'object' && Array.isArray(v.stops)) {
+                return Object.assign({}, v, { stops: v.stops.map(st => [st[0], mapColors(st[1], fn)]) });
+            }
+            return v;
+        }
+        function makeDarkStyle(style) {
+            const d = JSON.parse(JSON.stringify(style));
+            (d.layers || []).forEach(l => {
+                if (!l.paint) return;
+                const id = (l.id || '').toLowerCase();
+                Object.keys(l.paint).forEach(prop => {
+                    if (!/-color$/.test(prop)) return;
+                    l.paint[prop] = mapColors(l.paint[prop], (c) => darkColor(c, { id, prop, type: l.type }));
+                });
+            });
+            return d;
+        }
+        let glStyles = null, glDark = null;
+        function applyGlTheme() {
+            if (!glMap || !glStyles) return;
+            const dark = document.body.classList.contains('dark-theme');
+            if (dark === glDark) return;
+            glDark = dark;
+            const holder = document.getElementById('gl-basemap');
+            if (holder) holder.classList.toggle('gl-invert', dark && glStyles.darkFailed);
+            try { glMap.setStyle(dark ? glStyles.dark : glStyles.light); } catch (e) {}
+        }
         function startVectorBasemap() {
             return new Promise((resolve) => {
                 let done = false;
@@ -3439,12 +3560,18 @@ const tileRefreshing = new Set();
                                 l.layout['text-field'] = ['coalesce', ['get', 'name:uk'], ['get', 'name']];
                             }
                         });
+                        applyLabelZooms(style);
+                        let darkStyle = style, darkFailed = false;
+                        try { darkStyle = makeDarkStyle(style); } catch (e) { darkFailed = true; }
+                        glStyles = { light: style, dark: darkStyle, darkFailed: darkFailed };
+                        glDark = document.body.classList.contains('dark-theme');
                         const holder = document.createElement('div');
                         holder.id = 'gl-basemap';
+                        if (glDark && darkFailed) holder.classList.add('gl-invert');
                         map.getContainer().insertBefore(holder, map.getContainer().firstChild);
                         const c = map.getCenter();
                         glMap = new maplibregl.Map({
-                            container: holder, style: style,
+                            container: holder, style: glDark ? glStyles.dark : glStyles.light,
                             center: [c.lng, c.lat],
                             zoom: map.getZoom() - 1, // тайли MapLibre 512px, Leaflet 256px — різниця рівно 1 рівень зуму
                             bearing: leafletBearingToGl(),
@@ -3482,6 +3609,8 @@ const tileRefreshing = new Set();
                 });
                 map.on('resize', () => { if (glMap) { glMap.resize(); syncGlToLeaflet(); } });
                 syncGlToLeaflet();
+                try { new MutationObserver(applyGlTheme).observe(document.body, { attributes: true, attributeFilter: ['class'] }); } catch (e) {}
+                applyGlTheme();
                 const f = document.querySelector('.about-footer');
                 if (f) f.insertAdjacentHTML('beforeend', '<br>Карта: OpenFreeMap © OpenMapTiles, дані © учасники OpenStreetMap');
             } else {
