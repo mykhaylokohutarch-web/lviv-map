@@ -252,6 +252,8 @@
         })();
     </script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" />
+    <link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin>
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -340,6 +342,13 @@
         /* Той самий трюк для темної теми — тон CARTO Dark Matter, а не чистий чорний,
            щоб не було видно "чорного спалаху" до підвантаження тайлів. */
         body.dark-theme #map { background-color: #17171b; }
+        /* Векторна підкладка (OpenFreeMap/MapLibre) лежить ПІД усіма шарами Leaflet і лише слідкує за його центром, зумом і поворотом. */
+        #gl-basemap { position: absolute !important; inset: 0; z-index: 0; pointer-events: none; }
+        #map.gl-active { background-color: transparent; }
+        body:not(.dark-theme) #map.gl-active { background-color: #f2efe9; }
+        #map.map-dark-mode #gl-basemap {
+            filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.96) saturate(0.42) sepia(0.12);
+        }
         #map.map-dark-mode .leaflet-tile-pane {
             filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.96) saturate(0.42) sepia(0.12);
         }
@@ -2891,6 +2900,7 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate.js"></script>
+    <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -3404,11 +3414,81 @@ const tileRefreshing = new Set();
             keepBuffer: 3,          // менше "зайвих" тайлів у DOM/пам'яті навколо екрана — панорамування легше для пристрою
             updateWhenZooming: false // не довантажує нові тайли посеред анімації зуму, лише по завершенню
         });
-        osmTiles.addTo(map);
-        if (USE_CARTO) {
-            const f = document.querySelector('.about-footer');
-            if (f) f.insertAdjacentHTML('beforeend', '<br>Стиль карти © CARTO (carto.com/attributions)');
+        // ---- Векторна підкладка, як в EasyWay: OpenFreeMap (дані OpenMapTiles/OpenStreetMap) через MapLibre ----
+        // Заклади, назви й іконки малює сама карта й оновлюються разом з нею; без ключа й без наших міток.
+        // Якщо WebGL/бібліотека/мережа недоступні — автоматично повертаємось на растрові плитки OSM.
+        // Щоб вимкнути й користуватись лише растром: USE_VECTOR_MAP = false.
+        const USE_VECTOR_MAP = true;
+        const VECTOR_STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
+        let vectorState = USE_VECTOR_MAP ? 'pending' : 'failed'; // 'pending' | 'ok' | 'failed'
+        let glMap = null;
+        function startVectorBasemap() {
+            return new Promise((resolve) => {
+                let done = false;
+                const finish = (ok) => { if (done) return; done = true; resolve(ok); };
+                try {
+                    if (!USE_VECTOR_MAP || !window.maplibregl) return finish(false);
+                    const probe = document.createElement('canvas');
+                    if (!(probe.getContext('webgl2') || probe.getContext('webgl'))) return finish(false);
+                    const timer = setTimeout(() => finish(false), 8000);
+                    fetch(VECTOR_STYLE_URL).then(r => { if (!r.ok) throw new Error('style'); return r.json(); }).then(style => {
+                        // Підписи — українською, якщо є name:uk, інакше звичайна назва. Номери доріг (ref) не чіпаємо.
+                        (style.layers || []).forEach(l => {
+                            const tf = l.layout && l.layout['text-field'];
+                            if (tf && JSON.stringify(tf).includes('name')) {
+                                l.layout['text-field'] = ['coalesce', ['get', 'name:uk'], ['get', 'name']];
+                            }
+                        });
+                        const holder = document.createElement('div');
+                        holder.id = 'gl-basemap';
+                        map.getContainer().insertBefore(holder, map.getContainer().firstChild);
+                        const c = map.getCenter();
+                        glMap = new maplibregl.Map({
+                            container: holder, style: style,
+                            center: [c.lng, c.lat],
+                            zoom: map.getZoom() - 1, // тайли MapLibre 512px, Leaflet 256px — різниця рівно 1 рівень зуму
+                            bearing: (typeof map.getBearing === 'function') ? map.getBearing() : 0,
+                            interactive: false, attributionControl: false, fadeDuration: 0, pitchWithRotate: false
+                        });
+                        glMap.once('load', () => { clearTimeout(timer); finish(true); });
+                        glMap.on('error', (e) => { if (!done) { clearTimeout(timer); finish(false); } });
+                    }).catch(() => finish(false));
+                } catch (e) { finish(false); }
+            });
         }
+        function syncGlToLeaflet() {
+            if (!glMap) return;
+            const c = map.getCenter();
+            glMap.jumpTo({
+                center: [c.lng, c.lat],
+                zoom: map.getZoom() - 1,
+                bearing: (typeof map.getBearing === 'function') ? map.getBearing() : 0
+            });
+        }
+        startVectorBasemap().then((ok) => {
+            if (ok) {
+                vectorState = 'ok';
+                map.getContainer().classList.add('gl-active');
+                map.on('move zoom rotate moveend zoomend', syncGlToLeaflet);
+                map.on('zoomanim', (e) => {
+                    if (!glMap) return;
+                    glMap.easeTo({ center: [e.center.lng, e.center.lat], zoom: e.zoom - 1, duration: 250, essential: true });
+                });
+                map.on('resize', () => { if (glMap) { glMap.resize(); syncGlToLeaflet(); } });
+                syncGlToLeaflet();
+                const f = document.querySelector('.about-footer');
+                if (f) f.insertAdjacentHTML('beforeend', '<br>Карта: OpenFreeMap © OpenMapTiles, дані © учасники OpenStreetMap');
+            } else {
+                vectorState = 'failed';
+                if (glMap) { try { glMap.remove(); } catch (e) {} glMap = null; }
+                const h = document.getElementById('gl-basemap'); if (h) h.remove();
+                osmTiles.addTo(map);
+                if (USE_CARTO) {
+                    const f = document.querySelector('.about-footer');
+                    if (f) f.insertAdjacentHTML('beforeend', '<br>Стиль карти © CARTO (carto.com/attributions)');
+                }
+            }
+        });
         map.getContainer().classList.toggle('map-dark-mode', document.body.classList.contains('dark-theme'));
         // Сам шар-"приглушувач": звичайний div поверх карти (не Leaflet-пейн), тож не рухається й не
         // масштабується разом із тайлами при панорамуванні/зумі — просто статична тонована плівка.
@@ -3439,6 +3519,7 @@ const tileRefreshing = new Set();
         }
         function warmupTile(x, y, z, low) {
             const key = `${z}/${x}/${y}`;
+            if (vectorState !== 'failed') return; // векторна карта сама тягне свої тайли — растр не прогріваємо
             if (tileWarmupCache.has(key)) return;
             tileWarmupCache.add(key);
             idbHasTile(key).then(has => {
