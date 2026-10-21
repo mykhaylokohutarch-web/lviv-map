@@ -3252,7 +3252,7 @@
         // (закрив застосунок, відкрив за тиждень — карта, яку вже бачили, з'являється миттєво,
         // без мережі взагалі).
         // Ключ CARTO (безкоштовний): https://carto.com/basemaps/apikey — вставте між лапками, щоб увімкнути світлий стиль Voyager.
-        const CARTO_KEY = 'cb1_4qmo_1_818489a95164c6cd525a6874';
+        const CARTO_KEY = ''; // порожньо = плитки OpenStreetMap із закладами (іконки й назви малює сама карта й оновлює OSM)
         const USE_CARTO = !!CARTO_KEY;
         const TILE_DB_NAME = USE_CARTO ? 'mapTileCacheDB_voyager_key' : 'mapTileCacheDB'; // окремий кеш, щоб стилі не змішувались
         const TILE_STORE = 'tiles';
