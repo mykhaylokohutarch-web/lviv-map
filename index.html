@@ -258,7 +258,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <!-- Прогріваємо з'єднання з тайл-сервером карти заздалегідь (DNS/TLS), щоб перші тайли
          почали вантажитись одразу, а не з нуля, коли користувач відкриє вкладку Карта. -->
-    <link rel="preconnect" href="https://a.basemaps.cartocdn.com" crossorigin>
+    <link rel="preconnect" href="https://tile.openstreetmap.org" crossorigin>
     <link rel="preconnect" href="https://assets.mixkit.co" crossorigin>
     <link rel="dns-prefetch" href="https://assets.mixkit.co">
     <link rel="dns-prefetch" href="https://unpkg.com">
@@ -2528,7 +2528,7 @@
             <div class="settings-section">
                 <div class="settings-section-title">Звідки взято дані</div>
                 <div class="settings-card about-card">
-                    <div class="about-item"><span class="about-item-title">Карта</span><span class="about-item-text">Картографічні дані — © учасники OpenStreetMap (ліцензія ODbL), стиль плиток карти — © CARTO (Voyager).</span><span class="about-item-tag">openstreetmap.org/copyright · carto.com/attributions</span></div>
+                    <div class="about-item"><span class="about-item-title">Карта</span><span class="about-item-text">Картографічні дані та плитки карти — © учасники OpenStreetMap, розповсюджуються за ліцензією ODbL.</span><span class="about-item-tag">openstreetmap.org/copyright</span></div>
                     <div class="about-item"><span class="about-item-title">Заклади й місця поруч</span><span class="about-item-text">Кафе, магазини, музеї тощо завантажуються з OpenStreetMap через Overpass API (overpass-api.de та дзеркала). Дані вносить спільнота, тому години роботи чи назви можуть бути неточними.</span></div>
                     <div class="about-item"><span class="about-item-title">Пошук і маршрути</span><span class="about-item-text">Пошук адрес — Nominatim (OpenStreetMap). Пішохідні маршрути — routing.openstreetmap.de на даних OpenStreetMap.</span></div>
                     <div class="about-item"><span class="about-item-title">Бібліотеки карти</span><span class="about-item-text">Leaflet (BSD-2), leaflet-rotate, Leaflet.markercluster (MIT) — відкрите програмне забезпечення.</span></div>
@@ -2556,7 +2556,7 @@
                     <h4>Хто це бачить</h4>
                     <p>Профіль, фото, сторіс і мітка на карті доступні іншим користувачам застосунку. Повідомлення бачать учасники відповідної переписки.</p>
                     <h4>Сторонні сервіси</h4>
-                    <p>Під час роботи ваш пристрій звертається до OpenStreetMap і CARTO (карта, пошук, маршрути), Firebase, Cloudinary, Telegram і сервісу QR-кодів. Вони отримують технічні дані запиту, зокрема IP-адресу та область карти, яку ви дивитесь, і мають власні політики конфіденційності.</p>
+                    <p>Під час роботи ваш пристрій звертається до OpenStreetMap (карта, пошук, маршрути), Firebase, Cloudinary, Telegram і сервісу QR-кодів. Вони отримують технічні дані запиту, зокрема IP-адресу та область карти, яку ви дивитесь, і мають власні політики конфіденційності.</p>
                     <h4>Ваші права</h4>
                     <p>Ви можете змінити чи видалити свої фото та інформацію в профілі. Щоб повністю видалити акаунт і пов’язані дані, напишіть розробникам через кнопку вище.</p>
                     <h4>Правила користування</h4>
@@ -2566,7 +2566,7 @@
                 </div></div>
             </div>
 
-            <div class="about-footer">Останнє оновлення: 5 жовтня 2026<br>Карта © учасники OpenStreetMap, © CARTO</div>
+            <div class="about-footer">Останнє оновлення: 5 жовтня 2026<br>Карта © учасники OpenStreetMap</div>
         </div>
     </div>
 
@@ -3251,7 +3251,10 @@
         // застосунку на диску пристрою: тайли, завантажені хоч раз, лишаються там і між сеансами
         // (закрив застосунок, відкрив за тиждень — карта, яку вже бачили, з'являється миттєво,
         // без мережі взагалі).
-        const TILE_DB_NAME = 'mapTileCacheDB_voyager';
+        // Ключ CARTO (безкоштовний): https://carto.com/basemaps/apikey — вставте між лапками, щоб увімкнути світлий стиль Voyager.
+        const CARTO_KEY = 'cb1_4qmo_1_818489a95164c6cd525a6874';
+        const USE_CARTO = !!CARTO_KEY;
+        const TILE_DB_NAME = USE_CARTO ? 'mapTileCacheDB_voyager_key' : 'mapTileCacheDB'; // окремий кеш, щоб стилі не змішувались
         const TILE_STORE = 'tiles';
         const MAX_CACHED_TILES = 8000;                 // ≈ 100–150 МБ максимум на пристрої
         const TILE_MAX_AGE_MS = 14 * 24 * 3600 * 1000; // старші за 14 днів — показуємо з кешу й тихо оновлюємо у фоні
@@ -3343,15 +3346,18 @@
         // там ще нема — тягне з мережі та заразом зберігає на майбутнє. Якщо IndexedDB чи
         // fetch(CORS) з якоїсь причини недоступні в середовищі — тихо повертається до звичайного
         // прямого завантаження картинкою, як було раніше (карта в будь-якому разі не ламається).
-        // Світла "сервісна" карта у стилі EasyWay/Google: м'які кольори, чіткі підписи вулиць і районів.
-// Дані — OpenStreetMap, стиль — CARTO Voyager. Ретіна-варіант (@2x) беремо на щільних екранах.
-const TILE_URL = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+        // ---- Джерело плиток ----
+// Без ключа CARTO_KEY (див. вище) працює стандартний OpenStreetMap.
+const TILE_URL = USE_CARTO
+    ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=' + encodeURIComponent(CARTO_KEY)
+    : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 const TILE_SUBDOMAINS = 'abcd';
 function plainTileUrl(z, x, y) {
+    if (!USE_CARTO) return `https://tile.openstreetmap.org/${z}/${x}/${y}.png`;
     const sub = TILE_SUBDOMAINS[(x + y) % TILE_SUBDOMAINS.length];
-    return `https://${sub}.basemaps.cartocdn.com/rastertiles/voyager/${z}/${x}/${y}${L.Browser.retina ? '@2x' : ''}.png`;
+    return `https://${sub}.basemaps.cartocdn.com/rastertiles/voyager/${z}/${x}/${y}${L.Browser.retina ? '@2x' : ''}.png?key=${encodeURIComponent(CARTO_KEY)}`;
 }
-        const tileRefreshing = new Set();
+const tileRefreshing = new Set();
         function refreshTileInBackground(key, url) {
             if (tileRefreshing.has(key)) return;
             tileRefreshing.add(key);
@@ -3391,14 +3397,18 @@ function plainTileUrl(z, x, y) {
         // немає, тож темний режим робимо CSS-інверсією кольорів самого шару тайлів (лише карти,
         // мітки та іконки це не чіпає — вони в іншому шарі Leaflet).
         const osmTiles = new CachedTileLayer(TILE_URL, {
-            attribution: '© OpenStreetMap contributors © CARTO', maxZoom: 20, maxNativeZoom: 20,
-            subdomains: TILE_SUBDOMAINS,
+            attribution: USE_CARTO ? '© OpenStreetMap contributors © CARTO' : '© OpenStreetMap contributors',
+            maxZoom: USE_CARTO ? 20 : 19, subdomains: TILE_SUBDOMAINS,
             updateWhenIdle: false,  // тайли підвантажуються ПІД ЧАС панорамування, а не після його кінця
             updateInterval: 100,
             keepBuffer: 3,          // менше "зайвих" тайлів у DOM/пам'яті навколо екрана — панорамування легше для пристрою
             updateWhenZooming: false // не довантажує нові тайли посеред анімації зуму, лише по завершенню
         });
         osmTiles.addTo(map);
+        if (USE_CARTO) {
+            const f = document.querySelector('.about-footer');
+            if (f) f.insertAdjacentHTML('beforeend', '<br>Стиль карти © CARTO (carto.com/attributions)');
+        }
         map.getContainer().classList.toggle('map-dark-mode', document.body.classList.contains('dark-theme'));
         // Сам шар-"приглушувач": звичайний div поверх карти (не Leaflet-пейн), тож не рухається й не
         // масштабується разом із тайлами при панорамуванні/зумі — просто статична тонована плівка.
