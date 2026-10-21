@@ -3530,6 +3530,9 @@ const tileRefreshing = new Set();
                     if (!/-color$/.test(prop)) return;
                     l.paint[prop] = mapColors(l.paint[prop], (c) => darkColor(c, { id, prop, type: l.type }));
                 });
+                // Штриховки/текстури площ (картинки зі спрайта не перефарбовуються) на темному фоні виглядали різко — робимо ледь помітними.
+                if (l.paint['fill-pattern']) l.paint['fill-opacity'] = 0.10;
+                if (l.paint['line-pattern']) l.paint['line-opacity'] = 0.30;
             });
             return d;
         }
@@ -3589,25 +3592,77 @@ const tileRefreshing = new Set();
             const b = (typeof map.getBearing === 'function') ? map.getBearing() : 0;
             return -b;
         }
+        // Центр беремо з тієї ж проєкції, якою Leaflet розставляє мітки (containerPointToLatLng),
+        // а не з getCenter(): під поворотом getCenter() може віддавати застаріле значення й підкладка «пливе» відносно міток.
+        function leafletViewCenter() {
+            try {
+                // Реальний розмір контейнера (а не кешований Leaflet'ом map.getSize()): у Telegram висота вікна змінюється
+                // вже після старту, а Leaflet про це дізнається не одразу — звідси сталий зсув між підкладкою й мітками.
+                const el = map.getContainer();
+                return map.containerPointToLatLng([el.clientWidth / 2, el.clientHeight / 2]);
+            } catch (e) { return map.getCenter(); }
+        }
+        let glAnimRaf = 0;
         function syncGlToLeaflet() {
             if (!glMap) return;
-            const c = map.getCenter();
+            if (glAnimRaf) { cancelAnimationFrame(glAnimRaf); glAnimRaf = 0; }
+            const c = leafletViewCenter();
             glMap.jumpTo({
                 center: [c.lng, c.lat],
                 zoom: map.getZoom() - 1,
                 bearing: leafletBearingToGl()
             });
         }
+        // Leaflet анімує зум CSS-переходом 250мс з cubic-bezier(0,0,.25,1): масштаб і зсув змінюються ЛІНІЙНО (а не за логарифмом зуму).
+        // Повторюємо ту саму криву покадрово, щоб підкладка й мітки не розходились посеред анімації.
+        function cubicBezierEase(x1, y1, x2, y2) {
+            return function (t) {
+                let lo = 0, hi = 1, u = t;
+                for (let i = 0; i < 24; i++) {
+                    const x = 3 * (1 - u) * (1 - u) * u * x1 + 3 * (1 - u) * u * u * x2 + u * u * u;
+                    if (Math.abs(x - t) < 1e-5) break;
+                    if (x < t) lo = u; else hi = u;
+                    u = (lo + hi) / 2;
+                }
+                return 3 * (1 - u) * (1 - u) * u * y1 + 3 * (1 - u) * u * u * y2 + u * u * u;
+            };
+        }
+        const leafletZoomEase = cubicBezierEase(0, 0, 0.25, 1);
+        function animateGlZoom(e) {
+            if (!glMap) return;
+            if (glAnimRaf) cancelAnimationFrame(glAnimRaf);
+            const z0 = glMap.getZoom() + 1, c0 = glMap.getCenter();
+            const S = Math.pow(2, e.zoom - z0);
+            const P0 = map.project(L.latLng(c0.lat, c0.lng), z0), P1 = map.project(e.center, z0);
+            const t0 = performance.now(), DUR = 250;
+            const step = (now) => {
+                const t = Math.min(1, (now - t0) / DUR), k = leafletZoomEase(t);
+                const sc = (1 - k) + k * S;
+                const ll = map.unproject(L.point(((1 - k) * P0.x + k * S * P1.x) / sc, ((1 - k) * P0.y + k * S * P1.y) / sc), z0);
+                glMap.jumpTo({ center: [ll.lng, ll.lat], zoom: z0 + Math.log2(sc) - 1, bearing: leafletBearingToGl() });
+                glAnimRaf = t < 1 ? requestAnimationFrame(step) : 0;
+            };
+            glAnimRaf = requestAnimationFrame(step);
+        }
         startVectorBasemap().then((ok) => {
             if (ok) {
                 vectorState = 'ok';
                 map.getContainer().classList.add('gl-active');
-                map.on('move zoom rotate moveend zoomend', syncGlToLeaflet);
-                map.on('zoomanim', (e) => {
-                    if (!glMap) return;
-                    glMap.easeTo({ center: [e.center.lng, e.center.lat], zoom: e.zoom - 1, duration: 250, essential: true });
-                });
+                map.on('move zoom rotate moveend zoomend viewreset', syncGlToLeaflet);
+                map.on('zoomanim', animateGlZoom);
                 map.on('resize', () => { if (glMap) { glMap.resize(); syncGlToLeaflet(); } });
+                // Контейнер карти міг змінити розмір без події window.resize (Telegram, клавіатура, панелі) —
+                // тоді Leaflet тримає застарілий розмір, і всі мітки зсуваються відносно підкладки. Вирівнюємо обидва.
+                try {
+                    let rzRaf = 0;
+                    new ResizeObserver(() => {
+                        cancelAnimationFrame(rzRaf);
+                        rzRaf = requestAnimationFrame(() => {
+                            try { map.invalidateSize({ pan: false }); } catch (e) {}
+                            if (glMap) { glMap.resize(); syncGlToLeaflet(); }
+                        });
+                    }).observe(map.getContainer());
+                } catch (e) {}
                 syncGlToLeaflet();
                 try { new MutationObserver(applyGlTheme).observe(document.body, { attributes: true, attributeFilter: ['class'] }); } catch (e) {}
                 applyGlTheme();
