@@ -381,7 +381,7 @@
             width: 20px; height: 20px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
             font-size: 11px; line-height: 1; opacity: 0.82;
-            border: 1.5px solid rgba(255,255,255,0.85);
+            border: none;
             box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22);
             transition: var(--theme-transition), transform 0.2s ease, opacity 0.2s ease;
         }
@@ -482,29 +482,34 @@
 
         #my-profile-btn { left: 20px; right: auto; }
 
-        /* Маленька мінімалістична кнопка "північ" — компактніша й простіша за звичайні apple-blur-btn */
-        #map-compass-btn {
-            position: absolute; top: calc(20px + 1cm + env(safe-area-inset-top, 0px)); right: 20px; z-index: 2500;
-            width: 30px; height: 30px; padding: 6px; box-sizing: border-box;
-            background: transparent; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+        /* Кнопки "північ" і "я" — той самий мінімалістичний стиль, що й іконки нижньої навігації:
+           контурні іконки (stroke 1.8, колір --icon-color) у напівпрозорій капсулі з розмиттям. */
+        #map-compass-btn, #map-me-btn {
+            position: absolute; right: 20px; z-index: 2500;
+            width: 36px; height: 36px; padding: 0; box-sizing: border-box;
+            background: rgba(255, 255, 255, 0.14);
+            backdrop-filter: blur(18px) saturate(180%); -webkit-backdrop-filter: blur(18px) saturate(180%);
             border: 1px solid var(--border-minimal); border-radius: 50%;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.10);
             display: flex; align-items: center; justify-content: center; cursor: pointer;
             color: var(--icon-color); transition: var(--theme-transition), transform 0.15s ease;
-            touch-action: manipulation;
+            touch-action: manipulation; -webkit-tap-highlight-color: transparent;
         }
-        body.dark-theme #map-compass-btn { box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-        #map-compass-btn:active { transform: scale(0.9); }
-        #map-compass-arrow { width: 100%; height: 100%; transition: transform 0.25s ease; }
+        #map-compass-btn { top: calc(20px + 1cm + env(safe-area-inset-top, 0px)); }
+        #map-me-btn { top: calc(20px + 1cm + 44px + env(safe-area-inset-top, 0px)); }
+        body.dark-theme #map-compass-btn, body.dark-theme #map-me-btn { background: rgba(28, 28, 30, 0.18); box-shadow: 0 8px 24px rgba(0,0,0,0.35); }
+        #map-compass-btn:active, #map-me-btn:active { transform: scale(0.88); }
+        #map-compass-arrow { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: transform 0.25s ease; }
+        #map-me-btn svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
         /* Кнопка "північ" мала вищий z-index за бічну панель (діалоги/профіль), тож просвічувала
            поверх екрана діалогів. Ховаємо її, поки будь-яка бічна панель (профіль, чат) відкрита. */
-        body:has(#profile-sidebar.active) #map-compass-btn { display: none; }
+        body:has(#profile-sidebar.active) #map-compass-btn, body:has(#profile-sidebar.active) #map-me-btn { display: none; }
 
         /* ---- Моя мітка на карті: пульсація, світле кільце і підпис «Ви» — щоб відрізнялась від інших ---- */
         .me-marker { position: relative; width: 38px; height: 38px; }
         .me-marker .me-pulse { position: absolute; inset: 0; border-radius: 50%; background: rgba(10, 132, 255, 0.45); animation: meMarkerPulse 2s ease-out infinite; pointer-events: none; }
         .me-marker .me-pulse.d2 { animation-delay: 1s; }
-        .me-marker .avatar-ring { position: relative; z-index: 1; width: 38px; height: 38px; box-shadow: 0 0 0 3px #fff, 0 0 16px 5px rgba(10, 132, 255, 0.85); }
+        .me-marker .avatar-ring { position: relative; z-index: 1; width: 38px; height: 38px; box-shadow: 0 0 16px 5px rgba(10, 132, 255, 0.85); }
         .me-marker .me-label { position: absolute; top: calc(100% + 6px); left: 50%; transform: translateX(-50%); z-index: 2; padding: 2px 9px; border-radius: 10px; background: var(--accent-main, #0a84ff); color: #fff; font-size: 11px; font-weight: 700; line-height: 1.3; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,0.35); pointer-events: none; }
         @keyframes meMarkerPulse { 0% { transform: scale(0.8); opacity: 0.9; } 100% { transform: scale(3); opacity: 0; } }
         /* ---- Підсвітка знайденого на карті місця ---- */
@@ -515,7 +520,7 @@
         }
         .map-search-highlight .pulse-dot {
             width: 16px; height: 16px; border-radius: 50%; background: var(--accent-main);
-            border: 3px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.35); z-index: 1;
+            border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.35); z-index: 1;
         }
         @keyframes mapSearchPulse {
             0% { transform: scale(0.35); opacity: 0.9; }
@@ -1113,7 +1118,7 @@
         .place-ring {
             width: 38px; height: 38px; border-radius: 50%; padding: 1.2px; box-sizing: border-box;
             display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 3px 8px rgba(0,0,0,0.28), inset 0 0 0 2.2px rgba(255,255,255,0.92);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.28);
             transition: transform 0.15s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.2s ease;
         }
         .custom-place-marker:active .place-ring { transform: scale(0.9); }
@@ -1135,10 +1140,10 @@
         .place-photo-ring.cat-shopping { background: linear-gradient(160deg, #67d0ff 0%, #2f93e8 55%, #1a6bc4 100%); }
         .place-photo-ring.cat-events { background: linear-gradient(160deg, #e59bff 0%, #ab53f0 55%, #7c22c9 100%); }
         .place-photo-ring.cat-services { background: linear-gradient(160deg, #4fe0b0 0%, #12b586 55%, #0a8f68 100%); }
-        .place-photo-ring-inner { width: 100%; height: 100%; border-radius: 50%; background-size: cover; background-position: center; box-shadow: inset 0 0 0 2px rgba(255,255,255,0.92); }
+        .place-photo-ring-inner { width: 100%; height: 100%; border-radius: 50%; background-size: cover; background-position: center; }
         .place-cat-badge {
             position: absolute; right: -3px; bottom: -3px; width: 17px; height: 17px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center; border: 1.5px solid #fff;
+            display: flex; align-items: center; justify-content: center; border: none;
             box-shadow: 0 1px 3px rgba(0,0,0,0.3);
         }
         .place-cat-badge svg { width: 9px; height: 9px; fill: #ffffff; }
@@ -1154,7 +1159,7 @@
         .app-cluster-bubble {
             display: flex; align-items: center; justify-content: center; border-radius: 50%;
             background: var(--ultramarine-gradient); color: #fff; font-weight: 700; font-size: 13px;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.3), inset 0 0 0 2.2px rgba(255,255,255,0.85);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.3);
             font-family: inherit;
         }
 
@@ -1795,7 +1800,7 @@
         .home-circle-add-badge:active { transform: scale(0.9); }
         .home-circle-add-badge svg { width: 58%; height: 58%; stroke: #fff; fill: none; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
         /* Тимчасова мітка на карті — з'являється, коли натискають на "мітку" біля кола закладу на Головній */
-        .place-focus-marker { width: 34px; height: 34px; border-radius: 50%; background: var(--ultramarine-gradient); border: 2px solid #fff; box-shadow: 0 3px 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
+        .place-focus-marker { width: 34px; height: 34px; border-radius: 50%; background: var(--ultramarine-gradient); border: none; box-shadow: 0 3px 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
         .place-focus-marker svg { width: 58%; height: 58%; stroke: #fff; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
         /* Підпис під колом — завжди ім'я (статичне, більше не підмінюється фразою). "Вайб"
            людини/закладу тепер живе окремо, як хмарка діалогу над аватаркою (.home-circle-msg). */
@@ -2025,9 +2030,12 @@
              тап скидає обертання й повертає карту у стандартне (північ-угору) положення. -->
         <button id="map-compass-btn" aria-label="Повернути карту на північ">
             <svg viewBox="0 0 24 24" id="map-compass-arrow">
-                <path d="M12 2 L15 12 L12 10 L9 12 Z" fill="#ff453a"></path>
-                <path d="M12 22 L9 12 L12 14 L15 12 Z" fill="currentColor"></path>
+                <path d="M12 3 L15.5 12 H8.5 Z" stroke="#ff453a"></path>
+                <path d="M12 21 L15.5 12 H8.5 Z"></path>
             </svg>
+        </button>
+        <button id="map-me-btn" aria-label="Показати мене на карті">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 4-6 8-6s8 2 8 6"></path></svg>
         </button>
 
         <!-- Пошук місця на карті тепер живе внизу, у тій самій смужці пошуку, що й на Головній
@@ -3216,7 +3224,7 @@
         }
 
         function openChatsList() {
-            document.getElementById('map-compass-btn').style.display = 'none';
+            document.getElementById('map-compass-btn').style.display = document.getElementById('map-me-btn').style.display = 'none';
             currentActiveItem = getMyProfileItem();
             if (currentChatRef) { off(currentChatRef); document.getElementById('chat-messages').innerHTML = ''; }
             if (isEditingProfile) exitEditMode(false);
@@ -4740,7 +4748,7 @@ const tileRefreshing = new Set();
         });
 
         function showSidebar(item) {
-            document.getElementById('map-compass-btn').style.display = 'none';
+            document.getElementById('map-compass-btn').style.display = document.getElementById('map-me-btn').style.display = 'none';
             currentActiveItem = item;
             const sidebarEl = document.getElementById('profile-sidebar');
             sidebarEl.classList.remove('chat-mode');
@@ -4817,7 +4825,7 @@ const tileRefreshing = new Set();
         });
 
         window.closeProfile = function() {
-            document.getElementById('map-compass-btn').style.display = '';
+            document.getElementById('map-compass-btn').style.display = document.getElementById('map-me-btn').style.display = '';
             const sidebar = document.getElementById('profile-sidebar');
             const wasChatMode = sidebar.classList.contains('chat-mode');
             sidebar.style.transition = 'transform 0.45s cubic-bezier(0.32, 0.72, 0, 1)';
@@ -7640,6 +7648,11 @@ const tileRefreshing = new Set();
             registerMarker(myId, profileMarkers[myId]);
             attachLongPress(profileMarkers[myId], () => enterRouteSelectionMode(myCoords, myId));
         })();
+
+        // Кнопка "я" біля компаса: повертає карту до моєї мітки (myCoords)
+        document.getElementById('map-me-btn').addEventListener('click', () => {
+            map.setView(myCoords, Math.max(map.getZoom(), 16), { animate: true });
+        });
 
         // ==================== Реєстрація нового користувача + вибір власної точки на карті ====================
         let placingPin = false;
