@@ -3447,7 +3447,7 @@ const tileRefreshing = new Set();
                             container: holder, style: style,
                             center: [c.lng, c.lat],
                             zoom: map.getZoom() - 1, // тайли MapLibre 512px, Leaflet 256px — різниця рівно 1 рівень зуму
-                            bearing: (typeof map.getBearing === 'function') ? map.getBearing() : 0,
+                            bearing: leafletBearingToGl(),
                             interactive: false, attributionControl: false, fadeDuration: 0, pitchWithRotate: false
                         });
                         glMap.once('load', () => { clearTimeout(timer); finish(true); });
@@ -3456,13 +3456,19 @@ const tileRefreshing = new Set();
                 } catch (e) { finish(false); }
             });
         }
+        // Leaflet-rotate крутить карту ПО годинниковій стрілці на bearing°, а MapLibre — ПРОТИ (bearing = куди дивиться «верх»).
+        // Тому знак треба інвертувати, інакше підкладка їде в протилежний бік відносно міток.
+        function leafletBearingToGl() {
+            const b = (typeof map.getBearing === 'function') ? map.getBearing() : 0;
+            return -b;
+        }
         function syncGlToLeaflet() {
             if (!glMap) return;
             const c = map.getCenter();
             glMap.jumpTo({
                 center: [c.lng, c.lat],
                 zoom: map.getZoom() - 1,
-                bearing: (typeof map.getBearing === 'function') ? map.getBearing() : 0
+                bearing: leafletBearingToGl()
             });
         }
         startVectorBasemap().then((ok) => {
