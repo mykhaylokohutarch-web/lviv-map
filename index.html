@@ -1152,6 +1152,79 @@
         .place-cat-badge.cat-events { background: #ab53f0; }
         .place-cat-badge.cat-services { background: #12b586; }
 
+        /* ===== Брендовані мітки закладів (круглий логотип на фірмовому кольорі, як в Apple Maps / Google) ===== */
+        .brand-pin {
+            position: relative; width: 46px; height: 46px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; overflow: hidden;
+            box-sizing: border-box; text-align: center; line-height: 1.02;
+            box-shadow: 0 0 0 1.5px rgba(255,255,255,0.92), 0 4px 10px rgba(0,0,0,0.28);
+            transform-origin: center center;
+            transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1.2), box-shadow 0.28s ease;
+        }
+        .brand-pin-mark {
+            font-family: inherit; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em;
+            white-space: pre; padding: 0 2px; pointer-events: none;
+        }
+        .brand-pin-logo { width: 100%; height: 100%; object-fit: contain; padding: 18%; box-sizing: border-box; display: block; pointer-events: none; }
+        .brand-pin-logo.cover { object-fit: cover; padding: 0; }
+        .custom-place-marker:active .brand-pin { transform: scale(0.92); }
+        .custom-place-marker.sel .brand-pin { transform: scale(1.45); box-shadow: 0 0 0 2px #fff, 0 8px 18px rgba(0,0,0,0.38); }
+
+        /* ===== Док фільтрів карти: кругла чорна кнопка внизу зліва → розкриває ряд чіпів (як на макеті) ===== */
+        #map-dock {
+            position: fixed; left: 14px; right: 0; bottom: 100px; z-index: 2450;
+            display: none; align-items: center; gap: 10px; pointer-events: none;
+        }
+        body:has(#bottom-nav.map-context) #map-dock { display: flex; }
+        body:has(#profile-sidebar.active) #map-dock { display: none; }
+        /* Старі перемикачі шарів (кнопка в навігації й вертикальна таблетка) замінені цим доком */
+        #map-layers-btn, #map-filter-bar { display: none !important; }
+        #map-dock-btn {
+            position: relative; flex: none; width: 48px; height: 48px; border-radius: 50%; border: none; padding: 0;
+            display: flex; align-items: center; justify-content: center; cursor: pointer; pointer-events: auto;
+            background: #0b0b0c; box-shadow: 0 6px 18px rgba(0,0,0,0.28);
+            -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+            transition: transform 0.2s cubic-bezier(0.32, 0.72, 0, 1.2), background 0.3s ease;
+        }
+        #map-dock-btn:active { transform: scale(0.9); }
+        #map-dock-btn svg { width: 22px; height: 22px; fill: none; stroke: #fff; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1.2); }
+        #map-dock.open #map-dock-btn svg { transform: rotate(90deg); }
+        #map-dock-badge {
+            position: absolute; top: -3px; right: -3px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box;
+            border-radius: 9px; background: var(--accent-main, #0a84ff); color: #fff; font-size: 11px; font-weight: 700;
+            display: none; align-items: center; justify-content: center; border: 2px solid #fff;
+        }
+        #map-dock-badge.on { display: flex; }
+        #map-dock-chips {
+            flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 8px;
+            overflow-x: auto; overflow-y: hidden; padding: 6px 28px 10px 2px; margin: -6px 0 -10px;
+            scrollbar-width: none; -webkit-overflow-scrolling: touch;
+            -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 34px), transparent);
+            mask-image: linear-gradient(to right, #000 calc(100% - 34px), transparent);
+            opacity: 0; transform: translate3d(-18px, 0, 0) scale(0.96); transform-origin: left center; pointer-events: none;
+            transition: opacity 0.25s ease, transform 0.35s cubic-bezier(0.32, 0.72, 0, 1.1);
+        }
+        #map-dock-chips::-webkit-scrollbar { display: none; }
+        #map-dock.open #map-dock-chips { opacity: 1; transform: none; pointer-events: auto; }
+        .map-chip {
+            flex: none; height: 44px; padding: 0 16px; border-radius: 999px; box-sizing: border-box;
+            display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+            font-family: inherit; font-size: 15px; font-weight: 600; letter-spacing: -0.01em; white-space: nowrap;
+            color: #1c1c1e; background: rgba(255,255,255,0.94); border: 1px solid rgba(0,0,0,0.07);
+            backdrop-filter: blur(18px) saturate(180%); -webkit-backdrop-filter: blur(18px) saturate(180%);
+            box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+            -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+            transition: transform 0.15s ease, background 0.2s ease, color 0.2s ease;
+        }
+        .map-chip:active { transform: scale(0.94); }
+        .map-chip svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+        .map-chip.on { background: #0b0b0c; color: #fff; border-color: #0b0b0c; }
+        body.dark-theme #map-dock-btn { background: #f2f2f7; box-shadow: 0 6px 18px rgba(0,0,0,0.5); }
+        body.dark-theme #map-dock-btn svg { stroke: #111; }
+        body.dark-theme #map-dock-badge { border-color: #1c1c1e; }
+        body.dark-theme .map-chip { color: #fff; background: rgba(44,44,46,0.92); border-color: rgba(255,255,255,0.1); }
+        body.dark-theme .map-chip.on { background: #f2f2f7; color: #111; border-color: #f2f2f7; }
+
         /* Бульбашка кластера: кілька міток поруч на віддаленій карті згортаються в одну таку кружечку
            з числом — той самий ультрамариновий стиль, що й у кільцях людей, аби виглядало як частина
            того самого дизайну, а не сторонній плагін. */
@@ -2300,6 +2373,15 @@
     </div>
 
     <!-- ==================== Глобальна нижня навігація ==================== -->
+    <!-- Док фільтрів карти: кругла кнопка зліва внизу, по тапу розкриває чіпи-фільтри (заповнюються в JS) -->
+    <div id="map-dock">
+        <button id="map-dock-btn" aria-label="Фільтри карти" aria-expanded="false">
+            <svg viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"></path><circle cx="15" cy="7" r="2.4"></circle><circle cx="9" cy="17" r="2.4"></circle></svg>
+            <span id="map-dock-badge"></span>
+        </button>
+        <div id="map-dock-chips" role="group" aria-label="Фільтри"></div>
+    </div>
+
     <div id="bottom-nav">
         <button class="nav-btn active" id="nav-home" aria-label="Люди">
             <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"></path><path d="M5 10v10h14V10"></path></svg>
@@ -3047,7 +3129,7 @@ body.dark-theme .app-notif{background:rgba(44,44,46,.84);color:#f5f5f7;border-co
 </script>
 <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, push, onChildAdded, onChildChanged, onChildRemoved, onValue, set, update, off, get, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getDatabase, ref, push, onChildAdded, onChildChanged, onChildRemoved, onValue, set, update, off, get, remove, onDisconnect, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         // Нейтральна заглушка-аватар (сірий силует), поки людина ще не додала власне фото.
         // Раніше тут стояло стокове фото конкретної випадкової людини (xsgames.co) — це виглядало
@@ -3319,6 +3401,102 @@ body.dark-theme .app-notif{background:rgba(44,44,46,.84);color:#f5f5f7;border-co
                 btn.classList.remove('active');
             }, { passive: true });
             window.addEventListener('resize', () => { if (bar.classList.contains('revealed')) positionBar(); });
+        })();
+
+        // ===== Док фільтрів: кругла кнопка → ряд чіпів (ресторани, кав'ярні, бари, магазини, події, послуги, друзі, улюблене) =====
+        // Логіка «фільтра»: нічого не вибрано — видно все; вибрано чіпи — видно лише вибрані категорії.
+        const placeMarkerRegistry = [];   // { place, marker, group } — заповнюється там, де створюються мітки закладів
+        const PLACE_SUB = { demo_pl1: 'coffee', demo_pl4: 'coffee', demo_pl16: 'coffee', demo_pl8: 'bar', demo_pl12: 'restaurant', demo_pl18: 'restaurant' };
+        function placeFilterKey(place) { return place.sub || PLACE_SUB[place.id] || (place.category === 'food' ? 'restaurant' : place.category); }
+        (function setupMapDock() {
+            const dock = document.getElementById('map-dock');
+            const btn = document.getElementById('map-dock-btn');
+            const row = document.getElementById('map-dock-chips');
+            const badge = document.getElementById('map-dock-badge');
+            const nav = document.getElementById('bottom-nav');
+            const favBtn = document.getElementById('map-fav-toggle');
+            if (!dock || !btn || !row) return;
+
+            const I = {
+                restaurant: '<path d="M7 2v8a2 2 0 0 0 2 2v10M11 2v8a2 2 0 0 1-2 2M17 22V2c-2.2 1.6-3 4.5-3 7.5V14h3"></path>',
+                coffee: '<path d="M4 8h12v6a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"></path><path d="M16 10h1.5a2.5 2.5 0 0 1 0 5H16"></path><path d="M8 2v2M12 2v2"></path>',
+                bar: '<path d="M4 4h16l-8 9z"></path><path d="M12 13v7M8 20h8"></path>',
+                shopping: '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path>',
+                events: '<path d="M8 2v3M16 2v3M3.5 9h17"></path><rect x="3.5" y="4.5" width="17" height="16" rx="2"></rect>',
+                services: '<path d="M14.7 6.3a4 4 0 0 1-5.4 5.4L4.6 17.4a1.5 1.5 0 0 0 2.1 2.1L12.4 14a4 4 0 0 1 5.4-5.4l-2.1 2.1-2-2z"></path>',
+                friends: '<circle cx="9" cy="7" r="3"></circle><path d="M2 21c0-3.3 3.1-6 7-6s7 2.7 7 6"></path><circle cx="17" cy="8" r="2.3"></circle><path d="M15 13.5c2.8.4 5 2.4 5 4.9"></path>',
+                fav: '<path d="M20.8 4.6a5 5 0 0 0-7.1 0L12 6.3l-1.7-1.7a5 5 0 1 0-7.1 7.1L12 20.4l8.8-8.7a5 5 0 0 0 0-7.1z"></path>'
+            };
+            const CHIPS = [
+                ['restaurant', 'Ресторани'], ['coffee', 'Кав\u02bcярні'], ['bar', 'Бари'], ['shopping', 'Магазини'],
+                ['events', 'Події'], ['services', 'Послуги'], ['friends', 'Друзі'], ['fav', 'Улюблене']
+            ];
+            const active = new Set();      // вибрані ключі (без 'fav' — він працює окремо, як і раніше)
+            let hiddenFriends = [];        // мітки людей, тимчасово прибрані з карти фільтром
+
+            CHIPS.forEach(([key, label]) => {
+                const b = document.createElement('button');
+                b.type = 'button'; b.className = 'map-chip'; b.dataset.key = key;
+                b.innerHTML = '<span>' + label + '</span><svg viewBox="0 0 24 24">' + I[key] + '</svg>';
+                row.appendChild(b);
+            });
+
+            function applyFilters() {
+                const all = active.size === 0;
+                placeMarkerRegistry.forEach(r => {
+                    const show = all || active.has(placeFilterKey(r.place));
+                    const has = r.group.hasLayer(r.marker);
+                    if (show && !has) r.group.addLayer(r.marker);
+                    else if (!show && has) r.group.removeLayer(r.marker);
+                });
+                // Люди/друзі: ховаємо всіх, окрім моєї власної мітки
+                const showFriends = all || active.has('friends');
+                const g = layerGroups.friends;
+                if (showFriends) {
+                    if (hiddenFriends.length) { g.addLayers ? g.addLayers(hiddenFriends) : hiddenFriends.forEach(m => g.addLayer(m)); hiddenFriends = []; }
+                } else {
+                    let me = null;
+                    try { me = (typeof profileMarkers !== 'undefined' && typeof myId !== 'undefined') ? profileMarkers[myId] : null; } catch (_) {}
+                    const toHide = g.getLayers().filter(m => m !== me);
+                    if (toHide.length) { g.removeLayers ? g.removeLayers(toHide) : toHide.forEach(m => g.removeLayer(m)); hiddenFriends = hiddenFriends.concat(toHide); }
+                }
+                updateBadge();
+            }
+            function updateBadge() {
+                const n = active.size + ((favBtn && favBtn.classList.contains('active')) ? 1 : 0);
+                badge.textContent = n; badge.classList.toggle('on', n > 0);
+            }
+            function positionDock() {
+                if (!nav) return;
+                const r = nav.getBoundingClientRect();
+                if (r.height) dock.style.bottom = Math.round(window.innerHeight - r.top + 12) + 'px';
+            }
+            function setOpen(open) {
+                dock.classList.toggle('open', open);
+                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+                if (open) { positionDock(); if (navigator.vibrate) { try { navigator.vibrate(15); } catch (_) {} } }
+            }
+
+            btn.addEventListener('click', () => setOpen(!dock.classList.contains('open')));
+            row.addEventListener('click', (e) => {
+                const chip = e.target.closest('.map-chip'); if (!chip) return;
+                const key = chip.dataset.key;
+                if (key === 'fav') {
+                    if (favBtn) favBtn.click();                       // та сама підсвітка улюблених, що була раніше
+                    chip.classList.toggle('on', !!(favBtn && favBtn.classList.contains('active')));
+                    updateBadge(); return;
+                }
+                if (active.has(key)) active.delete(key); else active.add(key);
+                chip.classList.toggle('on', active.has(key));
+                if (navigator.vibrate) { try { navigator.vibrate(10); } catch (_) {} }
+                applyFilters();
+            });
+
+            positionDock();
+            window.addEventListener('resize', positionDock);
+            if (nav && window.MutationObserver) new MutationObserver(positionDock).observe(nav, { attributes: true, attributeFilter: ['class'] });
+            setTimeout(positionDock, 400);
+            window.__applyMapFilters = applyFilters;   // щоб нові мітки (напр. нові люди) підкорялися активному фільтру
         })();
 
         // "Улюблене" зверху на карті — не окремий шар, а підсвітка: показує лише улюблені мітки,
@@ -4521,22 +4699,75 @@ const tileRefreshing = new Set();
         // Заклади з масиву `places` тепер мають власні мітки на карті (кольорове коло за категорією
         // + іконка), клікабельні, як і люди — відкривають картку з описом і спецпропозицією.
         // Живі точки з OSM (кав'ярні/магазини звідусіль) лишаються вимкненими окремо, це не заважає.
+        // Бренд кожного закладу: фірмовий колір, колір напису й короткий напис-логотип.
+        // Справжній логотип: додайте в заклад `logo: 'https://…/logo.png'` (прозорий PNG/SVG) —
+        // він має пріоритет над текстовим написом. `logoFit: 'cover'` — якщо лого вже круглий і на весь фон.
+        const BRANDS = {
+            demo_pl1:  { bg: '#2b1d14', fg: '#f3d9b1', mark: 'КАВА\nХАТА', logoFit: 'cover', logo: 'data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%232b1d14%22%2F%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2245%22%20fill%3D%22none%22%20stroke%3D%22%23f3d9b1%22%20stroke-opacity%3D%22.35%22%20stroke-width%3D%221.6%22%2F%3E%3Cg%20transform%3D%22translate%2820%2012%29%20scale%28.99%29%22%3E%3Cpath%20fill%3D%22%23f3d9b1%22%20d%3D%22M12%2022h34v18a14%2014%200%200%201-14%2014h-6A14%2014%200%200%201%2012%2040z%22%2F%3E%3Cpath%20stroke%3D%22%23f3d9b1%22%20stroke-width%3D%224%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20fill%3D%22none%22%20d%3D%22M46%2026h4a6%206%200%200%201%200%2014h-4%22%2F%3E%3Cpath%20stroke%3D%22%23f3d9b1%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20fill%3D%22none%22%20d%3D%22M20%206q4%205%200%2010M30%206q4%205%200%2010M40%206q4%205%200%2010%22%2F%3E%3C%2Fg%3E%3Ctext%20x%3D%2250%22%20y%3D%2283%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2213%22%20fill%3D%22%23f3d9b1%22%20textLength%3D%2242.0%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%D0%9A%D0%90%D0%92%D0%90%3C%2Ftext%3E%3C%2Fsvg%3E' },
+            demo_pl2:  { bg: '#c9a46a', fg: '#2a1d0f', mark: 'ВІНТАЖ', logoFit: 'cover', logo: 'data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%23c9a46a%22%2F%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2245%22%20fill%3D%22none%22%20stroke%3D%22%232a1d0f%22%20stroke-opacity%3D%22.35%22%20stroke-width%3D%221.6%22%2F%3E%3Cg%20transform%3D%22translate%2820%2012%29%20scale%28.99%29%22%3E%3Cpath%20stroke%3D%22%232a1d0f%22%20stroke-width%3D%224%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20fill%3D%22none%22%20d%3D%22M30%2016a6%206%200%201%201%206%206l-6%205%22%2F%3E%3Cpath%20stroke%3D%22%232a1d0f%22%20stroke-width%3D%224%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20fill%3D%22none%22%20d%3D%22M30%2027L5%2047h50z%22%2F%3E%3C%2Fg%3E%3Ctext%20x%3D%2250%22%20y%3D%2283%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2213%22%20fill%3D%22%232a1d0f%22%20textLength%3D%2263.0%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%D0%92%D0%86%D0%9D%D0%A2%D0%90%D0%96%3C%2Ftext%3E%3C%2Fsvg%3E' },
+            demo_pl3:  { bg: '#5b1a6e', fg: '#ffe9ff', mark: 'ЛІЛЕЯ', logoFit: 'cover', logo: 'data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%235b1a6e%22%2F%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2245%22%20fill%3D%22none%22%20stroke%3D%22%23ffe9ff%22%20stroke-opacity%3D%22.35%22%20stroke-width%3D%221.6%22%2F%3E%3Cg%20transform%3D%22translate%2820%2012%29%20scale%28.99%29%22%3E%3Cellipse%20fill%3D%22%23ffe9ff%22%20cx%3D%2230%22%20cy%3D%2215%22%20rx%3D%227%22%20ry%3D%2214%22%20transform%3D%22rotate%280%2030%2030%29%22%2F%3E%3Cellipse%20fill%3D%22%23ffe9ff%22%20cx%3D%2230%22%20cy%3D%2215%22%20rx%3D%227%22%20ry%3D%2214%22%20transform%3D%22rotate%2872%2030%2030%29%22%2F%3E%3Cellipse%20fill%3D%22%23ffe9ff%22%20cx%3D%2230%22%20cy%3D%2215%22%20rx%3D%227%22%20ry%3D%2214%22%20transform%3D%22rotate%28144%2030%2030%29%22%2F%3E%3Cellipse%20fill%3D%22%23ffe9ff%22%20cx%3D%2230%22%20cy%3D%2215%22%20rx%3D%227%22%20ry%3D%2214%22%20transform%3D%22rotate%28216%2030%2030%29%22%2F%3E%3Cellipse%20fill%3D%22%23ffe9ff%22%20cx%3D%2230%22%20cy%3D%2215%22%20rx%3D%227%22%20ry%3D%2214%22%20transform%3D%22rotate%28288%2030%2030%29%22%2F%3E%3Ccircle%20cx%3D%2230%22%20cy%3D%2230%22%20r%3D%225%22%20fill%3D%22%235b1a6e%22%2F%3E%3C%2Fg%3E%3Ctext%20x%3D%2250%22%20y%3D%2283%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2213%22%20fill%3D%22%23ffe9ff%22%20textLength%3D%2252.5%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%D0%9B%D0%86%D0%9B%D0%95%D0%AF%3C%2Ftext%3E%3C%2Fsvg%3E' },
+            demo_pl4:  { bg: '#f2c14e', fg: '#4a2c0a', mark: 'ХЛІБНА\nХАТА', logoFit: 'cover', logo: 'data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%23f2c14e%22%2F%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2245%22%20fill%3D%22none%22%20stroke%3D%22%234a2c0a%22%20stroke-opacity%3D%22.35%22%20stroke-width%3D%221.6%22%2F%3E%3Cg%20transform%3D%22translate%2820%2012%29%20scale%28.99%29%22%3E%3Cellipse%20fill%3D%22%234a2c0a%22%20cx%3D%2230%22%20cy%3D%2232%22%20rx%3D%2227%22%20ry%3D%2217%22%2F%3E%3Cpath%20stroke%3D%22%23f2c14e%22%20stroke-width%3D%223.5%22%20stroke-linecap%3D%22round%22%20d%3D%22M16%2022l6%2014M28%2019l6%2016M40%2022l6%2014%22%2F%3E%3C%2Fg%3E%3Ctext%20x%3D%2250%22%20y%3D%2283%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2213%22%20fill%3D%22%234a2c0a%22%20textLength%3D%2242.0%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%D0%A5%D0%9B%D0%86%D0%91%3C%2Ftext%3E%3C%2Fsvg%3E' },
+            demo_pl5:  { bg: '#0f2a5c', fg: '#ffd84a', mark: 'СЯЙВО', logoFit: 'cover', logo: 'data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%230f2a5c%22%2F%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2245%22%20fill%3D%22none%22%20stroke%3D%22%23ffd84a%22%20stroke-opacity%3D%22.35%22%20stroke-width%3D%221.6%22%2F%3E%3Cg%20transform%3D%22translate%2820%2012%29%20scale%28.99%29%22%3E%3Cpath%20stroke%3D%22%23ffd84a%22%20stroke-width%3D%224%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20fill%3D%22none%22%20d%3D%22M30%2014C22%208%2012%208%204%2012v34c8-4%2018-4%2026%202%208-6%2018-6%2026-2V12c-8-4-18-4-26%202zM30%2014v34%22%2F%3E%3C%2Fg%3E%3Ctext%20x%3D%2250%22%20y%3D%2283%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2213%22%20fill%3D%22%23ffd84a%22%20textLength%3D%2252.5%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%D0%A1%D0%AF%D0%99%D0%92%D0%9E%3C%2Ftext%3E%3C%2Fsvg%3E' },
+            demo_pl6:  { bg: '#111111', fg: '#ffffff', mark: 'АРТ\nПРОСТІР', logoFit: 'cover', logo: 'data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%23111111%22%2F%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2245%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-opacity%3D%22.35%22%20stroke-width%3D%221.6%22%2F%3E%3Cg%20transform%3D%22translate%2820%2012%29%20scale%28.99%29%22%3E%3Crect%20stroke%3D%22%23ffffff%22%20stroke-width%3D%224%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20fill%3D%22none%22%20x%3D%226%22%20y%3D%226%22%20width%3D%2248%22%20height%3D%2248%22%20rx%3D%223%22%2F%3E%3Ccircle%20fill%3D%22%23ffffff%22%20cx%3D%2230%22%20cy%3D%2230%22%20r%3D%2210%22%2F%3E%3C%2Fg%3E%3Ctext%20x%3D%2250%22%20y%3D%2283%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2213%22%20fill%3D%22%23ffffff%22%20textLength%3D%2231.5%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%D0%90%D0%A0%D0%A2%3C%2Ftext%3E%3C%2Fsvg%3E' },
+            demo_pl7:  { bg: '#d83a2e', fg: '#ffffff', mark: 'ГОЛЕНИЙ\nКІТ', logoFit: 'cover', logo: 'data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%23d83a2e%22%2F%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2245%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-opacity%3D%22.35%22%20stroke-width%3D%221.6%22%2F%3E%3Cg%20transform%3D%22translate%2820%2012%29%20scale%28.99%29%22%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22M10%2050V12l13%2013h14l13-13v38a8%208%200%200%201-8%208H18a8%208%200%200%201-8-8z%22%2F%3E%3Ccircle%20cx%3D%2222%22%20cy%3D%2238%22%20r%3D%223.5%22%20fill%3D%22%23d83a2e%22%2F%3E%3Ccircle%20cx%3D%2238%22%20cy%3D%2238%22%20r%3D%223.5%22%20fill%3D%22%23d83a2e%22%2F%3E%3C%2Fg%3E%3Ctext%20x%3D%2250%22%20y%3D%2283%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2213%22%20fill%3D%22%23ffffff%22%20textLength%3D%2231.5%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%D0%9A%D0%86%D0%A2%3C%2Ftext%3E%3C%2Fsvg%3E' },
+            demo_pl8:  { bg: '#6d1530', fg: '#f6d6a8', mark: 'ДЕГУСТ\nАЦІУМ', logoFit: 'cover', logo: 'data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%236d1530%22%2F%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2245%22%20fill%3D%22none%22%20stroke%3D%22%23f6d6a8%22%20stroke-opacity%3D%22.35%22%20stroke-width%3D%221.6%22%2F%3E%3Cg%20transform%3D%22translate%2820%2012%29%20scale%28.99%29%22%3E%3Cpath%20fill%3D%22%23f6d6a8%22%20d%3D%22M4%206h52L30%2034z%22%2F%3E%3Cpath%20stroke%3D%22%23f6d6a8%22%20stroke-width%3D%224%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20fill%3D%22none%22%20d%3D%22M30%2034v20M17%2055h26%22%2F%3E%3C%2Fg%3E%3Ctext%20x%3D%2250%22%20y%3D%2283%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2213%22%20fill%3D%22%23f6d6a8%22%20textLength%3D%2263.0%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%D0%94%D0%95%D0%93%D0%A3%D0%A1%D0%A2%3C%2Ftext%3E%3C%2Fsvg%3E' },
+            demo_pl9:  { bg: '#f4b6c8', fg: '#7a1f43', mark: 'ПЕЛЮСТКА', logoFit: 'cover', logo: 'data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%23f4b6c8%22%2F%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2245%22%20fill%3D%22none%22%20stroke%3D%22%237a1f43%22%20stroke-opacity%3D%22.35%22%20stroke-width%3D%221.6%22%2F%3E%3Cg%20transform%3D%22translate%2820%2012%29%20scale%28.99%29%22%3E%3Ccircle%20fill%3D%22%237a1f43%22%20cx%3D%2245.0%22%20cy%3D%2230.0%22%20r%3D%2210%22%2F%3E%3Ccircle%20fill%3D%22%237a1f43%22%20cx%3D%2237.5%22%20cy%3D%2243.0%22%20r%3D%2210%22%2F%3E%3Ccircle%20fill%3D%22%237a1f43%22%20cx%3D%2222.5%22%20cy%3D%2243.0%22%20r%3D%2210%22%2F%3E%3Ccircle%20fill%3D%22%237a1f43%22%20cx%3D%2215.0%22%20cy%3D%2230.0%22%20r%3D%2210%22%2F%3E%3Ccircle%20fill%3D%22%237a1f43%22%20cx%3D%2222.5%22%20cy%3D%2217.0%22%20r%3D%2210%22%2F%3E%3Ccircle%20fill%3D%22%237a1f43%22%20cx%3D%2237.5%22%20cy%3D%2217.0%22%20r%3D%2210%22%2F%3E%3Ccircle%20cx%3D%2230%22%20cy%3D%2230%22%20r%3D%227%22%20fill%3D%22%23f4b6c8%22%2F%3E%3C%2Fg%3E%3Ctext%20x%3D%2250%22%20y%3D%2283%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2213%22%20fill%3D%22%237a1f43%22%20textLength%3D%2264%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%D0%9F%D0%95%D0%9B%D0%AE%D0%A1%D0%A2%D0%9A%D0%90%3C%2Ftext%3E%3C%2Fsvg%3E' },
+            demo_pl10: { bg: '#151515', fg: '#39ff88', mark: 'ПІДВАЛ', logoFit: 'cover', logo: 'data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%23151515%22%2F%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2245%22%20fill%3D%22none%22%20stroke%3D%22%2339ff88%22%20stroke-opacity%3D%22.35%22%20stroke-width%3D%221.6%22%2F%3E%3Cg%20transform%3D%22translate%2820%2012%29%20scale%28.99%29%22%3E%3Crect%20fill%3D%22%2339ff88%22%20x%3D%224%22%20y%3D%2221.0%22%20width%3D%227%22%20height%3D%2218%22%20rx%3D%223.5%22%2F%3E%3Crect%20fill%3D%22%2339ff88%22%20x%3D%2215%22%20y%3D%2211.0%22%20width%3D%227%22%20height%3D%2238%22%20rx%3D%223.5%22%2F%3E%3Crect%20fill%3D%22%2339ff88%22%20x%3D%2226%22%20y%3D%223.0%22%20width%3D%227%22%20height%3D%2254%22%20rx%3D%223.5%22%2F%3E%3Crect%20fill%3D%22%2339ff88%22%20x%3D%2237%22%20y%3D%2214.0%22%20width%3D%227%22%20height%3D%2232%22%20rx%3D%223.5%22%2F%3E%3Crect%20fill%3D%22%2339ff88%22%20x%3D%2248%22%20y%3D%2222.0%22%20width%3D%227%22%20height%3D%2216%22%20rx%3D%223.5%22%2F%3E%3C%2Fg%3E%3Ctext%20x%3D%2250%22%20y%3D%2283%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2213%22%20fill%3D%22%2339ff88%22%20textLength%3D%2263.0%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%D0%9F%D0%86%D0%94%D0%92%D0%90%D0%9B%3C%2Ftext%3E%3C%2Fsvg%3E' },
+            demo_pl11: { bg: '#ffc928', fg: '#1b1b1b', mark: 'ВУЛИК', logoFit: 'cover', logo: 'data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%23ffc928%22%2F%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2245%22%20fill%3D%22none%22%20stroke%3D%22%231b1b1b%22%20stroke-opacity%3D%22.35%22%20stroke-width%3D%221.6%22%2F%3E%3Cg%20transform%3D%22translate%2820%2012%29%20scale%28.99%29%22%3E%3Cpolygon%20stroke%3D%22%231b1b1b%22%20stroke-width%3D%224%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20fill%3D%22none%22%20points%3D%2253.4%2C43.5%2030.0%2C57.0%206.6%2C43.5%206.6%2C16.5%2030.0%2C3.0%2053.4%2C16.5%22%2F%3E%3Cpolygon%20fill%3D%22%231b1b1b%22%20points%3D%2241.3%2C36.5%2030.0%2C43.0%2018.7%2C36.5%2018.7%2C23.5%2030.0%2C17.0%2041.3%2C23.5%22%2F%3E%3C%2Fg%3E%3Ctext%20x%3D%2250%22%20y%3D%2283%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2213%22%20fill%3D%22%231b1b1b%22%20textLength%3D%2252.5%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%D0%92%D0%A3%D0%9B%D0%98%D0%9A%3C%2Ftext%3E%3C%2Fsvg%3E' },
+            demo_pl12: { bg: '#1e7a46', fg: '#ffffff', mark: 'НЕАПО\nЛІТАНО', logoFit: 'cover', logo: 'data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%231e7a46%22%2F%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2245%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-opacity%3D%22.35%22%20stroke-width%3D%221.6%22%2F%3E%3Cg%20transform%3D%22translate%2820%2012%29%20scale%28.99%29%22%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22M30%2058L5%2014a40%2040%200%200%201%2050%200z%22%2F%3E%3Ccircle%20cx%3D%2221%22%20cy%3D%2221%22%20r%3D%224.5%22%20fill%3D%22%231e7a46%22%2F%3E%3Ccircle%20cx%3D%2239%22%20cy%3D%2222%22%20r%3D%224.5%22%20fill%3D%22%231e7a46%22%2F%3E%3Ccircle%20cx%3D%2230%22%20cy%3D%2238%22%20r%3D%224.5%22%20fill%3D%22%231e7a46%22%2F%3E%3C%2Fg%3E%3Ctext%20x%3D%2250%22%20y%3D%2283%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2213%22%20fill%3D%22%23ffffff%22%20textLength%3D%2264%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%D0%9D%D0%95%D0%90%D0%9F%D0%9E%D0%9B%D0%86%3C%2Ftext%3E%3C%2Fsvg%3E' },
+            demo_pl13: { bg: '#8b1e2d', fg: '#f8e2b8', mark: 'ЛЬВІВ\nСКАРБИ', logoFit: 'cover', logo: 'data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%238b1e2d%22%2F%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2245%22%20fill%3D%22none%22%20stroke%3D%22%23f8e2b8%22%20stroke-opacity%3D%22.35%22%20stroke-width%3D%221.6%22%2F%3E%3Cg%20transform%3D%22translate%2820%2012%29%20scale%28.99%29%22%3E%3Cpath%20fill%3D%22%23f8e2b8%22%20d%3D%22M10%2056V20h7v7h7v-7h12v7h7v-7h7v36z%22%2F%3E%3Cpath%20fill%3D%22%238b1e2d%22%20d%3D%22M25%2056V42a5%205%200%200%201%2010%200v14z%22%2F%3E%3C%2Fg%3E%3Ctext%20x%3D%2250%22%20y%3D%2283%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2213%22%20fill%3D%22%23f8e2b8%22%20textLength%3D%2263.0%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%D0%A1%D0%9A%D0%90%D0%A0%D0%91%D0%98%3C%2Ftext%3E%3C%2Fsvg%3E' },
+            demo_pl14: { bg: '#2d4a7a', fg: '#ffffff', mark: 'ДРАБИНА', logoFit: 'cover', logo: 'data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%232d4a7a%22%2F%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2245%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-opacity%3D%22.35%22%20stroke-width%3D%221.6%22%2F%3E%3Cg%20transform%3D%22translate%2820%2012%29%20scale%28.99%29%22%3E%3Cpath%20stroke%3D%22%23ffffff%22%20stroke-width%3D%225%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20fill%3D%22none%22%20d%3D%22M16%204v52M44%204v52%22%2F%3E%3Cpath%20stroke%3D%22%23ffffff%22%20stroke-width%3D%224%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20fill%3D%22none%22%20d%3D%22M16%2014h28M16%2026h28M16%2038h28M16%2050h28%22%2F%3E%3C%2Fg%3E%3Ctext%20x%3D%2250%22%20y%3D%2283%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2213%22%20fill%3D%22%23ffffff%22%20textLength%3D%2264%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%D0%94%D0%A0%D0%90%D0%91%D0%98%D0%9D%D0%90%3C%2Ftext%3E%3C%2Fsvg%3E' },
+            demo_pl15: { bg: '#bfe3d6', fg: '#14594a', mark: 'ДИХАННЯ', logoFit: 'cover', logo: 'data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%23bfe3d6%22%2F%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2245%22%20fill%3D%22none%22%20stroke%3D%22%2314594a%22%20stroke-opacity%3D%22.35%22%20stroke-width%3D%221.6%22%2F%3E%3Cg%20transform%3D%22translate%2820%2012%29%20scale%28.99%29%22%3E%3Cpath%20fill%3D%22%2314594a%22%20d%3D%22M30%206q13%2018%200%2040q-13-22%200-40z%22%2F%3E%3Cpath%20fill%3D%22%2314594a%22%20d%3D%22M30%2046q-2-16-24-20q0%2020%2024%2020z%22%2F%3E%3Cpath%20fill%3D%22%2314594a%22%20d%3D%22M30%2046q2-16%2024-20q0%2020-24%2020z%22%2F%3E%3C%2Fg%3E%3Ctext%20x%3D%2250%22%20y%3D%2283%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2213%22%20fill%3D%22%2314594a%22%20textLength%3D%2264%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%D0%94%D0%98%D0%A5%D0%90%D0%9D%D0%9D%D0%AF%3C%2Ftext%3E%3C%2Fsvg%3E' },
+            demo_pl16: { bg: '#0f5c4d', fg: '#f2dca0', mark: 'ШОВКОВИЙ\nШЛЯХ', logoFit: 'cover', logo: 'data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%230f5c4d%22%2F%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2245%22%20fill%3D%22none%22%20stroke%3D%22%23f2dca0%22%20stroke-opacity%3D%22.35%22%20stroke-width%3D%221.6%22%2F%3E%3Cg%20transform%3D%22translate%2820%2012%29%20scale%28.99%29%22%3E%3Cpath%20fill%3D%22%23f2dca0%22%20d%3D%22M6%2026h44c0%2016-9%2026-22%2026S6%2042%206%2026z%22%2F%3E%3Cpath%20stroke%3D%22%23f2dca0%22%20stroke-width%3D%224%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20fill%3D%22none%22%20d%3D%22M2%2057h52%22%2F%3E%3Cpath%20stroke%3D%22%23f2dca0%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20fill%3D%22none%22%20d%3D%22M20%206q4%205%200%2010M32%206q4%205%200%2010%22%2F%3E%3C%2Fg%3E%3Ctext%20x%3D%2250%22%20y%3D%2283%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2213%22%20fill%3D%22%23f2dca0%22%20textLength%3D%2242.0%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%D0%A8%D0%9B%D0%AF%D0%A5%3C%2Ftext%3E%3C%2Fsvg%3E' },
+            demo_pl17: { bg: '#3a3a3a', fg: '#e8c872', mark: 'ЧАСОВИЙ\nДІМ', logoFit: 'cover', logo: 'data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%233a3a3a%22%2F%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2245%22%20fill%3D%22none%22%20stroke%3D%22%23e8c872%22%20stroke-opacity%3D%22.35%22%20stroke-width%3D%221.6%22%2F%3E%3Cg%20transform%3D%22translate%2820%2012%29%20scale%28.99%29%22%3E%3Ccircle%20stroke%3D%22%23e8c872%22%20stroke-width%3D%225%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20fill%3D%22none%22%20cx%3D%2230%22%20cy%3D%2230%22%20r%3D%2225%22%2F%3E%3Cpath%20stroke%3D%22%23e8c872%22%20stroke-width%3D%224%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20fill%3D%22none%22%20d%3D%22M30%2014v17l11%208%22%2F%3E%3C%2Fg%3E%3Ctext%20x%3D%2250%22%20y%3D%2283%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2213%22%20fill%3D%22%23e8c872%22%20textLength%3D%2231.5%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%D0%A7%D0%90%D0%A1%3C%2Ftext%3E%3C%2Fsvg%3E' },
+            demo_pl18: { bg: '#f26a1b', fg: '#ffffff', mark: 'БУРГЕР', logoFit: 'cover', logo: 'data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%23f26a1b%22%2F%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2245%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-opacity%3D%22.35%22%20stroke-width%3D%221.6%22%2F%3E%3Cg%20transform%3D%22translate%2820%2012%29%20scale%28.99%29%22%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22M6%2026a24%2020%200%200%201%2048%200z%22%2F%3E%3Crect%20fill%3D%22%23ffffff%22%20x%3D%224%22%20y%3D%2230%22%20width%3D%2252%22%20height%3D%228%22%20rx%3D%224%22%2F%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22M6%2042h48v3a9%209%200%200%201-9%209H15a9%209%200%200%201-9-9z%22%2F%3E%3Cg%20fill%3D%22%23f26a1b%22%3E%3Cellipse%20cx%3D%2220%22%20cy%3D%2217%22%20rx%3D%222.2%22%20ry%3D%221.3%22%2F%3E%3Cellipse%20cx%3D%2231%22%20cy%3D%2212%22%20rx%3D%222.2%22%20ry%3D%221.3%22%2F%3E%3Cellipse%20cx%3D%2241%22%20cy%3D%2218%22%20rx%3D%222.2%22%20ry%3D%221.3%22%2F%3E%3C%2Fg%3E%3C%2Fg%3E%3Ctext%20x%3D%2250%22%20y%3D%2283%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2213%22%20fill%3D%22%23ffffff%22%20textLength%3D%2263.0%22%20lengthAdjust%3D%22spacingAndGlyphs%22%3E%D0%91%D0%A3%D0%A0%D0%93%D0%95%D0%A0%3C%2Ftext%3E%3C%2Fsvg%3E' }
+        };
+        const BRAND_FALLBACK = { food: '#e8792f', shopping: '#2f93e8', events: '#ab53f0', services: '#12b586' };
+        function brandOf(place) {
+            const b = Object.assign({}, BRANDS[place.id] || {}, place.brand || {});
+            if (!b.bg) b.bg = BRAND_FALLBACK[place.category] || '#2f93e8';
+            if (!b.fg) b.fg = '#ffffff';
+            if (!b.mark) {
+                const words = String(place.name || '').replace(/[«»"“”]/g, '').trim().split(/\s+/).filter(Boolean);
+                b.mark = (words.length > 1 ? words.slice(-2).join('\n') : (words[0] || '•'));
+            }
+            return b;
+        }
+        const escHtml = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        function brandPinHtml(place) {
+            const b = brandOf(place);
+            const logo = place.logo || b.logo;
+            if (logo) {
+                const fit = place.logo ? place.logoFit : (place.logoFit || b.logoFit);
+                return `<div class="brand-pin" style="background:${b.bg}"><img class="brand-pin-logo${fit === 'cover' ? ' cover' : ''}" src="${escHtml(logo)}" alt="" draggable="false"></div>`;
+            }
+            const longest = Math.max.apply(null, String(b.mark).split('\n').map(l => l.length));
+            const fs = longest <= 4 ? 11.5 : longest <= 5 ? 10 : longest <= 6 ? 9 : longest <= 8 ? 7.6 : 6.6;
+            return `<div class="brand-pin" style="background:${b.bg}"><span class="brand-pin-mark" style="color:${b.fg};font-size:${fs}px">${escHtml(b.mark)}</span></div>`;
+        }
+        // Тап по мітці — вона збільшується (як вибраний заклад на макеті), тап по карті — повертається
+        let selectedBrandMarker = null;
+        function selectBrandPin(marker) {
+            if (selectedBrandMarker && selectedBrandMarker._icon) selectedBrandMarker._icon.classList.remove('sel');
+            if (selectedBrandMarker && selectedBrandMarker.setZIndexOffset) selectedBrandMarker.setZIndexOffset(0);
+            selectedBrandMarker = marker;
+            if (marker && marker._icon) marker._icon.classList.add('sel');
+            if (marker && marker.setZIndexOffset) marker.setZIndexOffset(900);
+        }
+        map.on('click', () => selectBrandPin(null));
+
         places.forEach(place => {
-            const photo = place.photos && place.photos[0];
             const placeIcon = L.divIcon({
                 className: 'custom-place-marker',
-                html: photo
-                    ? `<div class="place-marker-wrap">
-                           <div class="place-photo-ring cat-${place.category}"><div class="place-photo-ring-inner" style="background-image: url('${photo}')"></div></div>
-                           <div class="place-cat-badge cat-${place.category}">${svgIcons[place.svg] || placeBadgeSvg}</div>
-                       </div>`
-                    : `<div class="place-ring cat-${place.category}">${svgIcons[place.svg] || placeBadgeSvg}</div>`,
-                iconSize: [38, 38], iconAnchor: [19, 19]
+                html: brandPinHtml(place),
+                iconSize: [46, 46], iconAnchor: [23, 23]
             });
             const group = layerGroups[place.category] || layerGroups.services;
             const placeMarker = L.marker(place.coords, { icon: placeIcon }).addTo(group);
+            placeMarkerRegistry.push({ place: place, marker: placeMarker, group: group });
             placeMarker.on('click', (e) => {
                 L.DomEvent.stopPropagation(e);
+                selectBrandPin(placeMarker);
                 if (routeSelecting) { buildWalkingRoute(myCoords, place.coords, place.id); return; }
                 showMapCard(place);
             });
@@ -5612,6 +5843,71 @@ const tileRefreshing = new Set();
         // той самий на будь-якому пристрої, де людина відкриє застосунок.
         let myId = 'tg_' + tgUser.id;
         localStorage.setItem('chat_my_id', myId);
+
+        // ===== Push на заблокований екран / коли людина не в додатку =====
+        // Клієнт лише: (1) просить у Telegram дозвіл, щоб бот міг писати людині,
+        // (2) зберігає налаштування pushPrefs, (3) веде presence (онлайн/офлайн).
+        // Саму відправку робить Cloud Function (functions/index.js) через Telegram-бота.
+        (function setupPush() {
+            try {
+                const tg = window.Telegram && window.Telegram.WebApp;
+                const lsOn = (k) => (localStorage.getItem(k) ?? '1') === '1';
+                const prefsRef = ref(db, `pushPrefs/${myId}`);
+                const presRef = ref(db, `presence/${myId}`);
+
+                function syncPrefs(extra) {
+                    set(prefsRef, Object.assign({
+                        enabled: lsOn('settings_notifications'),
+                        silent: !lsOn('settings_sound'),
+                        canWrite: localStorage.getItem('push_can_write') === '1',
+                        ts: Date.now()
+                    }, extra || {})).catch(() => {});
+                }
+
+                function askWriteAccess() {
+                    if (!tg || typeof tg.requestWriteAccess !== 'function') return;
+                    try {
+                        tg.requestWriteAccess((allowed) => {
+                            localStorage.setItem('push_can_write', allowed ? '1' : '0');
+                            localStorage.setItem('push_asked', '1');
+                            syncPrefs();
+                        });
+                    } catch (_) {}
+                }
+
+                // Presence: онлайн лише поки застосунок видимий; heartbeat кожні 30 с
+                let hb = null;
+                function goOnline() {
+                    set(presRef, { online: true, ts: Date.now() }).catch(() => {});
+                    onDisconnect(presRef).set({ online: false, ts: serverTimestamp() }).catch(() => {});
+                    clearInterval(hb);
+                    hb = setInterval(() => { if (!document.hidden) set(presRef, { online: true, ts: Date.now() }).catch(() => {}); }, 30000);
+                }
+                function goOffline() {
+                    clearInterval(hb);
+                    set(presRef, { online: false, ts: Date.now() }).catch(() => {});
+                }
+                document.addEventListener('visibilitychange', () => { document.hidden ? goOffline() : goOnline(); });
+                window.addEventListener('pagehide', goOffline);
+                if (!document.hidden) goOnline();
+
+                syncPrefs();
+                // Перший запуск: через кілька секунд просимо дозвіл на сповіщення від бота
+                if (localStorage.getItem('push_asked') !== '1') setTimeout(askWriteAccess, 4000);
+
+                // Перемикачі «Сповіщення» / «Звук» у налаштуваннях
+                const bind = (rowId, isNotif) => {
+                    const row = document.getElementById(rowId);
+                    if (!row) return;
+                    row.addEventListener('click', () => setTimeout(() => {
+                        syncPrefs();
+                        if (isNotif && lsOn('settings_notifications') && localStorage.getItem('push_can_write') !== '1') askWriteAccess();
+                    }, 0));
+                };
+                bind('settings-notif-row', true);
+                bind('settings-sound-row', false);
+            } catch (e) { console.error('push setup', e); }
+        })();
 
         // Чи редагувала людина колись профіль сама вручну (ім'я/фото) — лише тоді її
         // редагування має пріоритет над даними з Telegram. Поки цього прапорця нема,
