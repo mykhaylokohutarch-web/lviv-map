@@ -1367,6 +1367,18 @@
         #map-card-chips .mc-me { color: var(--accent-main); font-weight: 650; }
         #map-card-chips .mc-fav { color: #ff3b30; font-weight: 650; }
         #map-card-desc { margin: 0; padding-top: 7px; border-top: 1px solid var(--mc-hair); font-size: 12.5px; line-height: 1.38; opacity: 0.88; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+        /* ---- Іконка QR на візитці закладу: відкриває купон / пропозицію ---- */
+        .mc-qr-btn { width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; border: none; padding: 0; display: none; align-items: center; justify-content: center; background: var(--ultramarine-gradient); box-shadow: 0 3px 10px rgba(0,0,0,0.22); cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease; }
+        .mc-qr-btn.show { display: flex; }
+        .mc-qr-btn:active { transform: scale(0.9); }
+        .mc-qr-btn svg { width: 19px; height: 19px; stroke: #fff; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+        .home-circle-qr { position: absolute; right: 2%; top: 2%; width: 24%; height: 24%; min-width: 22px; min-height: 22px; border-radius: 50%; background: var(--ultramarine-gradient); border: 2px solid var(--bg-color); display: flex; align-items: center; justify-content: center; box-sizing: border-box; cursor: pointer; z-index: 6; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease; }
+        .home-circle-qr:active { transform: scale(0.88); }
+        .home-circle-qr svg { width: 58%; height: 58%; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        #qr-place-name { margin: 0 0 2px; font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+        #qr-offer { margin: 0 0 12px; padding: 8px 10px; border-radius: 12px; background: rgba(255,149,0,0.12); border: 1px solid rgba(255,149,0,0.3); font-size: 13px; font-weight: 600; line-height: 1.3; }
+        #qr-place-name:empty, #qr-offer:empty { display: none; }
         #map-card-promo { padding-left: 9px; border-left: 2px solid #ff9500; font-size: 12.5px; font-weight: 600; line-height: 1.3; }
 
         /* ---- Глобальна нижня навігація ---- */
@@ -2361,6 +2373,7 @@
                 <div id="map-card-top">
                     <div id="map-card-avatar"></div>
                     <div id="map-card-text"><p id="map-card-name"></p><p id="map-card-sub"></p></div>
+                    <button type="button" class="mc-qr-btn" id="map-card-qr" aria-label="Показати QR-код зі знижкою"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.2"/><rect x="14" y="3" width="7" height="7" rx="1.2"/><rect x="3" y="14" width="7" height="7" rx="1.2"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h3M20 17v4"/></svg></button>
                     <svg id="map-card-chevron" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"></path></svg>
                 </div>
                 <div id="map-card-chips"></div>
@@ -2439,6 +2452,8 @@
     <div id="qr-modal">
         <div class="qr-content">
             <h3>Твій купон</h3>
+            <p id="qr-place-name"></p>
+            <p id="qr-offer"></p>
             <div id="qr-code-space"></div>
             <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px;">Покажи цей код на касі закладу</p>
             <button class="qr-close" id="qr-close-btn">Готово</button>
@@ -5066,6 +5081,7 @@ const tileRefreshing = new Set();
             document.getElementById('map-card-tags').innerHTML = tags.map(t => `<span>${escapeHtml(t)}</span>`).join('');
 
             document.getElementById('map-card-promo').textContent = (!isPerson && item.text2) ? item.text2 : '';
+            document.getElementById('map-card-qr').classList.toggle('show', !isPerson);
         }
 
         // Де зараз мітка на екрані: беремо реальний DOM-елемент (враховує зум, пан і поворот карти).
@@ -5140,6 +5156,11 @@ const tileRefreshing = new Set();
             mapCardW = Math.min(window.innerWidth - 24, 300);
             mcEl.style.setProperty('--mc-w', mapCardW + 'px');
             mapCardH = mcEl.offsetHeight; mcLastKey = '';
+        });
+        document.getElementById('map-card-qr').addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            const it = mapCardItem; if (!it || it.type !== 'place') return;
+            window.openPlaceCoupon(it);
         });
         mcPop.addEventListener('click', () => {
             const it = mapCardItem; if (!it) return;
@@ -5807,11 +5828,18 @@ const tileRefreshing = new Set();
             );
         });
 
+        // Єдине місце, де відкривається QR із купоном закладу (кнопка в профілі, візитка на карті, коло на Головній).
+        window.openPlaceCoupon = function(item) {
+            if (!item || item.type !== 'place') return;
+            const qrSpace = document.getElementById('qr-code-space'); const randomCode = Math.floor(100000 + Math.random() * 900000);
+            qrSpace.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=LVIV-${encodeURIComponent(item.id)}-${randomCode}" alt="QR Code"><p style="font-weight:700; font-size:18px; margin: 5px 0;">LVIV-${randomCode}</p>`;
+            document.getElementById('qr-place-name').textContent = item.name || '';
+            document.getElementById('qr-offer').textContent = item.text2 || '';
+            document.getElementById('qr-modal').style.display = 'flex';
+        };
         document.getElementById('prof-btn').addEventListener('click', () => {
             if (!currentActiveItem || currentActiveItem.type !== 'place') return;
-            const qrSpace = document.getElementById('qr-code-space'); const randomCode = Math.floor(100000 + Math.random() * 900000);
-            qrSpace.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=LVIV-${currentActiveItem.id}-${randomCode}" alt="QR Code"><p style="font-weight:700; font-size:18px; margin: 5px 0;">LVIV-${randomCode}</p>`;
-            document.getElementById('qr-modal').style.display = 'flex';
+            window.openPlaceCoupon(currentActiveItem);
         });
         window.closeQr = function() { document.getElementById('qr-modal').style.display = 'none'; }
         document.getElementById('qr-close-btn').addEventListener('click', window.closeQr);
@@ -9020,6 +9048,13 @@ const tileRefreshing = new Set();
                 });
                 applyStoryRing(mini, liveStories(e.stories), 7);
                 avatar.appendChild(mini);
+                if (e.type === 'place') {
+                    const qrBadge = document.createElement('div'); qrBadge.className = 'home-circle-qr';
+                    qrBadge.setAttribute('aria-label', 'QR-код зі знижкою');
+                    qrBadge.innerHTML = '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.2"/><rect x="14" y="3" width="7" height="7" rx="1.2"/><rect x="3" y="14" width="7" height="7" rx="1.2"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h3M20 17v4"/></svg>';
+                    qrBadge.addEventListener('click', (ev) => { ev.stopPropagation(); window.openPlaceCoupon(e); });
+                    avatar.appendChild(qrBadge);
+                }
                 if (e.isMe) {
                     // Кнопка "+" знизу справа — додати нове фото/відео в сторі, не заходячи в профіль.
                     const addBadge = document.createElement('div'); addBadge.className = 'home-circle-add-badge';
