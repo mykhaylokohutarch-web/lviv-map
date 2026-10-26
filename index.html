@@ -1345,29 +1345,47 @@
         #bottom-bar { bottom: 86px; }
 
         /* ---- Візитка на карті: мінімалістичне напівпрозоре «скло», випливає з мітки ---- */
-        #map-card { position: fixed; left: 0; top: 0; z-index: 2550; width: var(--mc-w, 300px); box-sizing: border-box; pointer-events: none; will-change: transform; --mc-ax: 50%; --mc-bg: rgba(255,255,255,0.55); --mc-line: rgba(255,255,255,0.55); --mc-sub: rgba(60,60,67,0.62); --mc-hair: rgba(60,60,67,0.14); }
-        body.dark-theme #map-card { --mc-bg: rgba(30,30,32,0.5); --mc-line: rgba(255,255,255,0.14); --mc-sub: rgba(235,235,245,0.6); --mc-hair: rgba(255,255,255,0.14); }
-        #map-card-pop { position: relative; opacity: 0; transform: translate3d(0, 8px, 0) scale(0.9); transform-origin: var(--mc-ax) 100%; transition: opacity 0.18s ease, transform 0.3s cubic-bezier(0.34, 1.35, 0.5, 1); pointer-events: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-        #map-card-pop.below { transform: translate3d(0, -8px, 0) scale(0.9); transform-origin: var(--mc-ax) 0%; }
+        /* ===== Візитка закладу/людини на карті: широка картка знизу (над доком фільтрів), фото справа ===== */
+        #map-card {
+            position: fixed; left: 14px; right: 14px; bottom: 110px; z-index: 2550; pointer-events: none;
+            --mc-text: #111114; --mc-sub: rgba(60,60,67,0.62); --mc-card: #ffffff; --mc-line: rgba(0,0,0,0.08); --mc-pill: #f4f4f2;
+        }
+        body.dark-theme #map-card { --mc-text: #ffffff; --mc-sub: rgba(235,235,245,0.62); --mc-card: #1c1c1e; --mc-line: rgba(255,255,255,0.13); --mc-pill: rgba(255,255,255,0.1); }
+        #map-card.featured { --mc-card: #fffee8; --mc-line: #f2e300; }
+        body.dark-theme #map-card.featured { --mc-card: #2a2800; --mc-line: #b8aa00; }
+        #map-card-pop {
+            opacity: 0; transform: translate3d(0, 26px, 0) scale(0.97); transform-origin: 50% 100%; pointer-events: none; cursor: pointer;
+            transition: opacity 0.2s ease, transform 0.4s cubic-bezier(0.32, 0.72, 0, 1.1); -webkit-tap-highlight-color: transparent;
+        }
         #map-card-pop.open { opacity: 1; transform: none; pointer-events: auto; }
-        #map-card-body { display: flex; flex-direction: column; gap: 7px; padding: 11px 12px; box-sizing: border-box; background: var(--mc-bg); color: #1c1c1e; backdrop-filter: blur(26px) saturate(190%); -webkit-backdrop-filter: blur(26px) saturate(190%); border: 1px solid var(--mc-line); border-radius: 18px; box-shadow: 0 8px 28px rgba(0,0,0,0.16); overflow: hidden; }
-        body.dark-theme #map-card-body { color: #fff; box-shadow: 0 8px 28px rgba(0,0,0,0.4); }
-        #map-card-arrow { position: absolute; left: var(--mc-ax); bottom: -8px; width: 18px; height: 8px; margin-left: -9px; background: var(--mc-bg); backdrop-filter: blur(26px) saturate(190%); -webkit-backdrop-filter: blur(26px) saturate(190%); clip-path: polygon(0 0, 100% 0, 50% 100%); }
-        #map-card-pop.below #map-card-arrow { bottom: auto; top: -8px; clip-path: polygon(50% 0, 0 100%, 100% 100%); }
-        #map-card-top { display: flex; align-items: center; gap: 10px; }
-        #map-card-avatar { width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0; background-size: cover; background-position: center; background-color: rgba(120,120,128,0.3); box-shadow: 0 0 0 2px var(--mc-bg), 0 0 0 3px var(--accent-main); }
-        #map-card-text { min-width: 0; flex: 1; }
-        #map-card-name { margin: 0; font-size: 15px; font-weight: 650; letter-spacing: -0.2px; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        #map-card-sub { margin: 1px 0 0; font-size: 12.5px; line-height: 1.25; color: var(--mc-sub); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        #map-card-chevron { width: 16px; height: 16px; flex-shrink: 0; stroke: var(--mc-sub); fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-        #map-card-chips, #map-card-tags { display: flex; flex-wrap: wrap; align-items: center; font-size: 11.5px; font-weight: 500; color: var(--mc-sub); }
-        #map-card-chips span + span::before, #map-card-tags span + span::before { content: '·'; margin: 0 6px; opacity: 0.6; }
-        #map-card-sub:empty, #map-card-chips:empty, #map-card-desc:empty, #map-card-tags:empty, #map-card-promo:empty { display: none; }
-        .mc-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--mc-c, #888); margin-right: 5px; vertical-align: 1px; }
-        #map-card-chips .mc-me { color: var(--accent-main); font-weight: 650; }
-        #map-card-chips .mc-fav { color: #ff3b30; font-weight: 650; }
-        #map-card-desc { margin: 0; padding-top: 7px; border-top: 1px solid var(--mc-hair); font-size: 12.5px; line-height: 1.38; opacity: 0.88; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-        #map-card-promo { padding-left: 9px; border-left: 2px solid #ff9500; font-size: 12.5px; font-weight: 600; line-height: 1.3; }
+        #map-card-pop:active #map-card-body { transform: scale(0.985); }
+        #map-card-body {
+            display: flex; align-items: stretch; min-height: 134px; max-width: 520px; margin: 0 auto; box-sizing: border-box;
+            background: var(--mc-card); color: var(--mc-text); border: 1.5px solid var(--mc-line); border-radius: 26px; overflow: hidden;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.18); transition: transform 0.15s ease, background 0.3s ease, border-color 0.3s ease;
+        }
+        #map-card-main { flex: 1 1 58%; min-width: 0; display: flex; flex-direction: column; padding: 12px 12px 12px 14px; box-sizing: border-box; }
+        #map-card-pills { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 9px; min-height: 26px; }
+        .mc-pill {
+            display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; box-sizing: border-box; border-radius: 999px;
+            background: var(--mc-pill); border: 1px solid var(--mc-line); font-size: 12.5px; font-weight: 650; white-space: nowrap; max-width: 100%; overflow: hidden;
+        }
+        .mc-pill.grey { border-color: transparent; color: var(--mc-sub); font-weight: 600; }
+        .mc-pill:empty { display: none; }
+        .mc-dot { display: inline-block; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--mc-c, #888); }
+        #map-card-name { margin: 0; font-size: 21px; font-weight: 750; letter-spacing: -0.4px; line-height: 1.1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; }
+        #map-card-sub { margin: 5px 0 0; font-size: 13px; line-height: 1.28; opacity: 0.86; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        #map-card-foot { margin: auto 0 0; padding-top: 8px; font-size: 13px; line-height: 1.25; color: var(--mc-sub); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        #map-card-foot.promo { color: #b45309; font-weight: 650; }
+        body.dark-theme #map-card-foot.promo { color: #ffb454; }
+        #map-card-sub:empty, #map-card-foot:empty { display: none; }
+        #map-card-photo { flex: 0 0 42%; position: relative; background-size: cover; background-position: center; background-color: rgba(120,120,128,0.25); }
+        #map-card-badge {
+            position: absolute; right: 10px; bottom: 10px; height: 30px; padding: 0 12px; border-radius: 999px; box-sizing: border-box;
+            display: inline-flex; align-items: center; gap: 6px; background: #ffe600; color: #111; font-size: 13px; font-weight: 700;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.22); white-space: nowrap;
+        }
+        #map-card-badge:empty { display: none; }
 
         /* ---- Глобальна нижня навігація ---- */
         #bottom-nav {
@@ -2358,17 +2376,14 @@
     <div id="map-card">
         <div id="map-card-pop">
             <div id="map-card-body">
-                <div id="map-card-top">
-                    <div id="map-card-avatar"></div>
-                    <div id="map-card-text"><p id="map-card-name"></p><p id="map-card-sub"></p></div>
-                    <svg id="map-card-chevron" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"></path></svg>
+                <div id="map-card-main">
+                    <div id="map-card-pills"><span class="mc-pill" id="map-card-pill-a"></span><span class="mc-pill grey" id="map-card-pill-b"></span></div>
+                    <p id="map-card-name"></p>
+                    <p id="map-card-sub"></p>
+                    <p id="map-card-foot"></p>
                 </div>
-                <div id="map-card-chips"></div>
-                <p id="map-card-desc"></p>
-                <div id="map-card-tags"></div>
-                <div id="map-card-promo"></div>
+                <div id="map-card-photo"><span id="map-card-badge"></span></div>
             </div>
-            <span id="map-card-arrow"></span>
         </div>
     </div>
 
@@ -5030,42 +5045,47 @@ const tileRefreshing = new Set();
             return (m / 1000).toFixed(m < 10000 ? 1 : 0).replace('.', ',') + ' км';
         }
 
+        // Заклади, яким даємо «жовту» картку (як Featured на макеті); можна також ставити place.featured = true
+        const FEATURED_PLACES = new Set(['demo_pl1', 'demo_pl8', 'demo_pl12']);
+        const MC_SUBLABEL = { restaurant: 'Ресторан', coffee: 'Кав\u02bcярня', bar: 'Бар' };
         function mcFill(item) {
             const isPerson = item.type === 'person';
             const isMe = item.id === myId;
             const photo = (item.photos && item.photos[0]) || DEFAULT_AVATAR;
-            document.getElementById('map-card-avatar').style.backgroundImage = `url('${photo}')`;
+            document.getElementById('map-card-photo').style.backgroundImage = `url('${String(photo).replace(/'/g, '%27')}')`;
+
+            // Ліва пігулка: категорія закладу / хто це
+            const pa = document.getElementById('map-card-pill-a');
+            pa.textContent = '';
+            if (isMe) pa.textContent = 'Це ви';
+            else if (!isPerson) {
+                const c = MC_CAT[item.category];
+                const label = (item.category === 'food' && MC_SUBLABEL[placeFilterKey(item)]) || (c && c[0]) || '';
+                if (c) { const dot = document.createElement('i'); dot.className = 'mc-dot'; dot.style.setProperty('--mc-c', c[1]); pa.appendChild(dot); }
+                pa.appendChild(document.createTextNode(label));
+            } else pa.textContent = myFavorites.has(item.id) ? '♥ Улюблене' : 'Поруч';
+
+            // Права пігулка: відстань; нижній рядок: акція або час пішки
+            let dist = null;
+            if (!isMe && item.coords) { try { const d = haversineMeters(myCoords, item.coords); if (isFinite(d)) dist = d; } catch (e) {} }
+            document.getElementById('map-card-pill-b').textContent = dist != null ? mcFormatDist(dist) : '';
+
             document.getElementById('map-card-name').textContent = item.name || 'Гість';
             document.getElementById('map-card-sub').textContent = item.status || '';
 
-            const chips = [];
-            if (isMe) chips.push('<span class="mc-me">Це ви</span>');
-            if (!isPerson) {
-                const c = MC_CAT[item.category];
-                if (c) chips.push(`<span><i class="mc-dot" style="--mc-c:${c[1]}"></i>${c[0]}</span>`);
+            const foot = document.getElementById('map-card-foot');
+            const promo = !isPerson && item.text2 ? String(item.text2) : '';
+            let footText = promo;
+            if (!footText && isPerson) {
+                const tags = String(item.interests || '').split(/[·•,;|]/).map(t => t.trim()).filter(Boolean).slice(0, 3);
+                footText = tags.join(' · ');
             }
-            if (!isMe && item.coords) {
-                try {
-                    const d = haversineMeters(myCoords, item.coords);
-                    if (isFinite(d)) chips.push(`<span>${mcFormatDist(d)} · ${Math.max(1, Math.round(d / 80))} хв пішки</span>`);
-                } catch (e) {}
-            }
-            const photoCount = (item.photos || []).length;
-            if (photoCount > 1) chips.push(`<span>${photoCount} фото</span>`);
-            const storyCount = isPerson && item.stories ? item.stories.length : 0;
-            if (storyCount) chips.push(`<span>${storyCount} сторіс</span>`);
-            if (myFavorites.has(item.id)) chips.push('<span class="mc-fav">♥</span>');
-            document.getElementById('map-card-chips').innerHTML = chips.join('');
+            if (!footText && dist != null) footText = Math.max(1, Math.round(dist / 80)) + ' хв пішки';
+            foot.textContent = footText;
+            foot.classList.toggle('promo', !!promo);
 
-            document.getElementById('map-card-desc').textContent = (isPerson ? item.about : item.text1) || '';
-
-            let tags = [];
-            if (isPerson && !(isMe && !myProfile.interests)) {
-                tags = String(item.interests || '').split(/[·•,;|]/).map(s => s.trim()).filter(Boolean).slice(0, 3);
-            }
-            document.getElementById('map-card-tags').innerHTML = tags.map(t => `<span>${escapeHtml(t)}</span>`).join('');
-
-            document.getElementById('map-card-promo').textContent = (!isPerson && item.text2) ? item.text2 : '';
+            document.getElementById('map-card-badge').textContent = promo ? 'Акція ☆' : '';
+            mcEl.classList.toggle('featured', !isPerson && (item.featured === true || FEATURED_PLACES.has(item.id)));
         }
 
         // Де зараз мітка на екрані: беремо реальний DOM-елемент (враховує зум, пан і поворот карти).
@@ -5090,24 +5110,16 @@ const tileRefreshing = new Set();
             return { ok: false };
         }
 
-        function mcPlace(t) {
-            const vw = window.innerWidth, vh = window.innerHeight;
-            const w = mapCardW, h = mapCardH, gap = 10, margin = 12;
-            const topLimit = 100, bottomLimit = vh - 90;
-            let above = (t.top - gap - h) >= topLimit;
-            if (!above && (t.bottom + gap + h) > bottomLimit) above = (t.top - topLimit) >= (bottomLimit - t.bottom);
-            const left = Math.min(Math.max(t.x - w / 2, margin), vw - margin - w);
-            const y = above ? t.top - gap - h : t.bottom + gap;
-            const ax = Math.round(Math.min(Math.max(t.x - left, 24), w - 24));
-            const key = Math.round(left) + '|' + Math.round(y) + '|' + (above ? 1 : 0) + '|' + ax;
-            if (key !== mcLastKey) {
-                mcLastKey = key;
-                mcEl.style.transform = `translate3d(${Math.round(left)}px, ${Math.round(y)}px, 0)`;
-                mcEl.style.setProperty('--mc-ax', ax + 'px');
-                mcPop.classList.toggle('below', !above);
-            }
-            const off = t.x < -20 || t.x > vw + 20 || t.top > vh || t.bottom < 0;
-            mcEl.style.visibility = off ? 'hidden' : 'visible';
+        // Картка «прикріплена» знизу, прямо над доком фільтрів (або над навігацією, якщо дока немає)
+        function mcPlace() {
+            let b = 110;
+            const d = document.getElementById('map-dock');
+            const dr = d && d.getBoundingClientRect();
+            if (dr && dr.height) b = Math.round(window.innerHeight - dr.top + 12);
+            else { const n = document.getElementById('bottom-nav'); const nr = n && n.getBoundingClientRect(); if (nr && nr.height) b = Math.round(window.innerHeight - nr.top + 12); }
+            const key = b + '|' + window.innerWidth;
+            if (key !== mcLastKey) { mcLastKey = key; mcEl.style.bottom = b + 'px'; }
+            mcEl.style.visibility = 'visible';
         }
 
         function mcFrame() {
@@ -5122,25 +5134,26 @@ const tileRefreshing = new Set();
         function showMapCard(item) {
             mapCardItem = item; mapCardLost = 0; mcLastKey = '';
             mcFill(item);
-            mapCardW = Math.min(window.innerWidth - 24, 300);
-            mcEl.style.setProperty('--mc-w', mapCardW + 'px');
-            mapCardH = mcEl.offsetHeight;
             const t = mcTarget(item);
-            if (t.ok) mcPlace(t);
+            mcPlace(t);
             mcPop.classList.add('open');
             if (!mapCardRaf) mapCardRaf = requestAnimationFrame(mcFrame);
+            // Якщо мітку закриває картка — трохи зсуваємо карту, щоб вона лишилась над карткою
+            requestAnimationFrame(() => {
+                try {
+                    const tt = mcTarget(item); if (!tt.ok) return;
+                    const lim = mcEl.getBoundingClientRect().top - 28;
+                    if (tt.bottom > lim) map.panBy([0, Math.round(tt.bottom - lim)], { animate: true });
+                } catch (_) {}
+            });
         }
         function hideMapCard() {
             mapCardItem = null;
             mcPop.classList.remove('open');
             if (mapCardRaf) { cancelAnimationFrame(mapCardRaf); mapCardRaf = 0; }
+            try { selectBrandPin(null); } catch (_) {}
         }
-        window.addEventListener('resize', () => {
-            if (!mapCardItem) return;
-            mapCardW = Math.min(window.innerWidth - 24, 300);
-            mcEl.style.setProperty('--mc-w', mapCardW + 'px');
-            mapCardH = mcEl.offsetHeight; mcLastKey = '';
-        });
+        window.addEventListener('resize', () => { if (mapCardItem) { mcLastKey = ''; mcPlace(); } });
         mcPop.addEventListener('click', () => {
             const it = mapCardItem; if (!it) return;
             hideMapCard();
