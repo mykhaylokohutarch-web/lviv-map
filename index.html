@@ -5180,6 +5180,9 @@ const tileRefreshing = new Set();
             mcPop.classList.remove('open');
             if (mapCardRaf) { cancelAnimationFrame(mapCardRaf); mapCardRaf = 0; }
         }
+        // Будь-який тап по нижній навігації (Повідомлення, Пошук, Профіль, Люди, Карта) закриває візитку на карті —
+        // раніше її закривав лише showScreen(), а Повідомлення й Пошук його не викликають.
+        (function () { const nb = document.getElementById('bottom-nav'); if (nb) nb.addEventListener('click', () => { try { hideMapCard(); } catch (e) {} }, true); })();
         window.addEventListener('resize', () => {
             if (!mapCardItem) return;
             mapCardW = Math.min(window.innerWidth - 24, 300);
