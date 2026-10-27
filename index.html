@@ -5045,6 +5045,7 @@ const tileRefreshing = new Set();
             return (m / 1000).toFixed(m < 10000 ? 1 : 0).replace('.', ',') + ' км';
         }
 
+        window.isPlaceItem = function(it) { return !!it && it.type !== 'person' && (it.type === 'place' || !!it.category); };
         function mcFill(item) {
             const isPerson = item.type === 'person';
             const isMe = item.id === myId;
@@ -5081,7 +5082,7 @@ const tileRefreshing = new Set();
             document.getElementById('map-card-tags').innerHTML = tags.map(t => `<span>${escapeHtml(t)}</span>`).join('');
 
             document.getElementById('map-card-promo').textContent = (!isPerson && item.text2) ? item.text2 : '';
-            document.getElementById('map-card-qr').classList.toggle('show', item.type === 'place');
+            document.getElementById('map-card-qr').classList.toggle('show', window.isPlaceItem(item));
         }
 
         // Де зараз мітка на екрані: беремо реальний DOM-елемент (враховує зум, пан і поворот карти).
@@ -5159,7 +5160,7 @@ const tileRefreshing = new Set();
         });
         document.getElementById('map-card-qr').addEventListener('click', (ev) => {
             ev.stopPropagation();
-            const it = mapCardItem; if (!it || it.type !== 'place') return;
+            const it = mapCardItem; if (!window.isPlaceItem(it)) return;
             window.openPlaceCoupon(it);
         });
         mcPop.addEventListener('click', () => {
@@ -5830,7 +5831,7 @@ const tileRefreshing = new Set();
 
         // Єдине місце, де відкривається QR із купоном закладу (кнопка в профілі, візитка на карті, коло на Головній).
         window.openPlaceCoupon = function(item) {
-            if (!item || item.type !== 'place') return;
+            if (!window.isPlaceItem(item)) return;
             const qrSpace = document.getElementById('qr-code-space'); const randomCode = Math.floor(100000 + Math.random() * 900000);
             qrSpace.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=LVIV-${encodeURIComponent(item.id)}-${randomCode}" alt="QR Code"><p style="font-weight:700; font-size:18px; margin: 5px 0;">LVIV-${randomCode}</p>`;
             document.getElementById('qr-place-name').textContent = item.name || '';
@@ -5838,7 +5839,7 @@ const tileRefreshing = new Set();
             document.getElementById('qr-modal').style.display = 'flex';
         };
         document.getElementById('prof-btn').addEventListener('click', () => {
-            if (!currentActiveItem || currentActiveItem.type !== 'place') return;
+            if (!window.isPlaceItem(currentActiveItem)) return;
             window.openPlaceCoupon(currentActiveItem);
         });
         window.closeQr = function() { document.getElementById('qr-modal').style.display = 'none'; }
