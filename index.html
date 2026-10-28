@@ -1337,6 +1337,54 @@
         body.dark-theme #route-toast { box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
         #route-toast.warn { border-color: rgba(255, 45, 120, 0.5); color: #ff2d78; font-weight: 700; }
 
+        /* ---- Покрокова навігація: плашка «Почати», верхня підказка маневру, нижня панель, мітка «я» з напрямком ---- */
+        #nav-start-panel, #nav-hud, #nav-bottom {
+            position: absolute;
+            display: none;
+            box-sizing: border-box;
+            background: var(--msg-solid-bg, rgba(255,255,255,0.94));
+            backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--border-minimal);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.16);
+            color: var(--text-color);
+            border-radius: 22px;
+        }
+        #nav-start-panel { left: 12px; right: 12px; bottom: 86px; z-index: 2700; align-items: center; gap: 10px; padding: 12px 12px 12px 16px; }
+        #nav-start-panel.show { display: flex; }
+        #nav-start-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+        #nav-start-main { font-size: 17px; font-weight: 700; }
+        #nav-start-sub { font-size: 12px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        #nav-start-btn { border: none; border-radius: 16px; padding: 12px 22px; font-size: 15px; font-weight: 700; color: #fff; background: var(--ultramarine-gradient); cursor: pointer; }
+        #nav-start-btn:active, #nav-end-btn:active, .nav-icon-btn:active { transform: scale(0.94); }
+        .nav-icon-btn { flex: 0 0 auto; width: 40px; height: 40px; border: none; border-radius: 50%; background: rgba(120,120,128,0.16); color: var(--text-color); font-size: 18px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+        #nav-hud { left: 10px; right: 10px; top: calc(8px + env(safe-area-inset-top, 0px)); z-index: 2750; align-items: center; gap: 12px; padding: 12px 16px; pointer-events: none; }
+        #nav-hud.show { display: flex; }
+        #nav-hud-arrow { flex: 0 0 54px; width: 54px; height: 54px; border-radius: 16px; background: var(--ultramarine-gradient); color: #fff; font-size: 32px; font-weight: 800; line-height: 1; display: flex; align-items: center; justify-content: center; }
+        #nav-hud-text { flex: 1; min-width: 0; }
+        #nav-hud-dist { font-size: 24px; font-weight: 800; line-height: 1.1; }
+        #nav-hud-instr { font-size: 15px; font-weight: 600; margin-top: 2px; }
+        #nav-hud-street { font-size: 12.5px; color: var(--text-secondary); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        #nav-bottom { left: 12px; right: 12px; bottom: 86px; z-index: 2750; align-items: center; gap: 8px; padding: 10px 10px 10px 16px; }
+        #nav-bottom.show { display: flex; }
+        #nav-bottom-info { flex: 1; min-width: 0; }
+        #nav-bottom-main { font-size: 17px; font-weight: 700; }
+        #nav-bottom-sub { font-size: 12px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        #nav-recenter { display: none; }
+        #nav-recenter.show { display: flex; }
+        #nav-end-btn { border: none; border-radius: 16px; padding: 12px 16px; font-size: 14px; font-weight: 700; color: #fff; background: #ff3b5c; cursor: pointer; }
+
+        body.navigating #bottom-bar, body.nav-start-open #bottom-bar { display: none !important; }
+        body.navigating #route-toast { top: calc(122px + env(safe-area-inset-top, 0px)); }
+        body.navigating #map-compass-btn { top: calc(112px + env(safe-area-inset-top, 0px)); }
+        body.navigating #map-me-btn { top: calc(112px + 44px + env(safe-area-inset-top, 0px)); }
+
+        .nav-puck { position: relative; width: 44px; height: 44px; }
+        .nav-puck-cone { position: absolute; inset: 0; transform-origin: 50% 50%; transition: transform 0.35s linear; }
+        .nav-puck-cone::before { content: ''; position: absolute; left: 50%; top: -4px; margin-left: -10px; width: 0; height: 0; border-left: 10px solid transparent; border-right: 10px solid transparent; border-bottom: 20px solid rgba(10,132,255,0.92); filter: drop-shadow(0 2px 3px rgba(0,0,0,0.35)); }
+        .nav-puck-dot { position: absolute; left: 50%; top: 50%; width: 20px; height: 20px; margin: -10px 0 0 -10px; border-radius: 50%; background: #0a84ff; border: 3px solid #fff; box-shadow: 0 0 0 7px rgba(10,132,255,0.25), 0 2px 8px rgba(0,0,0,0.4); }
+
         /* ==================================================================================
            Багатоекранний режим: карта більше не головна — це один із екранів, між якими
            перемикає нижня навігація в стилі надісланого прикладу (Instagram-мінімалізм).
@@ -1377,9 +1425,6 @@
         .mc-qr-btn.show { display: flex; }
         .mc-qr-btn:active { transform: scale(0.9); background: var(--mc-hair); }
         .mc-qr-btn svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
-        .home-circle-qr { position: absolute; right: 2%; top: 2%; width: 24%; height: 24%; min-width: 22px; min-height: 22px; border-radius: 50%; background: var(--card-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--border-minimal); display: flex; align-items: center; justify-content: center; box-sizing: border-box; cursor: pointer; z-index: 6; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease; }
-        .home-circle-qr:active { transform: scale(0.88); }
-        .home-circle-qr svg { width: 56%; height: 56%; stroke: var(--icon-color); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
         #qr-place-name { margin: 0 0 2px; font-size: 13px; font-weight: 600; color: var(--text-secondary); }
         #qr-offer { margin: 0 0 12px; padding: 8px 10px; border-radius: 12px; background: rgba(255,149,0,0.12); border: 1px solid rgba(255,149,0,0.3); font-size: 13px; font-weight: 600; line-height: 1.3; }
         #qr-place-name:empty, #qr-offer:empty { display: none; }
@@ -2152,6 +2197,27 @@
         
         <div id="map"></div>
         <div id="route-toast"></div>
+
+        <!-- Навігація: «Почати» після прокладання маршруту, підказка маневру зверху, підсумок і «Завершити» знизу -->
+        <div id="nav-start-panel">
+            <div id="nav-start-info"><div id="nav-start-main"></div><div id="nav-start-sub"></div></div>
+            <button type="button" id="nav-start-btn">Почати</button>
+            <button type="button" class="nav-icon-btn" id="nav-start-close" aria-label="Закрити">✕</button>
+        </div>
+        <div id="nav-hud">
+            <div id="nav-hud-arrow">↑</div>
+            <div id="nav-hud-text">
+                <div id="nav-hud-dist"></div>
+                <div id="nav-hud-instr"></div>
+                <div id="nav-hud-street"></div>
+            </div>
+        </div>
+        <div id="nav-bottom">
+            <div id="nav-bottom-info"><div id="nav-bottom-main"></div><div id="nav-bottom-sub"></div></div>
+            <button type="button" class="nav-icon-btn" id="nav-voice-btn" aria-label="Голосові підказки">🔇</button>
+            <button type="button" class="nav-icon-btn" id="nav-recenter" aria-label="Повернутись до мене">◎</button>
+            <button type="button" id="nav-end-btn">Завершити</button>
+        </div>
 
         <!-- Нижня панель: кнопка чату (всі мої бесіди) + перемикачі шарів карти -->
         <div id="bottom-bar">
@@ -4277,7 +4343,7 @@ const tileRefreshing = new Set();
             if (placingPin) return;
             try { hideMapCard(); } catch (e) {}
             window.closeProfile();
-            if (routeSelecting || routeLine) { cancelRouteSelection(); clearRouteLine(); }
+            if ((routeSelecting || routeLine) && !navActive) { cancelRouteSelection(); clearRouteLine(); }
         });
 
         // ---- Пішохідний маршрут: затисни свою іконку на карті, потім вибери іншу — прокладеться найкоротший пішохідний шлях (радіус дії 4 км) ----
@@ -4285,6 +4351,11 @@ const tileRefreshing = new Set();
         let routeSelecting = false;
         let routeSelectFromId = null;
         let routeLine = null;
+        // Стан навігації (оголошуємо тут, щоб був доступний з clearRouteLine / обробників кліків)
+        let navLast = null, navActive = false, navSim = false, navArrived = false, navData = null;
+        let navWatchId = null, navSimTimer = null, navPuck = null, navWakeLock = null;
+        let navFollow = true, navHeadingUp = true, navHeading = null, navLastPos = null;
+        let navOffCount = 0, navLastReroute = 0, navAnnounced = {}, navVoice = false, navIdx = 0;
         // Маршрут і кільця — на ОКРЕМОМУ векторному (SVG) шарі, а не на canvas карти (preferCanvas):
         // canvas під час зуму лише розтягує готову картинку й перемальовує після завершення жесту (звідси «запізнення»),
         // а SVG-шар зсувається/масштабується разом із тайлами й мітками кадр у кадр. padding 1 — щоб лінія
@@ -4350,7 +4421,7 @@ const tileRefreshing = new Set();
         }
 
         function clearRouteRings() { routeRings.forEach(r => map.removeLayer(r)); routeRings = []; }
-        function clearRouteLine() { if (routeLine) { map.removeLayer(routeLine); routeLine = null; } clearRouteRings(); hideRouteInfo(); setRouteDim(false); }
+        function clearRouteLine() { if (routeLine) { map.removeLayer(routeLine); routeLine = null; } clearRouteRings(); hideRouteInfo(); setRouteDim(false); hideNavStartPanel(); }
 
         function cancelRouteSelection() {
             if (!routeSelecting) return;
@@ -4402,6 +4473,7 @@ const tileRefreshing = new Set();
         }
 
         function enterRouteSelectionMode(fromCoords, fromId) {
+            if (navActive) navStop({ keepBearing: true });
             clearRouteLine();
             routeSelecting = true;
             routeSelectFromId = fromId || null;
@@ -4414,6 +4486,8 @@ const tileRefreshing = new Set();
         // Клік по будь-якій іншій іконці під час режиму вибору — прокладає найкоротший пішохідний маршрут (діє лише в радіусі 4 км)
         async function buildWalkingRoute(fromCoords, toCoords, toId) {
             routeSelecting = false;
+            if (navActive) navStop({ keepBearing: true });
+            navLast = null; hideNavStartPanel();
             const fromId = routeSelectFromId;
             const dist = haversineMeters(fromCoords, toCoords);
             if (dist > ROUTE_MAX_METERS) {
@@ -4427,7 +4501,7 @@ const tileRefreshing = new Set();
             setRouteDim(true, [fromId, toId].filter(Boolean));
             showRouteInfo('Прокладаю маршрут…');
             try {
-                const url = `https://routing.openstreetmap.de/routed-foot/route/v1/foot/${fromCoords[1]},${fromCoords[0]};${toCoords[1]},${toCoords[0]}?overview=full&geometries=geojson`;
+                const url = `https://routing.openstreetmap.de/routed-foot/route/v1/foot/${fromCoords[1]},${fromCoords[0]};${toCoords[1]},${toCoords[0]}?overview=full&geometries=geojson&steps=true`;
                 const resp = await fetch(url);
                 const data = await resp.json();
                 if (data.code !== 'Ok' || !data.routes || !data.routes[0]) throw new Error('no route');
@@ -4438,13 +4512,436 @@ const tileRefreshing = new Set();
                 const km = (data.routes[0].distance / 1000).toFixed(1);
                 const mins = Math.max(1, Math.round(data.routes[0].duration / 60));
                 showRouteInfo(`Пішки: ${km} км · ~${mins} хв`);
+                // Зберігаємо кроки маршруту й пропонуємо почати покрокову навігацію
+                navLast = navBuildData(data.routes[0], toCoords, toId);
+                navLast.from = fromCoords.slice();
+                showNavStartPanel(navLast);
             } catch (err) {
                 if (routeLine) map.removeLayer(routeLine);
                 routeLine = L.polyline([fromCoords, toCoords], { color: '#ff2d78', weight: 4, opacity: 0.85, dashArray: '6 8', renderer: routeRenderer, interactive: false }).addTo(map);
                 map.fitBounds(routeLine.getBounds(), { padding: [70, 90] });
                 showRouteInfo('Маршрут показано приблизно (немає з’єднання з сервісом маршрутів)');
+                navLast = null; hideNavStartPanel();
             }
         }
+
+
+        // =====================================================================================
+        // ПОКРОКОВА НАВІГАЦІЯ: після прокладання маршруту з’являється «Почати». Далі — GPS-стеження,
+        // підказки маневрів, відрізання пройденої частини лінії, перебудова при з’їзді з маршруту,
+        // сповіщення про прибуття. Без GPS (десктоп / заборонено) — демо-рух по маршруту.
+        // =====================================================================================
+        const NAV_SIM_SPEED = 6;          // м/с у демо-режимі (≈ у 4 рази швидше за пішохода)
+        const NAV_OFF_ROUTE_M = 40;       // далі від лінії — вважаємо, що людина зійшла з маршруту
+        const NAV_ARRIVE_M = 25;          // ближче до цілі — «Ви прибули»
+
+        // <nav-pure>
+        function navBearing(a, b) {
+            const r = Math.PI / 180;
+            const dl = (b[1] - a[1]) * r;
+            const y = Math.sin(dl) * Math.cos(b[0] * r);
+            const x = Math.cos(a[0] * r) * Math.sin(b[0] * r) - Math.sin(a[0] * r) * Math.cos(b[0] * r) * Math.cos(dl);
+            return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+        }
+        function navAngleDiff(a, b) { return ((b - a + 540) % 360) - 180; }
+
+        function navFormatDist(m) {
+            m = Math.max(0, m);
+            if (m >= 1000) return (m / 1000).toFixed(1) + ' км';
+            if (m < 20) return Math.round(m) + ' м';
+            return (Math.round(m / 10) * 10) + ' м';
+        }
+
+        // Українська підказка + стрілка за маневром OSRM (type / modifier)
+        function navInstruction(step) {
+            const m = (step && step.maneuver) || {};
+            const type = m.type || '', mod = m.modifier || '';
+            const street = (step && step.name) || '';
+            const arrows = { 'uturn': '↶', 'sharp right': '↘', 'right': '→', 'slight right': '↗', 'straight': '↑', 'slight left': '↖', 'left': '←', 'sharp left': '↙' };
+            const turnText = {
+                'uturn': 'Розвернітеся', 'sharp right': 'Різко праворуч', 'right': 'Поверніть праворуч',
+                'slight right': 'Тримайтеся правіше', 'straight': 'Рухайтеся прямо', 'slight left': 'Тримайтеся лівіше',
+                'left': 'Поверніть ліворуч', 'sharp left': 'Різко ліворуч'
+            };
+            if (type === 'arrive') {
+                if (mod === 'left') return { arrow: '🏁', text: 'Пункт призначення ліворуч', street: street };
+                if (mod === 'right') return { arrow: '🏁', text: 'Пункт призначення праворуч', street: street };
+                return { arrow: '🏁', text: 'Ви прибули', street: street };
+            }
+            if (type === 'depart') return { arrow: arrows[mod] || '↑', text: 'Рушайте', street: street };
+            if (type === 'roundabout' || type === 'rotary' || type === 'roundabout turn' || type === 'rotary turn') {
+                if (type.indexOf('turn') > 0) return { arrow: arrows[mod] || '↑', text: turnText[mod] || 'Рухайтеся прямо', street: street };
+                const n = m.exit;
+                return { arrow: '⟳', text: n ? ('На колі — ' + n + '-й з’їзд') : 'Об’їдьте коло', street: street };
+            }
+            if (type === 'exit roundabout' || type === 'exit rotary') return { arrow: arrows[mod] || '↑', text: 'З’їдьте з кола', street: street };
+            if (type === 'fork' && (mod === 'left' || mod === 'slight left')) return { arrow: '↖', text: 'На розвилці — ліворуч', street: street };
+            if (type === 'fork' && (mod === 'right' || mod === 'slight right')) return { arrow: '↗', text: 'На розвилці — праворуч', street: street };
+            if (type === 'new name' || type === 'continue') return { arrow: arrows[mod] || '↑', text: turnText[mod] || 'Рухайтеся прямо', street: street };
+            return { arrow: arrows[mod] || '↑', text: turnText[mod] || 'Рухайтеся прямо', street: street };
+        }
+
+        // Готуємо маршрут OSRM до навігації: масив точок, накопичена довжина, кроки й їхні початки
+        function navBuildData(route, to, toId) {
+            const coords = route.geometry.coordinates.map(c => [c[1], c[0]]);
+            const cum = [0];
+            for (let i = 1; i < coords.length; i++) cum.push(cum[i - 1] + haversineMeters(coords[i - 1], coords[i]));
+            const total = cum[cum.length - 1] || 1;
+            const steps = [];
+            (route.legs || []).forEach(l => (l.steps || []).forEach(s => steps.push(s)));
+            let acc = 0;
+            const starts = steps.map(s => { const a = acc; acc += s.distance || 0; return a; });
+            const distance = route.distance || total;
+            return { coords: coords, cum: cum, total: total, scale: distance / total, steps: steps, starts: starts,
+                     distance: distance, duration: route.duration || (distance / 1.35), to: to, toId: toId || null };
+        }
+
+        // Найближча точка маршруту до позиції p: відстань до лінії, сегмент, проєкція і пройдений шлях
+        function navProject(d, p, i0, i1) {
+            const kx = 111320 * Math.cos(p[0] * Math.PI / 180), ky = 110574;
+            const px = p[1] * kx, py = p[0] * ky;
+            let best = { dist: Infinity, idx: 0, point: d.coords[0], along: 0 };
+            const from = Math.max(0, i0 || 0), to = Math.min(d.coords.length - 1, i1 == null ? d.coords.length - 1 : i1);
+            for (let i = from; i < to; i++) {
+                const ax = d.coords[i][1] * kx, ay = d.coords[i][0] * ky;
+                const bx = d.coords[i + 1][1] * kx, by = d.coords[i + 1][0] * ky;
+                const dx = bx - ax, dy = by - ay, l2 = dx * dx + dy * dy;
+                let t = l2 ? ((px - ax) * dx + (py - ay) * dy) / l2 : 0;
+                t = Math.max(0, Math.min(1, t));
+                const cx = ax + t * dx, cy = ay + t * dy;
+                const dist = Math.hypot(px - cx, py - cy);
+                if (dist < best.dist) best = { dist: dist, idx: i, point: [cy / ky, cx / kx], along: d.cum[i] + t * (d.cum[i + 1] - d.cum[i]) };
+            }
+            return best;
+        }
+
+        // Точка на маршруті за пройденим шляхом s (для демо-режиму)
+        function navPointAt(d, s) {
+            s = Math.max(0, Math.min(d.total, s));
+            for (let i = 0; i < d.coords.length - 1; i++) {
+                if (s <= d.cum[i + 1]) {
+                    const seg = d.cum[i + 1] - d.cum[i] || 1, t = (s - d.cum[i]) / seg;
+                    return [d.coords[i][0] + (d.coords[i + 1][0] - d.coords[i][0]) * t, d.coords[i][1] + (d.coords[i + 1][1] - d.coords[i][1]) * t];
+                }
+            }
+            return d.coords[d.coords.length - 1];
+        }
+
+        // Який крок зараз і скільки метрів до наступного маневру
+        function navStepState(d, along) {
+            const n = d.steps.length;
+            if (!n) return { si: -1, next: null, toNext: Math.max(0, d.distance - along) };
+            let si = 0;
+            for (let i = 0; i < n; i++) if (d.starts[i] <= along + 1) si = i;
+            if (si >= n - 1) return { si: n - 1, next: d.steps[n - 1], toNext: Math.max(0, d.distance - along) };
+            return { si: si, next: d.steps[si + 1], toNext: Math.max(0, d.starts[si + 1] - along) };
+        }
+        // </nav-pure>
+
+        function navDestName(toId) {
+            try {
+                const p = people.find(x => x.id === toId); if (p) return p.name;
+                const pl = places.find(x => x.id === toId); if (pl) return pl.name;
+            } catch (e) {}
+            return '';
+        }
+
+        async function navFetchRoute(from, to) {
+            const url = `https://routing.openstreetmap.de/routed-foot/route/v1/foot/${from[1]},${from[0]};${to[1]},${to[0]}?overview=full&geometries=geojson&steps=true`;
+            const resp = await fetch(url);
+            const data = await resp.json();
+            if (data.code !== 'Ok' || !data.routes || !data.routes[0]) throw new Error('no route');
+            return data.routes[0];
+        }
+
+        // ---- Плашка «Почати» ----
+        function showNavStartPanel(route) {
+            const km = (route.distance / 1000).toFixed(1);
+            const mins = Math.max(1, Math.round(route.duration / 60));
+            const name = navDestName(route.toId);
+            document.getElementById('nav-start-main').innerText = `Пішки · ${km} км · ~${mins} хв`;
+            document.getElementById('nav-start-sub').innerText = name ? `Маршрут до: ${name}` : 'Покрокова навігація по GPS';
+            document.getElementById('nav-start-panel').classList.add('show');
+            document.body.classList.add('nav-start-open');
+        }
+        function hideNavStartPanel() {
+            const el = document.getElementById('nav-start-panel');
+            if (el) el.classList.remove('show');
+            document.body.classList.remove('nav-start-open');
+        }
+
+        // ---- Голос (за замовчуванням вимкнено) ----
+        function navSpeak(text) {
+            if (!navVoice || !('speechSynthesis' in window)) return;
+            try {
+                speechSynthesis.cancel();
+                const u = new SpeechSynthesisUtterance(text);
+                u.lang = 'uk-UA'; u.rate = 1;
+                speechSynthesis.speak(u);
+            } catch (e) {}
+        }
+
+        // ---- Мітка «я» з напрямком ----
+        function navUpdatePuck() {
+            const el = navPuck && navPuck.getElement && navPuck.getElement();
+            const cone = el && el.querySelector('.nav-puck-cone');
+            if (!cone || navHeading == null) return;
+            const b = (typeof map.getBearing === 'function') ? map.getBearing() : 0;
+            cone.style.transform = `rotate(${navHeading + b}deg)`;
+        }
+        function navPlacePuck(ll) {
+            if (!navPuck) {
+                const icon = L.divIcon({ className: '', html: '<div class="nav-puck"><div class="nav-puck-cone"></div><div class="nav-puck-dot"></div></div>', iconSize: [44, 44], iconAnchor: [22, 22] });
+                navPuck = L.marker(ll, { icon: icon, interactive: false, keyboard: false, zIndexOffset: 3000 }).addTo(map);
+            } else navPuck.setLatLng(ll);
+            navUpdatePuck();
+        }
+        map.on('rotate', navUpdatePuck);
+
+        // ---- Камера: слідкує за мітою і (за замовчуванням) крутить карту «за напрямком руху» ----
+        function navApplyCamera(ll) {
+            if (!navFollow) return;
+            if (navHeadingUp && navHeading != null && typeof map.setBearing === 'function') map.setBearing((360 - navHeading) % 360);
+            map.panTo(ll, { animate: true, duration: 0.6, easeLinearity: 1, noMoveStart: true });
+        }
+        function navSetFollow(v) {
+            navFollow = v;
+            document.getElementById('nav-recenter').classList.toggle('show', !v);
+        }
+        map.on('dragstart', () => { if (navActive && navFollow) navSetFollow(false); });
+        map.getContainer().addEventListener('touchstart', (e) => { if (navActive && navFollow && e.touches && e.touches.length > 1) navSetFollow(false); }, { passive: true });
+        document.getElementById('nav-recenter').addEventListener('click', () => {
+            navSetFollow(true);
+            if (navLastPos) { navApplyCamera(navLastPos); }
+        });
+        // Під час навігації «я» повертає до мітки навігації, а компас перемикає «за напрямком / північ угорі»
+        (function () {
+            const meBtn = document.getElementById('map-me-btn'), compass = document.getElementById('map-compass-btn');
+            meBtn.parentElement.addEventListener('click', (e) => {
+                if (!navActive) return;
+                if (e.target.closest('#map-me-btn')) { e.stopPropagation(); navSetFollow(true); if (navLastPos) navApplyCamera(navLastPos); }
+                else if (e.target.closest('#map-compass-btn')) {
+                    e.stopPropagation();
+                    navHeadingUp = !navHeadingUp;
+                    if (!navHeadingUp && map.setBearing) map.setBearing(0);
+                    else if (navLastPos) navApplyCamera(navLastPos);
+                    showRouteInfo(navHeadingUp ? 'Карта крутиться за напрямком руху' : 'Північ угорі', 1800);
+                }
+            }, true);
+        })();
+
+        // ---- Екран не гасне під час навігації ----
+        async function navAcquireWakeLock() { try { if (navigator.wakeLock) navWakeLock = await navigator.wakeLock.request('screen'); } catch (e) {} }
+        function navReleaseWakeLock() { try { if (navWakeLock) navWakeLock.release(); } catch (e) {} navWakeLock = null; }
+        document.addEventListener('visibilitychange', () => { if (navActive && document.visibilityState === 'visible' && !navWakeLock) navAcquireWakeLock(); });
+
+        function navDrawRoute(d) {
+            if (routeLine) map.removeLayer(routeLine);
+            routeLine = L.polyline(d.coords, { color: '#ff2d78', weight: 6, opacity: 0.95, lineCap: 'round', lineJoin: 'round', renderer: routeRenderer, interactive: false }).addTo(map);
+            setRouteDim(true, [d.toId].filter(Boolean));
+        }
+
+        // ---- Старт ----
+        function navGetPosition() {
+            return new Promise((resolve) => {
+                if (!navigator.geolocation) return resolve(null);
+                navigator.geolocation.getCurrentPosition(p => resolve(p), () => resolve(null), { enableHighAccuracy: true, timeout: 8000, maximumAge: 5000 });
+            });
+        }
+
+        async function navStart() {
+            if (navActive || !navLast) return;
+            const route = navLast;
+            hideNavStartPanel();
+            showRouteInfo('Визначаю ваше місце…');
+            const pos = await navGetPosition();
+            hideRouteInfo();
+            if (!pos) { navBegin(route, true); return; }
+            const here = [pos.coords.latitude, pos.coords.longitude];
+            if (haversineMeters(here, route.to) > ROUTE_MAX_METERS) {
+                showRouteInfo('Ви занадто далеко від пункту призначення — пішохідна навігація працює в радіусі 4 км 🚫', 4500, true);
+                showNavStartPanel(route);
+                return;
+            }
+            let data = route;
+            if (haversineMeters(here, route.from) > 30) {
+                try {
+                    const r = await navFetchRoute(here, route.to);
+                    data = navBuildData(r, route.to, route.toId);
+                    data.from = here;
+                } catch (err) {
+                    showRouteInfo('Не вдалося прокласти маршрут від вашого місця — перевірте з’єднання', 3500, true);
+                    showNavStartPanel(route);
+                    return;
+                }
+            }
+            navBegin(data, false);
+            navOnFix(here, pos.coords.accuracy, pos.coords.heading, pos.coords.speed);
+        }
+
+        function navBegin(d, simulate) {
+            navActive = true; navSim = simulate; navArrived = false; navData = d;
+            navFollow = true; navHeadingUp = true; navOffCount = 0; navLastReroute = 0;
+            navHeading = null; navLastPos = null; navAnnounced = {}; navIdx = 0;
+            document.body.classList.add('navigating');
+            document.getElementById('nav-hud').classList.add('show');
+            document.getElementById('nav-bottom').classList.add('show');
+            document.getElementById('nav-recenter').classList.remove('show');
+            hideRouteInfo();
+            navDrawRoute(d);
+            navAcquireWakeLock();
+            map.setView(d.from || d.coords[0], Math.max(map.getZoom(), 18), { animate: false });
+            if (simulate) {
+                showRouteInfo('GPS недоступний — показую демо-рух по маршруту', 3500);
+                navSimStart();
+            } else navWatchStart();
+            navSpeak('Навігацію розпочато');
+        }
+
+        function navWatchStart() {
+            if (!navigator.geolocation) return;
+            navWatchId = navigator.geolocation.watchPosition(
+                (p) => navOnFix([p.coords.latitude, p.coords.longitude], p.coords.accuracy, p.coords.heading, p.coords.speed),
+                (err) => {
+                    if (err && err.code === 1) { showRouteInfo('Немає доступу до геолокації — навігацію зупинено', 3500, true); navStop(); }
+                    else showRouteInfo('Слабкий GPS-сигнал…', 2500);
+                },
+                { enableHighAccuracy: true, maximumAge: 1000, timeout: 20000 }
+            );
+        }
+
+        function navSimStart() {
+            let a = 0;
+            navSimTimer = setInterval(() => {
+                if (!navData) return;
+                a += NAV_SIM_SPEED * 0.5;
+                navOnFix(navPointAt(navData, a), 5, null, null);
+            }, 500);
+        }
+
+        function navStopSources() {
+            if (navWatchId != null) { try { navigator.geolocation.clearWatch(navWatchId); } catch (e) {} navWatchId = null; }
+            if (navSimTimer) { clearInterval(navSimTimer); navSimTimer = null; }
+        }
+
+        // ---- Кожне нове положення ----
+        function navOnFix(pos, acc, devHeading, speed) {
+            if (!navActive || !navData || navArrived) return;
+            const d = navData;
+            const offLimit = Math.max(NAV_OFF_ROUTE_M, (acc || 0) * 1.2);
+            // Спершу шукаємо поруч із попередньою позицією (маршрут не «перестрибує» вперед на петлях),
+            // і лише якщо так далеко від лінії — по всьому маршруту
+            let pr = navProject(d, pos, navIdx - 3, navIdx + 40);
+            if (pr.dist > offLimit) pr = navProject(d, pos);
+            navIdx = pr.idx;
+            const along = pr.along * d.scale;
+            const remaining = Math.max(0, d.distance - along);
+
+            // Прибуття
+            if (haversineMeters(pos, d.to) < NAV_ARRIVE_M || remaining < 15) { navArrive(pos); return; }
+
+            // Зійшов з маршруту → перебудова від поточного місця (двічі підряд + пауза між спробами)
+            if (!navSim && pr.dist > offLimit) {
+                navOffCount++;
+                if (navOffCount >= 2 && Date.now() - navLastReroute > 8000) { navReroute(pos); }
+            } else navOffCount = 0;
+
+            // Напрямок: компас/GPS, якщо йдемо; інакше — за напрямком сегмента маршруту
+            let h = null;
+            if (devHeading != null && !isNaN(devHeading) && (speed == null || speed > 0.8)) h = devHeading;
+            else if (pr.dist < 30) {
+                const b = d.coords[Math.min(pr.idx + 1, d.coords.length - 1)];
+                if (haversineMeters(pr.point, b) > 1) h = navBearing(pr.point, b);
+            }
+            if (h != null) navHeading = (navHeading == null) ? h : (navHeading + navAngleDiff(navHeading, h) * 0.4 + 360) % 360;
+
+            // Мітка: «прилипаємо» до лінії, поки йдемо по ній
+            const shown = pr.dist < 25 ? pr.point : pos;
+            navLastPos = shown;
+            navPlacePuck(shown);
+
+            // Пройдену частину лінії прибираємо
+            if (routeLine && pr.dist <= offLimit) routeLine.setLatLngs([pr.point].concat(d.coords.slice(pr.idx + 1)));
+
+            // Підказка
+            const st = navStepState(d, along);
+            const info = st.next ? navInstruction(st.next) : { arrow: '↑', text: 'Рухайтеся прямо до пункту призначення', street: '' };
+            document.getElementById('nav-hud-arrow').innerText = info.arrow;
+            document.getElementById('nav-hud-dist').innerText = navFormatDist(st.toNext);
+            document.getElementById('nav-hud-instr').innerText = info.text;
+            document.getElementById('nav-hud-street').innerText = info.street || '';
+            const key = st.si + 1;
+            if (st.toNext < 40 && !navAnnounced[key]) { navAnnounced[key] = 1; navSpeak(info.text); }
+
+            // Нижня панель
+            const mins = Math.max(1, Math.round(d.duration * (remaining / d.distance) / 60));
+            const eta = new Date(Date.now() + mins * 60000).toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' });
+            const name = navDestName(d.toId);
+            document.getElementById('nav-bottom-main').innerText = `${(remaining / 1000).toFixed(1)} км · ${mins} хв`;
+            document.getElementById('nav-bottom-sub').innerText = `Прибуття о ${eta}` + (name ? ` · ${name}` : '') + (navSim ? ' · демо' : '');
+
+            navApplyCamera(shown);
+        }
+
+        async function navReroute(pos) {
+            navLastReroute = Date.now(); navOffCount = 0;
+            document.getElementById('nav-hud-instr').innerText = 'Перебудовую маршрут…';
+            try {
+                const r = await navFetchRoute(pos, navData.to);
+                if (!navActive) return;
+                const nd = navBuildData(r, navData.to, navData.toId);
+                nd.from = pos; navData = nd; navAnnounced = {}; navIdx = 0;
+                navDrawRoute(nd);
+                navSpeak('Маршрут перебудовано');
+            } catch (e) {
+                showRouteInfo('Немає з’єднання — лишаю попередній маршрут', 3000, true);
+            }
+        }
+
+        function navArrive(pos) {
+            if (navArrived) return;
+            navArrived = true;
+            navStopSources();
+            const name = navDestName(navData && navData.toId);
+            document.getElementById('nav-hud-arrow').innerText = '🏁';
+            document.getElementById('nav-hud-dist').innerText = 'Ви прибули';
+            document.getElementById('nav-hud-instr').innerText = name || 'Пункт призначення';
+            document.getElementById('nav-hud-street').innerText = '';
+            document.getElementById('nav-bottom-main').innerText = '0 км';
+            document.getElementById('nav-bottom-sub').innerText = 'Навігацію завершено';
+            if (navPuck && navData) navPlacePuck(navData.to);
+            try { if (navigator.vibrate) navigator.vibrate([60, 80, 60]); } catch (e) {}
+            try { const h = tgHaptic(); if (h && h.notificationOccurred) h.notificationOccurred('success'); } catch (e) {}
+            navSpeak('Ви прибули');
+            setTimeout(() => { if (navActive && navArrived) navStop(); }, 5000);
+        }
+
+        function navStop(opts) {
+            opts = opts || {};
+            const was = navActive;
+            navActive = false; navArrived = false;
+            navStopSources();
+            if (navPuck) { map.removeLayer(navPuck); navPuck = null; }
+            navReleaseWakeLock();
+            document.body.classList.remove('navigating');
+            document.getElementById('nav-hud').classList.remove('show');
+            document.getElementById('nav-bottom').classList.remove('show');
+            document.getElementById('nav-recenter').classList.remove('show');
+            try { if ('speechSynthesis' in window) speechSynthesis.cancel(); } catch (e) {}
+            navData = null; navLast = null; navLastPos = null;
+            if (was && !opts.keepBearing && typeof map.setBearing === 'function') map.setBearing(0);
+            cancelRouteSelection();
+            clearRouteLine();
+        }
+
+        document.getElementById('nav-start-btn').addEventListener('click', navStart);
+        document.getElementById('nav-start-close').addEventListener('click', () => { navLast = null; cancelRouteSelection(); clearRouteLine(); });
+        document.getElementById('nav-end-btn').addEventListener('click', () => navStop());
+        document.getElementById('nav-voice-btn').addEventListener('click', () => {
+            navVoice = !navVoice;
+            document.getElementById('nav-voice-btn').innerText = navVoice ? '🔊' : '🔇';
+            if (navVoice) navSpeak('Голосові підказки увімкнено'); else { try { speechSynthesis.cancel(); } catch (e) {} }
+        });
 
         let myName = localStorage.getItem('chat_username') || "Гість";
 
@@ -7487,10 +7984,9 @@ const tileRefreshing = new Set();
         document.getElementById('story-viewer-location-btn').addEventListener('click', (e) => {
             e.stopPropagation();
             if (!storyViewerEntry || !storyViewerEntry.coords) return;
-            const coords = storyViewerEntry.coords;
+            const entry = storyViewerEntry;
             closeStoryViewer();
-            showScreen('map');
-            map.panTo(coords);
+            showPlaceOnMap(entry);
         });
         document.getElementById('story-viewer-msg-btn').addEventListener('click', (e) => {
             e.stopPropagation();
@@ -8803,7 +9299,7 @@ const tileRefreshing = new Set();
         window.addEventListener('orientationchange', () => setTimeout(layoutHomeGrid, 60));
 
         function buildDirectoryEntries() {
-            const entries = people.map(p => ({ id: p.id, type: 'person', name: p.name, status: p.status, photos: p.photos, video: p.video, about: p.about, interests: p.interests }));
+            const entries = people.map(p => ({ id: p.id, type: 'person', name: p.name, status: p.status, photos: p.photos, video: p.video, about: p.about, interests: p.interests, coords: p.coords }));
             Object.keys(firebaseProfilesCache).forEach(id => {
                 if (id === myId) return;
                 const p = firebaseProfilesCache[id];
@@ -8811,7 +9307,8 @@ const tileRefreshing = new Set();
                 entries.push({
                     id, type: 'person', name: p.name || 'Гість', status: p.status || '',
                     photos: (p.photos && p.photos.length) ? p.photos : [DEFAULT_AVATAR],
-                    video: p.video, about: p.about || '', interests: p.interests || ''
+                    video: p.video, about: p.about || '', interests: p.interests || '',
+                    coords: (Array.isArray(p.coords) && p.coords.length === 2) ? p.coords : undefined
                 });
             });
             return entries;
@@ -8822,7 +9319,7 @@ const tileRefreshing = new Set();
         // без окремих екранів чи списків — усе прокручується вниз, а карта відкривається лише кнопкою.
         function buildTodayEntries() {
             const peopleEntries = buildDirectoryEntries();
-            const placeEntries = places.map(pl => ({ id: pl.id, type: 'place', name: pl.name, status: pl.status, photos: pl.photos, video: pl.video, text1: pl.text1, text2: pl.text2, svg: pl.svg, category: pl.category }));
+            const placeEntries = places.map(pl => ({ id: pl.id, type: 'place', name: pl.name, status: pl.status, photos: pl.photos, video: pl.video, text1: pl.text1, text2: pl.text2, svg: pl.svg, category: pl.category, coords: pl.coords }));
             const combined = peopleEntries.concat(placeEntries);
             combined.forEach(e => {
                 e.isFav = myFavorites.has(e.id);
@@ -9089,13 +9586,6 @@ const tileRefreshing = new Set();
                 });
                 applyStoryRing(mini, liveStories(e.stories), 7);
                 avatar.appendChild(mini);
-                if (e.type === 'place') {
-                    const qrBadge = document.createElement('div'); qrBadge.className = 'home-circle-qr';
-                    qrBadge.setAttribute('aria-label', 'QR-код зі знижкою');
-                    qrBadge.innerHTML = '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.2"/><rect x="14" y="3" width="7" height="7" rx="1.2"/><rect x="3" y="14" width="7" height="7" rx="1.2"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h3M20 17v4"/></svg>';
-                    qrBadge.addEventListener('click', (ev) => { ev.stopPropagation(); window.openPlaceCoupon(e); });
-                    avatar.appendChild(qrBadge);
-                }
                 if (e.isMe) {
                     // Кнопка "+" знизу справа — додати нове фото/відео в сторі, не заходячи в профіль.
                     const addBadge = document.createElement('div'); addBadge.className = 'home-circle-add-badge';
