@@ -5668,8 +5668,14 @@ const tileRefreshing = new Set();
             });
             placeFocusMarker = L.marker(item.coords, { icon }).addTo(map);
             placeFocusMarker.bindPopup(item.name);
-            map.setView(item.coords, Math.max(map.getZoom(), 16), { animate: true });
-            setTimeout(() => { map.invalidateSize(); placeFocusMarker.openPopup(); }, 120);
+            // Вкладка карти щойно показана (була display:none) — спершу оновлюємо розмір, потім центруємо без анімації,
+            // і повторюємо після showScreen/ResizeObserver, щоб центр не з'їхав.
+            const focusPlace = () => {
+                map.invalidateSize({ animate: false });
+                map.setView(item.coords, Math.max(map.getZoom(), 16), { animate: false });
+            };
+            focusPlace();
+            setTimeout(() => { focusPlace(); placeFocusMarker.openPopup(); }, 150);
         }
 
         // Візитка на карті: тап по мітці — картка випливає просто над нею (або під нею, якщо зверху тісно)
@@ -6099,7 +6105,8 @@ const tileRefreshing = new Set();
                 card.addEventListener('click', () => {
                     window.closeProfile();
                     showScreen('map');
-                    map.setView([msg.lat, msg.lng], 17, { animate: true });
+                    const fc = () => { map.invalidateSize({ animate: false }); map.setView([msg.lat, msg.lng], 17, { animate: false }); };
+                    fc(); setTimeout(fc, 150);
                 });
                 li.appendChild(card);
             } else if (type === 'call') {
@@ -10428,7 +10435,10 @@ const tileRefreshing = new Set();
             if (igCurrentItem.type === 'place') {
                 const pl = places.find(x => x.id === igCurrentItem.id);
                 closeMessagesWindowIfOpen(); showScreen('map');
-                if (pl && pl.coords) map.panTo(pl.coords);
+                if (pl && pl.coords) {
+                    const fc = () => { map.invalidateSize({ animate: false }); map.setView(pl.coords, Math.max(map.getZoom(), 16), { animate: false }); };
+                    fc(); setTimeout(fc, 150);
+                }
                 return;
             }
             const id = igCurrentItem.id;
