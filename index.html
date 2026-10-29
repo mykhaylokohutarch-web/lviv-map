@@ -12,6 +12,7 @@
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://lviv-map-chat-default-rtdb.europe-west1.firebasedatabase.app" crossorigin>
     <link rel="preconnect" href="https://telegram.org" crossorigin>
+    <link rel="preconnect" href="https://routing.openstreetmap.de" crossorigin>
     <link rel="dns-prefetch" href="https://overpass-api.de">
     <link rel="dns-prefetch" href="https://nominatim.openstreetmap.org">
     <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js">
@@ -2329,7 +2330,7 @@
                 <div class="chat-input-row">
                     <button id="chat-attach-btn" type="button" aria-label="Додати вкладення"><svg viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg></button>
                     <input type="text" id="chat-msg-input" placeholder="Повідомлення" />
-                    <button id="chat-send-btn">▲</button>
+                    <button id="chat-mic-btn" type="button" aria-label="Голосове повідомлення">🎤</button><button id="chat-send-btn">▲</button>
                 </div>
             </div>
         </div>
@@ -2652,6 +2653,19 @@
                         </span>
                         <span class="settings-toggle" id="settings-sound-toggle"><span class="settings-toggle-knob"></span></span>
                     </button>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <div class="settings-section-title">Приватність і доступність</div>
+                <div class="settings-card">
+                    <button class="settings-row" id="settings-read-row"><span class="settings-row-label"><span class="settings-icon c-gray">✓</span>Статус «прочитано»</span><span class="settings-toggle" id="settings-read-toggle"><span class="settings-toggle-knob"></span></span></button>
+                    <button class="settings-row" id="settings-typing-row"><span class="settings-row-label"><span class="settings-icon c-gray">✍️</span>Показувати «друкує…»</span><span class="settings-toggle" id="settings-typing-toggle"><span class="settings-toggle-knob"></span></span></button>
+                    <button class="settings-row" id="settings-hide-row"><span class="settings-row-label"><span class="settings-icon c-gray">🙈</span>Сховати мене на карті</span><span class="settings-toggle" id="settings-hide-toggle"><span class="settings-toggle-knob"></span></span></button>
+                    <button class="settings-row" id="settings-approx-row"><span class="settings-row-label"><span class="settings-icon c-gray">📍</span>Неточне місце на карті</span><span class="settings-toggle" id="settings-approx-toggle"><span class="settings-toggle-knob"></span></span></button>
+                    <button class="settings-row" id="settings-motion-row"><span class="settings-row-label"><span class="settings-icon c-gray">🐢</span>Зменшити анімації</span><span class="settings-toggle" id="settings-motion-toggle"><span class="settings-toggle-knob"></span></span></button>
+                    <button class="settings-row" id="settings-bigtext-row"><span class="settings-row-label"><span class="settings-icon c-gray">🔠</span>Більший текст</span><span class="settings-toggle" id="settings-bigtext-toggle"><span class="settings-toggle-knob"></span></span></button>
+                    <button class="settings-row" id="settings-lang-row"><span class="settings-row-label"><span class="settings-icon c-gray">🌐</span>English (англійська)</span><span class="settings-toggle" id="settings-lang-toggle"><span class="settings-toggle-knob"></span></span></button>
                 </div>
             </div>
 
@@ -3110,6 +3124,39 @@
 /* повідомлення-кружечок без бульбашки — час не показуємо */
 #chat-messages li.msg-circle::after { display: none !important; }
 </style>
+<style id="v2-style">
+#chat-typing{display:none;font-size:12px;opacity:.65;margin:0 12px 4px;padding:0 6px}#chat-typing.on{display:block}
+.chat-input-row.has-text #chat-mic-btn,.chat-input-row:not(.has-text) #chat-send-btn{display:none}
+#voice-rec-bar{display:none;align-items:center;gap:10px;padding:6px 8px 6px 14px;border-radius:22px;flex-shrink:0;margin:0 12px calc(88px + env(safe-area-inset-bottom,0px));background:rgba(242,242,247,.9);position:relative;z-index:3}
+body.dark-theme #voice-rec-bar{background:rgba(44,44,46,.9);color:#fff}
+#voice-rec-bar .dot{width:10px;height:10px;border-radius:50%;background:#ff3b30;animation:v2p 1s infinite}@keyframes v2p{50%{opacity:.25}}
+#voice-rec-bar .hint{flex:1;opacity:.6;font-size:13px}#voice-rec-bar button{width:32px;height:32px;border:0;border-radius:50%;background:var(--accent-main);color:#fff;cursor:pointer}
+#voice-rec-bar button[data-c]{background:#8e8e93}
+.msg-voice{display:flex;align-items:center;gap:8px;min-width:200px}.msg-voice button{flex:none;width:32px;height:32px;border-radius:50%;border:0;background:var(--accent-main);color:#fff;cursor:pointer}
+.msg-voice .wv{display:flex;align-items:center;gap:2px;height:28px;flex:1}.msg-voice .wv i{display:block;width:3px;border-radius:2px;background:currentColor;opacity:.3}.msg-voice .wv i.on{opacity:1}
+.msg-voice .vt{font-size:11px;opacity:.7;min-width:30px;text-align:right}
+#chat-messages li.msg-me[data-grp="last"]::after,#chat-messages li.msg-me[data-grp="single"]::after{content:attr(data-time) attr(data-tick)}
+#chat-messages li.msg-me[data-read="1"]::after{color:var(--accent-main);opacity:.95}
+mark.msg-hit{background:#ffd60a;color:#000;border-radius:3px}#chat-messages li.msg-flash{outline:2px solid var(--accent-main);outline-offset:1px}
+#dm-back-row #chat-search-btn{position:absolute;right:14px;top:50%;transform:translateY(-50%);border:0;background:none;font-size:18px;cursor:pointer}
+#chat-search-bar{display:none;position:fixed;z-index:60;left:10px;right:10px;top:calc(env(safe-area-inset-top,0px) + 56px);align-items:center;gap:6px;padding:6px 8px;border-radius:14px;background:rgba(242,242,247,.96);box-shadow:0 4px 18px rgba(0,0,0,.2)}
+body.dark-theme #chat-search-bar{background:rgba(44,44,46,.96);color:#fff}
+#chat-search-bar input{flex:1;min-width:0;border:0;background:transparent;font-size:15px;outline:none;color:inherit}#chat-search-bar .cnt{font-size:12px;opacity:.6}#chat-search-bar button{border:0;background:none;font-size:16px;cursor:pointer;color:inherit}
+html.v2-reduce *,html.v2-reduce *::before,html.v2-reduce *::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
+html.v2-bigtext #chat-messages li,html.v2-bigtext .settings-row,html.v2-bigtext .chat-input-row input,html.v2-bigtext .dm-row{font-size:17px!important}
+</style>
+<script id="v2-i18n">
+var V2_EN=(localStorage.getItem('settings_lang_en')==='1');
+(function(){if(!V2_EN)return;document.documentElement.lang='en';
+var D={'Чати':'Chats','Повідомлення':'Message','Фото':'Photo','Відео':'Video','Файл':'File','Локація':'Location','Скасувати':'Cancel','Відповісти':'Reply','Копіювати':'Copy','Переслати':'Forward','Редагувати':'Edit','Видалити в мене':'Delete for me','Видалити у всіх':'Delete for everyone','Сьогодні':'Today','Вчора':'Yesterday','Сповіщення':'Notifications','Звук':'Sound','Нічний режим':'Dark mode','Вигляд':'Appearance','Профіль':'Profile','Додати друга':'Add friend','Поділитись':'Share','Про застосунок':'About','Вийти з профілю':'Log out','Завантаження…':'Uploading…','Переслати до…':'Forward to…','Збережене':'Saved','Гість':'Guest','(змінено)':'(edited)','Опис':'About','Деталі':'Details','Дія':'Action','Показати на карті':'Show on map','Зберігати в галерею':'Save to gallery','Фото й відео на весь екран':'Fullscreen photo & video','Додати вкладення':'Attach','друкує…':'typing…','Пошук у чаті':'Search in chat','Запис…':'Recording…','Приватність і доступність':'Privacy & accessibility','Статус «прочитано»':'Read receipts','Показувати «друкує…»':'Show typing…','Сховати мене на карті':'Hide me on the map','Неточне місце на карті':'Approximate location','Зменшити анімації':'Reduce motion','Більший текст':'Larger text','English (англійська)':'English','Голосове повідомлення':'Voice message','Надіслати':'Send','Закрити':'Close','🎤 Голосове':'🎤 Voice','Переслане повідомлення':'Forwarded message','↪ Переслане повідомлення':'↪ Forwarded message','Відкрийте застосунок через Telegram':'Open the app in Telegram','Немає доступу до мікрофона. Дозвольте його в налаштуваннях.':'No microphone access. Please allow it in settings.'};
+function tr(s){var k=s.trim(),v=D[k];return v?s.replace(k,v):s}
+function fix(n){if(n.nodeType===3){var t=tr(n.nodeValue);if(t!==n.nodeValue)n.nodeValue=t;return}
+if(n.nodeType!==1||/^(SCRIPT|STYLE)$/.test(n.tagName))return;
+['placeholder','aria-label','title'].forEach(function(a){var v=n.getAttribute&&n.getAttribute(a);if(v){var t=tr(v);if(t!==v)n.setAttribute(a,t)}});
+for(var c=n.firstChild;c;c=c.nextSibling)fix(c)}
+function go(){fix(document.body);new MutationObserver(function(ms){ms.forEach(function(m){if(m.type==='characterData')fix(m.target);else if(m.type==='attributes')fix(m.target);else m.addedNodes.forEach(fix)})}).observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['placeholder','aria-label','title']})}
+if(document.body)go();else document.addEventListener('DOMContentLoaded',go)})();
+</script>
 <style id="app-notif-style">
 #app-notif-stack{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;flex-direction:column;align-items:center;gap:8px;padding:calc(env(safe-area-inset-top,0px) + 8px) 10px 0;pointer-events:none}
 .app-notif{pointer-events:auto;width:100%;max-width:420px;display:flex;align-items:center;gap:11px;padding:11px 14px;border-radius:22px;background:rgba(255,255,255,.82);color:#1d1d1f;border:1px solid rgba(0,0,0,.06);box-shadow:0 10px 30px rgba(0,0,0,.18);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);transform:translate3d(0,-130%,0);opacity:0;transition:transform .45s cubic-bezier(.22,1.2,.36,1),opacity .3s ease;touch-action:none;cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none}
@@ -3323,7 +3370,7 @@ body.dark-theme .app-notif{background:rgba(44,44,46,.84);color:#f5f5f7;border-co
             return new Promise((resolve, reject) => {
                 if (blob && blob.size > TELEGRAM_MAX_VIDEO_BYTES) { reject(new Error('file-too-large')); return; }
                 acquireUploadWakeLock();
-                const resourceType = kind === 'video' ? 'video' : (kind === 'file' ? 'raw' : 'image');
+                const resourceType = (kind === 'video' || kind === 'audio') ? 'video' : (kind === 'file' ? 'raw' : 'image');
                 const formData = new FormData();
                 formData.append('file', blob, filename || 'file');
                 formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
@@ -4477,11 +4524,64 @@ const tileRefreshing = new Set();
             clearRouteLine();
             routeSelecting = true;
             routeSelectFromId = fromId || null;
+            warmFootRouteServer();
             addRoutePing(fromCoords);
             setRouteDim(true, fromId ? [fromId] : []);
             showRouteInfo('Виберіть іконку на карті, щоб прокласти маршрут 🚶');
             if (navigator.vibrate) navigator.vibrate(15);
         }
+
+
+        // ---- Швидкий запит пішохідного маршруту: кеш, один запит на пару точок, тайм-аут і паралельний дубль ----
+        // Публічний сервер маршрутів інколи відповідає по 5–15 с. Якщо відповіді немає за 2.5 с — шлемо другий
+        // такий самий запит паралельно й беремо той, що прийшов першим. Повторні маршрути беруться з кешу миттєво.
+        const FOOT_ROUTE_BASE = 'https://routing.openstreetmap.de/routed-foot/route/v1/foot/';
+        const footRouteCache = new Map();
+        const footRouteInflight = new Map();
+        function footRouteKey(a, b) { return [a[0].toFixed(5), a[1].toFixed(5), b[0].toFixed(5), b[1].toFixed(5)].join(','); }
+        function footRouteRequest(from, to, timeoutMs) {
+            const ctl = new AbortController();
+            const timer = setTimeout(() => ctl.abort(), timeoutMs);
+            const url = `${FOOT_ROUTE_BASE}${from[1]},${from[0]};${to[1]},${to[0]}?overview=full&geometries=geojson&steps=true`;
+            return fetch(url, { signal: ctl.signal }).then(r => r.json()).then(data => {
+                if (data.code !== 'Ok' || !data.routes || !data.routes[0]) throw new Error('no route');
+                return data.routes[0];
+            }).finally(() => clearTimeout(timer));
+        }
+        function fetchFootRoute(from, to) {
+            const key = footRouteKey(from, to);
+            const hit = footRouteCache.get(key);
+            if (hit && Date.now() - hit.t < 10 * 60 * 1000) return Promise.resolve(hit.route);
+            if (footRouteInflight.has(key)) return footRouteInflight.get(key);
+            const pr = new Promise((resolve, reject) => {
+                let pending = 0, done = false, lastErr = null, hedgeTimer = null;
+                const launch = (timeoutMs) => {
+                    pending++;
+                    footRouteRequest(from, to, timeoutMs).then(route => {
+                        if (done) return; done = true; clearTimeout(hedgeTimer); resolve(route);
+                    }).catch(err => {
+                        lastErr = err; pending--;
+                        if (!done && pending === 0) { done = true; clearTimeout(hedgeTimer); reject(lastErr); }
+                    });
+                };
+                launch(12000);
+                hedgeTimer = setTimeout(() => { if (!done) launch(10000); }, 2500);
+            }).then(route => {
+                footRouteCache.set(key, { t: Date.now(), route });
+                if (footRouteCache.size > 30) footRouteCache.delete(footRouteCache.keys().next().value);
+                return route;
+            }).finally(() => footRouteInflight.delete(key));
+            footRouteInflight.set(key, pr);
+            return pr;
+        }
+        // "Розігріває" з'єднання з сервером маршрутів, поки людина ще вибирає, куди йти.
+        let footRouteWarmAt = 0;
+        function warmFootRouteServer() {
+            if (Date.now() - footRouteWarmAt < 60000) return;
+            footRouteWarmAt = Date.now();
+            try { fetch(`${FOOT_ROUTE_BASE}24.0300,49.8400;24.0310,49.8410?overview=false`).catch(() => {}); } catch (_) {}
+        }
+        let footRouteReqId = 0;
 
         // Клік по будь-якій іншій іконці під час режиму вибору — прокладає найкоротший пішохідний маршрут (діє лише в радіусі 4 км)
         async function buildWalkingRoute(fromCoords, toCoords, toId) {
@@ -4500,11 +4600,15 @@ const tileRefreshing = new Set();
             addRoutePing(toCoords);
             setRouteDim(true, [fromId, toId].filter(Boolean));
             showRouteInfo('Прокладаю маршрут…');
+            // Одразу показуємо пунктир «по прямій» і наближаємо карту — не чекаємо відповіді сервера.
+            const reqId = ++footRouteReqId;
+            if (routeLine) map.removeLayer(routeLine);
+            routeLine = L.polyline([fromCoords, toCoords], { color: '#ff2d78', weight: 4, opacity: 0.55, dashArray: '6 8', renderer: routeRenderer, interactive: false }).addTo(map);
+            map.fitBounds(routeLine.getBounds(), { padding: [70, 90] });
             try {
-                const url = `https://routing.openstreetmap.de/routed-foot/route/v1/foot/${fromCoords[1]},${fromCoords[0]};${toCoords[1]},${toCoords[0]}?overview=full&geometries=geojson&steps=true`;
-                const resp = await fetch(url);
-                const data = await resp.json();
-                if (data.code !== 'Ok' || !data.routes || !data.routes[0]) throw new Error('no route');
+                const route = await fetchFootRoute(fromCoords, toCoords);
+                if (reqId !== footRouteReqId) return; // за цей час почали інший маршрут
+                const data = { routes: [route] };
                 const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
                 if (routeLine) map.removeLayer(routeLine);
                 routeLine = L.polyline(coords, { color: '#ff2d78', weight: 5, opacity: 0.9, lineCap: 'round', lineJoin: 'round', renderer: routeRenderer, interactive: false }).addTo(map);
@@ -4517,6 +4621,7 @@ const tileRefreshing = new Set();
                 navLast.from = fromCoords.slice();
                 showNavStartPanel(navLast);
             } catch (err) {
+                if (reqId !== footRouteReqId) return;
                 if (routeLine) map.removeLayer(routeLine);
                 routeLine = L.polyline([fromCoords, toCoords], { color: '#ff2d78', weight: 4, opacity: 0.85, dashArray: '6 8', renderer: routeRenderer, interactive: false }).addTo(map);
                 map.fitBounds(routeLine.getBounds(), { padding: [70, 90] });
@@ -4647,11 +4752,7 @@ const tileRefreshing = new Set();
         }
 
         async function navFetchRoute(from, to) {
-            const url = `https://routing.openstreetmap.de/routed-foot/route/v1/foot/${from[1]},${from[0]};${to[1]},${to[0]}?overview=full&geometries=geojson&steps=true`;
-            const resp = await fetch(url);
-            const data = await resp.json();
-            if (data.code !== 'Ok' || !data.routes || !data.routes[0]) throw new Error('no route');
-            return data.routes[0];
+            return fetchFootRoute(from, to);
         }
 
         // ---- Плашка «Почати» ----
@@ -5980,6 +6081,8 @@ const tileRefreshing = new Set();
                     map.setView([msg.lat, msg.lng], 17, { animate: true });
                 });
                 li.appendChild(card);
+            } else if (type === 'voice') {
+                v2Voice(li, msg);
             } else {
                 li.appendChild(document.createTextNode(msg.text || ''));
             }
@@ -5998,7 +6101,7 @@ const tileRefreshing = new Set();
         function msgPreviewText(msg) {
             const t = msg.type || 'text';
             if (t === 'image') return '📷 Фото'; if (t === 'video') return '🎥 Відео';
-            if (t === 'file') return '📎 ' + (msg.fileName || 'Файл'); if (t === 'location') return '📍 Локація';
+            if (t === 'file') return '📎 ' + (msg.fileName || 'Файл'); if (t === 'location') return '📍 Локація'; if (t === 'voice') return '🎤 Голосове';
             return msg.text || '';
         }
         function fillMessageLi(li, path, key, msg) {
@@ -6068,11 +6171,11 @@ const tileRefreshing = new Set();
             const d = new Date(ts), now = new Date();
             const diff = Math.round((new Date(now.getFullYear(), now.getMonth(), now.getDate()) - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 86400000);
             if (diff === 0) return 'Сьогодні'; if (diff === 1) return 'Вчора';
-            return d.toLocaleDateString('uk-UA', d.getFullYear() === now.getFullYear() ? { day: 'numeric', month: 'long' } : { day: 'numeric', month: 'long', year: 'numeric' });
+            return d.toLocaleDateString(window.V2_EN ? 'en-US' : 'uk-UA', d.getFullYear() === now.getFullYear() ? { day: 'numeric', month: 'long' } : { day: 'numeric', month: 'long', year: 'numeric' });
         }
         function chatNameHue(s) { let h = 0; s = String(s); for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 360; return String(h); }
         function regroupChat() {
-            regroupQueued = false;
+            regroupQueued = false; setTimeout(v2Ticks, 0);
             const ul = document.getElementById('chat-messages'); if (!ul) return;
             const items = Array.prototype.filter.call(ul.children, (el) => el.tagName === 'LI' && el.dataset.sender);
             // Розділювачі днів («Сьогодні», «Вчора», «12 жовтня») — змінюємо DOM лише за потреби, щоб observer не зациклився
@@ -6106,19 +6209,171 @@ const tileRefreshing = new Set();
             const ul = document.getElementById('chat-messages'); if (!ul) return;
             new MutationObserver(scheduleRegroup).observe(ul, { childList: true });
         })();
+
+        // ===== v2: «друкує…», голосові, статуси прочитання, пошук, приватність карти =====
+        const V2on=k=>(localStorage.getItem(k)??'1')==='1', V2flag=k=>localStorage.getItem(k)==='1';
+        let v2Cache={},v2Path=null,v2TypRef=null,v2ReadsRef=null,v2OtherRead=0,v2MyRead=0,v2TypT=0,v2TypIdle=0,v2TypTimer=0,v2ReadT=0,v2Rec=null,v2Aud=null,v2S={hits:[],i:0,q:''};
+        const v2Saved=p=>/^savedMessages\//.test(p||'');
+        function v2Fmt(x){x=Math.round(x||0);return Math.floor(x/60)+':'+String(x%60).padStart(2,'0');}
+        function v2Fuzz(lat,lng){if(!V2flag('settings_approx_loc'))return [lat,lng];const g=0.003;return [Math.round(lat/g)*g,Math.round(lng/g)*g];}
+        function v2PubCoords(){return V2flag('settings_hide_on_map')?null:v2Fuzz(myCoords[0],myCoords[1]);}
+        function v2Open(path,cache){
+            if(v2Rec)v2RecStop(true); v2SearchClose();
+            v2Cache=cache;v2Path=path;v2OtherRead=0;v2MyRead=0;
+            if(v2TypRef){off(v2TypRef);v2TypRef=null;} if(v2ReadsRef){off(v2ReadsRef);v2ReadsRef=null;}
+            v2TypUi([]); if(v2Saved(path))return;
+            v2TypRef=ref(db,`typing/${path}`);
+            onValue(v2TypRef,sn=>{const v=sn.val()||{},n=Date.now();v2TypUi(Object.keys(v).filter(u=>u!==myId&&n-v[u]<7000));});
+            v2ReadsRef=ref(db,`reads/${path}`);
+            onValue(v2ReadsRef,sn=>{const v=sn.val()||{};v2OtherRead=Math.max(0,...Object.keys(v).filter(u=>u!==myId).map(u=>+v[u]||0));v2Ticks();});
+            v2ReadSoon();
+        }
+        function v2Added(){v2ReadSoon();v2Ticks();}
+        function v2TypUi(ids){
+            let b=document.getElementById('chat-typing');
+            if(!b){b=document.createElement('div');b.id='chat-typing';b.setAttribute('aria-live','polite');const r=document.querySelector('#chat-thread-wrap .chat-input-row');r.parentNode.insertBefore(b,r);}
+            clearTimeout(v2TypTimer);
+            if(!ids.length||!V2on('settings_typing')){b.classList.remove('on');return;}
+            b.textContent=(currentChatIsGroup?ids.slice(0,2).map(u=>((firebaseProfilesCache[u]||{}).name)||'…').join(', ')+' ':'')+'друкує…';b.classList.add('on');
+            v2TypTimer=setTimeout(()=>b.classList.remove('on'),7000);
+        }
+        function v2TypPing(){
+            if(!v2Path||v2Saved(v2Path)||!V2on('settings_typing'))return;
+            const r=ref(db,`typing/${v2Path}/${myId}`),n=Date.now();
+            if(n-v2TypT>2500){v2TypT=n;set(r,n).catch(()=>{});onDisconnect(r).remove();}
+            clearTimeout(v2TypIdle);v2TypIdle=setTimeout(v2TypStop,4000);
+        }
+        function v2TypStop(){clearTimeout(v2TypIdle);if(!v2Path||v2Saved(v2Path)||!v2TypT)return;v2TypT=0;remove(ref(db,`typing/${v2Path}/${myId}`)).catch(()=>{});}
+        function v2ReadSoon(){clearTimeout(v2ReadT);v2ReadT=setTimeout(()=>{
+            if(!v2Path||!V2on('settings_read_receipts')||document.visibilityState!=='visible'||document.getElementById('chat-thread-wrap').style.display!=='flex')return;
+            let m=0;for(const k in v2Cache){const x=v2Cache[k];if(x&&x.senderId!==myId)m=Math.max(m,+x.timestamp||0);}
+            if(m>v2MyRead){v2MyRead=m;set(ref(db,`reads/${v2Path}/${myId}`),m).catch(()=>{});}
+        },500);}
+        document.addEventListener('visibilitychange',v2ReadSoon);
+        function v2Ticks(){
+            const ul=document.getElementById('chat-messages');if(!ul)return;const on=V2on('settings_read_receipts');
+            ul.querySelectorAll('li.msg-me').forEach(li=>{
+                if(!on){li.removeAttribute('data-tick');li.removeAttribute('data-read');return;}
+                const rd=v2OtherRead>0&&v2OtherRead>=(+li.dataset.ts||0);li.dataset.tick=rd?' ✓✓':' ✓';li.dataset.read=rd?'1':'0';
+            });
+        }
+        // ---- голосові повідомлення ----
+        async function v2RecStart(){
+            if(v2Rec||!currentChatPath)return;
+            if(!navigator.mediaDevices||!window.MediaRecorder){alert('Запис голосу не підтримується на цьому пристрої.');return;}
+            let st;try{st=await navigator.mediaDevices.getUserMedia({audio:true});}catch(e){alert('Немає доступу до мікрофона. Дозвольте його в налаштуваннях.');return;}
+            const mt=['audio/mp4','audio/webm;codecs=opus','audio/webm'].find(t=>MediaRecorder.isTypeSupported(t))||'';
+            const mr=new MediaRecorder(st,mt?{mimeType:mt}:{}),peaks=[],buf=new Uint8Array(256);
+            let ac=null,an=null;try{ac=new (window.AudioContext||window.webkitAudioContext)();an=ac.createAnalyser();an.fftSize=256;ac.createMediaStreamSource(st).connect(an);}catch(_){}
+            const R={mr,st,ac,peaks,chunks:[],t0:Date.now(),mt,cancel:false,path:currentChatPath};
+            R.tick=setInterval(()=>{if(an){an.getByteTimeDomainData(buf);let m=0;for(const v of buf)m=Math.max(m,Math.abs(v-128));peaks.push(m/128);}v2RecUi();},100);
+            mr.ondataavailable=e=>{if(e.data&&e.data.size)R.chunks.push(e.data);};
+            mr.onstop=()=>v2RecDone(R);
+            v2Rec=R;mr.start();if(navigator.vibrate)navigator.vibrate(15);v2RecUi();
+        }
+        function v2RecStop(cancel){
+            const R=v2Rec;if(!R)return;R.cancel=!!cancel;v2Rec=null;clearInterval(R.tick);
+            try{if(R.mr.state!=='inactive')R.mr.stop();}catch(_){}
+            R.st.getTracks().forEach(t=>t.stop());try{R.ac&&R.ac.close();}catch(_){}
+            v2RecUi();
+        }
+        async function v2RecDone(R){
+            const dur=(Date.now()-R.t0)/1000;if(R.cancel||dur<0.7||!R.chunks.length)return;
+            const n=40,p=R.peaks.length?R.peaks:[0.3],wave=[];
+            for(let i=0;i<n;i++){const a=Math.floor(i*p.length/n),b=Math.max(a+1,Math.floor((i+1)*p.length/n));let m=0;for(let j=a;j<b&&j<p.length;j++)m=Math.max(m,p[j]);wave.push(Math.min(100,Math.round(m*140)));}
+            const blob=new Blob(R.chunks,{type:R.mt||'audio/webm'});
+            showUploadOverlay('Надсилання голосового…');
+            try{const url=await uploadMediaToTelegram(blob,'voice.'+(/mp4/.test(R.mt)?'m4a':'webm'),'audio');hideUploadOverlay();
+                if(currentChatPath===R.path)sendAttachmentMessage({type:'voice',url,dur:Math.round(dur),wave},'🎤 Голосове');}
+            catch(err){hideUploadOverlay();alert(mediaUploadErrorMessage(err));}
+        }
+        function v2RecUi(){
+            const row=document.querySelector('#chat-thread-wrap .chat-input-row');let b=document.getElementById('voice-rec-bar');
+            if(!b){b=document.createElement('div');b.id='voice-rec-bar';b.innerHTML='<span class="dot"></span><span class="tm">0:00</span><span class="hint">Запис…</span><button type="button" data-c="1" aria-label="Скасувати">✕</button><button type="button" aria-label="Надіслати">▲</button>';
+                b.addEventListener('click',e=>{const x=e.target.closest('button');if(x)v2RecStop(!!x.dataset.c);});row.parentNode.insertBefore(b,row);}
+            if(!v2Rec){b.style.display='none';row.style.display='';return;}
+            b.style.display='flex';row.style.display='none';const t=(Date.now()-v2Rec.t0)/1000;b.querySelector('.tm').textContent=v2Fmt(t);if(t>300)v2RecStop(false);
+        }
+        function v2PlayUrl(u){const a=document.createElement('audio');return(/\.webm(\?|$)/i.test(u)&&!a.canPlayType('audio/webm;codecs=opus'))?u.replace(/\.webm(\?|$)/i,'.mp3$1'):u;}
+        function v2Voice(li,msg){
+            const w=document.createElement('div');w.className='msg-voice';
+            const b=document.createElement('button');b.type='button';b.textContent='▶';b.setAttribute('aria-label','Відтворити');
+            const wv=document.createElement('div');wv.className='wv';
+            const bars=(msg.wave&&msg.wave.length?msg.wave:Array(32).fill(30)).map(h=>{const i=document.createElement('i');i.style.height=Math.max(4,Math.round(h*0.26))+'px';wv.appendChild(i);return i;});
+            const t=document.createElement('span');t.className='vt';t.textContent=v2Fmt(msg.dur);
+            w.append(b,wv,t);li.appendChild(w);let a=null;
+            b.addEventListener('click',()=>{
+                if(a&&!a.paused){a.pause();return;}
+                if(v2Aud&&v2Aud!==a)v2Aud.pause();
+                if(!a){a=new Audio(v2PlayUrl(msg.url));
+                    a.addEventListener('timeupdate',()=>{const p=a.duration?a.currentTime/a.duration:0;bars.forEach((x,i)=>x.classList.toggle('on',i/bars.length<p));t.textContent=v2Fmt(a.currentTime);});
+                    a.addEventListener('ended',()=>{b.textContent='▶';bars.forEach(x=>x.classList.remove('on'));t.textContent=v2Fmt(msg.dur);});
+                    a.addEventListener('pause',()=>{b.textContent='▶';});}
+                v2Aud=a;a.play().then(()=>{b.textContent='⏸';}).catch(()=>alert('Не вдалося відтворити голосове.'));
+            });
+        }
+        // ---- пошук у чаті ----
+        function v2SearchOpen(){
+            let bar=document.getElementById('chat-search-bar');
+            if(!bar){bar=document.createElement('div');bar.id='chat-search-bar';
+                bar.innerHTML='<input type="search" placeholder="Пошук у чаті" aria-label="Пошук у чаті"><span class="cnt"></span><button type="button" data-d="-1" aria-label="Попередній">↑</button><button type="button" data-d="1" aria-label="Наступний">↓</button><button type="button" data-x="1" aria-label="Закрити">✕</button>';
+                document.body.appendChild(bar);const inp=bar.querySelector('input');
+                inp.addEventListener('input',()=>v2Find(inp.value));inp.addEventListener('keydown',e=>{if(e.key==='Enter')v2Go(e.shiftKey?-1:1);});
+                bar.addEventListener('click',e=>{const x=e.target.closest('button');if(!x)return;if(x.dataset.x)v2SearchClose();else v2Go(+x.dataset.d);});}
+            bar.style.display='flex';bar.querySelector('input').focus();
+        }
+        function v2Unmark(){
+            document.querySelectorAll('#chat-messages mark.msg-hit').forEach(m=>{const p=m.parentNode;m.replaceWith(document.createTextNode(m.textContent));p.normalize();});
+            document.querySelectorAll('#chat-messages .msg-flash').forEach(x=>x.classList.remove('msg-flash'));
+        }
+        function v2SearchClose(){const b=document.getElementById('chat-search-bar');if(b){b.style.display='none';b.querySelector('input').value='';b.querySelector('.cnt').textContent='';}v2Unmark();v2S={hits:[],i:0,q:''};}
+        function v2Mark(li){[...li.childNodes].filter(n=>n.nodeType===3).forEach(n=>{
+            const x=n.nodeValue,l=x.toLowerCase(),f=document.createDocumentFragment();let p=0,i;
+            while((i=l.indexOf(v2S.q,p))>-1){f.append(x.slice(p,i));const m=document.createElement('mark');m.className='msg-hit';m.textContent=x.slice(i,i+v2S.q.length);f.append(m);p=i+v2S.q.length;}
+            if(p){f.append(x.slice(p));n.replaceWith(f);}});}
+        function v2Find(q){
+            v2Unmark();v2S={hits:[],i:0,q:q.trim().toLowerCase()};const c=document.querySelector('#chat-search-bar .cnt');
+            if(v2S.q.length<2){c.textContent='';return;}
+            const ul=document.getElementById('chat-messages');
+            Object.keys(v2Cache).map(k=>({k,m:v2Cache[k]})).filter(o=>o.m&&((o.m.text||'')+' '+(o.m.fileName||'')).toLowerCase().includes(v2S.q))
+                .sort((a,b)=>(+a.m.timestamp||0)-(+b.m.timestamp||0)).forEach(o=>{const li=ul.querySelector(`li[data-key="${o.k}"]`);if(li)v2S.hits.push(li);});
+            v2S.hits.forEach(v2Mark);v2S.i=v2S.hits.length;v2Go(-1);
+        }
+        function v2Go(d){
+            const n=v2S.hits.length,c=document.querySelector('#chat-search-bar .cnt');if(!c)return;
+            if(!n){c.textContent=v2S.q.length>1?'0':'';return;}
+            v2S.i=(v2S.i+d+n)%n;const li=v2S.hits[v2S.i];c.textContent=(v2S.i+1)+'/'+n;
+            v2S.hits.forEach(x=>x.classList.remove('msg-flash'));li.classList.add('msg-flash');li.scrollIntoView({block:'center',behavior:'smooth'});
+        }
+        function v2Prefs(){const h=document.documentElement;h.classList.toggle('v2-reduce',V2flag('settings_reduce_motion')||matchMedia('(prefers-reduced-motion: reduce)').matches);h.classList.toggle('v2-bigtext',V2flag('settings_big_text'));}
+        function v2Wire(){
+            const inp=document.getElementById('chat-msg-input'),row=inp.closest('.chat-input-row');
+            inp.addEventListener('input',v2TypPing);
+            setInterval(()=>row.classList.toggle('has-text',!!inp.value.trim()),250);
+            document.getElementById('chat-mic-btn').addEventListener('click',v2RecStart);
+            const sb=document.createElement('button');sb.id='chat-search-btn';sb.type='button';sb.setAttribute('aria-label','Пошук у чаті');sb.textContent='🔍';
+            sb.addEventListener('click',e=>{e.stopPropagation();v2SearchOpen();});document.getElementById('dm-back-row').appendChild(sb);
+            [['read','settings_read_receipts',true],['typing','settings_typing',true],['hide','settings_hide_on_map',false],['approx','settings_approx_loc',false],['motion','settings_reduce_motion',false],['bigtext','settings_big_text',false],['lang','settings_lang_en',false]]
+                .forEach(([id,key,def])=>initSettingsToggle(`settings-${id}-row`,`settings-${id}-toggle`,key,def));
+            ['hide','approx'].forEach(k=>document.getElementById(`settings-${k}-row`).addEventListener('click',()=>{try{saveMyProfileToFirebase().catch(()=>{});}catch(_){}}));
+            ['read'].forEach(k=>document.getElementById(`settings-${k}-row`).addEventListener('click',()=>{v2Ticks();v2ReadSoon();}));
+            ['motion','bigtext'].forEach(k=>document.getElementById(`settings-${k}-row`).addEventListener('click',v2Prefs));
+            document.getElementById('settings-lang-row').addEventListener('click',()=>setTimeout(()=>location.reload(),150));
+            v2Prefs();
+        }
         function loadChat(path) {
             const chatMessagesUl = document.getElementById('chat-messages'); chatMessagesUl.innerHTML = ''; chatMessagesUl.dataset.kind = /^(dms|savedMessages)\//.test(path) ? 'dm' : 'multi';
             clearChatContext();
             if (currentChatRef) off(currentChatRef);
             currentChatRef = ref(db, path);
-            const cache = {}; const hidden = getHiddenMsgs();
+            const cache = {}; const hidden = getHiddenMsgs(); v2Open(path, cache);
             onChildAdded(currentChatRef, (data) => {
                 if (hidden.has(path + '|' + data.key)) return;
                 const msg = data.val(); cache[data.key] = msg;
                 const li = document.createElement('li');
                 fillMessageLi(li, path, data.key, msg);
                 attachMsgLongPress(li, () => cache[data.key] ? { path, key: data.key, msg: cache[data.key] } : null);
-                chatMessagesUl.appendChild(li); chatMessagesUl.scrollTop = chatMessagesUl.scrollHeight;
+                chatMessagesUl.appendChild(li); chatMessagesUl.scrollTop = chatMessagesUl.scrollHeight; v2Added();
             });
             onChildChanged(currentChatRef, (data) => {
                 const li = chatMessagesUl.querySelector(`li[data-key="${data.key}"]`); if (!li) return;
@@ -6272,7 +6527,7 @@ const tileRefreshing = new Set();
             const payload = { type: 'text', senderId: myId, senderName: myName, text: text, timestamp: Date.now() };
             const rt = takeReplyTo(); if (rt) payload.replyTo = { name: rt.name, text: rt.text };
             push(ref(db, currentChatPath), payload);
-            input.value = '';
+            input.value = ''; v2TypStop();
             updateConvoPreview(text);
         }
         document.getElementById('chat-send-btn').addEventListener('click', sendMessage);
@@ -6350,7 +6605,7 @@ const tileRefreshing = new Set();
             navigator.geolocation.getCurrentPosition(
                 (pos) => {
                     hideUploadOverlay();
-                    sendAttachmentMessage({ type: 'location', lat: pos.coords.latitude, lng: pos.coords.longitude }, '📍 Локація');
+                    sendAttachmentMessage({ type: 'location', lat: v2Fuzz(pos.coords.latitude, pos.coords.longitude)[0], lng: v2Fuzz(pos.coords.latitude, pos.coords.longitude)[1] }, '📍 Локація');
                 },
                 () => { hideUploadOverlay(); alert('Не вдалося визначити місцезнаходження. Перевірте дозвіл на геолокацію.'); },
                 { enableHighAccuracy: true, timeout: 10000 }
@@ -7249,7 +7504,7 @@ const tileRefreshing = new Set();
         function saveMyProfileToFirebase() {
             return set(ref(db, `profiles/${myId}`), {
                 name: myProfile.name, status: myProfile.status, about: myProfile.about,
-                interests: myProfile.interests, photos: myProfile.photos || [], stories: liveStories(myProfile.stories), coords: myCoords,
+                interests: myProfile.interests, photos: myProfile.photos || [], stories: liveStories(myProfile.stories), coords: v2PubCoords(),
                 photoCaptions: myProfile.photoCaptions || {}
             });
         }
@@ -9130,7 +9385,7 @@ const tileRefreshing = new Set();
             firebaseProfilesCache = data;
             Object.keys(data).forEach(id => {
                 const p = data[id];
-                if (!p || !p.coords) return;
+                if (!p || !p.coords) { if (id !== myId && profileMarkers[id]) { layerGroups.friends.removeLayer(profileMarkers[id]); delete profileMarkers[id]; } return; }
                 const photos = (p.photos && p.photos.length) ? p.photos : [DEFAULT_AVATAR];
                 const personObj = { id: id, type: 'person', name: p.name || 'Гість', coords: p.coords, photos: photos, status: p.status || '', about: p.about || '', interests: p.interests || '', stories: liveStories(p.stories).filter(x => storyAllowedFor(x, id)) };
 
@@ -10227,6 +10482,7 @@ const tileRefreshing = new Set();
         initSettingsToggle('settings-notif-row', 'settings-notif-toggle', 'settings_notifications', true);
         initSettingsToggle('settings-sound-row', 'settings-sound-toggle', 'settings_sound', true);
         initSettingsToggle('settings-fullscreen-media-row', 'settings-fullscreen-media-toggle', 'settings_fullscreen_media', true);
+        v2Wire();
         function isFullscreenMediaOn() { return (localStorage.getItem('settings_fullscreen_media') ?? '1') === '1'; }
 
         const videoQualityOptions = ['Авто', 'Висока', 'Економія'];
