@@ -5657,6 +5657,33 @@ const tileRefreshing = new Set();
         }
 
         // Відкриває карту й показує розташування закладу — викликається натисканням на "мітку" біля кола на Головній.
+        // Центрує карту на САМІЙ мітці об'єкта (markerRegistry), а не на «сирих» item.coords: позиція мітки може
+        // відрізнятися від coords (наближена локація людини), а мітка може сидіти всередині кластера-бульбашки.
+        // Після центрування розкриваємо кластер, підсвічуємо мітку і показуємо візитку — як при тапі по мітці.
+        function focusMapOnItem(item, minZoom) {
+            if (!item) return;
+            const mk = (typeof markerRegistry !== 'undefined') ? markerRegistry[item.id] : null;
+            const ll = mk && mk.getLatLng ? mk.getLatLng() : (item.coords ? L.latLng(item.coords) : null);
+            if (!ll) return;
+            const zoom = Math.max(map.getZoom(), minZoom || 17);
+            const settle = () => { try { map.invalidateSize({ animate: false }); map.setView(ll, zoom, { animate: false }); } catch (e) {} };
+            settle();
+            setTimeout(() => {
+                settle();
+                if (!mk) return;
+                const parent = Object.values(layerGroups).find(g => g && g.hasLayer && g.hasLayer(mk));
+                const reveal = () => {
+                    try {
+                        const isPlace = (item.type === 'place') || !!places.find(x => x.id === item.id);
+                        if (isPlace) selectBrandPin(mk);
+                        const card = item.id === myId ? getMyProfileItem() : (mk._pObj || places.find(x => x.id === item.id) || item);
+                        showMapCard(card);
+                    } catch (e) {}
+                };
+                if (parent && map.hasLayer(parent) && typeof parent.zoomToShowLayer === 'function') parent.zoomToShowLayer(mk, reveal);
+                else if (parent && map.hasLayer(parent)) reveal();
+            }, 170);
+        }
         // Центрує карту на координатах після showScreen('map'): вкладка щойно перестала бути display:none,
         // тож спершу оновлюємо розмір, центруємо без анімації й повторюємо після ResizeObserver.
         function focusMapOn(coords, minZoom) {
@@ -5670,6 +5697,8 @@ const tileRefreshing = new Set();
         function showPlaceOnMap(item) {
             showScreen('map');
             if (placeFocusMarker) { map.removeLayer(placeFocusMarker); placeFocusMarker = null; }
+            // Є справжня мітка цього об'єкта на карті — летимо саме на неї (без дублювання допоміжною міткою).
+            if (item && markerRegistry[item.id]) { focusMapOnItem(item, 17); return; }
             const icon = L.divIcon({
                 className: 'place-focus-marker-wrap',
                 html: `<div class="place-focus-marker">${placeBadgeSvg}</div>`,
@@ -5903,10 +5932,10 @@ const tileRefreshing = new Set();
         // Кнопка "Локація" на фото — закриває картку і показує це місце на карті
         document.getElementById('hero-location-btn').addEventListener('click', () => {
             if (!currentActiveItem) return;
-            const coords = currentActiveItem.coords;
+            const locItem = currentActiveItem;
             window.closeProfile();
             showScreen('map');
-            focusMapOn(coords, 17);
+            focusMapOnItem(locItem, 17);
         });
 
         window.closeProfile = function() {
@@ -10430,7 +10459,7 @@ const tileRefreshing = new Set();
             btn.setAttribute('aria-label', following ? 'Ви підписані' : 'Підписатись');
         }
         document.getElementById('ig-act-write').addEventListener('click', () => {
-            if (igCurrentIsMine) { closeMessagesWindowIfOpen(); showScreen('map'); focusMapOn(myCoords, 16); return; }
+            if (igCurrentIsMine) { closeMessagesWindowIfOpen(); showScreen('map'); focusMapOnItem({ id: myId, coords: myCoords }, 16); return; }
             if (igCurrentItem) {
                 // Перекидає у вкладку «Діалоги» і одразу відкриває там переписку з цією людиною.
                 const it = igCurrentItem;
@@ -10444,7 +10473,7 @@ const tileRefreshing = new Set();
             if (igCurrentItem.type === 'place') {
                 const pl = places.find(x => x.id === igCurrentItem.id);
                 closeMessagesWindowIfOpen(); showScreen('map');
-                focusMapOn((pl && pl.coords) || igCurrentItem.coords, 17);
+                focusMapOnItem(pl || igCurrentItem, 17);
                 return;
             }
             const id = igCurrentItem.id;
