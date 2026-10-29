@@ -3126,6 +3126,7 @@
 #chat-messages li.msg-circle::after { display: none !important; }
 </style>
 <style id="v2-style">
+.dm-avatar-group,.dm-avatar-saved,.msg-location-icon{background:#4542f4!important;background-image:none!important}body.dark-theme .dm-avatar-group,body.dark-theme .dm-avatar-saved,body.dark-theme .msg-location-icon{background:#3a37e6!important}
 #story-viewer-map-btn{display:none;position:absolute;right:12px;top:50%;margin-top:-23px;z-index:21;width:46px;height:46px;border-radius:50%;align-items:center;justify-content:center;padding:0;cursor:pointer;background:rgba(28,28,30,.55);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.14);box-shadow:0 6px 20px rgba(0,0,0,.35);-webkit-tap-highlight-color:transparent}
 #story-viewer-map-btn svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 #story-viewer-map-btn:active{transform:scale(.92)}
@@ -6004,7 +6005,9 @@ const tileRefreshing = new Set();
         }
         let msgSwipeInScroll = false;
         function resetThreadDrag(wrap) { wrap.style.transition = ''; wrap.style.transform = ''; wrap.style.boxShadow = ''; }
+        const svIsOpen = () => { const v = document.getElementById('story-viewer'); return !!v && v.style.display === 'flex'; };
         document.addEventListener('touchstart', (e) => {
+            if (svIsOpen() || e.target.closest('#story-viewer')) { msgSwipeTracking = false; return; }
             if (!(sidebar.classList.contains('chat-mode') && sidebar.classList.contains('active')) || msgClosing) { msgSwipeTracking = false; return; }
             if (e.target.closest('.chat-input-row') || e.target.closest('#chat-send-btn') || e.target.closest('#chat-attach-sheet')) { msgSwipeTracking = false; return; }
             msgSwipeStartX = e.touches[0].clientX; msgSwipeStartY = e.touches[0].clientY; msgSwipeStartTime = Date.now(); msgSwipeTracking = true;
@@ -10853,6 +10856,7 @@ const tileRefreshing = new Set();
             function hideArrow() { if (!arrow) return; arrow.style.transition = 'transform .2s, opacity .2s'; arrow.style.opacity = '0'; arrow.style.transform = 'translateX(-50px)'; }
             document.addEventListener('touchstart', (e) => {
                 tracking = false; fired = false;
+                if (typeof svIsOpen === 'function' && svIsOpen()) return;
                 if (e.touches.length !== 1) return;
                 const t = e.touches[0]; if (t.clientX > EDGE) return;
                 sx = t.clientX; sy = t.clientY; tracking = true;
@@ -11087,7 +11091,8 @@ const tileRefreshing = new Set();
     </style>
     <style id="chat-my-bubbles">
     /* Мої повідомлення — акцентний ультрамариновий колір, білий текст */
-    #chat-messages li.msg-me { background: var(--ultramarine-gradient) !important; background-attachment: fixed; color: #fff !important; }
+    #chat-messages li.msg-me { background: #4542f4 !important; background-image: none !important; color: #fff !important; }
+    body.dark-theme #chat-messages li.msg-me { background: #3a37e6 !important; background-image: none !important; }
     #chat-messages li.msg-me[data-time]::after { color: rgba(255,255,255,.75); opacity: 1; }
     #chat-messages li.msg-me .msg-quote { background: rgba(255,255,255,.16); border-left-color: rgba(255,255,255,.8); }
     #chat-messages li.msg-me .msg-fwd, #chat-messages li.msg-me .msg-edited { color: rgba(255,255,255,.8); opacity: 1; }
