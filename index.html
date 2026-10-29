@@ -5657,6 +5657,15 @@ const tileRefreshing = new Set();
         }
 
         // Відкриває карту й показує розташування закладу — викликається натисканням на "мітку" біля кола на Головній.
+        // Центрує карту на координатах після showScreen('map'): вкладка щойно перестала бути display:none,
+        // тож спершу оновлюємо розмір, центруємо без анімації й повторюємо після ResizeObserver.
+        function focusMapOn(coords, minZoom) {
+            if (!coords) return;
+            const z = () => Math.max(map.getZoom(), minZoom || 16);
+            const fc = () => { try { map.invalidateSize({ animate: false }); map.setView(coords, z(), { animate: false }); } catch (e) {} };
+            fc();
+            setTimeout(fc, 150);
+        }
         let placeFocusMarker = null;
         function showPlaceOnMap(item) {
             showScreen('map');
@@ -5897,7 +5906,7 @@ const tileRefreshing = new Set();
             const coords = currentActiveItem.coords;
             window.closeProfile();
             showScreen('map');
-            if (coords) map.panTo(coords);
+            focusMapOn(coords, 17);
         });
 
         window.closeProfile = function() {
@@ -10421,7 +10430,7 @@ const tileRefreshing = new Set();
             btn.setAttribute('aria-label', following ? 'Ви підписані' : 'Підписатись');
         }
         document.getElementById('ig-act-write').addEventListener('click', () => {
-            if (igCurrentIsMine) { closeMessagesWindowIfOpen(); showScreen('map'); return; }
+            if (igCurrentIsMine) { closeMessagesWindowIfOpen(); showScreen('map'); focusMapOn(myCoords, 16); return; }
             if (igCurrentItem) {
                 // Перекидає у вкладку «Діалоги» і одразу відкриває там переписку з цією людиною.
                 const it = igCurrentItem;
@@ -10435,10 +10444,7 @@ const tileRefreshing = new Set();
             if (igCurrentItem.type === 'place') {
                 const pl = places.find(x => x.id === igCurrentItem.id);
                 closeMessagesWindowIfOpen(); showScreen('map');
-                if (pl && pl.coords) {
-                    const fc = () => { map.invalidateSize({ animate: false }); map.setView(pl.coords, Math.max(map.getZoom(), 16), { animate: false }); };
-                    fc(); setTimeout(fc, 150);
-                }
+                focusMapOn((pl && pl.coords) || igCurrentItem.coords, 17);
                 return;
             }
             const id = igCurrentItem.id;
