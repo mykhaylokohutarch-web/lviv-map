@@ -3020,6 +3020,7 @@
     <div id="story-viewer">
         <div class="story-viewer-media" id="story-viewer-media"></div>
         <div id="story-viewer-profile-btn" role="button" aria-label="Відкрити профіль"></div>
+        <button id="story-viewer-map-btn" type="button" aria-label="Показати на карті"><svg viewBox="0 0 24 24"><path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg></button>
         <div class="story-viewer-top">
             <div class="story-viewer-bars" id="story-viewer-bars"></div>
             <div class="story-viewer-header">
@@ -3125,6 +3126,10 @@
 #chat-messages li.msg-circle::after { display: none !important; }
 </style>
 <style id="v2-style">
+#story-viewer-map-btn{display:none;position:absolute;right:12px;top:50%;margin-top:-23px;z-index:21;width:46px;height:46px;border-radius:50%;align-items:center;justify-content:center;padding:0;cursor:pointer;background:rgba(28,28,30,.55);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.14);box-shadow:0 6px 20px rgba(0,0,0,.35);-webkit-tap-highlight-color:transparent}
+#story-viewer-map-btn svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#story-viewer-map-btn:active{transform:scale(.92)}
+#story-viewer.sv-swiping #story-viewer-map-btn,#story-viewer.sv-pending #story-viewer-map-btn{opacity:0;pointer-events:none}
 #chat-typing{display:none;font-size:12px;opacity:.65;margin:0 12px 4px;padding:0 6px}#chat-typing.on{display:block}
 .chat-input-row.has-text #chat-mic-btn,.chat-input-row:not(.has-text) #chat-send-btn{display:none}
 #voice-rec-bar{display:none;align-items:center;gap:10px;padding:6px 8px 6px 14px;border-radius:22px;flex-shrink:0;margin:0 12px calc(88px + env(safe-area-inset-bottom,0px));background:rgba(242,242,247,.9);position:relative;z-index:3}
@@ -3144,11 +3149,21 @@ body.dark-theme #chat-search-bar{background:rgba(44,44,46,.96);color:#fff}
 #chat-search-bar input{flex:1;min-width:0;border:0;background:transparent;font-size:15px;outline:none;color:inherit}#chat-search-bar .cnt{font-size:12px;opacity:.6}#chat-search-bar button{border:0;background:none;font-size:16px;cursor:pointer;color:inherit}
 html.v2-reduce *,html.v2-reduce *::before,html.v2-reduce *::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
 html.v2-bigtext #chat-messages li,html.v2-bigtext .settings-row,html.v2-bigtext .chat-input-row input,html.v2-bigtext .dm-row{font-size:17px!important}
+#dm-back-row .v2-callbtn{position:absolute;top:50%;transform:translateY(-50%);border:0;background:none;font-size:18px;cursor:pointer;display:none}
+#call-ui{display:none;position:fixed;inset:0;z-index:100000;background:#111;color:#fff;font-family:-apple-system,system-ui,sans-serif}#call-ui.show{display:block}
+#call-ui #call-remote{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#111}
+#call-ui .cu-ava{display:none;position:absolute;left:50%;top:28%;width:130px;height:130px;margin-left:-65px;border-radius:50%;background:#555 center/cover}#call-ui:not(.video) .cu-ava{display:block}
+#call-ui .cu-name{position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 16px);text-align:center;font-size:20px;font-weight:700;text-shadow:0 1px 6px rgba(0,0,0,.6)}
+#call-ui .cu-st{position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 46px);text-align:center;font-size:14px;opacity:.85;text-shadow:0 1px 6px rgba(0,0,0,.6)}
+#call-ui #call-local{display:none;position:absolute;right:12px;top:calc(env(safe-area-inset-top,0px) + 76px);width:100px;height:140px;object-fit:cover;border-radius:12px;background:#222;transform:scaleX(-1)}#call-ui.video #call-local{display:block}
+#call-ui .cu-btns{position:absolute;left:0;right:0;bottom:calc(40px + env(safe-area-inset-bottom,0px));display:flex;justify-content:center;gap:18px}
+#call-ui .cu-btns button{width:62px;height:62px;border-radius:50%;border:0;background:rgba(255,255,255,.22);color:#fff;font-size:24px;cursor:pointer}#call-ui .cu-btns button.off{opacity:.4}
+#call-ui [data-a=end]{background:#ff3b30}#call-ui [data-a=ok]{background:#34c759}#call-ui:not(.incoming) [data-a=ok],#call-ui.incoming [data-a=mute],#call-ui.incoming [data-a=cam],#call-ui:not(.video) [data-a=cam]{display:none}
 </style>
 <script id="v2-i18n">
 var V2_EN=(localStorage.getItem('settings_lang_en')==='1');
 (function(){if(!V2_EN)return;document.documentElement.lang='en';
-var D={'Чати':'Chats','Повідомлення':'Message','Фото':'Photo','Відео':'Video','Файл':'File','Локація':'Location','Скасувати':'Cancel','Відповісти':'Reply','Копіювати':'Copy','Переслати':'Forward','Редагувати':'Edit','Видалити в мене':'Delete for me','Видалити у всіх':'Delete for everyone','Сьогодні':'Today','Вчора':'Yesterday','Сповіщення':'Notifications','Звук':'Sound','Нічний режим':'Dark mode','Вигляд':'Appearance','Профіль':'Profile','Додати друга':'Add friend','Поділитись':'Share','Про застосунок':'About','Вийти з профілю':'Log out','Завантаження…':'Uploading…','Переслати до…':'Forward to…','Збережене':'Saved','Гість':'Guest','(змінено)':'(edited)','Опис':'About','Деталі':'Details','Дія':'Action','Показати на карті':'Show on map','Зберігати в галерею':'Save to gallery','Фото й відео на весь екран':'Fullscreen photo & video','Додати вкладення':'Attach','друкує…':'typing…','Пошук у чаті':'Search in chat','Запис…':'Recording…','Приватність і доступність':'Privacy & accessibility','Статус «прочитано»':'Read receipts','Показувати «друкує…»':'Show typing…','Сховати мене на карті':'Hide me on the map','Неточне місце на карті':'Approximate location','Зменшити анімації':'Reduce motion','Більший текст':'Larger text','English (англійська)':'English','Голосове повідомлення':'Voice message','Надіслати':'Send','Закрити':'Close','🎤 Голосове':'🎤 Voice','Переслане повідомлення':'Forwarded message','↪ Переслане повідомлення':'↪ Forwarded message','Відкрийте застосунок через Telegram':'Open the app in Telegram','Немає доступу до мікрофона. Дозвольте його в налаштуваннях.':'No microphone access. Please allow it in settings.'};
+var D={'Чати':'Chats','Повідомлення':'Message','Фото':'Photo','Відео':'Video','Файл':'File','Локація':'Location','Скасувати':'Cancel','Відповісти':'Reply','Копіювати':'Copy','Переслати':'Forward','Редагувати':'Edit','Видалити в мене':'Delete for me','Видалити у всіх':'Delete for everyone','Сьогодні':'Today','Вчора':'Yesterday','Сповіщення':'Notifications','Звук':'Sound','Нічний режим':'Dark mode','Вигляд':'Appearance','Профіль':'Profile','Додати друга':'Add friend','Поділитись':'Share','Про застосунок':'About','Вийти з профілю':'Log out','Завантаження…':'Uploading…','Переслати до…':'Forward to…','Збережене':'Saved','Гість':'Guest','(змінено)':'(edited)','Опис':'About','Деталі':'Details','Дія':'Action','Показати на карті':'Show on map','Зберігати в галерею':'Save to gallery','Фото й відео на весь екран':'Fullscreen photo & video','Додати вкладення':'Attach','друкує…':'typing…','Пошук у чаті':'Search in chat','Запис…':'Recording…','Приватність і доступність':'Privacy & accessibility','Статус «прочитано»':'Read receipts','Показувати «друкує…»':'Show typing…','Сховати мене на карті':'Hide me on the map','Неточне місце на карті':'Approximate location','Зменшити анімації':'Reduce motion','Більший текст':'Larger text','English (англійська)':'English','Голосове повідомлення':'Voice message','Надіслати':'Send','Закрити':'Close','Дзвінок…':'Calling…','Підключення…':'Connecting…','Завершено':'Ended','Без відповіді':'No answer','Відхилено':'Declined','Зайнято':'Busy','Вхідний дзвінок…':'Incoming call…','Вхідний відеодзвінок…':'Incoming video call…','Дзвінок':'Call','Відеодзвінок':'Video call','🎤 Голосове':'🎤 Voice','Переслане повідомлення':'Forwarded message','↪ Переслане повідомлення':'↪ Forwarded message','Відкрийте застосунок через Telegram':'Open the app in Telegram','Немає доступу до мікрофона. Дозвольте його в налаштуваннях.':'No microphone access. Please allow it in settings.'};
 function tr(s){var k=s.trim(),v=D[k];return v?s.replace(k,v):s}
 function fix(n){if(n.nodeType===3){var t=tr(n.nodeValue);if(t!==n.nodeValue)n.nodeValue=t;return}
 if(n.nodeType!==1||/^(SCRIPT|STYLE)$/.test(n.tagName))return;
@@ -6052,17 +6067,17 @@ const tileRefreshing = new Set();
             if (type === 'image') {
                 li.classList.add('msg-media');
                 const wrap = document.createElement('div'); wrap.className = 'msg-circle-wrap';
-                if (!isMediaOpened(msg.url)) li.classList.add('msg-circle');
+                li.classList.add('msg-circle');
                 const img = document.createElement('img'); img.src = msg.url; img.loading = 'lazy'; img.draggable = false;
-                img.addEventListener('click', () => { markMediaOpened(msg.url); li.classList.remove('msg-circle'); openStoryViewer([{ type: 'photo', url: msg.url, ts: msg.timestamp || Date.now() }], 0, 'Фото', { showTime: false, autoAdvance: false }); });
+                img.addEventListener('click', () => { markMediaOpened(msg.url); openStoryViewer([{ type: 'photo', url: msg.url, ts: msg.timestamp || Date.now() }], 0, 'Фото', { showTime: false, autoAdvance: false }); });
                 wrap.appendChild(img); li.appendChild(wrap);
             } else if (type === 'video') {
                 li.classList.add('msg-media');
                 const wrap = document.createElement('div'); wrap.className = 'msg-circle-wrap';
-                if (!isMediaOpened(msg.url)) li.classList.add('msg-circle');
+                li.classList.add('msg-circle');
                 const video = document.createElement('video'); setVideoSrc(video, msg.url); video.playsInline = true; video.muted = true; video.preload = 'metadata';
                 const play = document.createElement('span'); play.className = 'msg-circle-play'; play.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
-                const open = () => { markMediaOpened(msg.url); li.classList.remove('msg-circle'); openStoryViewer([{ type: 'video', url: msg.url, ts: msg.timestamp || Date.now() }], 0, 'Відео', { showTime: false, autoAdvance: false }); };
+                const open = () => { markMediaOpened(msg.url); openStoryViewer([{ type: 'video', url: msg.url, ts: msg.timestamp || Date.now() }], 0, 'Відео', { showTime: false, autoAdvance: false }); };
                 video.addEventListener('click', open); play.addEventListener('click', open);
                 wrap.appendChild(video); wrap.appendChild(play); li.appendChild(wrap);
             } else if (type === 'file') {
@@ -6081,6 +6096,8 @@ const tileRefreshing = new Set();
                     map.setView([msg.lat, msg.lng], 17, { animate: true });
                 });
                 li.appendChild(card);
+            } else if (type === 'call') {
+                li.appendChild(document.createTextNode((msg.video ? '🎥 ' : '📞 ') + (msg.missed ? 'Пропущений дзвінок' : 'Дзвінок · ' + v2Fmt(msg.dur))));
             } else if (type === 'voice') {
                 v2Voice(li, msg);
             } else {
@@ -6101,7 +6118,7 @@ const tileRefreshing = new Set();
         function msgPreviewText(msg) {
             const t = msg.type || 'text';
             if (t === 'image') return '📷 Фото'; if (t === 'video') return '🎥 Відео';
-            if (t === 'file') return '📎 ' + (msg.fileName || 'Файл'); if (t === 'location') return '📍 Локація'; if (t === 'voice') return '🎤 Голосове';
+            if (t === 'file') return '📎 ' + (msg.fileName || 'Файл'); if (t === 'location') return '📍 Локація'; if (t === 'voice') return '🎤 Голосове'; if (t === 'call') return (msg.video ? '🎥 ' : '📞 ') + 'Дзвінок';
             return msg.text || '';
         }
         function fillMessageLi(li, path, key, msg) {
@@ -6219,7 +6236,7 @@ const tileRefreshing = new Set();
         function v2PubCoords(){return V2flag('settings_hide_on_map')?null:v2Fuzz(myCoords[0],myCoords[1]);}
         function v2Open(path,cache){
             if(v2Rec)v2RecStop(true); v2SearchClose();
-            v2Cache=cache;v2Path=path;v2OtherRead=0;v2MyRead=0;
+            v2Cache=cache;v2Path=path;v2OtherRead=0;v2MyRead=0;v2CallBtns();
             if(v2TypRef){off(v2TypRef);v2TypRef=null;} if(v2ReadsRef){off(v2ReadsRef);v2ReadsRef=null;}
             v2TypUi([]); if(v2Saved(path))return;
             v2TypRef=ref(db,`typing/${path}`);
@@ -6359,7 +6376,93 @@ const tileRefreshing = new Set();
             ['read'].forEach(k=>document.getElementById(`settings-${k}-row`).addEventListener('click',()=>{v2Ticks();v2ReadSoon();}));
             ['motion','bigtext'].forEach(k=>document.getElementById(`settings-${k}-row`).addEventListener('click',v2Prefs));
             document.getElementById('settings-lang-row').addEventListener('click',()=>setTimeout(()=>location.reload(),150));
-            v2Prefs();
+            v2Prefs();v2CallWire();
+        }
+
+        // ===== v2: аудіо- та відеодзвінки (WebRTC, сигналізація через Firebase) =====
+        // Для стабільного зв'язку в мобільних мережах додайте сюди свій TURN-сервер.
+        const V2ICE={iceServers:[{urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302']}]};
+        let v2C=null,v2RingT=0,v2RingAc=null;
+        const v2On=(r,cb)=>{onValue(r,cb);return()=>off(r);}, v2OnChild=(r,cb)=>{onChildAdded(r,cb);return()=>off(r);};
+        function v2CallBtns(){const ok=!currentChatIsGroup&&currentChatOtherId&&/^dms\//.test(v2Path||'');document.querySelectorAll('#dm-back-row .v2-callbtn').forEach(b=>b.style.display=ok?'block':'none');}
+        function v2CallEl(){let e=document.getElementById('call-ui');if(!e){e=document.createElement('div');e.id='call-ui';
+            e.innerHTML='<video id="call-remote" autoplay playsinline></video><div class="cu-ava"></div><div class="cu-name"></div><div class="cu-st"></div><video id="call-local" autoplay playsinline muted></video><div class="cu-btns"><button data-a="mute" aria-label="Мікрофон">🎙️</button><button data-a="cam" aria-label="Камера">📷</button><button data-a="end" aria-label="Завершити">✕</button><button data-a="ok" aria-label="Відповісти">📞</button></div>';
+            document.body.appendChild(e);e.querySelector('.cu-btns').addEventListener('click',ev=>{const b=ev.target.closest('button');if(b)v2CallAct(b.dataset.a);});}return e;}
+        function v2Ring(on){clearInterval(v2RingT);if(!on)return;const beep=()=>{try{const ac=v2RingAc=v2RingAc||new (window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume();const o=ac.createOscillator(),g=ac.createGain();o.frequency.value=440;g.gain.value=.12;o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+.4);}catch(_){}if(navigator.vibrate)navigator.vibrate([300,200,300]);};beep();v2RingT=setInterval(beep,2000);}
+        function v2CallUi(st,incoming){const C=v2C,e=v2CallEl();e.className=(incoming?'incoming ':'')+(C&&C.video?'video ':'')+'show';
+            e.querySelector('.cu-name').textContent=C?(C.peerName||'Гість'):'';e.querySelector('.cu-st').textContent=st;
+            e.querySelector('.cu-ava').style.backgroundImage=C&&C.peerPhoto?`url('${String(C.peerPhoto).replace(/'/g,'%27')}')`:'';
+            const l=document.getElementById('call-local');if(C&&C.local&&C.video&&l.srcObject!==C.local)l.srcObject=C.local;}
+        function v2Cand(C,c){if(!c)return;if(C.pc&&C.pc.remoteDescription)C.pc.addIceCandidate(c).catch(()=>{});else(C.pend=C.pend||[]).push(c);}
+        function v2Flush(C){(C.pend||[]).forEach(c=>C.pc.addIceCandidate(c).catch(()=>{}));C.pend=[];}
+        function v2CallConnected(C){if(C.connected)return;C.connected=true;clearTimeout(C.timeout);v2Ring(false);C.t0=Date.now();
+            C.timer=setInterval(()=>{const st=document.querySelector('#call-ui .cu-st');if(st)st.textContent=v2Fmt((Date.now()-C.t0)/1000);},1000);}
+        async function v2CallMedia(video,C){
+            if(!navigator.mediaDevices||!window.RTCPeerConnection){alert('Дзвінки не підтримуються на цьому пристрої.');return null;}
+            try{C.local=await navigator.mediaDevices.getUserMedia({audio:true,video:video?{facingMode:'user'}:false});}catch(e){alert('Немає доступу до мікрофона. Дозвольте його в налаштуваннях.');return null;}
+            C.pc=new RTCPeerConnection(V2ICE);C.subs=C.subs||[];C.local.getTracks().forEach(t=>C.pc.addTrack(t,C.local));
+            C.pc.ontrack=e=>{const r=document.getElementById('call-remote');if(r.srcObject!==e.streams[0]){r.srcObject=e.streams[0];r.play&&r.play().catch(()=>{});}};
+            C.pc.onconnectionstatechange=()=>{const x=C.pc.connectionState;if(x==='connected')v2CallConnected(C);else if(x==='failed')v2CallEnd(true,'failed');
+                else if(x==='disconnected')setTimeout(()=>{if(v2C===C&&C.pc.connectionState==='disconnected')v2CallEnd(true,'failed');},6000);};
+            v2C=C;return C;
+        }
+        async function v2CallStart(video){
+            if(v2C||!currentChatOtherId||currentChatIsGroup)return;
+            const to=currentChatOtherId,id='c_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),base=`calls/${id}`;
+            const C=await v2CallMedia(video,{id,role:'caller',video,peer:to,peerName:currentChatOtherName,peerPhoto:currentChatOtherPhoto,convPath:currentChatPath});if(!C)return;
+            v2CallUi('Дзвінок…');
+            C.pc.onicecandidate=e=>{if(e.candidate)push(ref(db,`${base}/ice/caller`),e.candidate.toJSON());};
+            try{const o=await C.pc.createOffer();await C.pc.setLocalDescription(o);
+                await set(ref(db,base),{from:myId,to,video,offer:{type:o.type,sdp:o.sdp},ts:Date.now()});
+                await set(ref(db,`callInvites/${to}`),{id,from:myId,name:(myProfile&&myProfile.name)||myName,photo:(myProfile&&myProfile.photos&&myProfile.photos[0])||'',video,ts:Date.now()});
+            }catch(e){v2CallEnd(false,'failed');return;}
+            C.subs.push(v2On(ref(db,`${base}/answer`),sn=>{const a=sn.val();if(a&&!C.pc.remoteDescription)C.pc.setRemoteDescription(a).then(()=>v2Flush(C)).catch(()=>{});}));
+            C.subs.push(v2OnChild(ref(db,`${base}/ice/callee`),sn=>v2Cand(C,sn.val())));
+            C.subs.push(v2On(ref(db,`${base}/ended`),sn=>{if(sn.val())v2CallEnd(false,sn.val());}));
+            C.timeout=setTimeout(()=>{if(!C.connected)v2CallEnd(true,'missed');},45000);
+        }
+        function v2Incoming(inv){
+            const C={id:inv.id,role:'callee',video:!!inv.video,peer:inv.from,peerName:inv.name,peerPhoto:inv.photo,subs:[]};v2C=C;
+            v2CallUi(inv.video?'Вхідний відеодзвінок…':'Вхідний дзвінок…',true);v2Ring(true);
+            C.subs.push(v2On(ref(db,`calls/${inv.id}/ended`),sn=>{if(sn.val())v2CallEnd(false,sn.val());}));
+            C.timeout=setTimeout(()=>{if(!C.connected)v2CallEnd(false,'missed');},45000);
+        }
+        async function v2CallAccept(){
+            const C=v2C;if(!C||C.role!=='callee'||C.pc)return;v2Ring(false);
+            const d=(await get(ref(db,`calls/${C.id}`))).val();if(!d||d.ended){v2CallEnd(false,'ended');return;}
+            if(!(await v2CallMedia(C.video,C))){v2CallEnd(true,'declined');return;}
+            v2CallUi('Підключення…');
+            C.pc.onicecandidate=e=>{if(e.candidate)push(ref(db,`calls/${C.id}/ice/callee`),e.candidate.toJSON());};
+            try{await C.pc.setRemoteDescription(d.offer);v2Flush(C);const a=await C.pc.createAnswer();await C.pc.setLocalDescription(a);
+                await set(ref(db,`calls/${C.id}/answer`),{type:a.type,sdp:a.sdp});}catch(e){v2CallEnd(true,'failed');return;}
+            remove(ref(db,`callInvites/${myId}`)).catch(()=>{});
+            C.subs.push(v2OnChild(ref(db,`calls/${C.id}/ice/caller`),sn=>v2Cand(C,sn.val())));
+        }
+        function v2CallEnd(notify,reason){
+            const C=v2C;if(!C)return;v2C=null;v2Ring(false);clearTimeout(C.timeout);clearInterval(C.timer);
+            (C.subs||[]).forEach(f=>{try{f();}catch(_){}});try{C.pc&&C.pc.close();}catch(_){}
+            C.local&&C.local.getTracks().forEach(t=>t.stop());
+            if(notify)set(ref(db,`calls/${C.id}/ended`),reason||'ended').catch(()=>{});
+            remove(ref(db,`callInvites/${C.role==='callee'?myId:C.peer}`)).catch(()=>{});
+            if(C.role==='caller'){push(ref(db,C.convPath),{type:'call',video:C.video,dur:C.t0?Math.round((Date.now()-C.t0)/1000):0,missed:!C.t0,senderId:myId,senderName:myName,timestamp:Date.now()}).catch(()=>{});
+                setTimeout(()=>remove(ref(db,`calls/${C.id}`)).catch(()=>{}),5000);}
+            const M={missed:'Без відповіді',declined:'Відхилено',busy:'Зайнято',failed:'Зʼєднання втрачено'},e=v2CallEl();
+            e.classList.remove('incoming');e.querySelector('.cu-st').textContent=M[reason]||'Завершено';
+            const r=document.getElementById('call-remote');if(r)r.srcObject=null;
+            setTimeout(()=>{if(!v2C)e.classList.remove('show');},1400);
+        }
+        function v2CallAct(a){
+            const C=v2C;if(!C)return;
+            if(a==='ok')v2CallAccept();
+            else if(a==='end')v2CallEnd(true,C.role==='callee'&&!C.pc?'declined':'ended');
+            else{const t=C.local&&(a==='mute'?C.local.getAudioTracks():C.local.getVideoTracks())[0];if(t){t.enabled=!t.enabled;document.querySelector(`#call-ui [data-a=${a}]`).classList.toggle('off',!t.enabled);}}
+        }
+        function v2CallWire(){
+            [['📞',false,'Дзвінок'],['🎥',true,'Відеодзвінок']].forEach(([ic,v,l],i)=>{const b=document.createElement('button');b.className='v2-callbtn';b.type='button';b.textContent=ic;b.setAttribute('aria-label',l);b.style.right=(52+i*38)+'px';
+                b.addEventListener('click',e=>{e.stopPropagation();v2CallStart(v);});document.getElementById('dm-back-row').appendChild(b);});
+            onValue(ref(db,`callInvites/${myId}`),sn=>{const v=sn.val();if(!v||Date.now()-v.ts>60000)return;
+                if(v2C){set(ref(db,`calls/${v.id}/ended`),'busy').catch(()=>{});remove(ref(db,`callInvites/${myId}`)).catch(()=>{});return;}
+                v2Incoming(v);});
         }
         function loadChat(path) {
             const chatMessagesUl = document.getElementById('chat-messages'); chatMessagesUl.innerHTML = ''; chatMessagesUl.dataset.kind = /^(dms|savedMessages)\//.test(path) ? 'dm' : 'multi';
@@ -8014,6 +8117,7 @@ const tileRefreshing = new Set();
             const canLocate = !!(storyViewerEntry && storyViewerEntry.coords);
             locBtn.style.display = canLocate ? 'flex' : 'none';
             msgBtn.style.display = canLike ? 'flex' : 'none';
+            document.getElementById('story-viewer-map-btn').style.display = (storyViewerPeople && canLocate) ? 'flex' : 'none';
             moreBtn.style.display = isOwnEditable ? 'flex' : 'none';
             pillText.innerText = (storyViewerEntry && storyViewerEntry.status) ? storyViewerEntry.status : '';
             document.getElementById('story-viewer-pill').style.display = 'flex'; // знизу завжди лише кнопка «···»
@@ -8237,6 +8341,13 @@ const tileRefreshing = new Set();
             setTimeout(() => btn.classList.remove('pulse'), 180);
         });
         document.getElementById('story-viewer-location-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (!storyViewerEntry || !storyViewerEntry.coords) return;
+            const entry = storyViewerEntry;
+            closeStoryViewer();
+            showPlaceOnMap(entry);
+        });
+        document.getElementById('story-viewer-map-btn').addEventListener('click', (e) => {
             e.stopPropagation();
             if (!storyViewerEntry || !storyViewerEntry.coords) return;
             const entry = storyViewerEntry;
