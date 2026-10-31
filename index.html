@@ -281,11 +281,11 @@
             --header-scrim-bottom: rgba(255, 255, 255, 0);
             --card-bg: rgba(255, 255, 255, 0.55); 
             --msg-solid-bg: rgba(255, 255, 255, 0.94);
-            --accent-main: #8aceea;      
-            --accent-people: #8aceea;   
+            --accent-main: #5cb3da;      
+            --accent-people: #5cb3da;   
             --text-color: #1d1d1f; 
             --text-secondary: #86868b; 
-            --ultramarine-gradient: linear-gradient(180deg, #8aceea 0%, #8aceea 100%);
+            --ultramarine-gradient: linear-gradient(180deg, #5cb3da 0%, #5cb3da 100%);
             
             /* Епплівська тонка межа в залежності від теми */
             --border-minimal: rgba(0, 0, 0, 0.08);
@@ -308,7 +308,7 @@
             --msg-solid-bg: rgba(44, 44, 46, 0.94);
             --text-color: #f5f5f7; 
             --text-secondary: #aeaeB2; 
-            --ultramarine-gradient: linear-gradient(180deg, #8aceea 0%, #8aceea 100%);
+            --ultramarine-gradient: linear-gradient(180deg, #5cb3da 0%, #5cb3da 100%);
             
             --border-minimal: rgba(255, 255, 255, 0.08);
             --icon-color: #f5f5f7;
@@ -521,7 +521,7 @@
         .map-search-highlight { position: relative; width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; pointer-events: none; }
         .map-search-highlight .pulse-ring {
             position: absolute; width: 46px; height: 46px; border-radius: 50%;
-            background: rgba(138, 206, 234, 0.35); animation: mapSearchPulse 1.6s ease-out infinite;
+            background: rgba(92, 179, 218, 0.35); animation: mapSearchPulse 1.6s ease-out infinite;
         }
         .map-search-highlight .pulse-dot {
             width: 16px; height: 16px; border-radius: 50%; background: var(--accent-main);
@@ -1006,10 +1006,10 @@
         .profile-section label { display: block; color: var(--text-secondary); font-size: 10px; font-weight: 600; text-transform: uppercase; margin-bottom: 2px; transition: var(--theme-transition); }
         .profile-section p { margin: 0; font-size: 14px; line-height: 1.4; color: #3a3a3c; transition: var(--theme-transition); }
         body.dark-theme .profile-section p { color: #e5e5ea; }
-        .promo-box { background: rgba(138, 206, 234, 0.08); border: 1px solid rgba(138, 206, 234, 0.15); padding: 10px; border-radius: 14px; transition: var(--theme-transition); }
-        body.dark-theme .promo-box { background: rgba(138, 206, 234, 0.12); border: 1px solid rgba(138, 206, 234, 0.25); }
+        .promo-box { background: rgba(92, 179, 218, 0.08); border: 1px solid rgba(92, 179, 218, 0.15); padding: 10px; border-radius: 14px; transition: var(--theme-transition); }
+        body.dark-theme .promo-box { background: rgba(92, 179, 218, 0.12); border: 1px solid rgba(92, 179, 218, 0.25); }
         .promo-box p { color: var(--accent-main) !important; font-weight: 600; }
-        .action-btn { color: white; border: none; padding: 13px; border-radius: 16px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 10px; width: 100%; box-shadow: 0 4px 12px rgba(138, 206, 234, 0.2); flex-shrink: 0; transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1), background 0.5s ease; }
+        .action-btn { color: white; border: none; padding: 13px; border-radius: 16px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 10px; width: 100%; box-shadow: 0 4px 12px rgba(92, 179, 218, 0.2); flex-shrink: 0; transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1), background 0.5s ease; }
 
         /* ---- Вкладка чату — окремий повноекранний шар тієї ж картки ---- */
         #chat-container {
@@ -1543,7 +1543,7 @@
         .home-filter-menu-item:active { background: rgba(120,120,128,0.14); }
         .home-filter-menu-item svg.hf-icon { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
         .home-filter-menu-item span { flex: 1; text-align: left; }
-        .home-filter-menu-item.selected { background: rgba(138, 206, 234, 0.12); color: var(--accent-main); font-weight: 600; }
+        .home-filter-menu-item.selected { background: rgba(92, 179, 218, 0.12); color: var(--accent-main); font-weight: 600; }
         .home-header-add-btn {
             display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer;
             width: 30px; height: 30px; border-radius: 50%; border: none;
@@ -3139,7 +3139,7 @@
 #chat-messages li.msg-circle::after { display: none !important; }
 </style>
 <style id="v2-style">
-.dm-avatar-group,.dm-avatar-saved,.msg-location-icon{background:#8aceea!important;background-image:none!important}body.dark-theme .dm-avatar-group,body.dark-theme .dm-avatar-saved,body.dark-theme .msg-location-icon{background:#8aceea!important}
+.dm-avatar-group,.dm-avatar-saved,.msg-location-icon{background:#5cb3da!important;background-image:none!important}body.dark-theme .dm-avatar-group,body.dark-theme .dm-avatar-saved,body.dark-theme .msg-location-icon{background:#5cb3da!important}
 #story-viewer-map-btn{display:none;position:absolute;right:12px;top:50%;margin-top:-23px;z-index:21;width:46px;height:46px;border-radius:50%;align-items:center;justify-content:center;padding:0;cursor:pointer;background:rgba(28,28,30,.55);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.14);box-shadow:0 6px 20px rgba(0,0,0,.35);-webkit-tap-highlight-color:transparent}
 #story-viewer-map-btn svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 #story-viewer-map-btn:active{transform:scale(.92)}
@@ -7806,7 +7806,7 @@ const tileRefreshing = new Set();
             const mk = (cls) => { const c = document.createElementNS(NS, 'circle'); c.setAttribute('cx', '50'); c.setAttribute('cy', '50'); c.setAttribute('r', String(50 - sw / 2)); c.setAttribute('stroke-width', String(sw)); c.setAttribute('class', cls); return c; };
             const gid = 'sr' + Math.random().toString(36).slice(2, 8);
             const defs = document.createElementNS(NS, 'defs');
-            defs.innerHTML = '<linearGradient id="' + gid + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8aceea"/><stop offset="1" stop-color="#8aceea"/></linearGradient>';
+            defs.innerHTML = '<linearGradient id="' + gid + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5cb3da"/><stop offset="1" stop-color="#5cb3da"/></linearGradient>';
             svg.appendChild(defs);
             svg.appendChild(mk('sr-track'));
             const prog = mk('sr-prog');
@@ -11178,8 +11178,8 @@ const tileRefreshing = new Set();
     </style>
     <style id="chat-my-bubbles">
     /* Мої повідомлення — акцентний ультрамариновий колір, білий текст */
-    #chat-messages li.msg-me { background: #8aceea !important; background-image: none !important; color: #fff !important; }
-    body.dark-theme #chat-messages li.msg-me { background: #8aceea !important; background-image: none !important; }
+    #chat-messages li.msg-me { background: #5cb3da !important; background-image: none !important; color: #fff !important; }
+    body.dark-theme #chat-messages li.msg-me { background: #5cb3da !important; background-image: none !important; }
     #chat-messages li.msg-me[data-time]::after { color: rgba(255,255,255,.75); opacity: 1; }
     #chat-messages li.msg-me .msg-quote { background: rgba(255,255,255,.16); border-left-color: rgba(255,255,255,.8); }
     #chat-messages li.msg-me .msg-fwd, #chat-messages li.msg-me .msg-edited { color: rgba(255,255,255,.8); opacity: 1; }
