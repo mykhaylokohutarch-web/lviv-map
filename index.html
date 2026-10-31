@@ -285,7 +285,7 @@
             --accent-people: #8aceea;   
             --text-color: #1d1d1f; 
             --text-secondary: #86868b; 
-            --ultramarine-gradient: linear-gradient(180deg, #b3e1f2 0%, #8aceea 60%, #6db9db 100%);
+            --ultramarine-gradient: linear-gradient(180deg, #8aceea 0%, #8aceea 100%);
             
             /* Епплівська тонка межа в залежності від теми */
             --border-minimal: rgba(0, 0, 0, 0.08);
@@ -308,7 +308,7 @@
             --msg-solid-bg: rgba(44, 44, 46, 0.94);
             --text-color: #f5f5f7; 
             --text-secondary: #aeaeB2; 
-            --ultramarine-gradient: linear-gradient(180deg, #b3e1f2 0%, #8aceea 60%, #6db9db 100%);
+            --ultramarine-gradient: linear-gradient(180deg, #8aceea 0%, #8aceea 100%);
             
             --border-minimal: rgba(255, 255, 255, 0.08);
             --icon-color: #f5f5f7;
@@ -7806,7 +7806,7 @@ const tileRefreshing = new Set();
             const mk = (cls) => { const c = document.createElementNS(NS, 'circle'); c.setAttribute('cx', '50'); c.setAttribute('cy', '50'); c.setAttribute('r', String(50 - sw / 2)); c.setAttribute('stroke-width', String(sw)); c.setAttribute('class', cls); return c; };
             const gid = 'sr' + Math.random().toString(36).slice(2, 8);
             const defs = document.createElementNS(NS, 'defs');
-            defs.innerHTML = '<linearGradient id="' + gid + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b3e1f2"/><stop offset="1" stop-color="#8aceea"/></linearGradient>';
+            defs.innerHTML = '<linearGradient id="' + gid + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8aceea"/><stop offset="1" stop-color="#8aceea"/></linearGradient>';
             svg.appendChild(defs);
             svg.appendChild(mk('sr-track'));
             const prog = mk('sr-prog');
