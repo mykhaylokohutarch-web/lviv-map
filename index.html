@@ -4573,6 +4573,8 @@ const tileRefreshing = new Set();
         }
 
         // Затиск (long-press) власної іконки на карті вмикає режим вибору точки призначення
+        // Час останнього довгого затиску для маршруту — щоб відпускання пальця не відкривало ще й картку.
+        let lastRouteLpTs = 0;
         function attachLongPress(marker, onLongPress, duration) {
             duration = duration || 550;
             const MOVE_TOLERANCE = 12; // px — природне тремтіння пальця не повинно скасовувати затиск
@@ -5487,8 +5489,11 @@ const tileRefreshing = new Set();
                 L.DomEvent.stopPropagation(e);
                 selectBrandPin(placeMarker);
                 if (routeSelecting) { buildWalkingRoute(myCoords, place.coords, place.id); return; }
+                if (Date.now() - lastRouteLpTs < 800) return;
                 showMapCard(place);
             });
+            // Довгий затиск на закладі — одразу прокладає пішохідний маршрут від мене до нього.
+            attachLongPress(placeMarker, () => { if (!routeSelecting) { lastRouteLpTs = Date.now(); buildWalkingRoute(myCoords, place.coords, place.id); } });
             registerMarker(place.id, placeMarker);
             registerFavMarker(place.id, placeMarker);
         });
@@ -9416,7 +9421,19 @@ const tileRefreshing = new Set();
 
         // Кнопка "я" біля компаса: повертає карту до моєї мітки (myCoords)
         document.getElementById('map-me-btn').addEventListener('click', () => {
-            map.setView(myCoords, Math.max(map.getZoom(), 16), { animate: true });
+            // Плавно переносимо карту до вашої мітки (і наближаємо, якщо карта віддалена).
+            try { map.stop(); } catch (_) {}
+            try { map.flyTo(myCoords, Math.max(map.getZoom(), 16), { animate: true, duration: 0.8 }); }
+            catch (_) { map.setView(myCoords, Math.max(map.getZoom(), 16), { animate: true }); }
+            // Підсвічуємо власну мітку пульсацією, щоб одразу було видно, де ви.
+            try {
+                const el = profileMarkers[myId] && profileMarkers[myId].getElement && profileMarkers[myId].getElement();
+                const mm = el && el.querySelector('.me-marker');
+                if (mm) {
+                    mm.classList.remove('me-find'); void mm.offsetWidth; mm.classList.add('me-find');
+                    clearTimeout(mm._findTm); mm._findTm = setTimeout(() => mm.classList.remove('me-find'), 3600);
+                }
+            } catch (_) {}
         });
 
         // ==================== Реєстрація нового користувача + вибір власної точки на карті ====================
@@ -9843,6 +9860,7 @@ const tileRefreshing = new Set();
                 profileMarkers[id].on('click', (e) => {
                     L.DomEvent.stopPropagation(e);
                     if (routeSelecting) { if (id !== myId) buildWalkingRoute(myCoords, p.coords, id); return; }
+                    if (id !== myId && Date.now() - lastRouteLpTs < 800) return;
                     if (id === myId) { showMapCard(getMyProfileItem()); } else { showMapCard(profileMarkers[id]._pObj || personObj); }
                 });
                 registerMarker(id, profileMarkers[id]);
@@ -9853,7 +9871,7 @@ const tileRefreshing = new Set();
                 } else {
                     // Довгий затиск одразу на чужій іконці — без проміжного кроку "спершу затисни свою" —
                     // одразу прокладає маршрут від мене до неї.
-                    attachLongPress(profileMarkers[id], () => { if (!routeSelecting) buildWalkingRoute(myCoords, p.coords, id); });
+                    attachLongPress(profileMarkers[id], () => { if (!routeSelecting) { lastRouteLpTs = Date.now(); buildWalkingRoute(myCoords, p.coords, id); } });
                 }
                 profileMarkers[id]._sig = _sig; profileMarkers[id]._pObj = personObj;
                 }
@@ -10155,6 +10173,7 @@ const tileRefreshing = new Set();
             v.disablePictureInPicture = true;
             v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
             v.addEventListener('playing', () => v.classList.add('is-visible'));
+            v.addEventListener('loadeddata', () => v.classList.add('is-visible'));
             v.addEventListener('canplay', () => { if (homeVisibleVideos.has(v) && v.paused) homePlay(v); });
             v._wrap = wrap;
             const hst = storyForUrl(url);
@@ -10262,6 +10281,8 @@ const tileRefreshing = new Set();
                 // Якщо є активна сторі — коло показує саме НАЙНОВІШУ (щойно додану), а не старішу чи першу з відео.
                 const latestSt = latestLiveStory(e);
                 if (latestSt && latestSt.type === 'photo') bigCirclePhotoList = [latestSt.url];
+                // Найновіша сторі — відео: під ним показуємо його кадр-превʼю, а не старе фото чи аватарку.
+                if (latestSt && latestSt.type === 'video') { try { const pu = videoPosterUrl(latestSt.url); if (pu) bigCirclePhotoList = [pu]; } catch (_) {} }
                 startHomeCircleStory(mediaWrap, bigCirclePhotoList);
                 try {
                     if (latestSt) { if (latestSt.type === 'video') attachHomeCircleVideo(mediaWrap, latestSt.url); }
@@ -11610,6 +11631,10 @@ body.sheet-hides-nav #bottom-nav { opacity: 0 !important; visibility: hidden !im
 .so-sticker { position: absolute; transform: translate(-50%, -50%); line-height: 1; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; z-index: 3; padding: 2px; border-radius: 8px; }
 .so-sticker.sel { outline: 1.5px dashed rgba(255,255,255,.9); outline-offset: 2px; }
 .sv-sticker { position: absolute; transform: translate(-50%, -50%); line-height: 1; z-index: 6; pointer-events: none; user-select: none; -webkit-user-select: none; }
+</style>
+<style id="me-find-highlight">
+.me-marker.me-find .me-pulse { display: block; background: rgba(92, 179, 218, 0.55); }
+.me-marker.me-find .avatar-ring { box-shadow: 0 0 0 3px rgba(92, 179, 218, 0.9), 0 2px 8px rgba(0, 0, 0, 0.3); }
 </style>
 </body>
 </html>
