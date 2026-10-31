@@ -2161,6 +2161,32 @@
     #chat-messages > li { flex-shrink: 0; }
     #dm-list > * { flex-shrink: 0; }
     </style>
+<style id="chat-layout-polish">
+/* Розміщення повідомлень у стилі Telegram / Instagram: більше повітря з боків, акуратні групи */
+#profile-sidebar.chat-mode #chat-container.in-thread #chat-messages {
+    padding-left: 18px !important; padding-right: 18px !important; gap: 2px !important;
+}
+/* у груповому чаті аватар співрозмовника має місце зліва і не обрізається краєм */
+#profile-sidebar.chat-mode #chat-container.in-thread #chat-messages[data-kind="multi"] { padding-left: 52px !important; }
+#profile-sidebar.chat-mode #chat-container.in-thread #chat-messages[data-kind="multi"] li.msg-other[data-grp="last"]::before,
+#profile-sidebar.chat-mode #chat-container.in-thread #chat-messages[data-kind="multi"] li.msg-other[data-grp="single"]::before {
+    left: -34px; width: 28px; height: 28px;
+}
+/* бульбашки: вужчі, щоб не липли до протилежного краю, з трохи більшим внутрішнім відступом */
+#profile-sidebar.chat-mode #chat-container.in-thread #chat-messages li { max-width: 76%; padding: 8px 13px; border-radius: 20px; }
+#profile-sidebar.chat-mode #chat-container.in-thread #chat-messages li.msg-me { margin-left: 24px; }
+#profile-sidebar.chat-mode #chat-container.in-thread #chat-messages li.msg-other { margin-right: 24px; }
+/* "хвостик" на останньому повідомленні серії, як у Telegram */
+#profile-sidebar.chat-mode #chat-container.in-thread #chat-messages li.msg-me[data-grp="last"],
+#profile-sidebar.chat-mode #chat-container.in-thread #chat-messages li.msg-me[data-grp="single"] { border-bottom-right-radius: 6px; }
+#profile-sidebar.chat-mode #chat-container.in-thread #chat-messages li.msg-other[data-grp="last"],
+#profile-sidebar.chat-mode #chat-container.in-thread #chat-messages li.msg-other[data-grp="single"] { border-bottom-left-radius: 6px; }
+/* більше простору між серіями від різних людей */
+#chat-messages li[data-grp="first"], #chat-messages li[data-grp="single"] { margin-top: 14px; }
+#chat-messages > li:first-of-type { margin-top: 0; }
+/* фото/відео не розтягуються на всю ширину */
+#profile-sidebar.chat-mode #chat-container.in-thread #chat-messages li.msg-media { max-width: 72%; }
+</style>
 </head>
 <body class="dark-theme">
 
