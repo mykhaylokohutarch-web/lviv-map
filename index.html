@@ -272,6 +272,7 @@
     <link rel="preconnect" href="https://api.cloudinary.com">
     <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Yellowtail&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600&family=Pacifico&family=Playfair+Display:wght@700&subset=cyrillic&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-color: #f5f5f7; 
@@ -3024,8 +3025,39 @@
     <div id="story-opts-sheet">
         <div class="story-add-card">
             <div class="so-title">Параметри сторі</div>
+            <div id="so-stage"><div id="so-stage-media"></div><div id="so-stage-text"></div></div>
             <div class="so-label">Текст поверх сторі</div>
             <input id="so-text" maxlength="80" placeholder="Додайте текст…" autocomplete="off">
+            <div id="so-text-tools">
+                <div class="so-hint">Перетягніть текст у потрібне місце на превʼю</div>
+                <div class="so-label">Шрифт</div>
+                <div class="so-frow" id="so-fonts">
+                    <button type="button" class="so-fchip" data-f="classic" style="font-family:-apple-system,system-ui,sans-serif;font-weight:700">Аа</button>
+                    <button type="button" class="so-fchip" data-f="serif" style="font-family:'Playfair Display',Georgia,serif;font-weight:700">Аа</button>
+                    <button type="button" class="so-fchip" data-f="script" style="font-family:'Pacifico',cursive">Аа</button>
+                    <button type="button" class="so-fchip" data-f="narrow" style="font-family:'Oswald','Arial Narrow',sans-serif;font-weight:600">Аа</button>
+                    <button type="button" class="so-fchip" data-f="mono" style="font-family:ui-monospace,Menlo,monospace;font-weight:700">Аа</button>
+                </div>
+                <div class="so-label">Колір</div>
+                <div class="so-frow" id="so-colors">
+                    <button type="button" class="so-cdot" data-c="#ffffff" style="background:#ffffff"></button>
+                    <button type="button" class="so-cdot" data-c="#000000" style="background:#000000"></button>
+                    <button type="button" class="so-cdot" data-c="#ffd60a" style="background:#ffd60a"></button>
+                    <button type="button" class="so-cdot" data-c="#ff453a" style="background:#ff453a"></button>
+                    <button type="button" class="so-cdot" data-c="#ff2d78" style="background:#ff2d78"></button>
+                    <button type="button" class="so-cdot" data-c="#5cb3da" style="background:#5cb3da"></button>
+                    <button type="button" class="so-cdot" data-c="#30d158" style="background:#30d158"></button>
+                    <button type="button" class="so-cdot" data-c="#bf5af2" style="background:#bf5af2"></button>
+                </div>
+                <button type="button" class="so-fchip so-bgchip" id="so-bg-btn">Фон за текстом</button>
+            </div>
+            <div class="so-label">Емодзі</div>
+            <div id="so-emoji-grid"><button type="button" class="so-emo">😀</button><button type="button" class="so-emo">😂</button><button type="button" class="so-emo">😍</button><button type="button" class="so-emo">🥰</button><button type="button" class="so-emo">😎</button><button type="button" class="so-emo">🤩</button><button type="button" class="so-emo">😭</button><button type="button" class="so-emo">😡</button><button type="button" class="so-emo">🔥</button><button type="button" class="so-emo">❤️</button><button type="button" class="so-emo">💙</button><button type="button" class="so-emo">💛</button><button type="button" class="so-emo">💯</button><button type="button" class="so-emo">✨</button><button type="button" class="so-emo">🎉</button><button type="button" class="so-emo">🎂</button><button type="button" class="so-emo">🍕</button><button type="button" class="so-emo">🍔</button><button type="button" class="so-emo">☕</button><button type="button" class="so-emo">🍻</button><button type="button" class="so-emo">🌸</button><button type="button" class="so-emo">☀️</button><button type="button" class="so-emo">🌙</button><button type="button" class="so-emo">⭐</button><button type="button" class="so-emo">⚡</button><button type="button" class="so-emo">🌈</button><button type="button" class="so-emo">🐶</button><button type="button" class="so-emo">🐱</button><button type="button" class="so-emo">🦋</button><button type="button" class="so-emo">📍</button><button type="button" class="so-emo">🎵</button><button type="button" class="so-emo">👍</button><button type="button" class="so-emo">🙏</button><button type="button" class="so-emo">👀</button><button type="button" class="so-emo">🙌</button></div>
+            <div id="so-st-ctl">
+                <button type="button" class="so-fchip" id="so-st-smaller">Менше</button>
+                <button type="button" class="so-fchip" id="so-st-bigger">Більше</button>
+                <button type="button" class="so-fchip" id="so-st-del">Видалити</button>
+            </div>
             <div class="so-label">Хто бачить</div>
             <div class="so-row">
                 <button type="button" class="so-chip" data-v="all">🌍 Усі</button>
@@ -7811,6 +7843,12 @@ const tileRefreshing = new Set();
         }));
         syncStoryDurChips();
         function liveStories(list) { const now = Date.now(); return (list || []).filter(s => !s.exp || s.exp > now); }
+        // Найновіша активна сторі людини (за часом публікації) — саме її має показувати коло на Головній.
+        function latestLiveStory(e) {
+            const l = liveStories(e && e.stories).filter(st => st && st.url && (st.type === 'photo' || st.type === 'video'));
+            if (!l.length) return null;
+            return l.reduce((a, b) => ((b.ts || 0) >= (a.ts || 0) ? b : a));
+        }
 
         // Кільце-таймер навколо аватарки: повне, коли сторі щойно додали, і плавно зменшується до нуля,
         // коли сторі зникає. Береться сторі, що житиме найдовше. Анімація — чистий CSS із відʼємним delay,
@@ -7892,7 +7930,23 @@ const tileRefreshing = new Set();
         function storyAllowedFor(st, ownerId) {
             return !st || st.vis !== 'friends' || ownerId === myId || myFriends.has(ownerId) || myFollowers.has(ownerId);
         }
-        function openStoryOptions() {
+        // Стилі тексту на сторі: шрифт, колір, фон і положення (у відсотках від екрана).
+        const STORY_FONTS = {
+            classic: "-apple-system, system-ui, 'Segoe UI', Roboto, sans-serif",
+            serif: "'Playfair Display', Georgia, serif",
+            script: "'Pacifico', 'Caveat', cursive",
+            narrow: "'Oswald', 'Arial Narrow', sans-serif",
+            mono: "ui-monospace, Menlo, Consolas, monospace"
+        };
+        const STORY_FONT_WEIGHT = { classic: 700, serif: 700, script: 400, narrow: 600, mono: 700 };
+        function storyTextBg(color, on) {
+            if (!on) return 'transparent';
+            const h = String(color || '#ffffff').replace('#', '');
+            const r = parseInt(h.slice(0, 2), 16) || 0, g = parseInt(h.slice(2, 4), 16) || 0, b = parseInt(h.slice(4, 6), 16) || 0;
+            const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+            return lum > 0.6 ? 'rgba(0,0,0,0.45)' : 'rgba(255,255,255,0.72)';
+        }
+        function openStoryOptions(preview) {
             return new Promise(res => {
                 const sh = document.getElementById('story-opts-sheet'), t = document.getElementById('so-text');
                 const chips = sh.querySelectorAll('.so-chip'); let vis = 'all';
@@ -7900,10 +7954,123 @@ const tileRefreshing = new Set();
                 t.value = ''; setV('all');
                 document.getElementById('so-replies').checked = true; document.getElementById('so-keep').checked = false;
                 chips.forEach(c => { c.onclick = () => setV(c.dataset.v); });
-                const close = (r) => { sh.style.display = 'none'; res(r); };
-                document.getElementById('so-publish').onclick = () => close({ text: t.value.trim().slice(0, 80), vis, noReply: !document.getElementById('so-replies').checked, keep: document.getElementById('so-keep').checked });
+
+                // --- превʼю сторі з текстом, який можна перетягувати ---
+                const stage = document.getElementById('so-stage'), media = document.getElementById('so-stage-media'), txt = document.getElementById('so-stage-text');
+                const tools = document.getElementById('so-text-tools');
+                const st = { font: 'classic', color: '#ffffff', bg: true, x: 50, y: 42 };
+                // --- емодзі-стікери: додаються тапом, перетягуються, змінюють розмір, видаляються ---
+                stage.querySelectorAll('.so-sticker').forEach(n => n.remove());
+                const stickers = []; let selSt = null;
+                const stCtl = document.getElementById('so-st-ctl'); stCtl.style.display = 'none';
+                const stScale = () => stage.clientWidth / Math.max(320, Math.min(window.innerWidth, 480));
+                const paintSticker = (it) => {
+                    it.el.style.left = it.x + '%'; it.el.style.top = it.y + '%';
+                    it.el.style.fontSize = (44 * it.s * stScale()) + 'px';
+                    it.el.classList.toggle('sel', it === selSt);
+                };
+                const selectSticker = (it) => { selSt = it; stickers.forEach(paintSticker); stCtl.style.display = it ? 'flex' : 'none'; };
+                const addSticker = (emo) => {
+                    if (stickers.length >= 8) return;
+                    const el = document.createElement('div'); el.className = 'so-sticker'; el.textContent = emo;
+                    const it = { e: emo, x: 50, y: 50, s: 1, el };
+                    let d = null;
+                    el.onpointerdown = (ev) => {
+                        selectSticker(it);
+                        const r = stage.getBoundingClientRect(), tr = el.getBoundingClientRect();
+                        d = { dx: ev.clientX - (tr.left + tr.width / 2), dy: ev.clientY - (tr.top + tr.height / 2), r };
+                        try { el.setPointerCapture(ev.pointerId); } catch (_) {}
+                        ev.preventDefault(); ev.stopPropagation();
+                    };
+                    el.onpointermove = (ev) => {
+                        if (!d) return;
+                        it.x = Math.min(Math.max((ev.clientX - d.dx - d.r.left) / d.r.width * 100, 4), 96);
+                        it.y = Math.min(Math.max((ev.clientY - d.dy - d.r.top) / d.r.height * 100, 4), 96);
+                        paintSticker(it);
+                    };
+                    el.onpointerup = el.onpointercancel = () => { d = null; };
+                    stage.appendChild(el); stickers.push(it); paintSticker(it); selectSticker(it);
+                };
+                sh.querySelectorAll('#so-emoji-grid .so-emo').forEach(b => { b.onclick = () => addSticker(b.textContent); });
+                document.getElementById('so-st-bigger').onclick = () => { if (selSt) { selSt.s = Math.min(3, selSt.s * 1.25); paintSticker(selSt); } };
+                document.getElementById('so-st-smaller').onclick = () => { if (selSt) { selSt.s = Math.max(0.5, selSt.s / 1.25); paintSticker(selSt); } };
+                document.getElementById('so-st-del').onclick = () => {
+                    if (!selSt) return;
+                    selSt.el.remove(); stickers.splice(stickers.indexOf(selSt), 1); selectSticker(null);
+                };
+                stage.onpointerdown = (ev) => { if (ev.target === stage || ev.target === media) selectSticker(null); };
+                let objUrl = null;
+                media.innerHTML = ''; media.style.backgroundImage = '';
+                if (preview && preview.type === 'photo' && preview.url) {
+                    media.style.backgroundImage = `url('${preview.url}')`;
+                } else if (preview && preview.type === 'video' && preview.file) {
+                    objUrl = URL.createObjectURL(preview.file);
+                    const v = document.createElement('video');
+                    v.src = objUrl + '#t=0.1'; v.muted = true; v.playsInline = true; v.preload = 'metadata';
+                    v.setAttribute('playsinline', ''); v.setAttribute('muted', '');
+                    try { if (preview.frame) applyStoryVideoFrame(v, preview.frame); } catch (_) {}
+                    v.style.cssText += ';width:100%;height:100%;object-fit:cover;';
+                    media.appendChild(v);
+                }
+                const place = () => {
+                    const W = stage.clientWidth, H = stage.clientHeight;
+                    const w = txt.offsetWidth, h = txt.offsetHeight;
+                    const minX = W ? (w / 2) / W * 100 : 0, minY = H ? (h / 2) / H * 100 : 0;
+                    st.x = Math.min(Math.max(st.x, minX), 100 - minX);
+                    st.y = Math.min(Math.max(st.y, minY), 100 - minY);
+                    txt.style.left = st.x + '%'; txt.style.top = st.y + '%';
+                };
+                const paint = () => {
+                    const has = !!t.value.trim();
+                    txt.textContent = t.value;
+                    txt.style.display = has ? 'block' : 'none';
+                    tools.style.display = has ? 'block' : 'none';
+                    // розмір тексту масштабуємо під ширину превʼю, щоб воно збігалося з повним екраном
+                    const scale = stage.clientWidth / Math.max(320, Math.min(window.innerWidth, 480));
+                    txt.style.fontSize = (24 * scale) + 'px';
+                    txt.style.padding = (8 * scale) + 'px ' + (14 * scale) + 'px';
+                    txt.style.borderRadius = (12 * scale) + 'px';
+                    txt.style.fontFamily = STORY_FONTS[st.font]; txt.style.fontWeight = STORY_FONT_WEIGHT[st.font];
+                    txt.style.color = st.color; txt.style.background = storyTextBg(st.color, st.bg);
+                    sh.querySelectorAll('#so-fonts .so-fchip').forEach(b => b.classList.toggle('active', b.dataset.f === st.font));
+                    sh.querySelectorAll('#so-colors .so-cdot').forEach(b => b.classList.toggle('active', b.dataset.c === st.color));
+                    document.getElementById('so-bg-btn').classList.toggle('active', st.bg);
+                    if (has) place();
+                    stickers.forEach(paintSticker);
+                };
+                t.oninput = paint;
+                sh.querySelectorAll('#so-fonts .so-fchip').forEach(b => { b.onclick = () => { st.font = b.dataset.f; paint(); }; });
+                sh.querySelectorAll('#so-colors .so-cdot').forEach(b => { b.onclick = () => { st.color = b.dataset.c; paint(); }; });
+                document.getElementById('so-bg-btn').onclick = () => { st.bg = !st.bg; paint(); };
+
+                // перетягування тексту пальцем/мишею
+                let drag = null;
+                txt.onpointerdown = (e) => {
+                    const r = stage.getBoundingClientRect(), tr = txt.getBoundingClientRect();
+                    drag = { dx: e.clientX - (tr.left + tr.width / 2), dy: e.clientY - (tr.top + tr.height / 2), r };
+                    try { txt.setPointerCapture(e.pointerId); } catch (_) {}
+                    e.preventDefault();
+                };
+                txt.onpointermove = (e) => {
+                    if (!drag) return;
+                    st.x = (e.clientX - drag.dx - drag.r.left) / drag.r.width * 100;
+                    st.y = (e.clientY - drag.dy - drag.r.top) / drag.r.height * 100;
+                    place();
+                };
+                const endDrag = () => { drag = null; };
+                txt.onpointerup = endDrag; txt.onpointercancel = endDrag;
+
+                const close = (r) => { sh.style.display = 'none'; t.oninput = null; stage.querySelectorAll('.so-sticker').forEach(n => n.remove()); if (objUrl) { try { URL.revokeObjectURL(objUrl); } catch (_) {} } media.innerHTML = ''; res(r); };
+                document.getElementById('so-publish').onclick = () => {
+                    const text = t.value.trim().slice(0, 80);
+                    const r = { text, vis, noReply: !document.getElementById('so-replies').checked, keep: document.getElementById('so-keep').checked };
+                    if (stickers.length) r.stickers = stickers.map(it => ({ e: it.e, x: Math.round(it.x * 10) / 10, y: Math.round(it.y * 10) / 10, s: Math.round(it.s * 100) / 100 }));
+                    if (text) r.textStyle = { font: st.font, color: st.color, bg: st.bg, x: Math.round(st.x * 10) / 10, y: Math.round(st.y * 10) / 10 };
+                    close(r);
+                };
                 document.getElementById('so-cancel').onclick = () => close(null);
                 sh.style.display = 'flex';
+                paint();
             });
         }
         async function addStory(type, url, frame, caption, circle, opts) {
@@ -7913,7 +8080,7 @@ const tileRefreshing = new Set();
             const entry = { type, url, ts: Date.now(), exp: Date.now() + storyDurationH * 3600000 };
             if (frame) entry.frame = frame;
             if (circle) entry.circle = circle;
-            if (opts) { if (opts.text) entry.text = opts.text; if (opts.vis === 'friends') entry.vis = 'friends'; if (opts.noReply) entry.noReply = true; if (opts.keep) entry.keep = true; }
+            if (opts) { if (opts.text) { entry.text = opts.text; if (opts.textStyle) entry.textStyle = opts.textStyle; } if (opts.stickers && opts.stickers.length) entry.stickers = opts.stickers; if (opts.vis === 'friends') entry.vis = 'friends'; if (opts.noReply) entry.noReply = true; if (opts.keep) entry.keep = true; }
             myProfile.stories = liveStories(myProfile.stories);
             myProfile.stories.push(entry);
             if (myProfile.stories.length > 10) myProfile.stories = myProfile.stories.slice(-10);
@@ -8010,7 +8177,7 @@ const tileRefreshing = new Set();
             try { dataUrl = await openPhotoEditor(file, { aspect: 'story', outW: 1080, outH: 1920 }); }
             catch (err) { alert(mediaUploadErrorMessage(err)); return; }
             if (!dataUrl) return; // користувач натиснув "Скасувати"
-            const so = await openStoryOptions(); if (!so) return;
+            const so = await openStoryOptions({ type: 'photo', url: dataUrl }); if (!so) return;
             await addStory('photo', dataUrl, undefined, peLastCaption, peLastCircle, so);
         });
         document.getElementById('story-add-video-input').addEventListener('change', async (e) => {
@@ -8019,7 +8186,7 @@ const tileRefreshing = new Set();
             const frame = await openVideoFramer(file);
             if (frame === false) return; // «Скасувати»
             const circ = vfLastCircle;
-            const so = await openStoryOptions(); if (!so) return;
+            const so = await openStoryOptions({ type: 'video', file, frame }); if (!so) return;
             checkVideoDurationAndLoad(file, async (dataUrl) => { await addStory('video', dataUrl, frame, undefined, circ, so); });
         });
 
@@ -8111,7 +8278,11 @@ const tileRefreshing = new Set();
                 list = live.concat(base.filter(x => !seen.has(x.url)));
             }
             // Відео — першим: коли гортаєш між людьми, сторі одразу починається з відео, а не з фото.
-            return list.filter(x => x.type === 'video').concat(list.filter(x => x.type !== 'video'));
+            // Активні сторі лишаються в хронологічному порядку; "відео першим" стосується лише решти медіа профілю.
+            const liveUrls = new Set((isDemo && !e.isMe && e.id !== myId) ? [] : liveStories(e.stories).map(st => st && st.url));
+            const liveItems = list.filter(x => liveUrls.has(x.url));
+            const restItems = list.filter(x => !liveUrls.has(x.url));
+            return liveItems.concat(restItems.filter(x => x.type === 'video'), restItems.filter(x => x.type !== 'video'));
         }
         // Перемикає на сторі іншої людини зі списку Головної (dir: 1 — наступна, -1 — попередня), по колу.
         function switchStoryPerson(dir, noWrap) {
@@ -8325,6 +8496,41 @@ const tileRefreshing = new Set();
             setTimeout(fin, maxMs || 800);
         }
 
+        // Застосовує вибрані автором шрифт, колір, фон і положення тексту на сторі.
+        function svApplyTextStyle(meta) {
+            const el = document.getElementById('sv-text-overlay');
+            const ts = (meta && meta.text && meta.textStyle) || null;
+            const f = (ts && STORY_FONTS[ts.font]) ? ts.font : 'classic';
+            const color = (ts && /^#[0-9a-f]{6}$/i.test(ts.color || '')) ? ts.color : '#ffffff';
+            const bg = ts ? ts.bg !== false : true;
+            el.style.fontFamily = ts ? STORY_FONTS[f] : '';
+            el.style.fontWeight = ts ? STORY_FONT_WEIGHT[f] : '';
+            el.style.color = ts ? color : '';
+            el.style.background = ts ? storyTextBg(color, bg) : '';
+            const px = ts && isFinite(ts.x) ? Number(ts.x) : 50, py = ts && isFinite(ts.y) ? Number(ts.y) : 42;
+            el.style.left = px + '%'; el.style.top = py + '%';
+            if (!ts) return;
+            requestAnimationFrame(() => {
+                const P = el.parentElement; if (!P || !el.offsetWidth) return;
+                const W = P.clientWidth, H = P.clientHeight, w = el.offsetWidth, h = el.offsetHeight;
+                const cx = Math.min(Math.max(px / 100 * W, w / 2 + 8), W - w / 2 - 8);
+                const cy = Math.min(Math.max(py / 100 * H, h / 2 + 8), H - h / 2 - 8);
+                el.style.left = cx + 'px'; el.style.top = cy + 'px';
+            });
+        }
+        // Емодзі-стікери, які автор розмістив на сторі.
+        function svApplyStickers(meta) {
+            const root = document.getElementById('story-viewer'); if (!root) return;
+            root.querySelectorAll('.sv-sticker').forEach(n => n.remove());
+            const list = (meta && Array.isArray(meta.stickers)) ? meta.stickers.slice(0, 8) : [];
+            list.forEach(it => {
+                if (!it || typeof it.e !== 'string') return;
+                const el = document.createElement('div'); el.className = 'sv-sticker'; el.textContent = it.e.slice(0, 8);
+                const x = isFinite(it.x) ? Number(it.x) : 50, y = isFinite(it.y) ? Number(it.y) : 50, k = isFinite(it.s) ? Math.min(3, Math.max(0.5, Number(it.s))) : 1;
+                el.style.left = x + '%'; el.style.top = y + '%'; el.style.fontSize = (44 * k) + 'px';
+                root.appendChild(el);
+            });
+        }
         function playStoryAt(idx) {
             clearTimeout(storyViewerTimer);
             preloadStoryItem(storyViewerList[idx + 1]);
@@ -8335,6 +8541,7 @@ const tileRefreshing = new Set();
             const sMeta = storyForUrl(s.url);
             svSetPosterBg(media, s);
             document.getElementById('sv-text-overlay').textContent = (sMeta && sMeta.text) || '';
+            svApplyTextStyle(sMeta); svApplyStickers(sMeta);
             document.getElementById('sv-reply-bar').style.display = (storyViewerEntry && storyViewerEntry.id && storyViewerEntry.id !== myId && !(sMeta && sMeta.noReply)) ? 'flex' : 'none';
             document.getElementById('sv-reply-input').value = '';
             if (storyViewerShowTime) document.getElementById('story-viewer-time').innerText = formatStoryTime(s.ts);
@@ -10051,9 +10258,15 @@ const tileRefreshing = new Set();
                 // Велике коло (сторі) і маленька аватарка мають показувати РІЗНІ фото, а не те саме
                 // перше зображення двічі. Міні-аватарка нижче візьме photos[0], тож для великого
                 // кола, якщо світлин більше однієї, зсуваємо список на одну позицію вперед.
-                const bigCirclePhotoList = storyPhotoList.length > 1 ? storyPhotoList.slice(1) : storyPhotoList;
+                let bigCirclePhotoList = storyPhotoList.length > 1 ? storyPhotoList.slice(1) : storyPhotoList;
+                // Якщо є активна сторі — коло показує саме НАЙНОВІШУ (щойно додану), а не старішу чи першу з відео.
+                const latestSt = latestLiveStory(e);
+                if (latestSt && latestSt.type === 'photo') bigCirclePhotoList = [latestSt.url];
                 startHomeCircleStory(mediaWrap, bigCirclePhotoList);
-                try { const hsl = buildHomeStoryList(e); if (hsl[0] && hsl[0].type === 'video') attachHomeCircleVideo(mediaWrap, hsl[0].url); } catch (_) {}
+                try {
+                    if (latestSt) { if (latestSt.type === 'video') attachHomeCircleVideo(mediaWrap, latestSt.url); }
+                    else { const hsl = buildHomeStoryList(e); if (hsl[0] && hsl[0].type === 'video') attachHomeCircleVideo(mediaWrap, hsl[0].url); }
+                } catch (_) {}
                 // Тап по самому колу (фото) — відкриває сторі на весь екран.
                 // Важливо: беремо ПОВНИЙ e.photos (з відео), а не storyPhotoList — той список
                 // спеціально відфільтрований від відео лише для фонового кросфейду в самому колі.
@@ -10061,7 +10274,9 @@ const tileRefreshing = new Set();
                     ev.stopPropagation();
                     const list = buildHomeStoryList(e);
                     if (!list.length) return;
-                    openStoryViewer(list, 0, e.isMe ? 'Ви' : e.name, { showTime: false, people: homeViewerEntries }, e, 'photo');
+                    const ls = latestLiveStory(e);
+                    const startIdx = ls ? Math.max(0, list.findIndex(x => x.url === ls.url)) : 0;
+                    openStoryViewer(list, startIdx, e.isMe ? 'Ви' : e.name, { showTime: false, people: homeViewerEntries }, e, 'photo');
                 });
                 // Міні-аватарка тепер знизу зліва поверх будь-якого фото/відео сторі —
                 // так завжди видно, чиє це коло, навіть коли крутиться нова сторі.
@@ -11363,6 +11578,38 @@ body.sheet-hides-nav #bottom-nav { opacity: 0 !important; visibility: hidden !im
 .ob-avatar-preview { border: none !important; }
 /* профільна аватарка */
 .ig-avatar, .ig-avatar.has-story { border: none !important; }
+</style>
+<style id="avatar-borders">
+/* Люди на карті: тонка рамка, що контрастує з фоном — біла на темній карті, чорна на світлій */
+.avatar-ring { border: 1.5px solid #000 !important; box-sizing: border-box !important; }
+#map.map-dark-mode .avatar-ring, body.dark-theme .avatar-ring { border-color: #fff !important; }
+/* Особиста сторінка (профіль): тонка рамка основного кольору */
+.ig-avatar, .ig-avatar.has-story { border: 2px solid var(--accent-main) !important; box-sizing: border-box !important; }
+</style>
+<style id="story-text-editor">
+#story-opts-sheet .story-add-card { max-height: 94vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+#so-stage { position: relative; align-self: center; height: min(40vh, 340px); aspect-ratio: 9 / 16; border-radius: 16px; overflow: hidden; background: #1c1c1e; flex-shrink: 0; touch-action: none; }
+#so-stage-media { position: absolute; inset: 0; background-size: cover; background-position: center; }
+#so-stage-text { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%); max-width: 82%; text-align: center; line-height: 1.25; word-break: break-word; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; display: none; z-index: 2; }
+#so-stage-text:active { cursor: grabbing; }
+#so-text-tools { display: none; }
+.so-hint { color: var(--sh-sub, rgba(255,255,255,.5)); font-size: 12px; text-align: center; padding: 2px 0 4px; }
+.so-frow { display: flex; gap: 8px; overflow-x: auto; padding: 2px 0 4px; scrollbar-width: none; }
+.so-frow::-webkit-scrollbar { display: none; }
+#story-opts-sheet .so-fchip { flex: 0 0 auto; min-width: 52px; padding: 9px 14px; border-radius: 12px; font-size: 17px; background: var(--sh-fill, rgba(255,255,255,.08)); color: var(--sh-text, #fff); }
+#story-opts-sheet .so-fchip.active { background: var(--ultramarine-gradient); color: #fff; }
+#story-opts-sheet .so-bgchip { font-size: 14px; font-family: inherit; margin-top: 4px; width: 100%; }
+#story-opts-sheet .so-cdot { flex: 0 0 auto; width: 30px; height: 30px; min-width: 30px; padding: 0; border-radius: 50%; border: 2px solid rgba(128,128,128,.45); box-sizing: border-box; }
+#story-opts-sheet .so-cdot.active { box-shadow: 0 0 0 2px var(--sh-bg, #1c1c1e), 0 0 0 4px var(--accent-main); }
+</style>
+<style id="story-emoji">
+#so-emoji-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; max-height: 118px; overflow-y: auto; padding: 2px 0; }
+#story-opts-sheet .so-emo { padding: 6px 0; font-size: 24px; line-height: 1.1; background: var(--sh-fill, rgba(255,255,255,.08)); border-radius: 10px; }
+#so-st-ctl { display: none; gap: 8px; }
+#so-st-ctl .so-fchip { flex: 1; font-size: 14px; min-width: 0; }
+.so-sticker { position: absolute; transform: translate(-50%, -50%); line-height: 1; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; z-index: 3; padding: 2px; border-radius: 8px; }
+.so-sticker.sel { outline: 1.5px dashed rgba(255,255,255,.9); outline-offset: 2px; }
+.sv-sticker { position: absolute; transform: translate(-50%, -50%); line-height: 1; z-index: 6; pointer-events: none; user-select: none; -webkit-user-select: none; }
 </style>
 </body>
 </html>
