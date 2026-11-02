@@ -2600,8 +2600,7 @@
             <div class="settings-section">
                 <div class="settings-section-title">Для закладів</div>
                 <div class="settings-card">
-                    <button class="settings-row" id="settings-biz-row"><span class="settings-row-label"><span class="settings-icon c-green">🏪</span>Додати мій заклад</span><svg class="settings-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"></path></svg></button>
-                    <button class="settings-row" id="settings-scan-row" style="display:none"><span class="settings-row-label"><span class="settings-icon c-green">📷</span>Сканер купонів</span><svg class="settings-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"></path></svg></button>
+                    <button class="settings-row" id="settings-biz-row"><span class="settings-row-label"><span class="settings-icon c-green">🏪</span>Мій заклад</span><svg class="settings-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"></path></svg></button>
                     <button class="settings-row" id="settings-admin-row" style="display:none"><span class="settings-row-label"><span class="settings-icon c-blue">🛠</span>Адмін-панель</span><svg class="settings-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"></path></svg></button>
                 </div>
             </div>
@@ -3364,6 +3363,8 @@ body.dark-theme .app-notif{background:rgba(44,44,46,.84);color:#f5f5f7;border-co
 </script>
 <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
         import { getDatabase, ref, push, onChildAdded, onChildChanged, onChildRemoved, onValue, set, update, off, get, remove, onDisconnect, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         // Нейтральна заглушка-аватар (сірий силует), поки людина ще не додала власне фото.
@@ -3389,6 +3390,15 @@ body.dark-theme .app-notif{background:rgba(44,44,46,.84);color:#f5f5f7;border-co
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
+        // Вхід у Firebase через підписані дані Telegram: сервер перевіряє підпис і видає токен з реальним ID.
+        const fns = getFunctions(app, 'europe-west1');
+        window.__authReady = (async () => {
+            try {
+                const w = window.Telegram && window.Telegram.WebApp; if (!w || !w.initData) return;
+                const r = await httpsCallable(fns, 'tgAuth')({ initData: w.initData });
+                await signInWithCustomToken(getAuth(app), r.data.token);
+            } catch (e) { console.warn('tgAuth', e); }
+        })();
 
         // ==== Зберігання усіх медіа (фото, відео, будь-які файли) у Cloudinary ====
         // Хмара й пресет для завантаження — саме ті, що налаштовані в Cloudinary Console
@@ -5487,7 +5497,8 @@ const tileRefreshing = new Set();
         }
         map.on('click', () => selectBrandPin(null));
 
-        places.forEach(place => {
+        const addPlaceToMap = (place) => {
+            if (places.indexOf(place) < 0) places.push(place);
             const placeIcon = L.divIcon({
                 className: 'custom-place-marker',
                 html: brandPinHtml(place),
@@ -5507,7 +5518,8 @@ const tileRefreshing = new Set();
             attachLongPress(placeMarker, () => { if (!routeSelecting) { lastRouteLpTs = Date.now(); buildWalkingRoute(myCoords, place.coords, place.id); } });
             registerMarker(place.id, placeMarker);
             registerFavMarker(place.id, placeMarker);
-        });
+        };
+        places.slice().forEach(addPlaceToMap);
 
                 (function () {
             const BLANK = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
@@ -6874,7 +6886,7 @@ const tileRefreshing = new Set();
         window.openPlaceCoupon = function(item) {
             if (!window.isPlaceItem(item)) return;
             const qrSpace = document.getElementById('qr-code-space'); const randomCode = (crypto.getRandomValues(new Uint32Array(1))[0] % 900000) + 100000;
-            try { set(ref(db, 'coupons/' + item.id + '_' + randomCode), { placeId: item.id, userId: myId, ts: Date.now(), exp: Date.now() + 864e5, status: 'issued' }); } catch (_) {}
+            try { window.__authReady.then(() => set(ref(db, 'coupons/' + item.id + '_' + randomCode), { placeId: item.id, userId: myId, ts: Date.now(), exp: Date.now() + 864e5, status: 'issued' })).catch(() => {}); } catch (_) {}
             qrSpace.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=LVIV-${encodeURIComponent(item.id)}-${randomCode}" alt="QR Code"><p style="font-weight:700; font-size:18px; margin: 5px 0;">LVIV-${randomCode}</p>`;
             document.getElementById('qr-place-name').textContent = item.name || '';
             document.getElementById('qr-offer').textContent = item.text2 || '';
@@ -9651,7 +9663,7 @@ const tileRefreshing = new Set();
         // ВАЖЛИВО: встав СЮДИ свій власний ID (див. інструкцію в чаті, як його дізнатись) —
         // без збігу myId з цим значенням адмін-панель не відкриється в принципі, навіть якщо
         // хтось знайде і повторить секретний жест.
-        const ADMIN_DEV_ID = 'ВСТАВ_СЮДИ_СВІЙ_ID';
+        const ADMIN_DEV_ID = 'tg_476664286';
         let adminTapCount = 0, adminTapTimer = null;
 
         function tryUnlockAdmin() {
@@ -10932,73 +10944,101 @@ const tileRefreshing = new Set();
             o.appendChild(c); o.addEventListener('click', e => { if (e.target === o) o.remove(); });
             document.body.appendChild(o); build(c);
         }
-        const FEE_PER_CLIENT = 20; // грн, які заклад винен вам за одного погашеного клієнта — змініть на свою суму
-        async function myBizPlaceId() {
+                async function myBizPlaceId() {
             const d = (await get(ref(db, 'bizApplications'))).val() || {};
             const k = Object.keys(d).find(x => d[x].ownerId === myId && d[x].status === 'approved');
             return k ? (d[k].placeId || k) : null;
         }
         async function redeemCoupon(text, placeId, out) {
-            const t = (text || '').trim(), m = /^LVIV-(.+)-(\d{6})$/.exec(t), m2 = /^(?:LVIV-)?(\d{6})$/.exec(t);
-            if (!m && !m2) return out('Невірний код ❌');
-            let id = placeId, code;
-            if (m) { try { id = decodeURIComponent(m[1]); } catch (_) { id = m[1]; } code = m[2]; } else code = m2[1];
-            if (id !== placeId) return out('Цей купон для іншого закладу ❌');
-            let reason = '';
-            const r = await runTransaction(ref(db, 'coupons/' + id + '_' + code), c => {
-                reason = '';
-                if (!c) { reason = 'Купон не знайдено'; return; }
-                if (c.status !== 'issued') { reason = 'Купон уже використано'; return; }
-                if (c.exp < Date.now()) { reason = 'Купон прострочено'; return; }
-                c.status = 'redeemed'; c.redeemedAt = Date.now(); return c;
-            });
-            if (!r.committed) return out((reason || 'Не вдалося погасити') + ' ❌');
-            await set(ref(db, 'redemptions/' + id + '_' + code), { placeId: id, ownerId: myId, userId: r.snapshot.val().userId, ts: Date.now(), fee: FEE_PER_CLIENT });
-            out('Купон погашено ✅ Надайте знижку');
+            try { await window.__authReady; const r = await httpsCallable(fns, 'redeemCoupon')({ code: text }); out(r.data.message); }
+            catch (e) { out('Помилка з’єднання з сервером ❌'); }
         }
-        async function openBizScanner() {
-            const pid = await myBizPlaceId();
+        function bizScanSection(c, pid) {
+            c.appendChild(bizEl('h4', 'margin:4px 0 8px', 'Погасити купон клієнта'));
+            const msg = bizEl('p', 'min-height:22px;font-weight:600', '');
+            const inp = bizEl('input', 'width:100%;box-sizing:border-box;margin:0 0 8px;padding:11px;border-radius:12px;border:1px solid rgba(128,128,128,.3);font-size:16px;background:transparent;color:inherit'); inp.placeholder = 'Код купона, напр. 123456';
+            const bs = 'width:100%;padding:12px;margin-bottom:8px;border:0;border-radius:14px;font-weight:700;background:var(--accent-main,#5cb3da);color:#fff';
+            const sc = bizEl('button', bs, '📷 Сканувати QR'), go = bizEl('button', bs, 'Погасити за кодом');
+            sc.onclick = () => { const w = window.Telegram && window.Telegram.WebApp; if (w && w.showScanQrPopup) w.showScanQrPopup({ text: 'Наведіть на QR клієнта' }, t => { redeemCoupon(t, pid, x => msg.textContent = x); return true; }); else msg.textContent = 'Сканер недоступний — введіть код вручну'; };
+            go.onclick = () => redeemCoupon(inp.value, pid, x => msg.textContent = x);
+            [sc, inp, go, msg].forEach(e => c.appendChild(e));
+        }
+        const bizOnMap = {};
+        onValue(ref(db, 'bizApplications'), snap => {
+            const d = snap.val() || {};
+            Object.keys(d).forEach(k => {
+                const a = d[k]; if (a.status !== 'approved' || !a.coords) return;
+                const id = a.placeId || k, f = { name: a.name, status: a.address || '', text1: a.about || '', text2: a.offer ? '🔥 ' + a.offer : '' };
+                if (bizOnMap[k]) { Object.assign(bizOnMap[k], f); return; }
+                if (places.some(x => x.id === id)) return;
+                bizOnMap[k] = Object.assign({ id: id, type: 'place', coords: a.coords, photos: [DEFAULT_AVATAR], svg: 'fire', category: a.category || 'services', ownerId: a.ownerId }, f);
+                addPlaceToMap(bizOnMap[k]);
+            });
+        });
+        function bizEditSection(c, k, a) {
+            c.appendChild(bizEl('h4', 'margin:14px 0 8px', 'Дані закладу'));
+            const f = {};
+            [['offer', 'Пропозиція'], ['about', 'Опис'], ['address', 'Адреса']].forEach(([key, ph]) => {
+                const i = bizEl('input', 'width:100%;box-sizing:border-box;margin:0 0 8px;padding:11px;border-radius:12px;border:1px solid rgba(128,128,128,.3);font-size:16px;background:transparent;color:inherit');
+                i.placeholder = ph; i.value = a[key] || ''; f[key] = i; c.appendChild(i);
+            });
+            const b = bizEl('button', 'width:100%;padding:12px;border:0;border-radius:14px;font-weight:700;background:rgba(128,128,128,.18);color:inherit', 'Зберегти');
+            b.onclick = async () => { await update(ref(db, 'bizApplications/' + k), { offer: f.offer.value.trim().slice(0, 120), about: f.about.value.trim().slice(0, 300), address: f.address.value.trim().slice(0, 160) }); b.textContent = 'Збережено ✅'; };
+            c.appendChild(b);
+        }
+        // Один вхід для власника: що показати, залежить від стану його заявки.
+        async function openMyBiz() {
+            let d = {};
+            try { await window.__authReady; d = (await get(ref(db, 'bizApplications'))).val() || {}; } catch (_) {}
+            const k = Object.keys(d).filter(x => d[x].ownerId === myId).sort((x, y) => (d[y].ts || 0) - (d[x].ts || 0))[0];
+            if (!k || d[k].status === 'rejected') return openBizForm();   // немає заявки або відхилена — нова форма
+            const a = d[k];
             bizOverlay(c => {
-                c.appendChild(bizEl('h3', 'margin:0 0 10px', 'Сканер купонів'));
-                if (!pid) { c.appendChild(bizEl('p', null, 'У вас немає схваленого закладу.')); return; }
-                const msg = bizEl('p', 'min-height:22px;font-weight:600', '');
-                const inp = bizEl('input', 'width:100%;box-sizing:border-box;margin:0 0 8px;padding:11px;border-radius:12px;border:1px solid rgba(128,128,128,.3);font-size:16px;background:transparent;color:inherit'); inp.placeholder = 'Код купона, напр. 123456';
-                const bs = 'width:100%;padding:12px;margin-bottom:8px;border:0;border-radius:14px;font-weight:700;background:var(--accent-main,#5cb3da);color:#fff';
-                const sc = bizEl('button', bs, '📷 Сканувати QR'), go = bizEl('button', bs, 'Погасити за кодом');
-                sc.onclick = () => { const w = window.Telegram && window.Telegram.WebApp; if (w && w.showScanQrPopup) w.showScanQrPopup({ text: 'Наведіть на QR клієнта' }, t => { redeemCoupon(t, pid, x => msg.textContent = x); return true; }); else msg.textContent = 'Сканер недоступний — введіть код вручну'; };
-                go.onclick = () => redeemCoupon(inp.value, pid, x => msg.textContent = x);
-                [sc, inp, go, msg].forEach(e => c.appendChild(e));
+                c.appendChild(bizEl('h3', 'margin:0 0 10px', 'Мій заклад · ' + (a.name || '')));
+                if (a.status !== 'approved') { c.appendChild(bizEl('p', null, 'Заявку надіслано, вона на перевірці ⏳')); return; }
+                bizScanSection(c, a.placeId || k);
+                bizEditSection(c, k, a);
             });
         }
-        myBizPlaceId().then(pid => { if (pid) document.getElementById('settings-scan-row').style.display = ''; }).catch(() => {});
-        document.getElementById('settings-scan-row').addEventListener('click', () => { closeSettingsModal(); openBizScanner(); });
         function openBizForm() {
             bizOverlay(c => {
                 c.appendChild(bizEl('h3', 'margin:0 0 10px', 'Додати мій заклад'));
                 const f = {};
-                [['name', 'Назва закладу'], ['address', 'Адреса'], ['offer', 'Пропозиція, напр. −15% на стрижку']].forEach(([k, ph]) => {
+                [['name', 'Назва закладу'], ['address', 'Адреса'], ['offer', 'Пропозиція, напр. −15% на стрижку'], ['about', 'Короткий опис закладу']].forEach(([k, ph]) => {
                     const i = bizEl('input', 'width:100%;box-sizing:border-box;margin:0 0 8px;padding:11px;border-radius:12px;border:1px solid rgba(128,128,128,.3);font-size:16px;background:transparent;color:inherit');
                     i.placeholder = ph; f[k] = i; c.appendChild(i);
                 });
+                const cat = bizEl('select', 'width:100%;box-sizing:border-box;margin:0 0 8px;padding:11px;border-radius:12px;border:1px solid rgba(128,128,128,.3);font-size:16px;background:transparent;color:inherit');
+                [['food', 'Їжа й напої'], ['shopping', 'Магазин'], ['events', 'Події'], ['services', 'Послуги']].forEach(([v, t]) => { const o = bizEl('option', null, t); o.value = v; cat.appendChild(o); });
+                c.appendChild(cat);
+                let coords = null;
+                const loc = bizEl('button', 'width:100%;padding:11px;margin:0 0 8px;border:1px solid rgba(128,128,128,.3);border-radius:12px;background:transparent;color:inherit', '📍 Я зараз у закладі — вказати точку');
+                loc.onclick = () => navigator.geolocation && navigator.geolocation.getCurrentPosition(
+                    pos => { coords = [pos.coords.latitude, pos.coords.longitude]; loc.textContent = '📍 Точку збережено ✅'; },
+                    () => { coords = myCoords.slice(); loc.textContent = '📍 Взято вашу позицію на карті ✅'; });
+                c.appendChild(loc);
                 const b = bizEl('button', 'width:100%;padding:12px;border:0;border-radius:14px;font-weight:700;background:var(--accent-main,#5cb3da);color:#fff', 'Надіслати на перевірку');
                 b.onclick = async () => {
                     if (!f.name.value.trim()) { f.name.focus(); return; }
+                    if (!coords) { loc.textContent = '📍 Спершу вкажіть точку на карті'; return; }
                     b.disabled = true;
                     try {
-                        await push(ref(db, 'bizApplications'), { ownerId: myId, name: f.name.value.trim().slice(0, 80), address: f.address.value.trim().slice(0, 160), offer: f.offer.value.trim().slice(0, 120), status: 'pending', ts: Date.now() });
+                        await push(ref(db, 'bizApplications'), { ownerId: myId, name: f.name.value.trim().slice(0, 80), address: f.address.value.trim().slice(0, 160), offer: f.offer.value.trim().slice(0, 120), about: f.about.value.trim().slice(0, 300), category: cat.value, coords: coords, status: 'pending', ts: Date.now() });
                         c.innerHTML = ''; c.appendChild(bizEl('p', 'margin:0', 'Заявку надіслано ✅ Після перевірки заклад буде підключено.'));
                     } catch (e) { b.disabled = false; b.textContent = 'Помилка, спробуйте ще раз'; }
                 };
                 c.appendChild(b);
             });
         }
-        function openBizAdmin() {
+        function openBizAdmin(mode) {
             if (!isAdmin()) return;
             bizOverlay(c => {
-                c.appendChild(bizEl('h3', 'margin:0 0 10px', 'Адмін-панель · заявки закладів'));
+                c.appendChild(bizEl('h3', 'margin:0 0 10px', mode === 'acc' ? '🧾 Бухгалтерія' : mode === 'apps' ? '📨 Заявки закладів' : 'Адмін-панель'));
                 const box = bizEl('div'); c.appendChild(box);
-                c.appendChild(bizEl('h3', 'margin:16px 0 6px', 'Розрахунки'));
+                const accTitle = bizEl('h3', 'margin:16px 0 6px', 'Розрахунки'); c.appendChild(accTitle);
                 const sb = bizEl('div'); c.appendChild(sb);
+                if (mode === 'acc') box.style.display = 'none';
+                if (mode === 'apps') { accTitle.style.display = 'none'; sb.style.display = 'none'; }
                 let R = {}, P = {}, A = {};
                 const draw = () => {
                     sb.innerHTML = ''; const g = {};
@@ -11039,8 +11079,42 @@ const tileRefreshing = new Set();
             });
         }
                 document.getElementById('settings-admin-row').style.display = isAdmin() ? '' : 'none';
-        document.getElementById('settings-biz-row').addEventListener('click', () => { closeSettingsModal(); openBizForm(); });
+        document.getElementById('settings-biz-row').addEventListener('click', () => { closeSettingsModal(); openMyBiz(); });
         document.getElementById('settings-admin-row').addEventListener('click', () => { closeSettingsModal(); openBizAdmin(); });
+
+        // Для адміна над списком чатів: «Заявки закладів» (з лічильником нових) і окремо «Бухгалтерія».
+        (function adminInbox() {
+            const dm = document.getElementById('dm-list');
+            if (!dm || !isAdmin()) return;
+            const box = bizEl('div', 'padding:6px 12px 2px'); box.id = 'admin-inbox';
+            dm.parentNode.insertBefore(box, dm);
+            new MutationObserver(() => { box.style.display = dm.style.display === 'none' ? 'none' : ''; }).observe(dm, { attributes: true, attributeFilter: ['style'] });
+            const mk = (icon, title, mode) => {
+                const r = bizEl('button', 'display:flex;align-items:center;gap:12px;width:100%;padding:12px;margin-bottom:6px;border:0;border-radius:16px;background:rgba(128,128,128,.12);color:inherit;text-align:left;font-size:15px');
+                r.appendChild(bizEl('span', 'font-size:22px', icon));
+                const t = bizEl('span', 'flex:1;display:flex;flex-direction:column'), sub = bizEl('span', 'font-size:12px;opacity:.65', '…');
+                t.appendChild(bizEl('b', null, title)); t.appendChild(sub); r.appendChild(t);
+                const badge = bizEl('span', 'display:none;min-width:20px;padding:2px 7px;border-radius:12px;background:#ff3b30;color:#fff;font-size:12px;font-weight:700;text-align:center');
+                r.appendChild(badge); r.onclick = () => openBizAdmin(mode); box.appendChild(r);
+                return { sub, badge };
+            };
+            const apps = mk('📨', 'Заявки закладів', 'apps'), acc = mk('🧾', 'Бухгалтерія', 'acc');
+            window.__authReady.then(() => {
+                onValue(ref(db, 'bizApplications'), x => {
+                    const n = Object.values(x.val() || {}).filter(a => a.status === 'pending').length;
+                    apps.sub.textContent = n ? 'Нових заявок: ' + n : 'Нових заявок немає';
+                    apps.badge.textContent = n; apps.badge.style.display = n ? '' : 'none';
+                });
+                let R = {}, P = {};
+                const upd = () => {
+                    const sum = Object.values(R).reduce((a, r) => a + (r.fee || 0), 0);
+                    const paid = Object.values(P).reduce((a, m) => a + Object.values(m).reduce((b, y) => b + (y.amount || 0), 0), 0);
+                    acc.sub.textContent = 'До сплати: ' + (sum - paid) + ' грн · клієнтів: ' + Object.keys(R).length;
+                };
+                onValue(ref(db, 'redemptions'), x => { R = x.val() || {}; upd(); });
+                onValue(ref(db, 'payments'), x => { P = x.val() || {}; upd(); });
+            });
+        })();
 
         function closeSettingsModal() {
             document.getElementById('settings-modal').style.display = 'none';
