@@ -11030,6 +11030,40 @@ const tileRefreshing = new Set();
                 c.appendChild(b);
             });
         }
+        function bizDecide(k, st) {
+            update(ref(db, 'bizApplications/' + k), st === 'approved' ? { status: st, placeId: k } : { status: st });
+            bizPreviewClose();
+        }
+        let bizPreviewMarker = null;
+        function bizPreviewClose() {
+            if (bizPreviewMarker) { map.removeLayer(bizPreviewMarker); bizPreviewMarker = null; }
+            const bar = document.getElementById('biz-preview-bar'); if (bar) bar.remove();
+            try { hideMapCard(); } catch (_) {}
+        }
+        // Перегляд заявки до схвалення: карта летить до точки, показується візитка закладу (дотик по ній відкриває сторінку),
+        // знизу панель «Схвалити / Відхилити».
+        function bizPreview(k, a) {
+            const ov = document.getElementById('biz-overlay'); if (ov) ov.remove();
+            bizPreviewClose();
+            if (!a.coords) { alert('У заявці немає точки на карті'); return; }
+            const item = { id: 'preview_' + k, type: 'place', name: a.name || '', coords: a.coords, photos: [DEFAULT_AVATAR], status: a.address || '', text1: a.about || '', text2: a.offer ? '🔥 ' + a.offer : '', svg: 'fire', category: a.category || 'services' };
+            try { closeMessagesWindowIfOpen(); } catch (_) {}
+            showScreen('map');
+            setTimeout(() => {
+                map.invalidateSize(); map.flyTo(item.coords, 17);
+                bizPreviewMarker = L.marker(item.coords, { icon: L.divIcon({ className: 'custom-place-marker', html: brandPinHtml(item), iconSize: [46, 46], iconAnchor: [23, 23] }) }).addTo(map);
+                bizPreviewMarker.on('click', e => { L.DomEvent.stopPropagation(e); showMapCard(item); });
+                showMapCard(item);
+            }, 250);
+            const bar = bizEl('div', 'position:fixed;left:12px;right:12px;bottom:calc(96px + env(safe-area-inset-bottom,0px));z-index:100000;display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:18px;background:rgba(28,28,30,.88);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);color:#fff');
+            bar.id = 'biz-preview-bar';
+            bar.appendChild(bizEl('span', 'flex:1;font-size:13px;font-weight:600', 'Заявка: ' + (a.name || '')));
+            if (a.status === 'pending') [['Схвалити', 'approved', '#34c759'], ['Відхилити', 'rejected', '#ff3b30']].forEach(([t, st, col]) => {
+                const bt = bizEl('button', 'padding:8px 12px;border:0;border-radius:12px;font-weight:700;color:#fff;background:' + col, t); bt.onclick = () => bizDecide(k, st); bar.appendChild(bt);
+            });
+            const x = bizEl('button', 'padding:8px 10px;border:0;border-radius:12px;background:rgba(255,255,255,.18);color:#fff', '✕'); x.onclick = bizPreviewClose; bar.appendChild(x);
+            document.body.appendChild(bar);
+        }
         function openBizAdmin(mode) {
             if (!isAdmin()) return;
             bizOverlay(c => {
@@ -11066,12 +11100,11 @@ const tileRefreshing = new Set();
                         const a = d[k], r = bizEl('div', 'padding:10px 0;border-top:1px solid rgba(128,128,128,.2)');
                         r.appendChild(bizEl('div', 'font-weight:700', a.name || ''));
                         r.appendChild(bizEl('div', 'font-size:13px;opacity:.7', [a.address, a.offer, a.status].filter(Boolean).join(' · ')));
+                        const pv = bizEl('button', 'margin:6px 8px 0 0;padding:7px 12px;border:0;border-radius:10px;background:var(--accent-main,#5cb3da);color:#fff', '👁 Переглянути на карті');
+                        pv.onclick = () => bizPreview(k, a); r.appendChild(pv);
                         if (a.status === 'pending') [['Схвалити', 'approved'], ['Відхилити', 'rejected']].forEach(([t, st]) => {
                             const bt = bizEl('button', 'margin:6px 8px 0 0;padding:7px 12px;border:0;border-radius:10px', t);
-                            bt.onclick = () => {
-                                if (st === 'approved') { const pid = prompt('ID закладу (як у купонах / на карті):', k); if (pid === null) return; update(ref(db, 'bizApplications/' + k), { status: st, placeId: pid.trim() || k }); }
-                                else update(ref(db, 'bizApplications/' + k), { status: st });
-                            }; r.appendChild(bt);
+                            bt.onclick = () => bizDecide(k, st); r.appendChild(bt);
                         });
                         box.appendChild(r);
                     });
